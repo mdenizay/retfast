@@ -15,7 +15,7 @@ class EventController extends Controller
     public function index(Request $request): Response
     {
         $events = Event::query()
-            ->scopeForUser($request->user())
+            ->forUser($request->user())
             ->with(['dropOffPoints', 'managers:id,name,email'])
             ->withCount(['applications', 'applications as pending_count' => fn ($q) => $q->where('status', 'pending')])
             ->orderByDesc('start_date')
@@ -24,15 +24,15 @@ class EventController extends Controller
         return Inertia::render('Events/Index', ['events' => $events]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        $this->authorize('create', Event::class);
+        if (! in_array($request->user()->role, ['admin', 'event_manager'])) abort(403);
         return Inertia::render('Events/Create');
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $this->authorize('create', Event::class);
+        if (! in_array($request->user()->role, ['admin', 'event_manager'])) abort(403);
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -72,16 +72,16 @@ class EventController extends Controller
         ]);
     }
 
-    public function edit(Event $event): Response
+    public function edit(Request $request, Event $event): Response
     {
-        $this->authorize('update', $event);
+        if (! $request->user()->canManageEvent($event)) abort(403);
         $event->load('dropOffPoints');
         return Inertia::render('Events/Edit', ['event' => $event]);
     }
 
     public function update(Request $request, Event $event): RedirectResponse
     {
-        $this->authorize('update', $event);
+        if (! $request->user()->canManageEvent($event)) abort(403);
         $data = $request->validate([
             'name' => 'sometimes|string|max:255',
             'description' => 'nullable|string',
@@ -98,24 +98,24 @@ class EventController extends Controller
         return back()->with('success', 'Etkinlik güncellendi.');
     }
 
-    public function destroy(Event $event): RedirectResponse
+    public function destroy(Request $request, Event $event): RedirectResponse
     {
-        $this->authorize('delete', $event);
+        if (! $request->user()->isAdmin()) abort(403);
         $event->delete();
         return redirect()->route('events.index')->with('success', 'Etkinlik silindi.');
     }
 
     public function addManager(Request $request, Event $event): RedirectResponse
     {
-        $this->authorize('update', $event);
+        if (! $request->user()->isAdmin()) abort(403);
         $request->validate(['user_id' => 'required|exists:users,id']);
         $event->managers()->syncWithoutDetaching([$request->user_id]);
         return back()->with('success', 'Yönetici eklendi.');
     }
 
-    public function removeManager(Event $event, User $user): RedirectResponse
+    public function removeManager(Request $request, Event $event, User $user): RedirectResponse
     {
-        $this->authorize('update', $event);
+        if (! $request->user()->isAdmin()) abort(403);
         $event->managers()->detach($user->id);
         return back()->with('success', 'Yönetici kaldırıldı.');
     }

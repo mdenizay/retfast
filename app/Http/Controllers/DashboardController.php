@@ -15,7 +15,7 @@ class DashboardController extends Controller
         $user = $request->user();
 
         $events = Event::query()
-            ->scopeForUser($user)
+            ->forUser($user)
             ->with(['dropOffPoints'])
             ->orderByDesc('start_date')
             ->limit(10)
@@ -23,12 +23,12 @@ class DashboardController extends Controller
 
         $stats = [];
         if ($user->isAdmin() || $user->isEventManager()) {
+            $eventIds = Event::query()->forUser($user)->pluck('id');
             $stats = [
-                'total_events' => Event::query()->scopeForUser($user)->count(),
-                'active_events' => Event::query()->scopeForUser($user)->where('status', 'active')->count(),
-                'total_flights' => Flight::whereIn('event_id', Event::query()->scopeForUser($user)->pluck('id'))->count(),
-                'active_flights' => Flight::whereIn('event_id', Event::query()->scopeForUser($user)->pluck('id'))
-                    ->whereIn('status', ['flying', 'sos'])->count(),
+                'total_events' => $eventIds->count(),
+                'active_events' => Event::query()->forUser($user)->where('status', 'active')->count(),
+                'total_flights' => Flight::whereIn('event_id', $eventIds)->count(),
+                'active_flights' => Flight::whereIn('event_id', $eventIds)->whereIn('status', ['flying', 'sos'])->count(),
             ];
         }
 

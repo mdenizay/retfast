@@ -9,7 +9,7 @@ const navItems = [
   { href: '/users', label: 'Kullanıcılar', icon: Users, roles: ['admin'] as const },
 ];
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Layout({ children, fullHeight = false }: { children: React.ReactNode; fullHeight?: boolean }) {
   const { auth, flash } = usePage<PageProps>().props;
   const user = auth.user!;
 
@@ -74,7 +74,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {flash.error}
           </div>
         )}
-        <main className="flex-1 overflow-auto">
+        <main className={`flex-1 ${fullHeight ? 'overflow-hidden' : 'overflow-auto'}`}>
           {children}
         </main>
       </div>

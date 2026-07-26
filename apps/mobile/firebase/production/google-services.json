@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "81048089421",
+    "project_id": "retfast-ab7ca",
+    "storage_bucket": "retfast-ab7ca.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:81048089421:android:17a5d5ce8bd1b659867d04",
+        "android_client_info": {
+          "package_name": "com.mizibu.retfast"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "81048089421-eq7l6lm5jp1hruebcfgii6ohuvv38n1s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkbCvecsNlDVG9tNBBAPKKr9GrlehSb4Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "81048089421-eq7l6lm5jp1hruebcfgii6ohuvv38n1s.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "81048089421-cldlgc0d3j279o4abatifk3i6l2mh83d.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mizibu.retfast"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

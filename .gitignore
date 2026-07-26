@@ -13,6 +13,7 @@ coverage/
 
 apps/mobile/android/
 apps/mobile/ios/
+apps/mobile/dist-*/
 apps/mobile/google-services.json
 apps/mobile/GoogleService-Info.plist
 

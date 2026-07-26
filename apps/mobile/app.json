@@ -13,13 +13,14 @@
     "ios": {
       "bundleIdentifier": "com.mizibu.retfast",
       "buildNumber": "1",
+      "usesAppleSignIn": true,
       "supportsTablet": true
     },
     "android": {
       "package": "com.mizibu.retfast",
       "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#DFF3ED",
+        "backgroundColor": "#0D3F35",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -28,6 +29,23 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-localization",
+      "expo-secure-store",
+      "expo-apple-authentication",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ]
+    ]
   }
 }

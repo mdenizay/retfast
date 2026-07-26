@@ -9,6 +9,16 @@
   "storage": {
     "rules": "storage.rules"
   },
+  "auth": {
+    "providers": {
+      "anonymous": false,
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "RETFAST",
+        "supportEmail": "medenizay@gmail.com"
+      }
+    }
+  },
   "functions": {
     "source": "functions",
     "runtime": "nodejs22"

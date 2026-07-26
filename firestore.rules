@@ -14,6 +14,26 @@ service cloud.firestore {
       return signedIn() && request.auth.token.superadmin == true;
     }
 
+    function eventDocument(eventId) {
+      return get(/databases/$(database)/documents/events/$(eventId));
+    }
+
+    function isEventManager(eventId) {
+      return isSuperAdmin()
+        || (signedIn()
+          && request.auth.uid in eventDocument(eventId).data.managerIds);
+    }
+
+    function hasEventMembership(eventId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/eventMemberships/$(eventId + '_' + request.auth.uid));
+    }
+
+    function isPublicEvent(eventData) {
+      return eventData.visibility == 'public'
+        && eventData.status in ['published', 'active', 'completed'];
+    }
+
     function validOwnProfile(userId) {
       return request.resource.data.id == userId
         && request.resource.data.globalRole == 'user'
@@ -55,7 +75,28 @@ service cloud.firestore {
           && request.resource.data.globalRole == resource.data.globalRole
           && validOwnProfile(userId));
 
-      allow delete: if isOwner(userId) || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    match /events/{eventId} {
+      allow read: if isSuperAdmin()
+        || (signedIn() && request.auth.uid in resource.data.managerIds)
+        || hasEventMembership(eventId)
+        || isPublicEvent(resource.data);
+      allow create, update, delete: if false;
+    }
+
+    match /eventMemberships/{membershipId} {
+      allow read: if signedIn()
+        && (resource.data.userId == request.auth.uid
+          || isEventManager(resource.data.eventId));
+      allow create, update, delete: if false;
+    }
+
+    match /auditLogs/{auditId} {
+      allow read: if isSuperAdmin()
+        || (signedIn() && isEventManager(resource.data.eventId));
+      allow create, update, delete: if false;
     }
 
     match /{document=**} {

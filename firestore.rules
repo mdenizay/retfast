@@ -99,6 +99,24 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /trackingSessions/{sessionId} {
+      allow read: if signedIn()
+        && (resource.data.userId == request.auth.uid
+          || isEventManager(resource.data.eventId));
+      allow create, update, delete: if false;
+
+      match /chunks/{chunkId} {
+        allow read: if signedIn()
+          && (get(/databases/$(database)/documents/trackingSessions/$(sessionId)).data.userId == request.auth.uid
+            || isEventManager(get(/databases/$(database)/documents/trackingSessions/$(sessionId)).data.eventId));
+        allow create, update, delete: if false;
+      }
+    }
+
+    match /trackingActives/{activeId} {
+      allow read, write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

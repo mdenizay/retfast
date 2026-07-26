@@ -49,6 +49,22 @@ export const retrieverAvailabilitySchema = z.enum([
     "busy",
     "offline",
 ]);
+export const trackingRoleSchema = eventRoleSchema.extract([
+    "pilot",
+    "retriever",
+]);
+export const trackingSessionStatusSchema = z.enum([
+    "active",
+    "completed",
+    "cancelled",
+    "interrupted",
+]);
+export const connectivitySchema = z.enum([
+    "online",
+    "limited",
+    "offline",
+    "unknown",
+]);
 export const supportedLocaleSchema = z.enum(["tr", "en"]);
 export const userProfileSchema = z.object({
     id: z.string().min(1),
@@ -99,4 +115,49 @@ export const reviewMembershipInputSchema = eventIdInputSchema.extend({
 }).refine((value) => value.decision !== "approved" || value.role != null, {
     message: "role is required when approving a membership",
     path: ["role"],
+});
+export const trackPointSchema = z.object({
+    sequence: z.number().int().nonnegative(),
+    recordedAt: z.number().int().positive(),
+    latitude: z.number().min(-90).max(90),
+    longitude: z.number().min(-180).max(180),
+    accuracy: z.number().nonnegative().max(5_000).nullable(),
+    altitude: z.number().min(-1_000).max(20_000).nullable(),
+    altitudeAccuracy: z.number().nonnegative().max(5_000).nullable(),
+    speed: z.number().nonnegative().max(200).nullable(),
+    heading: z.number().min(0).max(360).nullable(),
+    batteryLevel: z.number().min(0).max(1).nullable(),
+    isCharging: z.boolean().nullable(),
+    connectivity: connectivitySchema,
+});
+export const startTrackingSessionInputSchema = eventIdInputSchema.extend({
+    deviceId: z.string().trim().min(8).max(128),
+});
+export const ingestTrackBatchInputSchema = eventIdInputSchema.extend({
+    sessionId: z.string().trim().min(1).max(128),
+    batchId: z.string().trim().regex(/^[a-zA-Z0-9_-]{8,128}$/),
+    points: z.array(trackPointSchema).min(1).max(100),
+}).superRefine((value, context) => {
+    for (let index = 1; index < value.points.length; index += 1) {
+        const previous = value.points[index - 1];
+        const current = value.points[index];
+        if (current.sequence <= previous.sequence) {
+            context.addIssue({
+                code: "custom",
+                message: "points must be ordered by increasing sequence",
+                path: ["points", index, "sequence"],
+            });
+        }
+        if (current.recordedAt < previous.recordedAt) {
+            context.addIssue({
+                code: "custom",
+                message: "points must be ordered by recordedAt",
+                path: ["points", index, "recordedAt"],
+            });
+        }
+    }
+});
+export const stopTrackingSessionInputSchema = eventIdInputSchema.extend({
+    sessionId: z.string().trim().min(1).max(128),
+    outcome: trackingSessionStatusSchema.exclude(["active"]),
 });

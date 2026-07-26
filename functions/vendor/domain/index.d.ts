@@ -60,6 +60,25 @@ export declare const retrieverAvailabilitySchema: z.ZodEnum<{
     offline: "offline";
 }>;
 export type RetrieverAvailability = z.infer<typeof retrieverAvailabilitySchema>;
+export declare const trackingRoleSchema: z.ZodEnum<{
+    pilot: "pilot";
+    retriever: "retriever";
+}>;
+export type TrackingRole = z.infer<typeof trackingRoleSchema>;
+export declare const trackingSessionStatusSchema: z.ZodEnum<{
+    active: "active";
+    completed: "completed";
+    cancelled: "cancelled";
+    interrupted: "interrupted";
+}>;
+export type TrackingSessionStatus = z.infer<typeof trackingSessionStatusSchema>;
+export declare const connectivitySchema: z.ZodEnum<{
+    offline: "offline";
+    online: "online";
+    limited: "limited";
+    unknown: "unknown";
+}>;
+export type Connectivity = z.infer<typeof connectivitySchema>;
 export declare const supportedLocaleSchema: z.ZodEnum<{
     tr: "tr";
     en: "en";
@@ -153,6 +172,63 @@ export declare const reviewMembershipInputSchema: z.ZodObject<{
         observer: "observer";
     }>>;
 }, z.core.$strip>;
+export declare const trackPointSchema: z.ZodObject<{
+    sequence: z.ZodNumber;
+    recordedAt: z.ZodNumber;
+    latitude: z.ZodNumber;
+    longitude: z.ZodNumber;
+    accuracy: z.ZodNullable<z.ZodNumber>;
+    altitude: z.ZodNullable<z.ZodNumber>;
+    altitudeAccuracy: z.ZodNullable<z.ZodNumber>;
+    speed: z.ZodNullable<z.ZodNumber>;
+    heading: z.ZodNullable<z.ZodNumber>;
+    batteryLevel: z.ZodNullable<z.ZodNumber>;
+    isCharging: z.ZodNullable<z.ZodBoolean>;
+    connectivity: z.ZodEnum<{
+        offline: "offline";
+        online: "online";
+        limited: "limited";
+        unknown: "unknown";
+    }>;
+}, z.core.$strip>;
+export type TrackPoint = z.infer<typeof trackPointSchema>;
+export declare const startTrackingSessionInputSchema: z.ZodObject<{
+    eventId: z.ZodString;
+    deviceId: z.ZodString;
+}, z.core.$strip>;
+export declare const ingestTrackBatchInputSchema: z.ZodObject<{
+    eventId: z.ZodString;
+    sessionId: z.ZodString;
+    batchId: z.ZodString;
+    points: z.ZodArray<z.ZodObject<{
+        sequence: z.ZodNumber;
+        recordedAt: z.ZodNumber;
+        latitude: z.ZodNumber;
+        longitude: z.ZodNumber;
+        accuracy: z.ZodNullable<z.ZodNumber>;
+        altitude: z.ZodNullable<z.ZodNumber>;
+        altitudeAccuracy: z.ZodNullable<z.ZodNumber>;
+        speed: z.ZodNullable<z.ZodNumber>;
+        heading: z.ZodNullable<z.ZodNumber>;
+        batteryLevel: z.ZodNullable<z.ZodNumber>;
+        isCharging: z.ZodNullable<z.ZodBoolean>;
+        connectivity: z.ZodEnum<{
+            offline: "offline";
+            online: "online";
+            limited: "limited";
+            unknown: "unknown";
+        }>;
+    }, z.core.$strip>>;
+}, z.core.$strip>;
+export declare const stopTrackingSessionInputSchema: z.ZodObject<{
+    eventId: z.ZodString;
+    sessionId: z.ZodString;
+    outcome: z.ZodEnum<{
+        completed: "completed";
+        cancelled: "cancelled";
+        interrupted: "interrupted";
+    }>;
+}, z.core.$strip>;
 export type EventRecord = {
     id: string;
     name: string;
@@ -180,5 +256,17 @@ export type EventMembershipRecord = {
     role: EventRole | null;
     eventStartsAt: Date;
     eventEndsAt: Date;
+};
+export type TrackingSessionRecord = {
+    id: string;
+    eventId: string;
+    userId: string;
+    role: TrackingRole;
+    status: TrackingSessionStatus;
+    deviceId: string;
+    startedAt: Date;
+    stoppedAt: Date | null;
+    pointCount: number;
+    latestPoint: TrackPoint | null;
 };
 //# sourceMappingURL=index.d.ts.map

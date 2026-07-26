@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "retfast-3279f",
+    "development": "retfast-3279f",
+    "production": "retfast-ab7ca"
+  },
+  "targets": {}
+}

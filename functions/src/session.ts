@@ -4,13 +4,13 @@ import { onCall } from "firebase-functions/v2/https";
 import { z } from "zod";
 
 import { db, parseInput, requireAuth } from "./callable.js";
-import { adminApp, SUPERADMIN_EMAIL } from "./config.js";
+import { adminApp, CALLABLE_OPTIONS, SUPERADMIN_EMAIL } from "./config.js";
 
 const bootstrapInputSchema = z.object({
   locale: z.enum(["tr", "en"]).default("tr"),
 });
 
-export const bootstrapSession = onCall(async (request) => {
+export const bootstrapSession = onCall(CALLABLE_OPTIONS, async (request) => {
   const session = requireAuth(request);
   const input = parseInput(bootstrapInputSchema, request.data ?? {});
   const auth = getAuth(adminApp);

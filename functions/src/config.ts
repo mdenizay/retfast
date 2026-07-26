@@ -3,6 +3,10 @@ import { setGlobalOptions } from "firebase-functions/v2";
 
 export const REGION = "europe-west1";
 export const SUPERADMIN_EMAIL = "medenizay@gmail.com";
+export const CALLABLE_OPTIONS = {
+  invoker: "public" as const,
+  enforceAppCheck: false,
+};
 
 export const adminApp = getApps()[0] ?? initializeApp();
 

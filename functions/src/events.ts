@@ -19,7 +19,7 @@ import {
   requireSuperadmin,
   slugify,
 } from "./callable.js";
-import { adminApp } from "./config.js";
+import { adminApp, CALLABLE_OPTIONS } from "./config.js";
 import { enqueueLifecycleTasks } from "./task-queue.js";
 
 async function userSummary(user: UserRecord) {
@@ -96,7 +96,7 @@ async function getUserByEmail(email: string) {
   }
 }
 
-export const createEvent = onCall(async (request) => {
+export const createEvent = onCall(CALLABLE_OPTIONS, async (request) => {
   const actor = requireSuperadmin(request);
   const input = parseInput(createEventInputSchema, request.data);
   const eventReference = db.collection("events").doc();
@@ -151,7 +151,7 @@ export const createEvent = onCall(async (request) => {
   return { eventId: eventReference.id, lifecycleQueued };
 });
 
-export const updateEvent = onCall(async (request) => {
+export const updateEvent = onCall(CALLABLE_OPTIONS, async (request) => {
   const actor = requireAuth(request);
   const input = parseInput(updateEventInputSchema, request.data);
   if (actor.token.superadmin !== true) {
@@ -192,7 +192,7 @@ export const updateEvent = onCall(async (request) => {
   return { eventId: input.eventId, lifecycleQueued };
 });
 
-export const applyToEvent = onCall(async (request) => {
+export const applyToEvent = onCall(CALLABLE_OPTIONS, async (request) => {
   const actor = requireAuth(request);
   const input = parseInput(applyToEventInputSchema, request.data);
   const eventReference = db.doc(`events/${input.eventId}`);
@@ -227,7 +227,7 @@ export const applyToEvent = onCall(async (request) => {
   return { membershipId: memberReference.id };
 });
 
-export const setEventManager = onCall(async (request) => {
+export const setEventManager = onCall(CALLABLE_OPTIONS, async (request) => {
   const actor = requireSuperadmin(request);
   const input = parseInput(setEventManagerInputSchema, request.data);
   const manager = await getUserByEmail(input.email);
@@ -269,7 +269,7 @@ export const setEventManager = onCall(async (request) => {
   return { userId: manager.uid };
 });
 
-export const inviteEventMember = onCall(async (request) => {
+export const inviteEventMember = onCall(CALLABLE_OPTIONS, async (request) => {
   const actor = requireAuth(request);
   const input = parseInput(inviteMemberInputSchema, request.data);
   if (actor.token.superadmin !== true) await requireEventManager(actor.uid, input.eventId);
@@ -304,7 +304,7 @@ export const inviteEventMember = onCall(async (request) => {
   return { userId: invitedUser.uid };
 });
 
-export const reviewEventMembership = onCall(async (request) => {
+export const reviewEventMembership = onCall(CALLABLE_OPTIONS, async (request) => {
   const actor = requireAuth(request);
   const input = parseInput(reviewMembershipInputSchema, request.data);
   if (actor.token.superadmin !== true) await requireEventManager(actor.uid, input.eventId);

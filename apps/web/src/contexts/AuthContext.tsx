@@ -22,12 +22,24 @@ import {
   updateProfile,
   type User,
 } from "firebase/auth";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 
-import { auth, db } from "../lib/firebase";
+import { auth, db, functions } from "../lib/firebase";
+
+export type UserProfile = {
+  id: string;
+  email: string;
+  displayName: string;
+  locale: "tr" | "en";
+  globalRole: "user" | "superadmin";
+  radioCallsign: string | null;
+};
 
 type AuthContextValue = {
   user: User | null;
+  profile: UserProfile | null;
+  profileLoading: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
@@ -66,6 +78,8 @@ async function ensureProfile(user: User, fallbackName?: string) {
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -75,15 +89,47 @@ export function AuthProvider({ children }: PropsWithChildren) {
       }
     });
 
-    return onAuthStateChanged(auth, (nextUser) => {
+    return onAuthStateChanged(auth, async (nextUser) => {
       setUser(nextUser);
+      if (nextUser) {
+        setProfileLoading(true);
+        try {
+          const bootstrap = httpsCallable<
+            { locale: "tr" | "en" },
+            { globalRole: "user" | "superadmin"; refreshToken: boolean }
+          >(functions, "bootstrapSession");
+          const result = await bootstrap({
+            locale: document.documentElement.lang === "en" ? "en" : "tr",
+          });
+          if (result.data.refreshToken) await nextUser.getIdToken(true);
+        } catch (error) {
+          console.warn("Session bootstrap is temporarily unavailable.", error);
+        }
+      } else {
+        setProfile(null);
+        setProfileLoading(false);
+      }
       setLoading(false);
     });
   }, []);
 
+  useEffect(() => {
+    if (!user) return;
+    return onSnapshot(
+      doc(db, "users", user.uid),
+      (snapshot) => {
+        setProfile(snapshot.exists() ? (snapshot.data() as UserProfile) : null);
+        setProfileLoading(false);
+      },
+      () => setProfileLoading(false),
+    );
+  }, [user]);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
+      profile,
+      profileLoading,
       loading,
       signIn: async (email, password) => {
         await signInWithEmailAndPassword(auth, email.trim(), password);
@@ -134,7 +180,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         await firebaseSignOut(auth);
       },
     }),
-    [loading, user],
+    [loading, profile, profileLoading, user],
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;

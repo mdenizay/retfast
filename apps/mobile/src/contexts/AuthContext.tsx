@@ -26,9 +26,31 @@ import {
   type User,
 } from "@react-native-firebase/auth";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import {
+  doc,
+  getDoc,
+  getFirestore,
+  onSnapshot,
+  serverTimestamp,
+  setDoc,
+} from "@react-native-firebase/firestore";
+import {
+  getFunctions,
+  httpsCallable,
+} from "@react-native-firebase/functions";
+
+export type UserProfile = {
+  id: string;
+  email: string;
+  displayName: string;
+  locale: "tr" | "en";
+  globalRole: "user" | "superadmin";
+  radioCallsign: string | null;
+};
 
 type AuthValue = {
   user: User | null;
+  profile: UserProfile | null;
   initializing: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
@@ -41,28 +63,73 @@ type AuthValue = {
 
 const AuthContext = createContext<AuthValue | null>(null);
 const auth = getAuth();
+const firestore = getFirestore();
+const functions = getFunctions(undefined, "europe-west1");
 
 const googleWebClientId = Constants.expoConfig?.extra?.googleWebClientId;
 if (typeof googleWebClientId === "string") {
   GoogleSignin.configure({ webClientId: googleWebClientId });
 }
 
+async function ensureProfile(user: User) {
+  const profileReference = doc(firestore, "users", user.uid);
+  const profileSnapshot = await getDoc(profileReference);
+  await setDoc(
+    profileReference,
+    {
+      id: user.uid,
+      email: user.email ?? "",
+      displayName: user.displayName || user.email?.split("@")[0] || "RETFAST User",
+      locale: "tr",
+      globalRole: "user",
+      radioCallsign: null,
+      ...(profileSnapshot.exists() ? {} : { createdAt: serverTimestamp() }),
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  );
+}
+
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [initializing, setInitializing] = useState(true);
 
   useEffect(
     () =>
-      onAuthStateChanged(auth, (nextUser) => {
+      onAuthStateChanged(auth, async (nextUser) => {
         setUser(nextUser);
+        if (nextUser) {
+          await ensureProfile(nextUser);
+          try {
+            const bootstrap = httpsCallable<
+              { locale: "tr" | "en" },
+              { globalRole: "user" | "superadmin"; refreshToken: boolean }
+            >(functions, "bootstrapSession");
+            const result = await bootstrap({ locale: "tr" });
+            if (result.data.refreshToken) await nextUser.getIdToken(true);
+          } catch (error) {
+            console.warn("Session bootstrap is temporarily unavailable.", error);
+          }
+        } else {
+          setProfile(null);
+        }
         setInitializing(false);
       }),
     [],
   );
 
+  useEffect(() => {
+    if (!user) return;
+    return onSnapshot(doc(firestore, "users", user.uid), (snapshot) => {
+      setProfile(snapshot.exists() ? (snapshot.data() as UserProfile) : null);
+    });
+  }, [user]);
+
   const value = useMemo<AuthValue>(
     () => ({
       user,
+      profile,
       initializing,
       signIn: async (email, password) => {
         await signInWithEmailAndPassword(auth, email.trim(), password);
@@ -130,7 +197,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         await Promise.allSettled([GoogleSignin.signOut(), firebaseSignOut(auth)]);
       },
     }),
-    [initializing, user],
+    [initializing, profile, user],
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;

@@ -14,7 +14,7 @@
     "test": "vitest run src"
   },
   "dependencies": {
-    "@retfast/domain": "*",
+    "@retfast/domain": "file:vendor/domain",
     "firebase-admin": "^13.6.1",
     "firebase-functions": "^7.0.6"
   },

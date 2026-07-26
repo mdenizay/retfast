@@ -21,6 +21,7 @@
     "dev:mobile": "npm run start --workspace @retfast/mobile",
     "dev:web": "npm run dev --workspace @retfast/web",
     "emulators": "firebase emulators:start --project development",
+    "sync:functions-domain": "node scripts/sync-functions-domain.mjs",
     "firebase:deploy:web:development": "VITE_FIREBASE_TARGET=development npm run build --workspace @retfast/web && firebase deploy --only hosting --project development",
     "firebase:deploy:web:production": "VITE_FIREBASE_TARGET=production npm run build --workspace @retfast/web && firebase deploy --only hosting --project production"
   },

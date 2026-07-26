@@ -7,6 +7,8 @@ type AppEnvironment = "development" | "production";
 const environments = {
   development: {
     firebaseProjectId: "retfast-3279f",
+    firebaseDatabaseUrl:
+      "https://retfast-3279f-default-rtdb.europe-west1.firebasedatabase.app",
     googleServicesFile: "./firebase/development/google-services.json",
     googleServiceInfoFile:
       "./firebase/development/GoogleService-Info.plist",
@@ -15,6 +17,8 @@ const environments = {
   },
   production: {
     firebaseProjectId: "retfast-ab7ca",
+    firebaseDatabaseUrl:
+      "https://retfast-ab7ca-default-rtdb.europe-west1.firebasedatabase.app",
     googleServicesFile: "./firebase/production/google-services.json",
     googleServiceInfoFile: "./firebase/production/GoogleService-Info.plist",
     googleWebClientId:
@@ -46,6 +50,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ...baseConfig.extra,
       environment,
       firebaseProjectId: environmentConfig.firebaseProjectId,
+      firebaseDatabaseUrl: environmentConfig.firebaseDatabaseUrl,
       googleWebClientId: environmentConfig.googleWebClientId,
     },
   };

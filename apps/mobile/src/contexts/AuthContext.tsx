@@ -38,6 +38,7 @@ import {
   getFunctions,
   httpsCallable,
 } from "@react-native-firebase/functions";
+import { recoverTrackingSync } from "../tracking/service";
 
 export type UserProfile = {
   id: string;
@@ -111,6 +112,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
           } catch (error) {
             console.warn("Session bootstrap is temporarily unavailable.", error);
           }
+          void recoverTrackingSync().catch(() => undefined);
         } else {
           setProfile(null);
         }

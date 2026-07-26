@@ -35,6 +35,17 @@
       "expo-localization",
       "expo-secure-store",
       "expo-apple-authentication",
+      "expo-sqlite",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "RETFAST, aktif göreviniz boyunca konumunuzu paylaşabilmek için konum erişimini kullanır. RETFAST uses your location during an active mission.",
+          "locationWhenInUsePermission": "RETFAST haritada konumunuzu göstermek için konum erişimini kullanır. RETFAST uses your location to show you on the map.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
       "@react-native-google-signin/google-signin",

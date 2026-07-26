@@ -1,14 +1,12 @@
-import { initializeApp } from "firebase-admin/app";
-import { setGlobalOptions } from "firebase-functions/v2";
+import "./config.js";
 
-initializeApp();
-
-setGlobalOptions({
-  region: "europe-west1",
-  maxInstances: 3,
-  memory: "256MiB",
-});
-
-// Trusted callable commands are introduced with their owning product phase.
-// Keeping this entry point deployable lets the Emulator Suite validate the
-// Firebase runtime before any paid service is used.
+export {
+  applyToEvent,
+  createEvent,
+  inviteEventMember,
+  reviewEventMembership,
+  setEventManager,
+  updateEvent,
+} from "./events.js";
+export { bootstrapSession } from "./session.js";
+export { syncEventLifecycle } from "./task-queue.js";

@@ -83,26 +83,26 @@ export type UserProfile = z.infer<typeof userProfileSchema>;
 
 const dateTimeSchema = z.iso.datetime({ offset: true });
 
-export const createEventInputSchema = z
-  .object({
-    name: z.string().trim().min(3).max(100),
-    description: z.string().trim().max(1200).default(""),
-    venue: z.string().trim().min(2).max(120),
-    startsAt: dateTimeSchema,
-    endsAt: dateTimeSchema,
-    timezone: z.string().trim().min(3).max(64).default("Europe/Istanbul"),
-    visibility: eventVisibilitySchema.default("public"),
-    status: z.enum(["draft", "published"]).default("draft"),
-    managerEmail: z.email().optional(),
-  })
+const eventDetailsSchema = z.object({
+  name: z.string().trim().min(3).max(100),
+  description: z.string().trim().max(1200).default(""),
+  venue: z.string().trim().min(2).max(120),
+  startsAt: dateTimeSchema,
+  endsAt: dateTimeSchema,
+  timezone: z.string().trim().min(3).max(64).default("Europe/Istanbul"),
+  visibility: eventVisibilitySchema.default("public"),
+  status: z.enum(["draft", "published"]).default("draft"),
+});
+
+export const createEventInputSchema = eventDetailsSchema
+  .extend({ managerEmail: z.email().optional() })
   .refine((value) => Date.parse(value.endsAt) > Date.parse(value.startsAt), {
     message: "endsAt must be after startsAt",
     path: ["endsAt"],
   });
 export type CreateEventInput = z.infer<typeof createEventInputSchema>;
 
-export const updateEventInputSchema = createEventInputSchema
-  .omit({ managerEmail: true })
+export const updateEventInputSchema = eventDetailsSchema
   .partial()
   .extend({
     eventId: z.string().trim().min(1).max(128),

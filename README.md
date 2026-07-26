@@ -46,6 +46,12 @@ npx eas build --profile development --platform android
 - Validated user profiles and deny-by-default Firestore security rules.
 - Separate development and production Firebase configuration.
 - Firebase Hosting targets for the React operations console.
+- Event creation, publication, visibility, and lifecycle management.
+- Public applications plus manager-driven pilot, retriever, and observer roles.
+- Event manager assignment and direct participant enrollment.
+- Transactional second-generation callable Functions for every privileged command.
+- A rate-limited Cloud Tasks queue for automatic event activation/completion.
+- Event discovery and application status on the native mobile application.
 
 Run the complete local quality gate with:
 
@@ -54,6 +60,11 @@ npm run check
 npm run build
 ```
 
-Cloud Functions are intentionally not deployed yet. This keeps the foundation
-free of server-side runtime costs until the event and dispatch command model is
-implemented.
+Production Functions run in `europe-west1` with 256 MiB memory, zero minimum
+instances, and a maximum of three instances. The event lifecycle task worker is
+limited to one concurrent dispatch. Artifact Registry images older than one day
+are automatically deleted to keep storage costs bounded.
+
+The development Firebase project remains on the Spark plan, so its callable
+Functions are used through the local Emulator Suite. Production Functions and
+Cloud Tasks are deployed to the Blaze-enabled `retfast-ab7ca` project.

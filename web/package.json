@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:production": "VITE_FIREBASE_TARGET=production npm run build",
     "lint": "oxlint",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",

@@ -16,10 +16,12 @@ import {
   type Database,
 } from "firebase/database";
 
-const productionAuthDomain =
-  globalThis.location?.hostname === "retfast-ab7ca.web.app"
-    ? "retfast-ab7ca.web.app"
-    : "retfast-ab7ca.firebaseapp.com";
+const currentHostname = globalThis.location?.hostname ?? "";
+const productionAuthDomain = ["retfast-ab7ca.web.app", "retfast.com"].includes(
+  currentHostname,
+)
+  ? currentHostname
+  : "retfast-ab7ca.firebaseapp.com";
 
 const configurations = {
   development: {

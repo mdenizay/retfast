@@ -16,6 +16,11 @@ import {
   type Database,
 } from "firebase/database";
 
+const productionAuthDomain =
+  globalThis.location?.hostname === "retfast-ab7ca.web.app"
+    ? "retfast-ab7ca.web.app"
+    : "retfast-ab7ca.firebaseapp.com";
+
 const configurations = {
   development: {
     apiKey: "AIzaSyDz3NDdQf8BhdFk_iimxKeb4eBeC-lk7Ds",
@@ -29,7 +34,7 @@ const configurations = {
   },
   production: {
     apiKey: "AIzaSyC2RvLWz8ych4j7ldh24qvEO585ZlSi_oI",
-    authDomain: "retfast-ab7ca.firebaseapp.com",
+    authDomain: productionAuthDomain,
     projectId: "retfast-ab7ca",
     storageBucket: "retfast-ab7ca.firebasestorage.app",
     messagingSenderId: "81048089421",

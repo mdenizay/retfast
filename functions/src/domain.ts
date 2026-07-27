@@ -208,6 +208,50 @@ export const stopTrackingSessionInputSchema = eventIdInputSchema.extend({
   outcome: trackingSessionStatusSchema.exclude(["active"]),
 });
 
+export const configureRetrieverInputSchema = eventIdInputSchema.extend({
+  capacity: z.number().int().min(1).max(12),
+  availability: retrieverAvailabilitySchema.extract([
+    "inactive",
+    "available",
+    "busy",
+  ]),
+});
+
+export const nearbyRetrieversInputSchema = eventIdInputSchema.extend({
+  sessionId: z.string().trim().min(1).max(128),
+});
+
+export const requestRetrievalInputSchema = nearbyRetrieversInputSchema.extend({
+  retrieverId: z.string().trim().min(1).max(128),
+  urgency: z.enum(["normal", "emergency"]).default("normal"),
+});
+
+export const respondRetrievalInputSchema = eventIdInputSchema.extend({
+  jobId: z.string().trim().min(1).max(128),
+  accept: z.boolean(),
+});
+
+export const updateRetrievalInputSchema = eventIdInputSchema.extend({
+  jobId: z.string().trim().min(1).max(128),
+  action: z.enum(["picked_up", "delivered", "cancelled"]),
+});
+
+export const managerAssignRetrievalInputSchema = eventIdInputSchema.extend({
+  jobId: z.string().trim().min(1).max(128),
+  retrieverId: z.string().trim().min(1).max(128),
+});
+
+export const managerDispatchRetrievalInputSchema = eventIdInputSchema.extend({
+  sessionId: z.string().trim().min(1).max(128),
+  retrieverId: z.string().trim().min(1).max(128),
+  urgency: z.enum(["normal", "emergency"]).default("normal"),
+});
+
+export const registerPushTokenInputSchema = z.object({
+  token: z.string().trim().min(20).max(256),
+  platform: z.enum(["android", "ios"]),
+});
+
 export type EventRecord = {
   id: string;
   name: string;

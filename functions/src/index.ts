@@ -9,7 +9,18 @@ export {
   updateEvent,
 } from "./events.js";
 export { bootstrapSession } from "./session.js";
+export { registerPushToken } from "./notifications.js";
 export { prepareEventRealtime, syncEventAccess } from "./event-access.js";
+export {
+  configureRetriever,
+  expireRetrievalOffer,
+  listNearbyRetrievers,
+  managerAssignRetrieval,
+  managerDispatchRetrieval,
+  requestRetrieval,
+  respondRetrievalOffer,
+  updateRetrievalProgress,
+} from "./retrieval.js";
 export {
   ingestTrackBatch,
   startTrackingSession,

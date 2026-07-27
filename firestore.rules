@@ -29,6 +29,11 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/eventMemberships/$(eventId + '_' + request.auth.uid));
     }
 
+    function hasApprovedEventMembership(eventId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/eventMemberships/$(eventId + '_' + request.auth.uid)).data.status == 'approved';
+    }
+
     function isPublicEvent(eventData) {
       return eventData.visibility == 'public'
         && eventData.status in ['published', 'active', 'completed'];
@@ -115,6 +120,18 @@ service cloud.firestore {
 
     match /trackingActives/{activeId} {
       allow read, write: if false;
+    }
+
+    match /retrieverStates/{stateId} {
+      allow read: if isSuperAdmin()
+        || hasApprovedEventMembership(resource.data.eventId);
+      allow create, update, delete: if false;
+    }
+
+    match /retrievalJobs/{jobId} {
+      allow read: if isSuperAdmin()
+        || hasApprovedEventMembership(resource.data.eventId);
+      allow create, update, delete: if false;
     }
 
     match /{document=**} {

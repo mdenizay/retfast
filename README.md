@@ -77,6 +77,13 @@ npx eas build --profile development --platform android
 - A role-aware mobile mission map and bilingual mission controls.
 - A lazy-loaded Leaflet operations map with street/topographic layers and a live
   telemetry panel for event managers.
+- Transactional retrieval offers with a 45-second Cloud Tasks timeout.
+- Capacity-safe retriever assignment, vehicle availability, pickup, delivery,
+  cancellation, and manager-driven vehicle transfers.
+- Distance-ranked retriever discovery from fresh Realtime Database locations.
+- Pilot and retriever mobile operation cards with external map directions.
+- Expo push-token registration and offer/status notifications from Functions.
+- A web dispatch desk for direct assignment and retrieval intervention.
 
 Run the complete local quality gate with:
 
@@ -118,3 +125,17 @@ not require an API key.
 The development Firebase project remains on the Spark plan, so its callable
 Functions are used through the local Emulator Suite. Production Functions and
 Cloud Tasks are deployed to the Blaze-enabled `retfast-ab7ca` project.
+
+## Retrieval consistency and cost controls
+
+- A seat is reserved only when an offer is accepted or a manager dispatches a
+  vehicle. The Firestore transaction serializes concurrent pilot requests and
+  prevents capacity overflow.
+- Declines and expired offers do not reserve capacity. Delivery, cancellation,
+  and vehicle transfer release the prior reservation in the same transaction.
+- Offer expiry runs with one concurrent Cloud Tasks dispatch, zero minimum
+  instances, and at most two dispatches per second.
+- Nearby matching reads the event's live RTDB snapshot and at most 100
+  configured retriever states, then returns the closest eight available teams.
+- Push delivery uses the Expo Push Service and stores at most 20 registered
+  devices per user for a single notification fan-out.

@@ -1,9 +1,9 @@
-import type { EventVisibility } from "@retfast/domain";
 import { ArrowLeft, CalendarDays, FileText, MapPin, Save, UserRound } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { FormField } from "../components/FormField";
+import type { EventVisibility } from "../domain";
 import { useLocale } from "../i18n";
 import { createEventCommand } from "../lib/events";
 

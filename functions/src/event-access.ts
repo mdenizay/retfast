@@ -1,7 +1,7 @@
 import { getDatabase } from "firebase-admin/database";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
-import { eventIdInputSchema } from "@retfast/domain";
+import { eventIdInputSchema } from "./domain.js";
 
 import { db, membershipId, parseInput, requireAuth } from "./callable.js";
 import { adminApp, CALLABLE_OPTIONS, REGION } from "./config.js";

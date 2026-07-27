@@ -3,7 +3,7 @@ import type {
   TrackPoint,
   TrackingRole,
   TrackingSessionStatus,
-} from "@retfast/domain";
+} from "../domain";
 
 export type ActiveTrackingState = {
   eventId: string;

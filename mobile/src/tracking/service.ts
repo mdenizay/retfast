@@ -1,9 +1,3 @@
-import type {
-  Connectivity,
-  TrackPoint,
-  TrackingRole,
-  TrackingSessionStatus,
-} from "@retfast/domain";
 import {
   onDisconnect,
   ref,
@@ -19,6 +13,12 @@ import * as Network from "expo-network";
 import * as SecureStore from "expo-secure-store";
 import * as TaskManager from "expo-task-manager";
 
+import type {
+  Connectivity,
+  TrackPoint,
+  TrackingRole,
+  TrackingSessionStatus,
+} from "../domain";
 import { realtime, realtimeReady } from "./firebase";
 import {
   enqueueLocations,

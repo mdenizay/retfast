@@ -1,7 +1,7 @@
-import type { TrackPoint } from "@retfast/domain";
 import type { LocationObject } from "expo-location";
 import * as SQLite from "expo-sqlite";
 
+import type { TrackPoint } from "../domain";
 import type { ActiveTrackingState, QueuedTrackPoint } from "./types";
 
 type Telemetry = Pick<

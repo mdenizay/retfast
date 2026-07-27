@@ -1,4 +1,4 @@
-import type { EventStatus } from "@retfast/domain";
+import type { EventStatus } from "./domain.js";
 
 export type LifecycleTransition = "activate" | "complete";
 

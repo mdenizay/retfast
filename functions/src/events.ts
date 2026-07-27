@@ -5,7 +5,7 @@ import {
   reviewMembershipInputSchema,
   setEventManagerInputSchema,
   updateEventInputSchema,
-} from "@retfast/domain";
+} from "./domain.js";
 import { getAuth, type UserRecord } from "firebase-admin/auth";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";

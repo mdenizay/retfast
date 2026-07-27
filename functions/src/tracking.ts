@@ -4,7 +4,7 @@ import {
   stopTrackingSessionInputSchema,
   type TrackPoint,
   type TrackingRole,
-} from "@retfast/domain";
+} from "./domain.js";
 import { getDatabase } from "firebase-admin/database";
 import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";

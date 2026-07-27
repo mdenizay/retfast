@@ -1,4 +1,3 @@
-import type { EventRole } from "@retfast/domain";
 import {
   ArrowLeft,
   CalendarDays,
@@ -17,6 +16,7 @@ import { Link, useParams } from "react-router-dom";
 
 import { FormField } from "../components/FormField";
 import { useAuth } from "../contexts/AuthContext";
+import type { EventRole } from "../domain";
 import { useLocale } from "../i18n";
 import {
   applyToEventCommand,

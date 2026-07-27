@@ -1,10 +1,3 @@
-import type {
-  CreateEventInput,
-  EventRole,
-  EventStatus,
-  EventVisibility,
-  UpdateEventInput,
-} from "@retfast/domain";
 import {
   collection,
   doc,
@@ -19,6 +12,13 @@ import { httpsCallable } from "firebase/functions";
 import { useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "../contexts/AuthContext";
+import type {
+  CreateEventInput,
+  EventRole,
+  EventStatus,
+  EventVisibility,
+  UpdateEventInput,
+} from "../domain";
 import { db, functions } from "./firebase";
 
 export type EventView = {

@@ -22,14 +22,10 @@
   "functions": {
     "source": "functions",
     "runtime": "nodejs22",
-    "predeploy": [
-      "npm run build --workspace @retfast/domain",
-      "npm run sync:functions-domain",
-      "npm run build --workspace @retfast/functions"
-    ]
+    "predeploy": ["npm --prefix functions run build"]
   },
   "hosting": {
-    "public": "apps/web/dist",
+    "public": "web/dist",
     "ignore": [
       "firebase.json",
       "**/.*",

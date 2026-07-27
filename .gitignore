@@ -11,11 +11,11 @@ coverage/
 .env.*
 !.env.example
 
-apps/mobile/android/
-apps/mobile/ios/
-apps/mobile/dist-*/
-apps/mobile/google-services.json
-apps/mobile/GoogleService-Info.plist
+mobile/android/
+mobile/ios/
+mobile/dist-*/
+mobile/google-services.json
+mobile/GoogleService-Info.plist
 
 firebase-debug.log
 firestore-debug.log

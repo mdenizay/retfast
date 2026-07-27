@@ -5,28 +5,13 @@
   "engines": {
     "node": ">=22"
   },
-  "workspaces": [
-    "apps/*",
-    "functions",
-    "packages/*"
-  ],
-  "overrides": {
-    "firebase": "12.15.0",
-    "react": "19.2.3",
-    "react-dom": "19.2.3"
-  },
   "scripts": {
-    "build": "npm run build --workspace @retfast/domain && npm run build --workspace @retfast/functions && npm run build --workspace @retfast/web",
-    "check": "npm run build --workspace @retfast/domain && npm run typecheck --workspaces --if-present && npm run lint --workspaces --if-present && npm run test --workspaces --if-present",
-    "dev:mobile": "npm run start --workspace @retfast/mobile",
-    "dev:web": "npm run dev --workspace @retfast/web",
+    "build": "npm --prefix functions run build && npm --prefix web run build",
+    "check": "npm --prefix web run check && npm --prefix mobile run check && npm --prefix functions run check",
+    "dev:mobile": "npm --prefix mobile run start",
+    "dev:web": "npm --prefix web run dev",
     "emulators": "firebase emulators:start --project development",
-    "sync:functions-domain": "node scripts/sync-functions-domain.mjs",
-    "firebase:deploy:web:development": "VITE_FIREBASE_TARGET=development npm run build --workspace @retfast/web && firebase deploy --only hosting --project development",
-    "firebase:deploy:web:production": "VITE_FIREBASE_TARGET=production npm run build --workspace @retfast/web && firebase deploy --only hosting --project production"
-  },
-  "devDependencies": {
-    "prettier": "^3.7.4",
-    "typescript": "~6.0.3"
+    "firebase:deploy:web:development": "VITE_FIREBASE_TARGET=development npm --prefix web run build && firebase deploy --only hosting --project development",
+    "firebase:deploy:web:production": "VITE_FIREBASE_TARGET=production npm --prefix web run build && firebase deploy --only hosting --project production"
   }
 }

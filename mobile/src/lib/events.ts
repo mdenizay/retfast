@@ -1,4 +1,3 @@
-import type { EventRole, EventStatus, EventVisibility } from "@retfast/domain";
 import {
   collection,
   doc,
@@ -14,6 +13,7 @@ import { getFunctions, httpsCallable } from "@react-native-firebase/functions";
 import { useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "../contexts/AuthContext";
+import type { EventRole, EventStatus, EventVisibility } from "../domain";
 
 const firestore = getFirestore();
 const functions = getFunctions(undefined, "europe-west1");

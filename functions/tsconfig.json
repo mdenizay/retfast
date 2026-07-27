@@ -1,12 +1,21 @@
 {
-  "extends": "../tsconfig.base.json",
   "compilerOptions": {
+    "allowJs": false,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
     "noEmit": false,
     "outDir": "lib",
+    "resolveJsonModule": true,
     "rootDir": "src",
-    "sourceMap": true
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "target": "ES2022"
   },
   "include": ["src"]
 }

@@ -5,10 +5,14 @@ hang-gliding, and cycling events.
 
 ## Applications
 
-- `apps/mobile`: Expo application for pilots and retrievers.
-- `apps/web`: React operations console for managers and observers.
-- `functions`: trusted Firebase command handlers.
-- `packages/domain`: shared roles, states, and validation schemas.
+- `mobile`: standalone Expo application for pilots and retrievers.
+- `web`: standalone React application for managers and observers.
+- `functions`: standalone trusted Firebase command handlers.
+
+Each project has its own `package.json`, `package-lock.json`, dependencies, and
+quality commands. There are no npm workspaces or cross-project package links.
+Firebase configuration, rules, and deployment orchestration remain at the
+repository root.
 
 ## Firebase environments
 
@@ -20,10 +24,19 @@ development.
 
 ## Local development
 
+Install each project independently:
+
 ```bash
-npm install
-npm run dev:web
-npm run dev:mobile
+cd web && npm ci
+cd ../mobile && npm ci
+cd ../functions && npm ci
+```
+
+Then start the application you are working on from its own directory:
+
+```bash
+cd web && npm run dev
+cd mobile && npm run start
 ```
 
 Expo Go is not a supported runtime for RETFAST because background location and
@@ -33,6 +46,7 @@ Use `APP_ENV=production` only for explicit production mobile builds. EAS profile
 already set the correct environment:
 
 ```bash
+cd mobile
 npx eas build --profile development --platform ios
 npx eas build --profile development --platform android
 ```
@@ -70,6 +84,10 @@ Run the complete local quality gate with:
 npm run check
 npm run build
 ```
+
+The root commands are convenience orchestrators only. They invoke the scripts
+inside the independent projects with `npm --prefix`; the projects do not share
+dependency installation or build state.
 
 Production Functions run in `europe-west1` with 256 MiB memory, zero minimum
 instances, and a maximum of three instances. The event lifecycle task worker is

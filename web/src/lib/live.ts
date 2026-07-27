@@ -1,8 +1,8 @@
-import type { Connectivity, TrackingRole } from "@retfast/domain";
 import { onValue, ref, type DataSnapshot } from "firebase/database";
 import { httpsCallable } from "firebase/functions";
 import { useEffect, useState } from "react";
 
+import type { Connectivity, TrackingRole } from "../domain";
 import { functions, realtime } from "./firebase";
 
 export type LiveParticipant = {

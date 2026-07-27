@@ -1,5 +1,5 @@
 {
-  "name": "@retfast/web",
+  "name": "retfast-web",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -9,10 +9,10 @@
     "lint": "oxlint",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check": "npm run typecheck && npm run lint && npm run test"
   },
   "dependencies": {
-    "@retfast/domain": "*",
     "firebase": "12.15.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.27.0",

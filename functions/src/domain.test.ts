@@ -3,7 +3,7 @@ import {
   ingestTrackBatchInputSchema,
   startTrackingSessionInputSchema,
   updateEventInputSchema,
-} from "@retfast/domain";
+} from "./domain.js";
 import { describe, expect, it } from "vitest";
 
 describe("event command schemas", () => {

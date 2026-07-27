@@ -1233,12 +1233,50 @@ button:disabled {
 .retrieval-job-actions button svg { width: 12px; }
 .retrieval-job-actions button.cancel-job { color: var(--danger); }
 
+.flight-replay-panel { margin-top: 22px; padding-top: 24px; border-top: 1px solid var(--line); }
+.replay-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+.replay-heading h3 { margin: 5px 0 0; color: var(--text); font-family: "Manrope", sans-serif; font-size: 20px; }
+.replay-heading p { max-width: 610px; margin: 6px 0 0; color: var(--muted); font-size: 10px; }
+.replay-session-select { display: flex; min-width: 260px; flex-direction: column; gap: 5px; }
+.replay-session-select span { color: var(--faint); font-size: 7px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.replay-session-select select { height: 41px; padding: 0 11px; color: var(--text); border: 1px solid var(--line); border-radius: 11px; outline: 0; background: var(--surface-soft); font: inherit; font-size: 9px; }
+.replay-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(280px, .65fr); gap: 12px; margin-top: 15px; }
+.replay-map-frame { position: relative; min-height: 390px; overflow: hidden; border: 1px solid var(--line); border-radius: 17px; background: #e7eee9; }
+.replay-leaflet-map { width: 100%; height: 390px; }
+.replay-marker-wrap { border: 0; background: transparent; }
+.replay-marker { display: grid; width: 36px; height: 36px; place-items: center; border: 3px solid rgba(255,255,255,.9); border-radius: 50%; background: #d9655c; box-shadow: 0 8px 22px rgba(30,49,44,.28); }
+.replay-marker i { width: 10px; height: 10px; border: 2px solid #fff; border-radius: 50%; }
+.replay-empty { position: absolute; z-index: 500; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; color: #60766f; background: rgba(240,245,242,.84); pointer-events: none; backdrop-filter: blur(2px); }
+.replay-empty svg { width: 26px; color: #146c5c; }
+.replay-empty strong { font-size: 11px; }
+.replay-console { display: flex; flex-direction: column; padding: 15px; border: 1px solid var(--line); border-radius: 17px; background: var(--surface-soft); }
+.replay-pilot { display: flex; align-items: center; gap: 10px; padding-bottom: 13px; border-bottom: 1px solid var(--line); }
+.replay-pilot > span { display: grid; width: 41px; height: 41px; place-items: center; color: #fff; border-radius: 13px; background: #d9655c; font-size: 10px; font-weight: 800; }
+.replay-pilot > div { display: flex; min-width: 0; flex-direction: column; }
+.replay-pilot strong { overflow: hidden; color: var(--text); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.replay-pilot small { margin-top: 2px; color: var(--muted); font-size: 8px; }
+.replay-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 13px; }
+.replay-metrics article { display: flex; min-width: 0; align-items: center; gap: 7px; padding: 9px; border-radius: 10px; background: var(--surface); }
+.replay-metrics svg { width: 14px; flex: 0 0 auto; color: var(--primary); }
+.replay-metrics span { display: flex; min-width: 0; flex-direction: column; }
+.replay-metrics small { color: var(--faint); font-size: 7px; font-weight: 800; text-transform: uppercase; }
+.replay-metrics strong { overflow: hidden; margin-top: 2px; color: var(--text); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.replay-time { display: flex; align-items: center; gap: 7px; margin-top: 12px; color: var(--muted); font-size: 9px; }
+.replay-time svg { width: 13px; color: var(--primary); }
+.replay-console input[type="range"] { width: 100%; margin: 16px 0 13px; accent-color: var(--primary); }
+.replay-controls { display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 6px; margin-top: auto; }
+.replay-controls button { display: inline-flex; min-height: 37px; align-items: center; justify-content: center; gap: 4px; padding: 0 7px; color: var(--muted); border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 7px; font-weight: 800; }
+.replay-controls button svg { width: 12px; }
+.replay-controls button.replay-play { color: #fff; border-color: var(--primary); background: var(--primary); }
+.replay-controls button:disabled { opacity: .45; }
+
 @media (max-width: 1040px) {
   .profile-chip { display: none; }
   .event-grid { grid-template-columns: 1fr; }
   .management-layout { grid-template-columns: 1fr; }
   .live-map-layout { grid-template-columns: 1fr; }
   .retrieval-columns { grid-template-columns: 1fr; }
+  .replay-layout { grid-template-columns: 1fr; }
   .telemetry-panel { min-height: 0; }
   .telemetry-list { max-height: 330px; }
 }
@@ -1269,6 +1307,8 @@ button:disabled {
   .live-operations-panel { padding: 17px; }
   .live-summary-grid { grid-template-columns: 1fr; }
   .retrieval-board-heading { flex-direction: column; }
+  .replay-heading { align-items: stretch; flex-direction: column; }
+  .replay-session-select { min-width: 0; }
   .vehicle-capacity-summary { width: 100%; }
   .dispatch-controls { grid-template-columns: 1fr; }
   .live-map-frame,

@@ -13,8 +13,9 @@
       "environment": "development"
     },
     "testing": {
-      "developmentClient": true,
+      "developmentClient": false,
       "distribution": "internal",
+      "autoIncrement": true,
       "env": {
         "APP_ENV": "production"
       },

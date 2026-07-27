@@ -6,8 +6,9 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "npm --prefix functions run build && npm --prefix web run build",
-    "check": "npm --prefix web run check && npm --prefix mobile run check && npm --prefix functions run check",
+    "build": "npm --prefix api run build && npm --prefix functions run build && npm --prefix web run build",
+    "check": "npm --prefix api run check && npm --prefix web run check && npm --prefix mobile run check && npm --prefix functions run check",
+    "dev:api": "npm --prefix api run dev",
     "dev:mobile": "npm --prefix mobile run start",
     "dev:web": "npm --prefix web run dev",
     "emulators": "firebase emulators:start --project development",

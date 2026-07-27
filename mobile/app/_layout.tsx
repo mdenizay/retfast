@@ -3,6 +3,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AuthProvider } from "../src/contexts/AuthContext";
 import { PreferencesProvider } from "../src/contexts/PreferencesContext";
+import "../src/notifications";
 import "../src/tracking/background-task";
 
 export default function RootLayout() {

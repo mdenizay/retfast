@@ -35,6 +35,7 @@
       "expo-localization",
       "expo-secure-store",
       "expo-apple-authentication",
+      "expo-notifications",
       "expo-sqlite",
       [
         "expo-location",

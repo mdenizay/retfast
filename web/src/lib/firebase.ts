@@ -1,13 +1,6 @@
 import { getApp, getApps, initializeApp, type FirebaseOptions } from "firebase/app";
 import { connectAuthEmulator, getAuth, type Auth } from "firebase/auth";
 
-const currentHostname = globalThis.location?.hostname ?? "";
-const productionAuthDomain = ["retfast-ab7ca.web.app", "retfast.com"].includes(
-  currentHostname,
-)
-  ? currentHostname
-  : "retfast-ab7ca.firebaseapp.com";
-
 const configurations = {
   development: {
     apiKey: "AIzaSyDz3NDdQf8BhdFk_iimxKeb4eBeC-lk7Ds",
@@ -19,7 +12,7 @@ const configurations = {
   },
   production: {
     apiKey: "AIzaSyC2RvLWz8ych4j7ldh24qvEO585ZlSi_oI",
-    authDomain: productionAuthDomain,
+    authDomain: "retfast-ab7ca.firebaseapp.com",
     projectId: "retfast-ab7ca",
     storageBucket: "retfast-ab7ca.firebasestorage.app",
     messagingSenderId: "81048089421",

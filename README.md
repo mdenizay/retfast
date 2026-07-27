@@ -1,6 +1,6 @@
 # RETFAST
 
-RETFAST is split into independent `web`, `mobile`, `api` and `functions` packages. New operational data flows through the Node.js/Express API and PostgreSQL; Firebase remains the authentication provider. See [API documentation](api/README.md) and [Ubuntu 24.04 deployment](docs/ubuntu-24-cloudflare-deployment.md).
+RETFAST is split into independent `web`, `mobile`, `api` and `functions` packages. The production React bundle is served by Caddy, operational data flows through the Node.js/Express API and PostgreSQL, and Firebase remains the authentication provider. See [API documentation](api/README.md) and [Ubuntu 24.04 deployment](docs/ubuntu-24-cloudflare-deployment.md).
 
 RETFAST coordinates live tracking and retrieval operations for paragliding,
 hang-gliding, and cycling events.
@@ -61,7 +61,7 @@ npx eas build --profile development --platform android
 - Turkish and English localization with system-aware light/dark themes.
 - Validated user profiles and deny-by-default Firestore security rules.
 - Separate development and production Firebase configuration.
-- Firebase Hosting targets for the React operations console.
+- Dockerized Caddy hosting for the React operations console, reached through Cloudflare Tunnel.
 - Event creation, publication, visibility, and lifecycle management.
 - Public applications plus manager-driven pilot, retriever, and observer roles.
 - Event manager assignment and direct participant enrollment.

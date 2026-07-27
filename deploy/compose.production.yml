@@ -65,12 +65,29 @@ services:
     networks:
       - backend
 
+  web:
+    build:
+      context: ../web
+    restart: unless-stopped
+    expose:
+      - "80"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1/"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    networks:
+      - backend
+
   cloudflared:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
     command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
       api:
+        condition: service_healthy
+      web:
         condition: service_healthy
     networks:
       - backend

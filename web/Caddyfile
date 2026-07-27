@@ -1,0 +1,23 @@
+:80 {
+	root * /srv
+	encode zstd gzip
+
+	@www host www.retfast.com
+	redir @www https://retfast.com{uri} permanent
+
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+
+	@notAssets not path /assets/*
+	header @notAssets Cache-Control "no-cache, no-store, must-revalidate"
+
+	header {
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=()"
+		-Server
+	}
+
+	try_files {path} /index.html
+	file_server
+}

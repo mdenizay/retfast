@@ -44,4 +44,4 @@ The import is upsert-based and may be run again. It imports Auth users, profiles
 
 ## Production
 
-The production image is built by [Dockerfile](./Dockerfile). The complete Ubuntu and Cloudflare procedure is documented in [Ubuntu deployment](../docs/ubuntu-24-cloudflare-deployment.md).
+The production image is built by [Dockerfile](./Dockerfile). The React application is built into a separate Caddy container. The complete Ubuntu and Cloudflare procedure is documented in [Ubuntu deployment](../docs/ubuntu-24-cloudflare-deployment.md).

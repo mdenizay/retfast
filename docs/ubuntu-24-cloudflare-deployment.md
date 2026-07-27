@@ -1,6 +1,6 @@
-# RETFAST API — Ubuntu 24.04, PostgreSQL and Cloudflare
+# RETFAST — Ubuntu 24.04, Caddy, PostgreSQL and Cloudflare
 
-This deployment runs Express and PostgreSQL on one Ubuntu 24.04 server. Neither service publishes a host port. A Cloudflare Tunnel container makes only the API reachable at `https://api.retfast.com`; PostgreSQL stays on the private Docker network.
+This deployment runs the React web app, Caddy, Express and PostgreSQL on one Ubuntu 24.04 server. None of them publishes a host port. A Cloudflare Tunnel container makes Caddy reachable at `https://retfast.com` and Express at `https://api.retfast.com`; PostgreSQL stays on the private Docker network.
 
 > “Cloudflare PostgreSQL” is not a hosted PostgreSQL product used by this stack. Cloudflare Hyperdrive is intended to connect Cloudflare Workers to an existing database. Because RETFAST Express runs beside PostgreSQL on Ubuntu, a direct private Docker connection is simpler and avoids an unnecessary service layer.
 
@@ -75,16 +75,19 @@ The credential is mounted read-only into the API. It is required because the API
 1. Open Cloudflare Zero Trust → **Networks → Tunnels**.
 2. Create a Cloudflared tunnel named `retfast-api` and choose the Docker connector.
 3. Copy only the token value from the shown Docker command into `CLOUDFLARE_TUNNEL_TOKEN` in `deploy/.env`.
-4. Add a public hostname:
+4. Add the API public hostname first. This does not interrupt the existing Firebase-hosted website:
+
    - Subdomain: `api`
    - Domain: `retfast.com`
    - Service type: `HTTP`
    - URL: `api:3000`
 5. In the Cloudflare zone, leave WebSockets enabled. RETFAST sends heartbeat frames, while REST polling remains a fallback on unstable mobile networks.
 
-The hostname target must be `api:3000`, not `localhost:3000`, because Cloudflared reaches Express by its Docker service name.
+Add the `retfast.com → http://web:80` and `www.retfast.com → http://web:80` public hostnames only after the import and checks in section 6. Caddy permanently redirects `www` to the apex domain.
 
-## 5. Start PostgreSQL and the API
+The targets must use `web:80` and `api:3000`, not `localhost`, because Cloudflared reaches both applications by their Docker service names.
+
+## 5. Start PostgreSQL, API and web
 
 ```bash
 cd /opt/retfast
@@ -98,14 +101,15 @@ The one-shot `migrate` service applies versioned SQL migrations before the API s
 ```bash
 curl --fail https://api.retfast.com/healthz
 curl --fail https://api.retfast.com/readyz
-docker compose --env-file deploy/.env -f deploy/compose.production.yml logs --tail=100 api cloudflared
+docker compose --env-file deploy/.env -f deploy/compose.production.yml exec -T web wget --quiet --spider http://127.0.0.1/
+docker compose --env-file deploy/.env -f deploy/compose.production.yml logs --tail=100 web api cloudflared
 ```
 
 Both HTTP checks should return a JSON status. `/readyz` proves that Express can query PostgreSQL.
 
 ## 6. Import the current Firebase dataset
 
-Run this once after the first healthy startup, before deploying the new web bundle:
+Run this once after the first healthy startup, before pointing `retfast.com` to the web service:
 
 ```bash
 docker compose --env-file deploy/.env -f deploy/compose.production.yml run --rm api node dist/db/import-firebase.js
@@ -122,13 +126,26 @@ docker compose --env-file deploy/.env -f deploy/compose.production.yml exec -T p
 
 ## 7. Switch the clients
 
-Only after the API and import checks succeed:
+The React production bundle is built into the `web` container automatically. There is no Firebase Hosting deploy step. After the import succeeds:
+
+1. In the tunnel add `retfast.com` with service `http://web:80`.
+2. Add `www.retfast.com` with service `http://web:80`.
+3. Remove or replace conflicting old `retfast.com`/`www` Firebase Hosting DNS records if Cloudflare asks you to do so.
+4. Do not remove `retfast-ab7ca.firebaseapp.com`; Google Authentication uses it for the OAuth callback.
+5. In Firebase Authentication → Settings → Authorized domains, confirm that `retfast.com` is still listed.
+6. Verify `curl --fail https://retfast.com/` and test email plus Google login in a private browser window.
+
+After changing web code later, rebuild and recreate that service:
 
 ```bash
-# Run from the development Mac, inside the repository.
-npm --prefix web run build:production
-firebase deploy --only hosting --project retfast-ab7ca
+cd /opt/retfast
+git pull --ff-only
+docker compose --env-file deploy/.env -f deploy/compose.production.yml up -d --build web
+```
 
+After the API and import checks succeed, build the native client on the development Mac:
+
+```bash
 # Ad hoc iOS build; this profile already uses APP_ENV=production.
 cd mobile
 npx eas-cli build --platform ios --profile testing
@@ -140,7 +157,7 @@ Recommended cutover order:
 
 1. Start API/PostgreSQL/Tunnel.
 2. Import Firebase data and validate row counts.
-3. Deploy the web build.
+3. Point the Cloudflare `retfast.com` and `www` hostnames to `http://web:80`.
 4. Install the new iOS ad hoc build.
 5. Keep the old Firebase Functions/data temporarily for rollback; disable them only after field testing.
 
@@ -158,10 +175,10 @@ The dump is written under the git-ignored `deploy/backups/` directory. Copy back
 To restore a selected dump into a maintenance instance, first stop API traffic and then run the destructive restore deliberately:
 
 ```bash
-docker compose --env-file deploy/.env -f deploy/compose.production.yml stop api cloudflared
+docker compose --env-file deploy/.env -f deploy/compose.production.yml stop web api cloudflared
 docker compose --env-file deploy/.env -f deploy/compose.production.yml exec -T postgres \
   pg_restore --clean --if-exists -U retfast -d retfast < deploy/backups/SELECTED.dump
-docker compose --env-file deploy/.env -f deploy/compose.production.yml start api cloudflared
+docker compose --env-file deploy/.env -f deploy/compose.production.yml start api web cloudflared
 ```
 
 ## 9. Updates and rollback
@@ -180,7 +197,7 @@ Inspect `docker compose ... logs api` after every migration. For application rol
 
 ## Operational notes
 
-- Do not expose ports `5432` or `3000` in Compose or UFW.
+- Do not expose ports `80`, `3000` or `5432` in Compose or UFW; Cloudflare Tunnel is the only ingress.
 - Rotate the Cloudflare Tunnel token and Firebase service-account key if either is disclosed.
 - Use `docker compose ... logs --since=30m api` for request failures; authorization headers are redacted.
 - Set an uptime check on `https://api.retfast.com/readyz` after launch.

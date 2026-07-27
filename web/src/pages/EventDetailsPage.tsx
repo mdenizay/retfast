@@ -93,24 +93,45 @@ export function EventDetailsPage() {
   if (!event || !eventId) return <main className="app-content"><section className="empty-state"><CalendarDays /><h3>{copy.eventNotFound}</h3><Link className="secondary-button" to="/app">{copy.backToEvents}</Link></section></main>;
 
   return (
-    <main className="app-content">
-      <Link className="back-link" to="/app"><ArrowLeft size={16} />{copy.backToEvents}</Link>
-      <section className="event-detail-hero">
-        <div><div className="event-card-top"><span className={`status-pill status-${event.status}`}>{copy[event.status]}</span><span className="visibility-label">{copy[event.visibility]}</span></div><h1>{event.name}</h1><p>{event.description || copy.noDescription}</p></div>
-        {canManage && <div className="status-actions">{event.status === "draft" && <button className="primary-button" type="button" disabled={busy === "status"} onClick={() => void run("status", () => updateEventCommand({ eventId, status: "published" }))}>{copy.publish}</button>}{event.status !== "cancelled" && event.status !== "completed" && <button className="danger-button" type="button" disabled={busy === "status"} onClick={() => void run("status", () => updateEventCommand({ eventId, status: "cancelled" }))}>{copy.cancelEvent}</button>}</div>}
-      </section>
-      <section className="event-detail-meta"><article><MapPin /><span><small>{copy.venue}</small><strong>{event.venue}</strong></span></article><article><CalendarDays /><span><small>{copy.starts}</small><strong>{dateFormatter.format(event.startsAt.toDate())}</strong></span></article><article><Clock3 /><span><small>{copy.ends}</small><strong>{dateFormatter.format(event.endsAt.toDate())}</strong></span></article><article><Users /><span><small>{copy.participants}</small><strong>{event.participantCount}</strong></span></article></section>
+    <main className={`app-content ${canOperate ? "event-operations-page" : ""}`}>
+      {canOperate ? (
+        <Suspense fallback={<div className="content-loader event-map-loader"><span />{copy.loadingLive}</div>}>
+          <LiveOperationsMap
+            eventId={eventId}
+            eventOverlay={(
+              <div className="map-event-card">
+                <Link className="map-back-link" to="/app"><ArrowLeft size={16} />{copy.backToEvents}</Link>
+                <div className="map-event-labels"><span className={`status-pill status-${event.status}`}>{copy[event.status]}</span><span>{copy[event.visibility]}</span></div>
+                <h1>{event.name}</h1>
+                <p>{event.description || copy.noDescription}</p>
+                <div className="map-event-meta">
+                  <span><MapPin />{event.venue}</span>
+                  <span><CalendarDays />{dateFormatter.format(event.startsAt.toDate())}</span>
+                  <span><Clock3 />{dateFormatter.format(event.endsAt.toDate())}</span>
+                  <span><Users />{event.participantCount}</span>
+                </div>
+                {canManage && <div className="status-actions map-status-actions">{event.status === "draft" && <button className="primary-button" type="button" disabled={busy === "status"} onClick={() => void run("status", () => updateEventCommand({ eventId, status: "published" }))}>{copy.publish}</button>}{event.status !== "cancelled" && event.status !== "completed" && <button className="danger-button" type="button" disabled={busy === "status"} onClick={() => void run("status", () => updateEventCommand({ eventId, status: "cancelled" }))}>{copy.cancelEvent}</button>}</div>}
+              </div>
+            )}
+          />
+        </Suspense>
+      ) : (
+        <>
+          <Link className="back-link" to="/app"><ArrowLeft size={16} />{copy.backToEvents}</Link>
+          <section className="event-detail-hero">
+            <div><div className="event-card-top"><span className={`status-pill status-${event.status}`}>{copy[event.status]}</span><span className="visibility-label">{copy[event.visibility]}</span></div><h1>{event.name}</h1><p>{event.description || copy.noDescription}</p></div>
+            {canManage && <div className="status-actions">{event.status === "draft" && <button className="primary-button" type="button" disabled={busy === "status"} onClick={() => void run("status", () => updateEventCommand({ eventId, status: "published" }))}>{copy.publish}</button>}{event.status !== "cancelled" && event.status !== "completed" && <button className="danger-button" type="button" disabled={busy === "status"} onClick={() => void run("status", () => updateEventCommand({ eventId, status: "cancelled" }))}>{copy.cancelEvent}</button>}</div>}
+          </section>
+          <section className="event-detail-meta"><article><MapPin /><span><small>{copy.venue}</small><strong>{event.venue}</strong></span></article><article><CalendarDays /><span><small>{copy.starts}</small><strong>{dateFormatter.format(event.startsAt.toDate())}</strong></span></article><article><Clock3 /><span><small>{copy.ends}</small><strong>{dateFormatter.format(event.endsAt.toDate())}</strong></span></article><article><Users /><span><small>{copy.participants}</small><strong>{event.participantCount}</strong></span></article></section>
+        </>
+      )}
+
+      <div className={canOperate ? "event-below-map" : undefined}>
 
       {message && <div className={`inline-alert ${message === copy.commandCompleted ? "success" : "error"}`}>{message}</div>}
 
       {!canManage && (
         <section className="panel-card"><div><span className="section-kicker">{copy.myApplication}</span><h2>{membership ? copy[membership.status] : copy.notApplied}</h2><p>{membership?.role ? `${copy.assignedRole}: ${copy[membership.role]}` : copy.applicationExplanation}</p></div>{!membership && event.visibility === "public" && ["published", "active"].includes(event.status) && <button className="primary-button" disabled={busy === "apply"} type="button" onClick={() => void run("apply", () => applyToEventCommand(eventId))}>{copy.apply}</button>}</section>
-      )}
-
-      {canOperate && (
-        <Suspense fallback={<div className="content-loader"><span />{copy.loadingLive}</div>}>
-          <LiveOperationsMap eventId={eventId} />
-        </Suspense>
       )}
 
       {canManage && (
@@ -128,6 +149,7 @@ export function EventDetailsPage() {
           </div>
         </>
       )}
+      </div>
     </main>
   );
 }

@@ -1,6 +1,16 @@
-import { BatteryMedium, Gauge, MapPin, Radio, Signal, Users } from "lucide-react";
+import {
+  BatteryMedium,
+  ChevronDown,
+  Gauge,
+  MapPin,
+  PanelRightOpen,
+  Radio,
+  Signal,
+  Users,
+  X,
+} from "lucide-react";
 import { divIcon, latLngBounds } from "leaflet";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   LayersControl,
   MapContainer,
@@ -49,9 +59,16 @@ function FitParticipants({ participants }: { participants: LiveParticipant[] }) 
   return null;
 }
 
-export function LiveOperationsMap({ eventId }: { eventId: string }) {
+export function LiveOperationsMap({
+  eventId,
+  eventOverlay,
+}: {
+  eventId: string;
+  eventOverlay?: ReactNode;
+}) {
   const { copy } = useLocale();
   const { participants, connected, loading, error } = useLiveParticipants(eventId, true);
+  const [telemetryOpen, setTelemetryOpen] = useState(false);
   const sorted = useMemo(
     () => [...participants].sort((left, right) => Number(right.online) - Number(left.online)),
     [participants],
@@ -62,25 +79,7 @@ export function LiveOperationsMap({ eventId }: { eventId: string }) {
 
   return (
     <section className="live-operations-panel">
-      <div className="live-operations-heading">
-        <div>
-          <span className="section-kicker">{copy.liveOperations}</span>
-          <h2>{copy.fieldMap}</h2>
-          <p>{copy.liveOperationsHint}</p>
-        </div>
-        <div className={`live-connection ${connected ? "connected" : "disconnected"}`}>
-          <i />
-          {connected ? copy.connected : copy.offline}
-        </div>
-      </div>
-
-      <div className="live-summary-grid">
-        <article><Users /><span><small>{copy.onlineTeam}</small><strong>{online.length}</strong></span></article>
-        <article><MapPin /><span><small>{copy.pilotsInFlight}</small><strong>{pilots}</strong></span></article>
-        <article><Radio /><span><small>{copy.activeRetrievers}</small><strong>{retrievers}</strong></span></article>
-      </div>
-
-      <div className="live-map-layout">
+      <div className="live-map-stage">
         <div className="live-map-frame">
           <MapContainer center={[39, 35]} zoom={6} scrollWheelZoom className="live-leaflet-map">
             <LayersControl position="topright">
@@ -120,27 +119,69 @@ export function LiveOperationsMap({ eventId }: { eventId: string }) {
           {!loading && sorted.length === 0 && <div className="map-empty-overlay"><MapPin /><strong>{copy.noLiveLocations}</strong><span>{copy.noLiveLocationsHint}</span></div>}
         </div>
 
-        <aside className="telemetry-panel">
-          <div className="telemetry-heading"><span>{copy.liveTelemetry}</span><strong>{sorted.length}</strong></div>
-          {error && <div className="telemetry-error">{copy.realtimeUnavailable}</div>}
-          <div className="telemetry-list">
-            {sorted.map((participant) => (
-              <article className="telemetry-person" key={participant.userId}>
-                <div className={`telemetry-avatar ${participant.role}`}>{participant.displayName.slice(0, 2).toUpperCase()}<i className={participant.online ? "online" : "offline"} /></div>
-                <div className="telemetry-identity"><strong>{participant.displayName}</strong><small>{copy[participant.role]}{participant.radioCallsign ? ` · ${participant.radioCallsign}` : ""}</small></div>
-                <div className="telemetry-values">
-                  <span title={copy.speed}><Gauge />{Math.round((participant.speed ?? 0) * 3.6)} <small>km/h</small></span>
-                  <span title={copy.altitude}><MapPin />{Math.round(participant.altitude ?? 0)} <small>m</small></span>
-                  <span title={copy.battery}><BatteryMedium />{participant.batteryLevel == null ? "—" : Math.round(participant.batteryLevel * 100)}<small>%</small></span>
-                  <span title={copy.connection}><Signal />{copy[participant.connectivity]}</span>
-                </div>
-              </article>
-            ))}
+        {eventOverlay && <div className="map-event-overlay">{eventOverlay}</div>}
+
+        <div className="map-live-tools">
+          <div className={`live-connection ${connected ? "connected" : "disconnected"}`}>
+            <i />
+            {connected ? copy.connected : copy.offline}
           </div>
-        </aside>
+          <button className="telemetry-toggle" type="button" onClick={() => setTelemetryOpen(true)}>
+            <PanelRightOpen />
+            <span>{copy.liveTelemetry}</span>
+            <strong>{sorted.length}</strong>
+          </button>
+        </div>
+
+        <div className="live-summary-grid map-summary-overlay">
+          <article><Users /><span><small>{copy.onlineTeam}</small><strong>{online.length}</strong></span></article>
+          <article><MapPin /><span><small>{copy.pilotsInFlight}</small><strong>{pilots}</strong></span></article>
+          <article><Radio /><span><small>{copy.activeRetrievers}</small><strong>{retrievers}</strong></span></article>
+        </div>
+
+        <a className="map-scroll-cue" href="#event-operations">
+          <span>{copy.scrollForOperations}</span>
+          <ChevronDown />
+        </a>
+
+        {telemetryOpen && (
+          <div className="telemetry-scrim" role="presentation" onMouseDown={() => setTelemetryOpen(false)}>
+            <aside className="telemetry-panel telemetry-drawer" role="dialog" aria-modal="true" aria-label={copy.liveTelemetry} onMouseDown={(mouseEvent) => mouseEvent.stopPropagation()}>
+              <div className="telemetry-heading">
+                <span>{copy.liveTelemetry}</span>
+                <div><strong>{sorted.length}</strong><button type="button" aria-label={copy.close} onClick={() => setTelemetryOpen(false)}><X /></button></div>
+              </div>
+              {error && <div className="telemetry-error">{copy.realtimeUnavailable}</div>}
+              <div className="telemetry-list">
+                {sorted.map((participant) => (
+                  <article className="telemetry-person" key={participant.userId}>
+                    <div className={`telemetry-avatar ${participant.role}`}>{participant.displayName.slice(0, 2).toUpperCase()}<i className={participant.online ? "online" : "offline"} /></div>
+                    <div className="telemetry-identity"><strong>{participant.displayName}</strong><small>{copy[participant.role]}{participant.radioCallsign ? ` · ${participant.radioCallsign}` : ""}</small></div>
+                    <div className="telemetry-values">
+                      <span title={copy.speed}><Gauge />{Math.round((participant.speed ?? 0) * 3.6)} <small>km/h</small></span>
+                      <span title={copy.altitude}><MapPin />{Math.round(participant.altitude ?? 0)} <small>m</small></span>
+                      <span title={copy.battery}><BatteryMedium />{participant.batteryLevel == null ? "—" : Math.round(participant.batteryLevel * 100)}<small>%</small></span>
+                      <span title={copy.connection}><Signal />{copy[participant.connectivity]}</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </aside>
+          </div>
+        )}
       </div>
-      <RetrievalOperationsBoard eventId={eventId} participants={sorted} />
-      <FlightReplayPanel eventId={eventId} />
+
+      <div className="operations-scroll-content" id="event-operations">
+        <div className="live-operations-heading">
+          <div>
+            <span className="section-kicker">{copy.liveOperations}</span>
+            <h2>{copy.eventOperations}</h2>
+            <p>{copy.liveOperationsHint}</p>
+          </div>
+        </div>
+        <RetrievalOperationsBoard eventId={eventId} participants={sorted} />
+        <FlightReplayPanel eventId={eventId} />
+      </div>
     </section>
   );
 }

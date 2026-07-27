@@ -14,7 +14,7 @@ import {
   membershipId,
   parseInput,
   requireAuth,
-  requireEventManager,
+  requireEventOperator,
 } from "./callable.js";
 import { adminApp, CALLABLE_OPTIONS } from "./config.js";
 import { syncEventAccessForMember } from "./event-access.js";
@@ -210,7 +210,7 @@ export const stopTrackingSession = onCall(
     }
     const isOwner = initialData.userId === actor.uid;
     if (!isOwner && actor.token.superadmin !== true) {
-      await requireEventManager(actor.uid, input.eventId);
+      await requireEventOperator(actor.uid, input.eventId);
     }
 
     const activeReference = db.doc(

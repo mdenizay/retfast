@@ -43,8 +43,12 @@ export function EventDetailsPage() {
   const { copy, locale } = useLocale();
   const { event, loading } = useEvent(eventId);
   const { membershipByEvent } = useEvents();
+  const membership = eventId ? membershipByEvent.get(eventId) : undefined;
   const isSuperadmin = profile?.globalRole === "superadmin";
   const canManage = Boolean(event && (isSuperadmin || event.managerIds.includes(user?.uid ?? "")));
+  const canOperate = canManage || Boolean(
+    membership?.status === "approved" && membership.role === "observer",
+  );
   const { members } = useEventMembers(eventId, canManage);
   const [memberEmail, setMemberEmail] = useState("");
   const [memberRole, setMemberRole] = useState<AssignableRole>("pilot");
@@ -52,7 +56,6 @@ export function EventDetailsPage() {
   const [rolesByUser, setRolesByUser] = useState<Record<string, AssignableRole>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const membership = eventId ? membershipByEvent.get(eventId) : undefined;
 
   const dateFormatter = useMemo(
     () => new Intl.DateTimeFormat(locale === "tr" ? "tr-TR" : "en-GB", { dateStyle: "medium", timeStyle: "short" }),
@@ -104,11 +107,14 @@ export function EventDetailsPage() {
         <section className="panel-card"><div><span className="section-kicker">{copy.myApplication}</span><h2>{membership ? copy[membership.status] : copy.notApplied}</h2><p>{membership?.role ? `${copy.assignedRole}: ${copy[membership.role]}` : copy.applicationExplanation}</p></div>{!membership && event.visibility === "public" && ["published", "active"].includes(event.status) && <button className="primary-button" disabled={busy === "apply"} type="button" onClick={() => void run("apply", () => applyToEventCommand(eventId))}>{copy.apply}</button>}</section>
       )}
 
+      {canOperate && (
+        <Suspense fallback={<div className="content-loader"><span />{copy.loadingLive}</div>}>
+          <LiveOperationsMap eventId={eventId} />
+        </Suspense>
+      )}
+
       {canManage && (
         <>
-          <Suspense fallback={<div className="content-loader"><span />{copy.loadingLive}</div>}>
-            <LiveOperationsMap eventId={eventId} />
-          </Suspense>
           <div className="management-layout">
           <section className="members-panel"><div className="section-heading compact-heading"><div><span className="section-kicker">{copy.eventTeam}</span><h2>{copy.membersAndApplications}</h2></div><span className="count-badge">{members.length}</span></div><div className="member-list">
             {members.length === 0 ? <p className="muted-copy">{copy.noMembers}</p> : members.map((member) => {

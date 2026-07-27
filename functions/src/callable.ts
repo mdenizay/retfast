@@ -49,6 +49,30 @@ export async function requireEventManager(userId: string, eventId: string) {
   return eventSnapshot;
 }
 
+export async function requireEventOperator(userId: string, eventId: string) {
+  const eventSnapshot = await db.doc(`events/${eventId}`).get();
+  if (!eventSnapshot.exists) {
+    throw new HttpsError("not-found", "Event not found.");
+  }
+  const managers = Array.isArray(eventSnapshot.data()?.managerIds)
+    ? (eventSnapshot.data()?.managerIds as string[])
+    : [];
+  if (managers.includes(userId)) return eventSnapshot;
+  const membership = await db.doc(
+    `eventMemberships/${membershipId(eventId, userId)}`,
+  ).get();
+  if (
+    membership.data()?.status !== "approved" ||
+    membership.data()?.role !== "observer"
+  ) {
+    throw new HttpsError(
+      "permission-denied",
+      "Event operator access is required.",
+    );
+  }
+  return eventSnapshot;
+}
+
 export function membershipId(eventId: string, userId: string) {
   return `${eventId}_${userId}`;
 }

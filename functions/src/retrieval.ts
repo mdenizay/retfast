@@ -10,7 +10,7 @@ import {
   membershipId,
   parseInput,
   requireAuth,
-  requireEventManager,
+  requireEventOperator,
 } from "./callable.js";
 import { adminApp, CALLABLE_OPTIONS, REGION } from "./config.js";
 import {
@@ -565,7 +565,7 @@ export const updateRetrievalProgress = onCall(
       !isPilotCancellation &&
       actor.token.superadmin !== true
     ) {
-      await requireEventManager(actor.uid, input.eventId);
+      await requireEventOperator(actor.uid, input.eventId);
     }
     const jobReference = initial.ref;
     const result = await db.runTransaction(async (transaction) => {
@@ -640,7 +640,7 @@ export const managerAssignRetrieval = onCall(
     const actor = requireAuth(request);
     const input = parseInput(managerAssignRetrievalInputSchema, request.data);
     if (actor.token.superadmin !== true) {
-      await requireEventManager(actor.uid, input.eventId);
+      await requireEventOperator(actor.uid, input.eventId);
     }
     const jobReference = db.doc(`retrievalJobs/${input.jobId}`);
     const targetReference = db.doc(
@@ -730,7 +730,7 @@ export const managerDispatchRetrieval = onCall(
     const actor = requireAuth(request);
     const input = parseInput(managerDispatchRetrievalInputSchema, request.data);
     if (actor.token.superadmin !== true) {
-      await requireEventManager(actor.uid, input.eventId);
+      await requireEventOperator(actor.uid, input.eventId);
     }
     const live = await eventLive(input.eventId);
     const sessionReference = db.doc(`trackingSessions/${input.sessionId}`);

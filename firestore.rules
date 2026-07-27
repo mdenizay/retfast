@@ -24,6 +24,16 @@ service cloud.firestore {
           && request.auth.uid in eventDocument(eventId).data.managerIds);
     }
 
+    function isEventObserver(eventId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/eventMemberships/$(eventId + '_' + request.auth.uid)).data.status == 'approved'
+        && get(/databases/$(database)/documents/eventMemberships/$(eventId + '_' + request.auth.uid)).data.role == 'observer';
+    }
+
+    function isEventOperator(eventId) {
+      return isEventManager(eventId) || isEventObserver(eventId);
+    }
+
     function hasEventMembership(eventId) {
       return signedIn()
         && exists(/databases/$(database)/documents/eventMemberships/$(eventId + '_' + request.auth.uid));
@@ -100,20 +110,20 @@ service cloud.firestore {
 
     match /auditLogs/{auditId} {
       allow read: if isSuperAdmin()
-        || (signedIn() && isEventManager(resource.data.eventId));
+        || (signedIn() && isEventOperator(resource.data.eventId));
       allow create, update, delete: if false;
     }
 
     match /trackingSessions/{sessionId} {
       allow read: if signedIn()
         && (resource.data.userId == request.auth.uid
-          || isEventManager(resource.data.eventId));
+          || isEventOperator(resource.data.eventId));
       allow create, update, delete: if false;
 
       match /chunks/{chunkId} {
         allow read: if signedIn()
           && (get(/databases/$(database)/documents/trackingSessions/$(sessionId)).data.userId == request.auth.uid
-            || isEventManager(get(/databases/$(database)/documents/trackingSessions/$(sessionId)).data.eventId));
+            || isEventOperator(get(/databases/$(database)/documents/trackingSessions/$(sessionId)).data.eventId));
         allow create, update, delete: if false;
       }
     }

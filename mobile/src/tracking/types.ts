@@ -11,6 +11,7 @@ export type ActiveTrackingState = {
   role: TrackingRole;
   displayName: string;
   radioCallsign: string | null;
+  locale?: "tr" | "en";
   pendingOutcome: Exclude<TrackingSessionStatus, "active"> | null;
 };
 

@@ -26,6 +26,19 @@ type QueueRow = {
 
 let databasePromise: ReturnType<typeof SQLite.openDatabaseAsync> | null = null;
 
+function boundedValue(
+  value: number | null,
+  minimum: number,
+  maximum: number,
+) {
+  return value != null &&
+    Number.isFinite(value) &&
+    value >= minimum &&
+    value <= maximum
+    ? value
+    : null;
+}
+
 async function database() {
   databasePromise ??= SQLite.openDatabaseAsync("retfast-tracking.db");
   const instance = await databasePromise;
@@ -92,6 +105,15 @@ export async function enqueueLocations(
   await instance.withExclusiveTransactionAsync(async (transaction) => {
     for (const location of locations) {
       const { coords } = location;
+      const accuracy = boundedValue(coords.accuracy, 0, 5_000);
+      const altitude = boundedValue(coords.altitude, -1_000, 20_000);
+      const altitudeAccuracy = boundedValue(
+        coords.altitudeAccuracy,
+        0,
+        5_000,
+      );
+      const speed = boundedValue(coords.speed, 0, 200);
+      const heading = boundedValue(coords.heading, 0, 360);
       const result = await transaction.runAsync(
         `INSERT INTO track_queue (
           session_id, event_id, recorded_at, latitude, longitude, accuracy,
@@ -103,11 +125,11 @@ export async function enqueueLocations(
         Math.round(location.timestamp),
         coords.latitude,
         coords.longitude,
-        coords.accuracy,
-        coords.altitude,
-        coords.altitudeAccuracy,
-        coords.speed != null && coords.speed >= 0 ? coords.speed : null,
-        coords.heading != null && coords.heading >= 0 ? coords.heading : null,
+        accuracy,
+        altitude,
+        altitudeAccuracy,
+        speed,
+        heading,
         telemetry.batteryLevel,
         telemetry.isCharging == null ? null : telemetry.isCharging ? 1 : 0,
         telemetry.connectivity,
@@ -118,11 +140,11 @@ export async function enqueueLocations(
         recordedAt: Math.round(location.timestamp),
         latitude: coords.latitude,
         longitude: coords.longitude,
-        accuracy: coords.accuracy,
-        altitude: coords.altitude,
-        altitudeAccuracy: coords.altitudeAccuracy,
-        speed: coords.speed != null && coords.speed >= 0 ? coords.speed : null,
-        heading: coords.heading != null && coords.heading >= 0 ? coords.heading : null,
+        accuracy,
+        altitude,
+        altitudeAccuracy,
+        speed,
+        heading,
         ...telemetry,
       });
     }

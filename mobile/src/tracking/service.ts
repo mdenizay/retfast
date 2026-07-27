@@ -33,6 +33,7 @@ import type { ActiveTrackingState, QueuedTrackPoint } from "./types";
 export const LOCATION_TASK_NAME = "retfast-active-mission-location";
 
 const DEVICE_ID_KEY = "retfast.tracking.device-id";
+const INITIAL_LOCATION_WAIT_MS = 12_000;
 const functions = getFunctions(undefined, "europe-west1");
 let flushPromise: Promise<number> | null = null;
 
@@ -175,6 +176,29 @@ export async function handleBackgroundLocations(locations: Location.LocationObje
   }
 }
 
+async function seedInitialLocation() {
+  const cached = await Location.getLastKnownPositionAsync({
+    maxAge: 60_000,
+    requiredAccuracy: 200,
+  });
+  const location = cached ?? await Location.getCurrentPositionAsync({
+    accuracy: Location.Accuracy.Balanced,
+  });
+  await handleBackgroundLocations([location]);
+  await flushTrackQueue(true);
+}
+
+function initialLocationTimeout() {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, INITIAL_LOCATION_WAIT_MS);
+  });
+}
+
+async function captureInitialLocation() {
+  const initialLocation = seedInitialLocation().catch(() => undefined);
+  await Promise.race([initialLocation, initialLocationTimeout()]);
+}
+
 function locationOptions(role: TrackingRole, locale: "tr" | "en") {
   const pilot = role === "pilot";
   return {
@@ -234,6 +258,7 @@ export async function startTracking(input: {
     role: result.data.role,
     displayName: input.displayName,
     radioCallsign: input.radioCallsign,
+    locale: input.locale,
     pendingOutcome: null,
   };
   await setTrackingState(state);
@@ -243,6 +268,7 @@ export async function startTracking(input: {
     LOCATION_TASK_NAME,
     locationOptions(result.data.role, input.locale),
   );
+  await captureInitialLocation();
   return { ...result.data, state };
 }
 
@@ -280,6 +306,16 @@ export async function recoverTrackingSync() {
     await finalizePending(state);
     return null;
   }
+  const started = await Location.hasStartedLocationUpdatesAsync(
+    LOCATION_TASK_NAME,
+  );
+  if (!started) {
+    await Location.startLocationUpdatesAsync(
+      LOCATION_TASK_NAME,
+      locationOptions(state.role, state.locale ?? "tr"),
+    );
+  }
+  await captureInitialLocation();
   await flushTrackQueue(false);
   return state;
 }

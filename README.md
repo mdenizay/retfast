@@ -84,6 +84,10 @@ npx eas build --profile development --platform android
 - Pilot and retriever mobile operation cards with external map directions.
 - Expo push-token registration and offer/status notifications from Functions.
 - A web dispatch desk for direct assignment and retrieval intervention.
+- Observer operator access for retrieval intervention, mission termination, and
+  historical route inspection without event/member administration privileges.
+- Flight replay with session selection, route reconstruction, telemetry,
+  playback controls, and a draggable timeline.
 
 Run the complete local quality gate with:
 

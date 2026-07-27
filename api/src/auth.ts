@@ -42,6 +42,8 @@ export async function bootstrapUser(token: DecodedIdToken, locale: "tr" | "en") 
      VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT (id) DO UPDATE SET
        email = EXCLUDED.email,
+       display_name = EXCLUDED.display_name,
+       locale = EXCLUDED.locale,
        global_role = EXCLUDED.global_role,
        updated_at = now()
      RETURNING id, email, display_name AS "displayName", locale,

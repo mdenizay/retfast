@@ -7,6 +7,7 @@ import { requireEventMembership, requireEventOperator } from "../access.js";
 import { inTransaction, pool } from "../db/pool.js";
 import { ApiError } from "../http/error.js";
 import { publishEvent } from "../realtime/hub.js";
+import { sendPushToUser } from "../services/push.js";
 
 export const retrievalRouter = Router();
 
@@ -158,6 +159,11 @@ retrievalRouter.post("/events/:eventId/retrieval/jobs", async (request, response
     }
   });
   publishEvent(eventId, "retrieval.updated", job);
+  await sendPushToUser(input.retrieverId, {
+    title: input.urgency === "emergency" ? "RETFAST · Emergency retrieval" : "RETFAST · New pilot request",
+    body: "A pilot is waiting for pickup.",
+    data: { type: "retrieval-offer", eventId, jobId: String(job.id) },
+  });
   response.status(201).json({ data: { job } });
 });
 
@@ -177,7 +183,7 @@ retrievalRouter.post("/events/:eventId/retrieval/jobs/:jobId/respond", async (re
       return (await client.query(
         `UPDATE retrieval_jobs SET status='searching',offered_retriever_id=NULL,
          offered_retriever_name=NULL,offer_expires_at=NULL,version=version+1,updated_at=now()
-         WHERE id=$1 RETURNING id,status`, [current.id],
+         WHERE id=$1 RETURNING id,status,pilot_id AS "pilotId"`, [current.id],
       )).rows[0];
     }
     const state = await client.query<any>(
@@ -196,11 +202,21 @@ retrievalRouter.post("/events/:eventId/retrieval/jobs/:jobId/respond", async (re
     return (await client.query(
       `UPDATE retrieval_jobs SET status='assigned',assigned_retriever_id=$2,
        assigned_retriever_name=offered_retriever_name,offer_expires_at=NULL,
-       version=version+1,updated_at=now() WHERE id=$1 RETURNING id,status,assigned_retriever_id AS "assignedRetrieverId"`,
+       version=version+1,updated_at=now() WHERE id=$1 RETURNING id,status,pilot_id AS "pilotId",
+       assigned_retriever_id AS "assignedRetrieverId",assigned_retriever_name AS "assignedRetrieverName"`,
       [current.id, request.auth.uid],
     )).rows[0];
   });
   publishEvent(eventId, "retrieval.updated", job);
+  if (job.pilotId) {
+    await sendPushToUser(String(job.pilotId), {
+      title: accept ? "RETFAST · Retriever assigned" : "RETFAST · Request declined",
+      body: accept
+        ? `${job.assignedRetrieverName ?? "Retriever"} accepted your pickup request.`
+        : "The retriever could not accept your request. Please select another vehicle.",
+      data: { type: accept ? "retrieval-assigned" : "retrieval-declined", eventId, jobId: String(job.id) },
+    });
+  }
   response.json({ data: { job } });
 });
 
@@ -231,10 +247,19 @@ retrievalRouter.post("/events/:eventId/retrieval/jobs/:jobId/progress", async (r
     const timestampColumn = action === "picked_up" ? "picked_up_at" : action === "delivered" ? "delivered_at" : "cancelled_at";
     return (await client.query(
       `UPDATE retrieval_jobs SET status=$1,${timestampColumn}=now(),version=version+1,updated_at=now()
-       WHERE id=$2 RETURNING id,status,updated_at AS "updatedAt"`, [action, current.id],
+       WHERE id=$2 RETURNING id,status,pilot_id AS "pilotId",
+       assigned_retriever_id AS "assignedRetrieverId",updated_at AS "updatedAt"`, [action, current.id],
     )).rows[0];
   });
   publishEvent(eventId, "retrieval.updated", job);
+  const progressTarget = job.pilotId === request.auth.uid ? job.assignedRetrieverId : job.pilotId;
+  if (progressTarget) {
+    await sendPushToUser(String(progressTarget), {
+      title: `RETFAST · ${action.replace("_", " ")}`,
+      body: "The retrieval status was updated.",
+      data: { type: "retrieval-progress", eventId, jobId: String(job.id), status: action },
+    });
+  }
   response.json({ data: { job } });
 });
 
@@ -273,7 +298,7 @@ retrievalRouter.post("/events/:eventId/retrieval/dispatch", async (request, resp
        ON CONFLICT(session_id) DO UPDATE SET status='assigned',urgency=$6,
         offered_retriever_id=NULL,offered_retriever_name=NULL,offer_expires_at=NULL,
         assigned_retriever_id=$7,assigned_retriever_name=$8,version=retrieval_jobs.version+1,updated_at=now()
-       RETURNING id,status,assigned_retriever_id AS "assignedRetrieverId"`,
+       RETURNING id,status,pilot_id AS "pilotId",assigned_retriever_id AS "assignedRetrieverId"`,
       [id, eventId, input.sessionId, pilot.user_id, pilot.display_name, input.urgency,
         input.retrieverId, retriever.display_name],
     );
@@ -285,6 +310,18 @@ retrievalRouter.post("/events/:eventId/retrieval/dispatch", async (request, resp
     return result.rows[0];
   });
   publishEvent(eventId, "retrieval.updated", job);
+  await Promise.all([
+    sendPushToUser(input.retrieverId, {
+      title: "RETFAST · Retrieval assigned",
+      body: "An event manager assigned a pilot to your vehicle.",
+      data: { type: "retrieval-assigned", eventId, jobId: String(job.id) },
+    }),
+    job.pilotId ? sendPushToUser(String(job.pilotId), {
+      title: "RETFAST · Retriever assigned",
+      body: "The event manager assigned a retriever to you.",
+      data: { type: "retrieval-assigned", eventId, jobId: String(job.id) },
+    }) : Promise.resolve(false),
+  ]);
   response.status(201).json({ data: { job } });
 });
 

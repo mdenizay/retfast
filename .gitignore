@@ -24,4 +24,9 @@ database-debug.log
 storage-debug.log
 .firebase/
 
+deploy/.env
+deploy/backups/
+deploy/secrets/*
+!deploy/secrets/.gitkeep
+
 functions/lib/

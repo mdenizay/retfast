@@ -1,5 +1,7 @@
 # RETFAST
 
+RETFAST is split into independent `web`, `mobile`, `api` and `functions` packages. New operational data flows through the Node.js/Express API and PostgreSQL; Firebase remains the authentication provider. See [API documentation](api/README.md) and [Ubuntu 24.04 deployment](docs/ubuntu-24-cloudflare-deployment.md).
+
 RETFAST coordinates live tracking and retrieval operations for paragliding,
 hang-gliding, and cycling events.
 

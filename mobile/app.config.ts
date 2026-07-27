@@ -54,7 +54,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       firebaseProjectId: environmentConfig.firebaseProjectId,
       firebaseDatabaseUrl: environmentConfig.firebaseDatabaseUrl,
       googleWebClientId: environmentConfig.googleWebClientId,
-      apiUrl: environmentConfig.apiUrl,
+      apiUrl: process.env.API_URL ?? environmentConfig.apiUrl,
     },
   };
 };

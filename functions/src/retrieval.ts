@@ -355,12 +355,6 @@ export const requestRetrieval = onCall(
           "An active pilot tracking session is required.",
         );
       }
-      if (!state.exists || !availableSeat(state.data() as RetrieverState)) {
-        throw new HttpsError(
-          "resource-exhausted",
-          "The selected retriever is no longer available.",
-        );
-      }
       const currentStatus = existing.data()?.status as RetrievalStatus | undefined;
       if (["assigned", "picked_up"].includes(currentStatus ?? "")) {
         return { created: false, active: true };
@@ -369,6 +363,12 @@ export const requestRetrieval = onCall(
         throw new HttpsError(
           "failed-precondition",
           "This tracking session already has a closed retrieval.",
+        );
+      }
+      if (!state.exists || !availableSeat(state.data() as RetrieverState)) {
+        throw new HttpsError(
+          "resource-exhausted",
+          "The selected retriever is no longer available.",
         );
       }
       const currentExpiry = existing.data()?.offerExpiresAt as Timestamp | undefined;
@@ -747,7 +747,8 @@ export const managerDispatchRetrieval = onCall(
       if (
         !session.exists ||
         session.data()?.eventId !== input.eventId ||
-        session.data()?.role !== "pilot"
+        session.data()?.role !== "pilot" ||
+        session.data()?.status !== "active"
       ) {
         throw new HttpsError("not-found", "Active pilot session not found.");
       }

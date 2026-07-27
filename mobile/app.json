@@ -13,6 +13,9 @@
     "ios": {
       "bundleIdentifier": "com.mizibu.retfast",
       "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      },
       "usesAppleSignIn": true,
       "supportsTablet": true
     },

@@ -12,7 +12,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { lazy, Suspense, useMemo, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { FormField } from "../components/FormField";
@@ -31,6 +31,11 @@ import {
 
 type AssignableRole = Exclude<EventRole, "manager">;
 const roles: AssignableRole[] = ["pilot", "retriever", "observer"];
+const LiveOperationsMap = lazy(() =>
+  import("../components/LiveOperationsMap").then((module) => ({
+    default: module.LiveOperationsMap,
+  })),
+);
 
 export function EventDetailsPage() {
   const { eventId } = useParams();
@@ -100,7 +105,11 @@ export function EventDetailsPage() {
       )}
 
       {canManage && (
-        <div className="management-layout">
+        <>
+          <Suspense fallback={<div className="content-loader"><span />{copy.loadingLive}</div>}>
+            <LiveOperationsMap eventId={eventId} />
+          </Suspense>
+          <div className="management-layout">
           <section className="members-panel"><div className="section-heading compact-heading"><div><span className="section-kicker">{copy.eventTeam}</span><h2>{copy.membersAndApplications}</h2></div><span className="count-badge">{members.length}</span></div><div className="member-list">
             {members.length === 0 ? <p className="muted-copy">{copy.noMembers}</p> : members.map((member) => {
               const selectedRole = rolesByUser[member.userId] ?? member.role ?? "pilot";
@@ -110,7 +119,8 @@ export function EventDetailsPage() {
           <aside className="management-sidebar"><form className="panel-card stacked-card" onSubmit={(formEvent) => void addMember(formEvent)}><span className="panel-icon"><Plus /></span><h3>{copy.addParticipant}</h3><p>{copy.addParticipantHint}</p><FormField id="member-email" icon={Mail} label={copy.email} type="email" value={memberEmail} onChange={(inputEvent) => setMemberEmail(inputEvent.target.value)} required /><label className="form-field"><span className="field-label">{copy.role}</span><span className="select-wrap"><select value={memberRole} onChange={(changeEvent) => setMemberRole(changeEvent.target.value as AssignableRole)}>{roles.map((role) => <option key={role} value={role}>{copy[role]}</option>)}</select></span></label><button className="primary-button full-button" disabled={busy === "add-member"} type="submit">{copy.addToEvent}</button></form>
           {isSuperadmin && <form className="panel-card stacked-card" onSubmit={(formEvent) => void assignManager(formEvent)}><span className="panel-icon"><UserCog /></span><h3>{copy.assignManager}</h3><p>{copy.assignManagerHint}</p><FormField id="manager-email-detail" icon={Mail} label={copy.managerEmail} type="email" value={managerEmail} onChange={(inputEvent) => setManagerEmail(inputEvent.target.value)} required /><button className="secondary-button full-button" disabled={busy === "manager"} type="submit"><ShieldCheck size={16} />{copy.assign}</button></form>}
           </aside>
-        </div>
+          </div>
+        </>
       )}
     </main>
   );

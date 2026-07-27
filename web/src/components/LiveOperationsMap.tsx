@@ -13,6 +13,7 @@ import "leaflet/dist/leaflet.css";
 
 import { useLocale } from "../i18n";
 import { useLiveParticipants, type LiveParticipant } from "../lib/live";
+import { RetrievalOperationsBoard } from "./RetrievalOperationsBoard";
 
 function markerIcon(participant: LiveParticipant) {
   const heading = Number.isFinite(participant.heading) ? participant.heading ?? 0 : 0;
@@ -137,6 +138,7 @@ export function LiveOperationsMap({ eventId }: { eventId: string }) {
           </div>
         </aside>
       </div>
+      <RetrievalOperationsBoard eventId={eventId} participants={sorted} />
     </section>
   );
 }

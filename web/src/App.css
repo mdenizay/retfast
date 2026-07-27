@@ -1188,11 +1188,57 @@ button:disabled {
 .telemetry-values svg { width: 12px; color: var(--primary); }
 .telemetry-values small { color: var(--faint); font-size: 7px; font-weight: 700; }
 
+.retrieval-board { margin-top: 20px; padding-top: 22px; border-top: 1px solid var(--line); }
+.retrieval-board-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.retrieval-board-heading h3 { margin: 5px 0 0; color: var(--text); font-family: "Manrope", sans-serif; font-size: 20px; }
+.retrieval-board-heading p { margin: 6px 0 0; color: var(--muted); font-size: 10px; }
+.vehicle-capacity-summary { display: grid; grid-template-columns: 28px auto; align-items: center; column-gap: 8px; padding: 9px 13px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface-soft); }
+.vehicle-capacity-summary svg { grid-row: 1 / 3; width: 19px; color: var(--primary); }
+.vehicle-capacity-summary strong { color: var(--text); font-size: 15px; line-height: 1; }
+.vehicle-capacity-summary span { color: var(--faint); font-size: 7px; font-weight: 800; text-transform: uppercase; }
+.retrieval-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+.retrieval-column { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 17px; background: var(--surface-soft); }
+.retrieval-column-title { display: flex; align-items: center; gap: 7px; min-height: 32px; color: var(--text); }
+.retrieval-column-title svg { width: 15px; color: var(--primary); }
+.retrieval-column-title span { flex: 1; font-size: 9px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.retrieval-column-title strong { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 8px; color: var(--primary); background: var(--primary-soft); font-size: 8px; }
+.retrieval-empty { margin: 15px 2px 5px; color: var(--muted); font-size: 10px; }
+.dispatch-card,
+.retrieval-job-card { margin-top: 8px; padding: 13px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.dispatch-identity { display: flex; align-items: center; gap: 9px; }
+.dispatch-avatar { display: grid; width: 35px; height: 35px; place-items: center; border-radius: 11px; color: #fff; background: #d9655c; font-size: 9px; font-weight: 800; }
+.dispatch-identity > div { display: flex; min-width: 0; flex: 1; flex-direction: column; }
+.dispatch-identity strong,
+.retrieval-job-top strong { color: var(--text); font-size: 10px; }
+.dispatch-identity small,
+.retrieval-job-top small { display: flex; align-items: center; gap: 4px; margin-top: 3px; color: var(--muted); font-size: 8px; }
+.dispatch-identity small svg { width: 10px; }
+.dispatch-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px; margin-top: 11px; }
+.dispatch-controls select { min-width: 0; height: 38px; padding: 0 10px; color: var(--text); border: 1px solid var(--line); border-radius: 10px; outline: 0; background: var(--surface-soft); font: inherit; font-size: 9px; }
+.dispatch-controls button { min-height: 38px; padding: 0 10px; font-size: 8px; }
+.dispatch-controls button svg { width: 13px; }
+.retrieval-job-card.urgency-emergency { border-color: color-mix(in srgb, var(--danger), transparent 60%); }
+.retrieval-job-top { display: grid; grid-template-columns: 35px minmax(0, 1fr) auto; align-items: center; gap: 9px; }
+.retrieval-job-top > div { display: flex; min-width: 0; flex-direction: column; }
+.retrieval-job-icon { display: grid; width: 35px; height: 35px; place-items: center; border-radius: 11px; color: var(--primary); background: var(--primary-soft); }
+.urgency-emergency .retrieval-job-icon { color: var(--danger); background: var(--danger-soft); }
+.retrieval-job-icon svg { width: 16px; }
+.retrieval-status { padding: 5px 7px; border-radius: 999px; color: var(--primary); background: var(--primary-soft); font-size: 7px; font-weight: 800; text-transform: uppercase; }
+.retrieval-status.status-picked_up { color: var(--success); background: color-mix(in srgb, var(--success), transparent 88%); }
+.retrieval-assignee { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; padding: 8px 9px; border-radius: 9px; color: var(--muted); background: var(--surface-soft); font-size: 8px; }
+.retrieval-assignee b { color: var(--danger); font-size: 7px; text-transform: uppercase; }
+.compact-dispatch-controls { margin-top: 8px; }
+.retrieval-job-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.retrieval-job-actions button { display: inline-flex; min-height: 32px; align-items: center; gap: 5px; padding: 0 9px; color: var(--primary); border: 1px solid var(--line); border-radius: 9px; background: var(--surface-soft); font-size: 8px; font-weight: 800; }
+.retrieval-job-actions button svg { width: 12px; }
+.retrieval-job-actions button.cancel-job { color: var(--danger); }
+
 @media (max-width: 1040px) {
   .profile-chip { display: none; }
   .event-grid { grid-template-columns: 1fr; }
   .management-layout { grid-template-columns: 1fr; }
   .live-map-layout { grid-template-columns: 1fr; }
+  .retrieval-columns { grid-template-columns: 1fr; }
   .telemetry-panel { min-height: 0; }
   .telemetry-list { max-height: 330px; }
 }
@@ -1222,6 +1268,9 @@ button:disabled {
   .review-actions select { flex: 1; }
   .live-operations-panel { padding: 17px; }
   .live-summary-grid { grid-template-columns: 1fr; }
+  .retrieval-board-heading { flex-direction: column; }
+  .vehicle-capacity-summary { width: 100%; }
+  .dispatch-controls { grid-template-columns: 1fr; }
   .live-map-frame,
   .live-leaflet-map { min-height: 420px; height: 420px; }
 }

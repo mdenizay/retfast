@@ -58,6 +58,17 @@
           }
         }
       ]
-    ]
+    ],
+    "extra": {
+      "environment": "development",
+      "firebaseProjectId": "retfast-3279f",
+      "firebaseDatabaseUrl": "https://retfast-3279f-default-rtdb.europe-west1.firebasedatabase.app",
+      "googleWebClientId": "303883341213-9a1gqdvcpbue29bodf8m4qe0pn9bfgok.apps.googleusercontent.com",
+      "router": {},
+      "eas": {
+        "projectId": "afd32316-c96e-482f-a0ca-8d68fde4940e"
+      }
+    },
+    "owner": "mdenizay"
   }
 }

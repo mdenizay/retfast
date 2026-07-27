@@ -1,9 +1,8 @@
-import { getFunctions, httpsCallable } from "@react-native-firebase/functions";
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
+import { apiRequest } from "./lib/api";
 
-const functions = getFunctions(undefined, "europe-west1");
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -34,13 +33,12 @@ export async function registerForRetrievalNotifications() {
       ?.projectId;
   if (!projectId) return false;
   const token = await Notifications.getExpoPushTokenAsync({ projectId });
-  const register = httpsCallable<
-    { token: string; platform: "android" | "ios" },
-    { registered: boolean }
-  >(functions, "registerPushToken");
-  await register({
-    token: token.data,
-    platform: Platform.OS === "ios" ? "ios" : "android",
+  await apiRequest("/v1/session/devices", {
+    method: "POST",
+    body: JSON.stringify({
+      token: token.data,
+      platform: Platform.OS === "ios" ? "ios" : "android",
+    }),
   });
   return true;
 }

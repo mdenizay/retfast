@@ -1,11 +1,3 @@
-import {
-  onDisconnect,
-  ref,
-  serverTimestamp,
-  set,
-} from "@react-native-firebase/database";
-import { getAuth } from "@react-native-firebase/auth";
-import { getFunctions, httpsCallable } from "@react-native-firebase/functions";
 import * as Battery from "expo-battery";
 import * as Crypto from "expo-crypto";
 import * as Location from "expo-location";
@@ -15,11 +7,10 @@ import * as TaskManager from "expo-task-manager";
 
 import type {
   Connectivity,
-  TrackPoint,
   TrackingRole,
   TrackingSessionStatus,
 } from "../domain";
-import { realtime, realtimeReady } from "./firebase";
+import { apiRequest } from "../lib/api";
 import {
   enqueueLocations,
   getTrackingState,
@@ -34,7 +25,6 @@ export const LOCATION_TASK_NAME = "retfast-active-mission-location";
 
 const DEVICE_ID_KEY = "retfast.tracking.device-id";
 const INITIAL_LOCATION_WAIT_MS = 12_000;
-const functions = getFunctions(undefined, "europe-west1");
 let flushPromise: Promise<number> | null = null;
 
 type StartResult = {
@@ -83,21 +73,14 @@ function batchId(state: ActiveTrackingState, points: QueuedTrackPoint[]) {
 }
 
 async function ingest(state: ActiveTrackingState, points: QueuedTrackPoint[]) {
-  const callable = httpsCallable<
-    {
-      eventId: string;
-      sessionId: string;
-      batchId: string;
-      points: TrackPoint[];
-    },
-    { accepted: number; duplicate: boolean }
-  >(functions, "ingestTrackBatch");
-  await callable({
+  await apiRequest<{ accepted: number; duplicate: boolean }>(
+    `/v1/tracking/sessions/${state.sessionId}/points`,
+    { method: "POST", body: JSON.stringify({
     eventId: state.eventId,
-    sessionId: state.sessionId,
     batchId: batchId(state, points),
     points: points.map(({ queueId: _queueId, ...point }) => point),
-  });
+    }) },
+  );
   await removeQueuedPoints(points.map((point) => point.queueId));
   return points.length;
 }
@@ -130,49 +113,13 @@ export async function flushTrackQueue(force = false) {
   return flushPromise;
 }
 
-async function publishLive(
-  state: ActiveTrackingState,
-  point: QueuedTrackPoint,
-) {
-  await realtimeReady;
-  const userId = getAuth().currentUser?.uid;
-  if (!userId) return;
-  const participantReference = ref(realtime, `live/${state.eventId}/${userId}`);
-  await onDisconnect(participantReference).update({
-    online: false,
-    lastDisconnectedAt: serverTimestamp(),
-  });
-  await set(participantReference, {
-    sessionId: state.sessionId,
-    userId,
-    role: state.role,
-    displayName: state.displayName,
-    radioCallsign: state.radioCallsign,
-    latitude: point.latitude,
-    longitude: point.longitude,
-    accuracy: point.accuracy,
-    altitude: point.altitude,
-    speed: point.speed,
-    heading: point.heading,
-    batteryLevel: point.batteryLevel,
-    isCharging: point.isCharging,
-    connectivity: point.connectivity,
-    recordedAt: point.recordedAt,
-    receivedAt: serverTimestamp(),
-    online: true,
-    lastDisconnectedAt: null,
-  });
-}
-
 export async function handleBackgroundLocations(locations: Location.LocationObject[]) {
   const state = await getTrackingState();
   if (!state || state.pendingOutcome || locations.length === 0) return;
   const currentTelemetry = await telemetry();
-  const points = await enqueueLocations(state, locations, currentTelemetry);
-  const latest = points.at(-1);
-  if (latest) await publishLive(state, latest).catch(() => undefined);
+  await enqueueLocations(state, locations, currentTelemetry);
   if (currentTelemetry.connectivity !== "offline") {
-    await flushTrackQueue(false).catch(() => undefined);
+    await flushTrackQueue(true).catch(() => undefined);
   }
 }
 
@@ -247,15 +194,14 @@ export async function startTracking(input: {
   if (background.status !== "granted") {
     throw new Error("tracking/background-permission-denied");
   }
-  const callable = httpsCallable<
-    { eventId: string; deviceId: string },
-    StartResult
-  >(functions, "startTrackingSession");
-  const result = await callable({ eventId: input.eventId, deviceId: await deviceId() });
+  const result = await apiRequest<StartResult>(
+    `/v1/events/${input.eventId}/tracking/sessions`,
+    { method: "POST", body: JSON.stringify({ deviceId: await deviceId() }) },
+  );
   const state: ActiveTrackingState = {
     eventId: input.eventId,
-    sessionId: result.data.sessionId,
-    role: result.data.role,
+    sessionId: result.sessionId,
+    role: result.role,
     displayName: input.displayName,
     radioCallsign: input.radioCallsign,
     locale: input.locale,
@@ -266,22 +212,20 @@ export async function startTracking(input: {
   if (started) await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
   await Location.startLocationUpdatesAsync(
     LOCATION_TASK_NAME,
-    locationOptions(result.data.role, input.locale),
+    locationOptions(result.role, input.locale),
   );
   await captureInitialLocation();
-  return { ...result.data, state };
+  return { ...result, state };
 }
 
 async function finalizePending(state: ActiveTrackingState) {
   await flushTrackQueue(true);
-  const callable = httpsCallable<
-    { eventId: string; sessionId: string; outcome: Exclude<TrackingSessionStatus, "active"> },
-    { sessionId: string; status: string }
-  >(functions, "stopTrackingSession");
-  await callable({
-    eventId: state.eventId,
-    sessionId: state.sessionId,
-    outcome: state.pendingOutcome ?? "interrupted",
+  await apiRequest(`/v1/tracking/sessions/${state.sessionId}/stop`, {
+    method: "POST",
+    body: JSON.stringify({
+      eventId: state.eventId,
+      outcome: state.pendingOutcome ?? "interrupted",
+    }),
   });
   await setTrackingState(null);
 }

@@ -22,10 +22,8 @@ import {
   updateProfile,
   type User,
 } from "firebase/auth";
-import { doc, getDoc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
-import { httpsCallable } from "firebase/functions";
-
-import { auth, db, functions } from "../lib/firebase";
+import { apiRequest } from "../lib/api";
+import { auth } from "../lib/firebase";
 
 export type UserProfile = {
   id: string;
@@ -51,29 +49,13 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-async function ensureProfile(user: User, fallbackName?: string) {
-  const profileReference = doc(db, "users", user.uid);
-  const profile = await getDoc(profileReference);
-  const commonFields = {
-    email: user.email ?? "",
-    displayName: user.displayName || fallbackName || user.email?.split("@")[0] || "RETFAST User",
-    locale: document.documentElement.lang === "en" ? "en" : "tr",
-    updatedAt: serverTimestamp(),
-  };
-
-  await setDoc(
-    profileReference,
-    profile.exists()
-      ? commonFields
-      : {
-          ...commonFields,
-          id: user.uid,
-          globalRole: "user",
-          radioCallsign: null,
-          createdAt: serverTimestamp(),
-        },
-    { merge: true },
-  );
+async function bootstrapProfile() {
+  return (await apiRequest<{ profile: UserProfile }>("/v1/session/bootstrap", {
+    method: "POST",
+    body: JSON.stringify({
+      locale: document.documentElement.lang === "en" ? "en" : "tr",
+    }),
+  })).profile;
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
@@ -83,27 +65,18 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    void getRedirectResult(auth).then(async (result) => {
-      if (result?.user) {
-        await ensureProfile(result.user);
-      }
-    });
+    void getRedirectResult(auth);
 
     return onAuthStateChanged(auth, async (nextUser) => {
       setUser(nextUser);
       if (nextUser) {
         setProfileLoading(true);
         try {
-          const bootstrap = httpsCallable<
-            { locale: "tr" | "en" },
-            { globalRole: "user" | "superadmin"; refreshToken: boolean }
-          >(functions, "bootstrapSession");
-          const result = await bootstrap({
-            locale: document.documentElement.lang === "en" ? "en" : "tr",
-          });
-          if (result.data.refreshToken) await nextUser.getIdToken(true);
+          setProfile(await bootstrapProfile());
         } catch (error) {
           console.warn("Session bootstrap is temporarily unavailable.", error);
+        } finally {
+          setProfileLoading(false);
         }
       } else {
         setProfile(null);
@@ -112,18 +85,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setLoading(false);
     });
   }, []);
-
-  useEffect(() => {
-    if (!user) return;
-    return onSnapshot(
-      doc(db, "users", user.uid),
-      (snapshot) => {
-        setProfile(snapshot.exists() ? (snapshot.data() as UserProfile) : null);
-        setProfileLoading(false);
-      },
-      () => setProfileLoading(false),
-    );
-  }, [user]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -141,7 +102,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
           password,
         );
         await updateProfile(credential.user, { displayName: name.trim() });
-        await ensureProfile(credential.user, name.trim());
+        await credential.user.getIdToken(true);
+        setProfile(await bootstrapProfile());
       },
       signInWithGoogle: async () => {
         const provider = new GoogleAuthProvider();
@@ -149,7 +111,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
         try {
           const credential = await signInWithPopup(auth, provider);
-          await ensureProfile(credential.user);
+          await credential.user.getIdToken(true);
         } catch (error) {
           const code =
             typeof error === "object" && error !== null && "code" in error

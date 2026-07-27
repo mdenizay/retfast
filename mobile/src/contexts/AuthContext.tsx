@@ -26,18 +26,7 @@ import {
   type User,
 } from "@react-native-firebase/auth";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import {
-  doc,
-  getDoc,
-  getFirestore,
-  onSnapshot,
-  serverTimestamp,
-  setDoc,
-} from "@react-native-firebase/firestore";
-import {
-  getFunctions,
-  httpsCallable,
-} from "@react-native-firebase/functions";
+import { apiRequest } from "../lib/api";
 import { recoverTrackingSync } from "../tracking/service";
 
 export type UserProfile = {
@@ -64,31 +53,17 @@ type AuthValue = {
 
 const AuthContext = createContext<AuthValue | null>(null);
 const auth = getAuth();
-const firestore = getFirestore();
-const functions = getFunctions(undefined, "europe-west1");
 
 const googleWebClientId = Constants.expoConfig?.extra?.googleWebClientId;
 if (typeof googleWebClientId === "string") {
   GoogleSignin.configure({ webClientId: googleWebClientId });
 }
 
-async function ensureProfile(user: User) {
-  const profileReference = doc(firestore, "users", user.uid);
-  const profileSnapshot = await getDoc(profileReference);
-  await setDoc(
-    profileReference,
-    {
-      id: user.uid,
-      email: user.email ?? "",
-      displayName: user.displayName || user.email?.split("@")[0] || "RETFAST User",
-      locale: "tr",
-      globalRole: "user",
-      radioCallsign: null,
-      ...(profileSnapshot.exists() ? {} : { createdAt: serverTimestamp() }),
-      updatedAt: serverTimestamp(),
-    },
-    { merge: true },
-  );
+async function bootstrapProfile() {
+  return (await apiRequest<{ profile: UserProfile }>("/v1/session/bootstrap", {
+    method: "POST",
+    body: JSON.stringify({ locale: "tr" }),
+  })).profile;
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
@@ -101,14 +76,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
       onAuthStateChanged(auth, async (nextUser) => {
         setUser(nextUser);
         if (nextUser) {
-          await ensureProfile(nextUser);
           try {
-            const bootstrap = httpsCallable<
-              { locale: "tr" | "en" },
-              { globalRole: "user" | "superadmin"; refreshToken: boolean }
-            >(functions, "bootstrapSession");
-            const result = await bootstrap({ locale: "tr" });
-            if (result.data.refreshToken) await nextUser.getIdToken(true);
+            setProfile(await bootstrapProfile());
           } catch (error) {
             console.warn("Session bootstrap is temporarily unavailable.", error);
           }
@@ -120,13 +89,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
       }),
     [],
   );
-
-  useEffect(() => {
-    if (!user) return;
-    return onSnapshot(doc(firestore, "users", user.uid), (snapshot) => {
-      setProfile(snapshot.exists() ? (snapshot.data() as UserProfile) : null);
-    });
-  }, [user]);
 
   const value = useMemo<AuthValue>(
     () => ({
@@ -143,6 +105,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
           password,
         );
         await updateProfile(credential.user, { displayName: name.trim() });
+        await credential.user.getIdToken(true);
+        setProfile(await bootstrapProfile());
       },
       signInWithGoogle: async () => {
         await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });

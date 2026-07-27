@@ -164,10 +164,6 @@ CREATE TABLE retrieval_jobs (
 );
 CREATE INDEX retrieval_jobs_event_status_idx ON retrieval_jobs (event_id, status);
 CREATE INDEX retrieval_jobs_retriever_idx ON retrieval_jobs (assigned_retriever_id, status);
-CREATE UNIQUE INDEX retrieval_one_open_offer_per_retriever
-  ON retrieval_jobs (event_id, offered_retriever_id)
-  WHERE status = 'offered';
-
 CREATE TABLE messages (
   id text PRIMARY KEY,
   event_id text NOT NULL REFERENCES events(id) ON DELETE CASCADE,

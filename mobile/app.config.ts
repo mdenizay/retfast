@@ -6,6 +6,7 @@ type AppEnvironment = "development" | "production";
 
 const environments = {
   development: {
+    apiUrl: "http://localhost:3000",
     firebaseProjectId: "retfast-3279f",
     firebaseDatabaseUrl:
       "https://retfast-3279f-default-rtdb.europe-west1.firebasedatabase.app",
@@ -16,6 +17,7 @@ const environments = {
       "303883341213-9a1gqdvcpbue29bodf8m4qe0pn9bfgok.apps.googleusercontent.com",
   },
   production: {
+    apiUrl: "https://api.retfast.com",
     firebaseProjectId: "retfast-ab7ca",
     firebaseDatabaseUrl:
       "https://retfast-ab7ca-default-rtdb.europe-west1.firebasedatabase.app",
@@ -52,6 +54,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       firebaseProjectId: environmentConfig.firebaseProjectId,
       firebaseDatabaseUrl: environmentConfig.firebaseDatabaseUrl,
       googleWebClientId: environmentConfig.googleWebClientId,
+      apiUrl: environmentConfig.apiUrl,
     },
   };
 };

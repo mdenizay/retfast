@@ -1,150 +1,70 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  onSnapshot,
-  orderBy,
-  query,
-  type Timestamp,
-  where,
-} from "firebase/firestore";
-import { httpsCallable } from "firebase/functions";
 import { useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "../contexts/AuthContext";
-import type {
-  CreateEventInput,
-  EventRole,
-  EventStatus,
-  EventVisibility,
-  UpdateEventInput,
-} from "../domain";
-import { db, functions } from "./firebase";
+import type { CreateEventInput, EventRole, EventStatus, EventVisibility, UpdateEventInput } from "../domain";
+import { apiRequest, timestamp, type ApiTimestamp } from "./api";
 
 export type EventView = {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  venue: string;
-  startsAt: Timestamp;
-  endsAt: Timestamp;
-  timezone: string;
-  visibility: EventVisibility;
-  status: EventStatus;
-  managerIds: string[];
-  participantCount: number;
-  createdBy: string;
+  id: string; name: string; slug: string; description: string; venue: string;
+  startsAt: ApiTimestamp; endsAt: ApiTimestamp; timezone: string;
+  visibility: EventVisibility; status: EventStatus; managerIds: string[];
+  participantCount: number; createdBy: string;
 };
 
 export type MembershipView = {
-  id: string;
-  eventId: string;
-  eventName: string;
-  eventVisibility: EventVisibility;
-  eventStartsAt: Timestamp;
-  eventEndsAt: Timestamp;
-  userId: string;
-  email: string;
-  displayName: string;
-  radioCallsign: string | null;
+  id: string; eventId: string; eventName: string; eventVisibility: EventVisibility;
+  eventStartsAt: ApiTimestamp; eventEndsAt: ApiTimestamp; userId: string;
+  email: string; displayName: string; radioCallsign: string | null;
   role: EventRole | null;
   status: "pending" | "invited" | "approved" | "rejected" | "declined";
-  requestedAt: Timestamp | null;
+  requestedAt: ApiTimestamp | null;
 };
 
-function byStartDescending(left: EventView, right: EventView) {
-  return right.startsAt.toMillis() - left.startsAt.toMillis();
+type ApiEvent = Omit<EventView, "startsAt" | "endsAt" | "managerIds"> & {
+  startsAt: string; endsAt: string; managerUserId: string;
+  membershipRole: EventRole | null; membershipStatus: MembershipView["status"] | null;
+};
+
+function mapEvent(event: ApiEvent): EventView {
+  return { ...event, startsAt: timestamp(event.startsAt)!, endsAt: timestamp(event.endsAt)!, managerIds: [event.managerUserId] };
+}
+
+function poll(load: () => Promise<void>, interval: number) {
+  void load();
+  return window.setInterval(() => void load(), interval);
 }
 
 export function useEvents() {
-  const { user, profile } = useAuth();
-  const [publicEvents, setPublicEvents] = useState<EventView[]>([]);
-  const [memberEvents, setMemberEvents] = useState<EventView[]>([]);
+  const { user } = useAuth();
+  const [events, setEvents] = useState<EventView[]>([]);
   const [memberships, setMemberships] = useState<MembershipView[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
     if (!user) return;
-    setLoading(true);
-    const eventQuery =
-      profile?.globalRole === "superadmin"
-        ? query(collection(db, "events"), orderBy("startsAt", "desc"))
-        : query(
-            collection(db, "events"),
-            where("visibility", "==", "public"),
-            where("status", "in", ["published", "active", "completed"]),
-            orderBy("startsAt", "desc"),
-          );
-    const unsubscribe = onSnapshot(
-      eventQuery,
-      (snapshot) => {
-        setPublicEvents(
-          snapshot.docs.map((item) => item.data() as EventView).sort(byStartDescending),
-        );
-        setLoading(false);
-      },
-      (snapshotError) => {
-        setError(snapshotError.message);
-        setLoading(false);
-      },
-    );
-    return unsubscribe;
-  }, [profile?.globalRole, user]);
-
-  useEffect(() => {
-    if (!user) return;
-    const membershipQuery = query(
-      collection(db, "eventMemberships"),
-      where("userId", "==", user.uid),
-      orderBy("eventStartsAt", "desc"),
-    );
     let active = true;
-    const unsubscribe = onSnapshot(
-      membershipQuery,
-      async (snapshot) => {
-        const nextMemberships = snapshot.docs.map(
-          (item) => item.data() as MembershipView,
-        );
-        setMemberships(nextMemberships);
-        const eventSnapshots = await Promise.all(
-          nextMemberships.map((membership) =>
-            getDoc(doc(db, "events", membership.eventId)),
-          ),
-        );
-        if (active) {
-          setMemberEvents(
-            eventSnapshots
-              .filter((item) => item.exists())
-              .map((item) => item.data() as EventView)
-              .sort(byStartDescending),
-          );
-          setLoading(false);
-        }
-      },
-      (snapshotError) => {
-        setError(snapshotError.message);
-        setLoading(false);
-      },
-    );
-    return () => {
-      active = false;
-      unsubscribe();
+    const load = async () => {
+      try {
+        const data = await apiRequest<{ events: ApiEvent[] }>("/v1/events");
+        if (!active) return;
+        setEvents(data.events.map(mapEvent));
+        setMemberships(data.events.filter((event) => event.membershipStatus).map((event) => ({
+          id: `${event.id}_${user.uid}`, eventId: event.id, eventName: event.name,
+          eventVisibility: event.visibility, eventStartsAt: timestamp(event.startsAt)!,
+          eventEndsAt: timestamp(event.endsAt)!, userId: user.uid, email: user.email ?? "",
+          displayName: user.displayName ?? user.email ?? "RETFAST User", radioCallsign: null,
+          role: event.membershipRole, status: event.membershipStatus!, requestedAt: null,
+        })));
+        setError(null);
+      } catch (loadError) { if (active) setError(String(loadError)); }
+      finally { if (active) setLoading(false); }
     };
+    const timer = poll(load, 15_000);
+    return () => { active = false; clearInterval(timer); };
   }, [user]);
-
-  const events = useMemo(() => {
-    const merged = new Map<string, EventView>();
-    for (const event of [...publicEvents, ...memberEvents]) merged.set(event.id, event);
-    return [...merged.values()].sort(byStartDescending);
-  }, [memberEvents, publicEvents]);
-
   const membershipByEvent = useMemo(
-    () => new Map(memberships.map((membership) => [membership.eventId, membership])),
-    [memberships],
+    () => new Map(memberships.map((membership) => [membership.eventId, membership])), [memberships],
   );
-
   return { events, memberships, membershipByEvent, loading, error };
 }
 
@@ -153,14 +73,15 @@ export function useEvent(eventId: string | undefined) {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     if (!eventId) return;
-    return onSnapshot(
-      doc(db, "events", eventId),
-      (snapshot) => {
-        setEvent(snapshot.exists() ? (snapshot.data() as EventView) : null);
-        setLoading(false);
-      },
-      () => setLoading(false),
-    );
+    let active = true;
+    const load = async () => {
+      try {
+        const data = await apiRequest<{ event: ApiEvent }>(`/v1/events/${eventId}`);
+        if (active) setEvent(mapEvent(data.event));
+      } finally { if (active) setLoading(false); }
+    };
+    const timer = poll(load, 15_000);
+    return () => { active = false; clearInterval(timer); };
   }, [eventId]);
   return { event, loading };
 }
@@ -169,67 +90,40 @@ export function useEventMembers(eventId: string | undefined, enabled: boolean) {
   const [members, setMembers] = useState<MembershipView[]>([]);
   const [loading, setLoading] = useState(enabled);
   useEffect(() => {
-    if (!eventId || !enabled) {
-      setLoading(false);
-      return;
-    }
-    const membersQuery = query(
-      collection(db, "eventMemberships"),
-      where("eventId", "==", eventId),
-      orderBy("requestedAt", "desc"),
-    );
-    return onSnapshot(
-      membersQuery,
-      (snapshot) => {
-        setMembers(snapshot.docs.map((item) => item.data() as MembershipView));
-        setLoading(false);
-      },
-      () => setLoading(false),
-    );
+    if (!eventId || !enabled) { setLoading(false); return; }
+    let active = true;
+    const load = async () => {
+      try {
+        const data = await apiRequest<{ members: Array<Omit<MembershipView, "id" | "eventName" | "eventVisibility" | "eventStartsAt" | "eventEndsAt" | "requestedAt"> & { requestedAt: string | null }> }>(`/v1/events/${eventId}/members`);
+        if (active) setMembers(data.members.map((member) => ({
+          ...member, id: `${eventId}_${member.userId}`, eventName: "",
+          eventVisibility: "private", eventStartsAt: timestamp(new Date(0))!,
+          eventEndsAt: timestamp(new Date(0))!, requestedAt: timestamp(member.requestedAt),
+        })));
+      } finally { if (active) setLoading(false); }
+    };
+    const timer = poll(load, 10_000);
+    return () => { active = false; clearInterval(timer); };
   }, [enabled, eventId]);
   return { members, loading };
 }
 
 export async function createEventCommand(input: CreateEventInput) {
-  return (await httpsCallable<CreateEventInput, { eventId: string }>(
-    functions,
-    "createEvent",
-  )(input)).data;
+  return apiRequest<{ eventId: string }>("/v1/events", { method: "POST", body: JSON.stringify(input) });
 }
-
 export async function updateEventCommand(input: UpdateEventInput) {
-  return (await httpsCallable<UpdateEventInput, { eventId: string }>(
-    functions,
-    "updateEvent",
-  )(input)).data;
+  const { eventId, ...changes } = input;
+  return apiRequest<{ eventId: string }>(`/v1/events/${eventId}`, { method: "PATCH", body: JSON.stringify(changes) });
 }
-
 export async function applyToEventCommand(eventId: string) {
-  await httpsCallable(functions, "applyToEvent")({ eventId });
+  await apiRequest(`/v1/events/${eventId}/applications`, { method: "POST", body: "{}" });
 }
-
 export async function setEventManagerCommand(eventId: string, email: string) {
-  await httpsCallable(functions, "setEventManager")({ eventId, email });
+  await apiRequest(`/v1/events/${eventId}/members`, { method: "POST", body: JSON.stringify({ email, role: "manager" }) });
 }
-
-export async function inviteEventMemberCommand(
-  eventId: string,
-  email: string,
-  role: Exclude<EventRole, "manager">,
-) {
-  await httpsCallable(functions, "inviteEventMember")({ eventId, email, role });
+export async function inviteEventMemberCommand(eventId: string, email: string, role: Exclude<EventRole, "manager">) {
+  await apiRequest(`/v1/events/${eventId}/members`, { method: "POST", body: JSON.stringify({ email, role }) });
 }
-
-export async function reviewMembershipCommand(
-  eventId: string,
-  userId: string,
-  decision: "approved" | "rejected",
-  role?: Exclude<EventRole, "manager">,
-) {
-  await httpsCallable(functions, "reviewEventMembership")({
-    eventId,
-    userId,
-    decision,
-    role,
-  });
+export async function reviewMembershipCommand(eventId: string, userId: string, decision: "approved" | "rejected", role?: Exclude<EventRole, "manager">) {
+  await apiRequest(`/v1/events/${eventId}/members/${userId}`, { method: "PATCH", body: JSON.stringify({ decision, role }) });
 }

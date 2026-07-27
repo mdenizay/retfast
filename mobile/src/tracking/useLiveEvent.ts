@@ -1,20 +1,8 @@
-import {
-  onValue,
-  ref,
-  type DataSnapshot,
-} from "@react-native-firebase/database";
-import { getFunctions, httpsCallable } from "@react-native-firebase/functions";
+import { getAuth } from "@react-native-firebase/auth";
 import { useEffect, useState } from "react";
 
-import { realtime, realtimeReady } from "./firebase";
+import { apiRequest, apiWebSocketUrl } from "../lib/api";
 import type { LiveParticipant } from "./types";
-
-const functions = getFunctions(undefined, "europe-west1");
-
-function participantsFromSnapshot(snapshot: DataSnapshot) {
-  const value = snapshot.val() as Record<string, LiveParticipant> | null;
-  return value ? Object.values(value) : [];
-}
 
 export function useLiveEvent(eventId: string | undefined, enabled: boolean) {
   const [participants, setParticipants] = useState<LiveParticipant[]>([]);
@@ -22,41 +10,45 @@ export function useLiveEvent(eventId: string | undefined, enabled: boolean) {
   const [loading, setLoading] = useState(enabled);
 
   useEffect(() => {
-    if (!eventId || !enabled) {
-      return;
-    }
-    let unsubLive: (() => void) | undefined;
-    let unsubConnection: (() => void) | undefined;
-    let cancelled = false;
-    void (async () => {
-      await httpsCallable<{ eventId: string }, { role: string }>(
-        functions,
-        "prepareEventRealtime",
-      )({ eventId });
-      await realtimeReady;
-      if (cancelled) return;
-      unsubLive = onValue(
-        ref(realtime, `live/${eventId}`),
-        (snapshot) => {
-          setParticipants(participantsFromSnapshot(snapshot));
-          setLoading(false);
-        },
-        () => setLoading(false),
-      );
-      unsubConnection = onValue(ref(realtime, ".info/connected"), (snapshot) => {
-        setConnected(snapshot.val() === true);
-      });
-    })().catch(() => setLoading(false));
+    if (!eventId || !enabled) return;
+    let active = true;
+    let socket: WebSocket | undefined;
+    const load = async () => {
+      try {
+        const data = await apiRequest<{ participants: LiveParticipant[] }>(`/v1/events/${eventId}/live`);
+        if (active) setParticipants(data.participants);
+      } finally { if (active) setLoading(false); }
+    };
+    void load();
+    const poll = setInterval(() => void load(), 15_000);
+    void getAuth().currentUser?.getIdToken().then((token) => {
+      if (!active || !token) return;
+      socket = new WebSocket(apiWebSocketUrl());
+      socket.onopen = () => socket?.send(JSON.stringify({ type: "authenticate", token }));
+      socket.onmessage = (event) => {
+        const message = JSON.parse(String(event.data)) as { type: string; eventId?: string; data?: LiveParticipant };
+        if (message.type === "authenticated") {
+          socket?.send(JSON.stringify({ type: "subscribe", eventId }));
+        } else if (message.type === "subscribed") {
+          setConnected(true);
+        } else if (message.type === "location.updated" && message.data) {
+          setParticipants((current) => [
+            ...current.filter((participant) => participant.userId !== message.data!.userId),
+            message.data!,
+          ]);
+        } else if (message.type === "tracking.stopped") {
+          void load();
+        }
+      };
+      socket.onerror = () => setConnected(false);
+      socket.onclose = () => setConnected(false);
+    });
     return () => {
-      cancelled = true;
-      unsubLive?.();
-      unsubConnection?.();
+      active = false;
+      clearInterval(poll);
+      socket?.close();
     };
   }, [enabled, eventId]);
 
-  return {
-    participants: enabled ? participants : [],
-    connected: enabled && connected,
-    loading: enabled && loading,
-  };
+  return { participants: enabled ? participants : [], connected: enabled && connected, loading: enabled && loading };
 }

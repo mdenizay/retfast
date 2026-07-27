@@ -56,12 +56,19 @@ retrievalRouter.get("/events/:eventId/retrieval", async (request, response) => {
   await expireOffers(eventId);
   const [jobs, retrievers] = await Promise.all([
     pool.query(
-      `SELECT id,event_id AS "eventId",session_id AS "sessionId",pilot_id AS "pilotId",
-       pilot_name AS "pilotName",urgency,status,offered_retriever_id AS "offeredRetrieverId",
+      `SELECT j.id,j.event_id AS "eventId",j.session_id AS "sessionId",j.pilot_id AS "pilotId",
+       j.pilot_name AS "pilotName",pilot.radio_callsign AS "pilotRadioCallsign",
+       j.urgency,j.status,j.offered_retriever_id AS "offeredRetrieverId",
        offered_retriever_name AS "offeredRetrieverName",assigned_retriever_id AS "assignedRetrieverId",
        assigned_retriever_name AS "assignedRetrieverName",offer_expires_at AS "offerExpiresAt",
-       picked_up_at AS "pickedUpAt",delivered_at AS "deliveredAt",created_at AS "createdAt",
-       updated_at AS "updatedAt",version FROM retrieval_jobs WHERE event_id=$1 ORDER BY created_at DESC`,
+       picked_up_at AS "pickedUpAt",delivered_at AS "deliveredAt",j.created_at AS "createdAt",
+       j.created_at AS "requestedAt",j.updated_at AS "updatedAt",j.version,
+       CASE WHEN ll.user_id IS NULL THEN NULL ELSE json_build_object(
+         'latitude',ll.latitude,'longitude',ll.longitude,
+         'recordedAt',(extract(epoch from ll.recorded_at)*1000)::bigint) END AS landing
+       FROM retrieval_jobs j JOIN users pilot ON pilot.id=j.pilot_id
+       LEFT JOIN live_locations ll ON ll.event_id=j.event_id AND ll.user_id=j.pilot_id
+       WHERE j.event_id=$1 ORDER BY j.created_at DESC`,
       [eventId],
     ),
     pool.query(
@@ -89,6 +96,7 @@ retrievalRouter.get("/events/:eventId/retrievers/nearby", async (request, respon
       WHERE event_id=$1 AND user_id=$2)
      SELECT rs.user_id AS "userId",u.display_name AS "displayName",u.radio_callsign AS "radioCallsign",
        rs.capacity,rs.assigned_count AS "assignedCount",rs.availability,
+       ll.latitude,ll.longitude,
        6371 * 2 * asin(sqrt(power(sin(radians(ll.latitude-p.latitude)/2),2) +
        cos(radians(p.latitude))*cos(radians(ll.latitude))*
        power(sin(radians(ll.longitude-p.longitude)/2),2))) AS "distanceKm"
@@ -228,6 +236,56 @@ retrievalRouter.post("/events/:eventId/retrieval/jobs/:jobId/progress", async (r
   });
   publishEvent(eventId, "retrieval.updated", job);
   response.json({ data: { job } });
+});
+
+retrievalRouter.post("/events/:eventId/retrieval/dispatch", async (request, response) => {
+  const eventId = String(request.params.eventId);
+  await requireEventOperator(pool, request.auth, eventId);
+  const input = z.object({
+    sessionId: z.string().min(1), retrieverId: z.string().min(1), urgency: urgencySchema.default("normal"),
+  }).parse(request.body);
+  const job = await inTransaction(async (client) => {
+    const session = await client.query<any>(
+      "SELECT * FROM tracking_sessions WHERE id=$1 AND event_id=$2 AND role='pilot' FOR UPDATE",
+      [input.sessionId, eventId],
+    );
+    const pilot = session.rows[0];
+    if (!pilot) throw new ApiError(404, "pilot_session_not_found", "Pilot session not found.");
+    const target = await client.query<any>(
+      `SELECT rs.*,u.display_name FROM retriever_states rs JOIN users u ON u.id=rs.user_id
+       WHERE rs.event_id=$1 AND rs.user_id=$2 FOR UPDATE OF rs`, [eventId, input.retrieverId],
+    );
+    const retriever = target.rows[0];
+    if (!retriever || retriever.availability === "inactive" || retriever.assigned_count >= retriever.capacity) {
+      throw new ApiError(409, "retriever_unavailable", "Retriever is unavailable or full.");
+    }
+    const current = await client.query<any>(
+      "SELECT * FROM retrieval_jobs WHERE session_id=$1 FOR UPDATE", [input.sessionId],
+    );
+    if (current.rows[0]?.assigned_retriever_id) {
+      throw new ApiError(409, "job_already_assigned", "Use transfer for an assigned job.");
+    }
+    const id = current.rows[0]?.id ?? randomUUID();
+    const result = await client.query(
+      `INSERT INTO retrieval_jobs
+       (id,event_id,session_id,pilot_id,pilot_name,urgency,status,assigned_retriever_id,assigned_retriever_name)
+       VALUES($1,$2,$3,$4,$5,$6,'assigned',$7,$8)
+       ON CONFLICT(session_id) DO UPDATE SET status='assigned',urgency=$6,
+        offered_retriever_id=NULL,offered_retriever_name=NULL,offer_expires_at=NULL,
+        assigned_retriever_id=$7,assigned_retriever_name=$8,version=retrieval_jobs.version+1,updated_at=now()
+       RETURNING id,status,assigned_retriever_id AS "assignedRetrieverId"`,
+      [id, eventId, input.sessionId, pilot.user_id, pilot.display_name, input.urgency,
+        input.retrieverId, retriever.display_name],
+    );
+    await client.query(
+      `UPDATE retriever_states SET assigned_count=assigned_count+1,
+       availability=CASE WHEN assigned_count+1>=capacity THEN 'busy' ELSE availability END,updated_at=now()
+       WHERE event_id=$1 AND user_id=$2`, [eventId, input.retrieverId],
+    );
+    return result.rows[0];
+  });
+  publishEvent(eventId, "retrieval.updated", job);
+  response.status(201).json({ data: { job } });
 });
 
 retrievalRouter.post("/events/:eventId/retrieval/transfers", async (request, response) => {

@@ -20,6 +20,7 @@ export default function ReplayPage() {
   const [idx, setIdx] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(16);
+  const [mapReady, setMapReady] = useState(false);
   const mapRef = useRef<MLMap | null>(null);
   const markerRef = useRef<maplibregl.Marker | null>(null);
 
@@ -50,7 +51,7 @@ export default function ReplayPage() {
   // Draw the trail + moving marker.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || points.length === 0) return;
+    if (!map || !mapReady || points.length === 0) return;
 
     const upTo = points.slice(0, idx + 1);
     const line: GeoJSON.Feature = {
@@ -85,7 +86,18 @@ export default function ReplayPage() {
     } else {
       markerRef.current.setLngLat([cur.lng, cur.lat]);
     }
-  }, [idx, points]);
+  }, [idx, points, mapReady]);
+
+  // Fit the camera once both the map and the track are available.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady || points.length === 0) return;
+    const bounds = points.reduce(
+      (b, p) => b.extend([p.lng, p.lat]),
+      new maplibregl.LngLatBounds([points[0].lng, points[0].lat], [points[0].lng, points[0].lat]),
+    );
+    map.fitBounds(bounds, { padding: 60 });
+  }, [mapReady, points]);
 
   const cur = points[idx];
 
@@ -126,13 +138,7 @@ export default function ReplayPage() {
         zoom={12}
         onReady={(map) => {
           mapRef.current = map;
-          if (points.length) {
-            const bounds = points.reduce(
-              (b, p) => b.extend([p.lng, p.lat]),
-              new maplibregl.LngLatBounds([points[0].lng, points[0].lat], [points[0].lng, points[0].lat]),
-            );
-            map.fitBounds(bounds, { padding: 60 });
-          }
+          setMapReady(true);
         }}
       />
 

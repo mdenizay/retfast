@@ -23,7 +23,7 @@ export default function AuditTab({ eventId }: { eventId: string }) {
   useEffect(() => {
     void supabase
       .from("audit_logs")
-      .select("*, actor:profiles(display_name)")
+      .select("*, actor:profiles!audit_logs_actor_id_fkey(display_name)")
       .eq("event_id", eventId)
       .order("created_at", { ascending: false })
       .limit(300)

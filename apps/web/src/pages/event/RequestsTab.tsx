@@ -15,7 +15,7 @@ export default function RequestsTab({ eventId }: { eventId: string }) {
   const load = useCallback(async () => {
     const { data } = await supabase
       .from("participation_requests")
-      .select("*, profile:profiles(id, display_name)")
+      .select("*, profile:profiles!participation_requests_user_id_fkey(id, display_name)")
       .eq("event_id", eventId)
       .eq("status", "pending")
       .order("created_at");

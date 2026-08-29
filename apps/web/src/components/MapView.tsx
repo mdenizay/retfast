@@ -86,6 +86,7 @@ function syncZones(map: MLMap, zones: GeoZone[]) {
 export default function MapView({ className, center, zoom, zones, onReady }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
+  const readyRef = useRef(false);
   const zonesRef = useRef<GeoZone[]>(zones ?? []);
   zonesRef.current = zones ?? [];
 
@@ -100,11 +101,17 @@ export default function MapView({ className, center, zoom, zones, onReady }: Map
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
     mapRef.current = map;
+    const ro = new ResizeObserver(() => map.resize());
+    ro.observe(containerRef.current);
     map.on("load", () => {
+      readyRef.current = true;
+      if (import.meta.env.DEV) (window as unknown as { __map?: MLMap }).__map = map;
       syncZones(map, zonesRef.current);
       onReady?.(map);
     });
     return () => {
+      ro.disconnect();
+      readyRef.current = false;
       map.remove();
       mapRef.current = null;
     };
@@ -114,7 +121,9 @@ export default function MapView({ className, center, zoom, zones, onReady }: Map
 
   useEffect(() => {
     const map = mapRef.current;
-    if (map && map.isStyleLoaded()) syncZones(map, zones ?? []);
+    // Zones arriving before the style finishes loading are synced by the
+    // load handler above (via zonesRef).
+    if (map && readyRef.current) syncZones(map, zones ?? []);
   }, [zones]);
 
   return <div ref={containerRef} className={className ?? "h-96 w-full rounded-md"} />;

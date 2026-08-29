@@ -23,7 +23,7 @@ export default function MembersTab({ eventId, canEdit }: { eventId: string; canE
   const load = useCallback(async () => {
     const { data } = await supabase
       .from("event_members")
-      .select("*, profile:profiles(id, display_name, avatar_url, locale)")
+      .select("*, profile:profiles!event_members_user_id_fkey(id, display_name, avatar_url, locale)")
       .eq("event_id", eventId)
       .order("created_at");
     setMembers((data as unknown as EventMember[]) ?? []);

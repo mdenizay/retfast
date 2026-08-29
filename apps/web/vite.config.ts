@@ -8,4 +8,9 @@ export default defineConfig({
   resolve: {
     alias: { "@": path.resolve(__dirname, "./src") },
   },
+  // The dep optimizer cannot rewrite maplibre's web-worker chunk; excluding it
+  // keeps the worker loadable in dev (production builds are unaffected).
+  optimizeDeps: {
+    exclude: ["maplibre-gl"],
+  },
 });

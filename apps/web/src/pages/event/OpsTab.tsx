@@ -49,6 +49,7 @@ export default function OpsTab({ eventId, isOperator }: { eventId: string; isOpe
   const [emergencies, setEmergencies] = useState<EmergencyEvent[]>([]);
   const [positions, setPositions] = useState<Record<string, LivePosition>>({});
   const [names, setNames] = useState<Record<string, string>>({});
+  const [mapReady, setMapReady] = useState(false);
   const mapRef = useRef<MLMap | null>(null);
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
 
@@ -74,7 +75,7 @@ export default function OpsTab({ eventId, isOperator }: { eventId: string; isOpe
         .order("created_at", { ascending: false }),
       supabase
         .from("event_members")
-        .select("user_id, profile:profiles(id, display_name)")
+        .select("user_id, profile:profiles!event_members_user_id_fkey(id, display_name)")
         .eq("event_id", eventId),
     ]);
     setZones((zonesRes.data as GeoZone[]) ?? []);
@@ -132,6 +133,10 @@ export default function OpsTab({ eventId, isOperator }: { eventId: string; isOpe
 
   useEffect(() => {
     void loadState();
+    // Polling fallback: keeps the ops picture fresh even if the Realtime
+    // socket is down; Realtime events just make it instant.
+    const timer = setInterval(() => void loadState(), 15000);
+    return () => clearInterval(timer);
   }, [loadState]);
 
   // Realtime: point inserts update positions in place; any state-table change
@@ -242,7 +247,7 @@ export default function OpsTab({ eventId, isOperator }: { eventId: string; isOpe
         markers.delete(key);
       }
     }
-  }, [tasks, retrievers, emergencies, positions, names]);
+  }, [tasks, retrievers, emergencies, positions, names, mapReady]);
 
   async function updateEmergency(id: string, action: "acknowledge" | "resolve") {
     const { error } = await supabase.rpc("update_emergency", { p_emergency: id, p_action: action });
@@ -286,6 +291,7 @@ export default function OpsTab({ eventId, isOperator }: { eventId: string; isOpe
         zones={zones}
         onReady={(map) => {
           mapRef.current = map;
+          setMapReady(true);
         }}
       />
 

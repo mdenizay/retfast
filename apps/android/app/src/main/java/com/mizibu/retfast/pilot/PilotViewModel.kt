@@ -39,6 +39,7 @@ class PilotViewModel(private val eventId: String) : ViewModel() {
 
     val tracking = TrackingService.state
     val pending = SyncEngine.pending
+    val syncError = SyncEngine.lastError
 
     fun attach(context: Context, existing: TaskRow?) {
         if (existing != null) {

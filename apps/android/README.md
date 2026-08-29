@@ -60,6 +60,27 @@ directly installable; wire a real keystore before store distribution.
 - `ui/Common.kt` — `Hit` touch-target tiers (48/52/60 dp) mirroring the iOS
   `ControlStyles.swift`, because these screens are used outdoors with gloves.
 
+## Verified on device
+
+Built, installed and driven end-to-end on an `android-35` emulator against the
+live Supabase: sign-in, event list/detail from real data, flight start, a
+`foregroundServiceType=location` service (`isForeground=true types=0x8`), and
+19 points captured while backgrounded then uploaded — coordinates matching the
+injected track exactly.
+
+Three bugs that only surfaced by actually running it:
+
+1. `PRAGMA journal_mode=WAL` via `execSQL()` crashed the app — the pragma
+   returns a row and `execSQL()` rejects statements that produce results. Now
+   uses `setWriteAheadLoggingEnabled()`.
+2. Sync started before the persisted Supabase session was restored, so uploads
+   went out unauthenticated, failed, and wedged the backoff — points piled up
+   in the queue while tracking looked healthy. `drain()` now waits for a
+   session, and the HUD surfaces upload failures with the queue depth.
+3. Fused location needs Google Play services; the service now falls back to
+   the platform `LocationManager` if fused stays silent for 20 s, so tracking
+   still works on devices without GMS.
+
 ## Not yet done
 
 - **No map view.** The pilot HUD is text-only; MapLibre is not wired in yet.

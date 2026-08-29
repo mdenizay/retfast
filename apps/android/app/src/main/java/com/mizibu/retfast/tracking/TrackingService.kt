@@ -10,6 +10,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
 import android.os.BatteryManager
 import android.os.Build
 import android.os.IBinder
@@ -50,6 +52,8 @@ class TrackingService : Service() {
         const val EXTRA_ID = "id"
 
         private const val CHANNEL_ID = "retfast.tracking"
+        /** How long fused location may stay silent before the fallback kicks in. */
+        private const val FUSED_GRACE_MS = 20_000L
         private const val NOTIFICATION_ID = 4201
 
         private val _state = MutableStateFlow(TrackingState())
@@ -84,8 +88,11 @@ class TrackingService : Service() {
     )
 
     private lateinit var client: com.google.android.gms.location.FusedLocationProviderClient
+    private var locationManager: LocationManager? = null
     private var mode: Mode? = null
     private var targetId: String? = null
+    private var lastFixAtMs = 0L
+    private val watchdog = android.os.Handler(android.os.Looper.getMainLooper())
 
     private val iso = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
         timeZone = TimeZone.getTimeZone("UTC")
@@ -93,9 +100,22 @@ class TrackingService : Service() {
 
     private val callback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
+            ingest(result.locations)
+        }
+    }
+
+    /**
+     * Backstop source. Fused location needs Google Play services, which plenty
+     * of Android devices ship without — for a safety app that must not mean
+     * "no tracking at all", so we fall back to the platform provider.
+     */
+    private val rawListener = LocationListener { loc -> ingest(listOf(loc)) }
+
+    private fun ingest(locations: List<Location>) {
+        run {
             val id = targetId ?: return
             val battery = batteryPercent()
-            for (loc in result.locations) {
+            for (loc in locations) {
                 if (loc.accuracy < 0) continue
                 val pointId = UUID.randomUUID().toString()
                 val payload = JSONObject().apply {
@@ -116,10 +136,11 @@ class TrackingService : Service() {
                     }
                 }
                 PointBuffer.get(this@TrackingService).enqueue(pointId, payload)
+                lastFixAtMs = System.currentTimeMillis()
                 _state.value = _state.value.copy(
                     lastLocation = loc,
                     batteryPercent = battery,
-                    lastFixAtMs = System.currentTimeMillis(),
+                    lastFixAtMs = lastFixAtMs,
                 )
             }
             // The location callback is the reliable trigger while backgrounded.
@@ -130,6 +151,7 @@ class TrackingService : Service() {
     override fun onCreate() {
         super.onCreate()
         client = LocationServices.getFusedLocationProviderClient(this)
+        locationManager = getSystemService(Context.LOCATION_SERVICE) as? LocationManager
         createChannel()
     }
 
@@ -159,15 +181,47 @@ class TrackingService : Service() {
             return
         }
         val interval = if (mode == Mode.RETRIEVER) 10_000L else 5_000L
+        val distance = if (mode == Mode.RETRIEVER) 50f else 10f
         val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, interval)
-            .setMinUpdateDistanceMeters(if (mode == Mode.RETRIEVER) 50f else 10f)
+            .setMinUpdateDistanceMeters(distance)
             .setWaitForAccurateLocation(false)
             .build()
         client.requestLocationUpdates(request, callback, mainLooper)
+
+        // If fused produces nothing (no/limited Play services), fall back to
+        // the platform provider rather than tracking silently failing.
+        lastFixAtMs = 0
+        watchdog.postDelayed({ startRawUpdatesIfStarved(interval, distance) }, FUSED_GRACE_MS)
+    }
+
+    private var rawActive = false
+
+    private fun startRawUpdatesIfStarved(interval: Long, distance: Float) {
+        if (targetId == null || rawActive) return
+        if (lastFixAtMs != 0L && System.currentTimeMillis() - lastFixAtMs < FUSED_GRACE_MS) return
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        val lm = locationManager ?: return
+        for (provider in listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)) {
+            if (lm.isProviderEnabled(provider)) {
+                runCatching {
+                    lm.requestLocationUpdates(provider, interval, distance, rawListener, mainLooper)
+                    rawActive = true
+                }
+            }
+        }
     }
 
     private fun stopTracking() {
+        watchdog.removeCallbacksAndMessages(null)
         client.removeLocationUpdates(callback)
+        if (rawActive) {
+            runCatching { locationManager?.removeUpdates(rawListener) }
+            rawActive = false
+        }
         SyncEngine.flushNow(this)
         _state.value = TrackingState()
         mode = null
@@ -177,7 +231,12 @@ class TrackingService : Service() {
     }
 
     override fun onDestroy() {
+        watchdog.removeCallbacksAndMessages(null)
         client.removeLocationUpdates(callback)
+        if (rawActive) {
+            runCatching { locationManager?.removeUpdates(rawListener) }
+            rawActive = false
+        }
         super.onDestroy()
     }
 

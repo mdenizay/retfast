@@ -52,6 +52,7 @@ fun PilotScreen(
     val state by vm.state.collectAsState()
     val tracking by vm.tracking.collectAsState()
     val pending by vm.pending.collectAsState()
+    val syncError by vm.syncError.collectAsState()
     var showCancel by remember { mutableStateOf(false) }
     var cancelReason by remember { mutableStateOf("") }
     var sosArmed by remember { mutableStateOf(false) }
@@ -125,6 +126,14 @@ fun PilotScreen(
         state.error?.let {
             Spacer(Modifier.size(8.dp))
             Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+        }
+        if (pending > 0 && syncError != null) {
+            Spacer(Modifier.size(8.dp))
+            Text(
+                "Yükleme hatası ($pending nokta bekliyor): $syncError",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+            )
         }
         if (state.sosDelivered == false) {
             Spacer(Modifier.size(8.dp))

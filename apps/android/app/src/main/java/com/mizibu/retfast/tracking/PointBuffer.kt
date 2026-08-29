@@ -16,6 +16,13 @@ import org.json.JSONObject
 class PointBuffer private constructor(context: Context) :
     SQLiteOpenHelper(context.applicationContext, "points.db", null, 1) {
 
+    init {
+        // WAL must be enabled through the helper API. Running
+        // `PRAGMA journal_mode=WAL` via execSQL() throws, because the pragma
+        // returns a row and execSQL() rejects statements that produce results.
+        setWriteAheadLoggingEnabled(true)
+    }
+
     data class Pending(val id: String, val payload: String)
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -35,7 +42,6 @@ class PointBuffer private constructor(context: Context) :
 
     override fun onOpen(db: SQLiteDatabase) {
         super.onOpen(db)
-        db.execSQL("PRAGMA journal_mode=WAL")
         // Recover after process death: anything left in-flight is pending again.
         db.execSQL("UPDATE pending_points SET in_flight = 0")
     }

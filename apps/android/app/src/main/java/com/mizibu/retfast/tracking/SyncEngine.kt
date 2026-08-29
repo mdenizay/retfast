@@ -3,6 +3,7 @@ package com.mizibu.retfast.tracking
 import android.content.Context
 import com.mizibu.retfast.core.appJson
 import com.mizibu.retfast.core.supa
+import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -63,12 +64,17 @@ object SyncEngine {
                 // long one, so we never hammer a failing server.
                 if (!force || nextAttemptAtMs - now > 30_000) return
             }
+            // Uploading before the persisted session is restored would send an
+            // unauthenticated request; ingest_location_points then rejects it
+            // and we would burn backoff for a problem that resolves itself.
+            if (supa.auth.currentSessionOrNull() == null) return
+
             lastFlushMs = now
 
             val buffer = PointBuffer.get(context)
-            repeat(5) {
+            for (round in 0 until 5) {
                 val batch = buffer.checkoutBatch(100)
-                if (batch.isEmpty()) return@repeat
+                if (batch.isEmpty()) break
                 val ids = batch.map { it.id }
                 try {
                     val arr = JSONArray()
@@ -89,7 +95,7 @@ object SyncEngine {
                     val delay = minOf(Math.pow(2.0, failures.toDouble()), 300.0)
                     nextAttemptAtMs = System.currentTimeMillis() + (delay * 1000).toLong()
                     _lastError.value = e.message
-                    return@repeat
+                    break
                 }
             }
             _pending.value = buffer.pendingCount()

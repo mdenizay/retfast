@@ -21,16 +21,30 @@ final class TrackingEngine: NSObject, ObservableObject, CLLocationManagerDelegat
     @Published private(set) var lastLocation: CLLocation?
     @Published private(set) var profile: Profile = .performance
 
-    private let manager = CLLocationManager()
+    private var manager: CLLocationManager!
     private var target: Target?
 
     override private init() {
         super.init()
-        manager.delegate = self
-        manager.allowsBackgroundLocationUpdates = false
-        manager.pausesLocationUpdatesAutomatically = false
-        manager.showsBackgroundLocationIndicator = true
-        UIDevice.current.isBatteryMonitoringEnabled = true
+        // CLLocationManager delivers callbacks on the runloop of the thread it
+        // was created on. The singleton can be first touched from an async
+        // context (background executor), so pin creation to the main thread —
+        // otherwise delegate callbacks are scheduled onto a dead thread and
+        // never arrive.
+        let setup = {
+            let m = CLLocationManager()
+            m.delegate = self
+            m.allowsBackgroundLocationUpdates = false
+            m.pausesLocationUpdatesAutomatically = false
+            m.showsBackgroundLocationIndicator = true
+            self.manager = m
+            UIDevice.current.isBatteryMonitoringEnabled = true
+        }
+        if Thread.isMainThread {
+            setup()
+        } else {
+            DispatchQueue.main.sync(execute: setup)
+        }
     }
 
     func requestPermissions() {
@@ -48,7 +62,11 @@ final class TrackingEngine: NSObject, ObservableObject, CLLocationManagerDelegat
         self.target = target
         requestPermissions()
         applyProfile(pick())
-        manager.allowsBackgroundLocationUpdates = true
+        // CoreLocation asserts (and kills the app) if this is enabled without
+        // the "location" background mode — guard so a misbuilt bundle merely
+        // loses background tracking instead of crashing mid-flight.
+        let modes = Bundle.main.object(forInfoDictionaryKey: "UIBackgroundModes") as? [String] ?? []
+        manager.allowsBackgroundLocationUpdates = modes.contains("location")
         manager.startUpdatingLocation()
         // Relaunch insurance: if iOS terminates the app, a significant-change
         // event restarts it and AppDelegate resumes precise tracking.

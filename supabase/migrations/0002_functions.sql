@@ -278,7 +278,7 @@ begin
       (p ->> 'speed_mps')::double precision                as speed_mps,
       (p ->> 'h_accuracy_m')::double precision             as h_accuracy_m,
       (p ->> 'v_accuracy_m')::double precision             as v_accuracy_m,
-      (p ->> 'battery_pct')::smallint                      as battery_pct,
+      round((p ->> 'battery_pct')::numeric)::smallint      as battery_pct,
       coalesce(p ->> 'tracking_state', 'foreground')::public.tracking_state as tracking_state
     from jsonb_array_elements(p_points) p
   ),

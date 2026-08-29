@@ -16,6 +16,16 @@ targets:
     platform: iOS
     sources:
       - path: Retfast
+    info:
+      path: Retfast/Info.plist
+      properties:
+        CFBundleDisplayName: RETFAST
+        UIBackgroundModes: [location]
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        NSLocationWhenInUseUsageDescription: "RETFAST records your position during flights and retrieval duty so the operation can see and reach you."
+        NSLocationAlwaysAndWhenInUseUsageDescription: "Background location keeps your track and safety monitoring alive while the screen is locked during a flight or retrieval duty."
+        ITSAppUsesNonExemptEncryption: false
     dependencies:
       - package: Supabase
         product: Supabase
@@ -27,11 +37,3 @@ targets:
         SWIFT_VERSION: 5.10
         DEVELOPMENT_TEAM: JHW499P7S3
         TARGETED_DEVICE_FAMILY: 1
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: RETFAST
-        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "RETFAST records your position during flights and retrieval duty so the operation can see and reach you."
-        INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription: "Background location keeps your track and safety monitoring alive while the screen is locked during a flight or retrieval duty."
-        INFOPLIST_KEY_UIBackgroundModes: "location"
-        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
-        INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait"

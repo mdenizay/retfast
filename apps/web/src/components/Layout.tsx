@@ -9,7 +9,7 @@ import {
 import { useAuth } from "@/auth/AuthProvider";
 import { useI18n, LOCALES } from "@/i18n";
 import { supabase } from "@/lib/supabase";
-import { CircleUser, Globe } from "lucide-react";
+import { CircleUser, Globe, RadioTower } from "lucide-react";
 
 export default function Layout() {
   const { profile } = useAuth();
@@ -17,16 +17,19 @@ export default function Layout() {
   const navigate = useNavigate();
 
   const navCls = ({ isActive }: { isActive: boolean }) =>
-    `px-3 py-1.5 rounded-md text-sm font-medium ${
-      isActive ? "bg-secondary text-secondary-foreground" : "text-muted-foreground hover:text-foreground"
+    `px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+      isActive ? "bg-primary/12 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
     }`;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b">
+      <header className="sticky top-0 z-40 border-b border-white/8 bg-background/82 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
-          <Link to="/events" className="text-lg font-bold tracking-tight">
-            RET<span className="text-primary">FAST</span>
+          <Link to="/events" className="flex items-center gap-2.5">
+            <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/15">
+              <RadioTower className="size-5" />
+            </span>
+            <span className="brand-wordmark text-lg">RET<span className="text-primary">FAST</span></span>
           </Link>
           <nav className="flex items-center gap-1">
             <NavLink to="/events" className={navCls}>

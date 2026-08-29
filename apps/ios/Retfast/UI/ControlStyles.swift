@@ -1,5 +1,30 @@
 import SwiftUI
 
+enum RetfastBrand {
+    static let amber = Color(red: 0.953, green: 0.655, blue: 0.071)
+    static let amberSoft = Color(red: 1.0, green: 0.784, blue: 0.341)
+    static let graphite = Color(red: 0.051, green: 0.055, blue: 0.063)
+    static let surface = Color(red: 0.106, green: 0.106, blue: 0.098)
+    static let surfaceHigh = Color(red: 0.145, green: 0.141, blue: 0.122)
+    static let ivory = Color(red: 1.0, green: 0.957, blue: 0.839)
+}
+
+struct RetfastMark: View {
+    var size: CGFloat = 56
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
+                .fill(RetfastBrand.amber)
+            Image(systemName: "location.north.fill")
+                .font(.system(size: size * 0.42, weight: .black))
+                .foregroundStyle(RetfastBrand.graphite)
+        }
+        .frame(width: size, height: size)
+        .shadow(color: RetfastBrand.amber.opacity(0.18), radius: 18, y: 8)
+    }
+}
+
 /// Touch-target sizing for the operational screens.
 ///
 /// These are flown with gloves on, in wind, often one-handed — Apple's 44pt
@@ -40,13 +65,17 @@ struct BigButtonStyle: ButtonStyle {
     }
 
     private var foreground: Color {
-        kind == .secondary ? .primary : .white
+        switch kind {
+        case .primary, .warning: RetfastBrand.graphite
+        case .secondary: RetfastBrand.ivory
+        case .destructive, .success: .white
+        }
     }
 
     private var background: Color {
         switch kind {
-        case .primary: .accentColor
-        case .secondary: Color(.secondarySystemBackground)
+        case .primary: RetfastBrand.amber
+        case .secondary: RetfastBrand.surfaceHigh
         case .destructive: .red
         case .warning: .orange
         case .success: .green
@@ -54,7 +83,7 @@ struct BigButtonStyle: ButtonStyle {
     }
 
     private var strokeColor: Color {
-        kind == .secondary ? Color.secondary.opacity(0.35) : .clear
+        kind == .secondary ? RetfastBrand.amber.opacity(0.18) : .clear
     }
 }
 
@@ -76,7 +105,9 @@ struct MapChipButtonStyle: ButtonStyle {
         configuration.label
             .font(.title3.weight(.semibold))
             .frame(width: Hit.min + 4, height: Hit.min + 4)
-            .background(.thinMaterial, in: Circle())
+            .foregroundStyle(RetfastBrand.ivory)
+            .background(RetfastBrand.surface.opacity(0.92), in: Circle())
+            .overlay(Circle().stroke(RetfastBrand.amber.opacity(0.2), lineWidth: 1))
             .opacity(configuration.isPressed ? 0.7 : 1)
             .contentShape(Circle())
     }

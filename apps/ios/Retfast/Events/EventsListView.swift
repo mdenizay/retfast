@@ -103,6 +103,8 @@ struct EventsListView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(RetfastBrand.graphite)
             .navigationTitle("RETFAST")
             .navigationDestination(for: EventRow.self) { event in
                 EventDetailView(event: event, roles: model.roles[event.id] ?? [])

@@ -17,11 +17,11 @@ struct ReplayView: View {
             Map(position: $camera) {
                 if let points = track?.points, points.count > 1 {
                     MapPolyline(coordinates: points.map(coord))
-                        .stroke(.blue, lineWidth: 3)
+                        .stroke(RetfastBrand.amber, lineWidth: 3)
                     let current = points[min(Int(index), points.count - 1)]
                     Annotation("", coordinate: coord(current)) {
                         Circle()
-                            .fill(.blue)
+                            .fill(RetfastBrand.amber)
                             .frame(width: 14, height: 14)
                             .overlay(Circle().stroke(.white, lineWidth: 3))
                     }
@@ -85,7 +85,7 @@ struct ReplayView: View {
             }
         }
         .padding()
-        .background(.thinMaterial)
+        .background(RetfastBrand.surface.opacity(0.96))
     }
 
     private func statItem(_ icon: String, _ value: String) -> some View {

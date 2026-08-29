@@ -15,6 +15,21 @@ struct LoginView: View {
         NavigationStack {
             Form {
                 Section {
+                    VStack(spacing: 10) {
+                        RetfastMark(size: 64)
+                        Text("LIVE FLIGHT OPERATIONS")
+                            .font(.caption2.weight(.bold))
+                            .tracking(2)
+                            .foregroundStyle(RetfastBrand.amber)
+                        Text("RETFAST")
+                            .font(.largeTitle.weight(.black))
+                            .tracking(-1.5)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .listRowBackground(Color.clear)
+                }
+                Section {
                     if mode == .signUp {
                         TextField(String(localized: "auth.displayName"), text: $displayName).minTapTarget()
                     }
@@ -48,7 +63,9 @@ struct LoginView: View {
                     .minTapTarget()
                 }
             }
-            .navigationTitle("RETFAST")
+            .scrollContentBackground(.hidden)
+            .background(RetfastBrand.graphite)
+            .navigationBarHidden(true)
         }
     }
 

@@ -106,6 +106,8 @@ struct RetrieverView: View {
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(RetfastBrand.graphite)
         .listStyle(.insetGrouped)
     }
 }

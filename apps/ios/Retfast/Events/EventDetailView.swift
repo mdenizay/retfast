@@ -99,6 +99,8 @@ struct EventDetailView: View {
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(RetfastBrand.graphite)
         .navigationTitle(event.name)
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(for: TaskRow.self) { task in

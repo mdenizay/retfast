@@ -17,6 +17,9 @@ struct RetfastApp: App {
                 }
             }
             .environmentObject(auth)
+            .preferredColorScheme(.dark)
+            .tint(RetfastBrand.amber)
+            .background(RetfastBrand.graphite)
             .onChange(of: scenePhase) { _, phase in
                 // Backgrounding flushes the queue while we still have runtime.
                 if phase == .background { SyncEngine.shared.flushNow() }

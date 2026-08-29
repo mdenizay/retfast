@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.mizibu.retfast.ui.BigButton
 import com.mizibu.retfast.ui.Hit
+import com.mizibu.retfast.ui.RetfastAmber
 import kotlinx.coroutines.delay
 import java.time.Instant
 
@@ -92,7 +93,7 @@ fun RetrieverScreen(vm: RetrieverViewModel, onExit: () -> Unit) {
                         Text(
                             "${remaining}s",
                             style = MaterialTheme.typography.headlineSmall,
-                            color = if (remaining <= 10) Color.Red else Color(0xFFEA8C00),
+                            color = if (remaining <= 10) Color.Red else RetfastAmber,
                         )
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {

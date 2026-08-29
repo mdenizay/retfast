@@ -329,7 +329,11 @@ struct PilotTaskView: View {
             }
         }
         .padding(16)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .background(RetfastBrand.surface.opacity(0.94), in: RoundedRectangle(cornerRadius: 20))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(RetfastBrand.amber.opacity(0.16), lineWidth: 1)
+        )
         .padding()
     }
 

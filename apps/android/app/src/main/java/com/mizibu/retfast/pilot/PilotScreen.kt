@@ -35,6 +35,7 @@ import com.mizibu.retfast.core.TaskRow
 import com.mizibu.retfast.ui.BigButton
 import com.mizibu.retfast.ui.Hit
 import com.mizibu.retfast.ui.Readout
+import com.mizibu.retfast.ui.RetfastAmber
 import kotlin.math.roundToInt
 
 /**
@@ -70,7 +71,7 @@ fun PilotScreen(
             val (color, label) = when {
                 !open -> Color.Gray to "Takip kapalı"
                 !tracking.tracking -> Color.Red to "TAKİP DURDU"
-                System.currentTimeMillis() - tracking.lastFixAtMs > 30_000 -> Color(0xFFF59E0B) to "GPS eski"
+                System.currentTimeMillis() - tracking.lastFixAtMs > 30_000 -> RetfastAmber to "GPS eski"
                 else -> Color(0xFF16A34A) to "Canlı"
             }
             Box(Modifier.size(10.dp).clip(CircleShape).background(color))
@@ -166,7 +167,8 @@ fun PilotScreen(
                             "İndim",
                             Modifier.weight(1f),
                             height = Hit.critical,
-                            container = Color(0xFFEA8C00),
+                            container = RetfastAmber,
+                            content = Color(0xFF0D0E10),
                             onClick = { vm.transition(context, "landed") },
                         )
                     } else {

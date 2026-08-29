@@ -1,0 +1,18 @@
+# Dokploy deploy target for the RETFAST web dashboard.
+# Env (set in the Dokploy compose service): VITE_SUPABASE_URL,
+# VITE_SUPABASE_ANON_KEY, VITE_MAP_STYLE_URL (optional).
+
+name: retfast-web
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+        VITE_MAP_STYLE_URL: ${VITE_MAP_STYLE_URL:-}
+    restart: unless-stopped
+    expose:
+      - "80"

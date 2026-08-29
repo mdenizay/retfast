@@ -65,47 +65,72 @@ struct EventsListView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                if let error = model.error {
-                    Text(error).foregroundStyle(.red).font(.footnote)
-                }
-                Section("events.mine") {
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 22) {
+                    HStack(alignment: .top) {
+                        ScreenTitle(
+                            kicker: "MISSION CONTROL",
+                            title: String(localized: "events.mine"),
+                            subtitle: "Uçuş, toplama ve canlı operasyon görevlerine tek ekrandan eriş."
+                        )
+                        Spacer()
+                        StatusPill(text: "tracking.live")
+                    }
+
                     let mine = model.events.filter { !(model.roles[$0.id] ?? []).isEmpty }
-                    if mine.isEmpty { Text("events.none").foregroundStyle(.secondary) }
+                    HStack(spacing: 12) {
+                        metric(icon: "calendar", value: "\(mine.count)", label: "Aktif etkinlik")
+                        metric(icon: "location.north.fill", value: "Hazır", label: "Takip sistemi")
+                    }
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("DAVET KODU")
+                            .font(.caption2.weight(.bold)).tracking(1.5)
+                            .foregroundStyle(RetfastBrand.amber)
+                        HStack(spacing: 10) {
+                            TextField(String(localized: "events.codePlaceholder"), text: $code)
+                                .textInputAutocapitalization(.characters)
+                                .autocorrectionDisabled()
+                                .padding(.horizontal, 14)
+                                .frame(minHeight: Hit.comfortable)
+                                .background(RetfastBrand.surfaceHigh, in: RoundedRectangle(cornerRadius: 14))
+                            Button {
+                                Task {
+                                    if let found = try? await model.lookupCode(code) { joinTarget = found }
+                                }
+                            } label: { Image(systemName: "arrow.up.right") }
+                                .buttonStyle(.big(.primary, height: Hit.comfortable))
+                                .frame(width: 58)
+                                .disabled(code.isEmpty)
+                        }
+                    }
+                    .operationalPanel()
+
+                    sectionTitle("events.mine", count: mine.count)
+                    if mine.isEmpty { emptyState("events.none") }
                     ForEach(mine) { event in
                         NavigationLink(value: event) {
                             EventRowView(event: event, roles: model.roles[event.id] ?? [])
                         }
+                        .buttonStyle(.plain)
                     }
-                }
-                Section("events.discover") {
-                    HStack {
-                        TextField(String(localized: "events.codePlaceholder"), text: $code)
-                            .textInputAutocapitalization(.characters)
-                            .autocorrectionDisabled()
-                        Button("events.lookup") {
-                            Task {
-                                if let found = try? await model.lookupCode(code) {
-                                    joinTarget = found
-                                }
-                            }
-                        }
-                        .disabled(code.isEmpty)
-                    }
+
                     let discover = model.events.filter { (model.roles[$0.id] ?? []).isEmpty && !$0.isArchived }
+                    sectionTitle("events.discover", count: discover.count)
                     ForEach(discover) { event in
-                        Button {
-                            joinTarget = event
-                        } label: {
-                            EventRowView(event: event, roles: [])
-                        }
-                        .tint(.primary)
+                        Button { joinTarget = event } label: { EventRowView(event: event, roles: []) }
+                            .buttonStyle(.plain)
+                    }
+
+                    if let error = model.error {
+                        Text(error).foregroundStyle(.red).font(.footnote)
                     }
                 }
+                .padding(16)
             }
-            .scrollContentBackground(.hidden)
             .background(RetfastBrand.graphite)
             .navigationTitle("RETFAST")
+            .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: EventRow.self) { event in
                 EventDetailView(event: event, roles: model.roles[event.id] ?? [])
             }
@@ -136,6 +161,31 @@ struct EventsListView: View {
             }
         }
     }
+
+    private func metric(icon: String, value: String, label: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Image(systemName: icon).foregroundStyle(RetfastBrand.amber)
+            Text(value).font(.title2.weight(.bold).monospacedDigit())
+            Text(label).font(.caption).foregroundStyle(RetfastBrand.muted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .operationalPanel()
+    }
+
+    private func sectionTitle(_ key: LocalizedStringKey, count: Int) -> some View {
+        HStack {
+            Text(key).font(.title3.weight(.bold))
+            Text("\(count)").font(.caption.weight(.bold)).padding(.horizontal, 8).padding(.vertical, 4)
+                .background(RetfastBrand.surfaceHigh, in: Capsule())
+            Rectangle().fill(.white.opacity(0.08)).frame(height: 1)
+        }
+    }
+
+    private func emptyState(_ key: LocalizedStringKey) -> some View {
+        Text(key).font(.subheadline).foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity).padding(28)
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(.white.opacity(0.1), style: StrokeStyle(lineWidth: 1, dash: [6])))
+    }
 }
 
 private struct EventRowView: View {
@@ -143,9 +193,22 @@ private struct EventRowView: View {
     let roles: [EventRole]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(event.name).font(.headline)
-            Text(event.startsAt, style: .date).font(.caption).foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Image(systemName: "location.north.fill")
+                    .frame(width: 42, height: 42)
+                    .foregroundStyle(RetfastBrand.amber)
+                    .background(RetfastBrand.amber.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(event.name).font(.headline)
+                    Text(event.startsAt, style: .date).font(.caption).foregroundStyle(RetfastBrand.muted)
+                }
+                Spacer()
+                Image(systemName: "arrow.up.right").foregroundStyle(RetfastBrand.muted)
+            }
+            if !event.description.isEmpty {
+                Text(event.description).font(.subheadline).foregroundStyle(RetfastBrand.muted).lineLimit(2)
+            }
             if !roles.isEmpty {
                 HStack(spacing: 4) {
                     ForEach(roles) { role in
@@ -153,11 +216,13 @@ private struct EventRowView: View {
                             .font(.caption2.weight(.semibold))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(.secondary.opacity(0.15), in: Capsule())
+                            .foregroundStyle(RetfastBrand.amber)
+                            .background(RetfastBrand.amber.opacity(0.1), in: Capsule())
                     }
                 }
             }
         }
+        .operationalPanel(padding: 16)
     }
 }
 

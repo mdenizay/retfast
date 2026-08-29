@@ -37,7 +37,7 @@ import {
   type RetrieverLive,
 } from "@/lib/useOpsLive";
 import type { AssignmentStatus } from "@/lib/types";
-import { ArrowLeft, Car, ChevronLeft, PlaneTakeoff, Siren } from "lucide-react";
+import { ArrowLeft, Car, ChevronLeft, PlaneTakeoff, Radio, Search, Siren } from "lucide-react";
 
 type Selection = { kind: "pilot"; id: string } | { kind: "retriever"; id: string } | null;
 
@@ -158,9 +158,9 @@ export default function OpsConsole() {
   );
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-background">
+    <div className="fixed inset-0 overflow-hidden bg-[#0b0c0d]">
       <MapView
-        className="absolute inset-0 h-full w-full"
+        className={`absolute inset-y-0 right-0 h-full transition-[left] duration-300 ${rosterOpen ? "left-0 md:left-[380px]" : "left-0"}`}
         zones={zones}
         onReady={(map) => {
           mapRef.current = map;
@@ -170,13 +170,14 @@ export default function OpsConsole() {
 
       {/* Overlay chrome — transparent to clicks except on real controls. */}
       <div className="pointer-events-none absolute inset-0 flex flex-col">
-        <div className="pointer-events-auto flex flex-wrap items-center gap-2 p-3">
-          <Button asChild variant="secondary" size="icon" className="size-11 shadow-lg">
+        <div className="pointer-events-auto flex flex-wrap items-center gap-2 border-b border-white/8 bg-[#0b0c0d]/88 p-3 backdrop-blur-2xl">
+          <Button asChild variant="secondary" size="icon" className="size-11 rounded-2xl shadow-lg">
             <Link to={`/events/${eventId}`} aria-label={m.ops.exitConsole}>
               <ArrowLeft className="size-5" />
             </Link>
           </Button>
-          <div className="rounded-lg bg-background/90 px-3 py-2 shadow-lg backdrop-blur">
+          <div className="px-2 py-1">
+            <div className="brand-kicker">OPERATIONS CONSOLE</div>
             <div className="text-sm font-semibold leading-tight">{event?.name ?? "…"}</div>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <FreshnessDot ageSec={live ? 0 : null} />
@@ -185,6 +186,9 @@ export default function OpsConsole() {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
+            <div className="hidden items-center gap-2 rounded-full border border-emerald-400/15 bg-emerald-400/8 px-3 py-2 text-xs font-semibold text-emerald-300 sm:flex">
+              <Radio className="size-3.5" /> {live ? m.ops.liveFeed : m.ops.reconnecting}
+            </div>
             <StatChip icon={<PlaneTakeoff className="size-4" />} value={pilots.length} label={m.ops.pilots} />
             <StatChip icon={<Car className="size-4" />} value={retrievers.length} label={m.ops.retrievers} />
             {emergencies.length > 0 && (
@@ -200,22 +204,31 @@ export default function OpsConsole() {
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-1 items-start p-3 pt-0">
+        <div className="flex min-h-0 flex-1 items-start p-3">
           {rosterOpen ? (
-            <div className="pointer-events-auto flex max-h-full w-[340px] max-w-[85vw] flex-col rounded-xl border bg-background/95 shadow-xl backdrop-blur">
-              <div className="flex items-center gap-2 border-b px-3 py-2">
-                <span className="text-sm font-semibold">{m.ops.console}</span>
+            <div className="pointer-events-auto -ml-3 -mt-3 flex h-[calc(100vh-69px)] w-[380px] max-w-[92vw] flex-col border-r border-white/8 bg-[#111210]/98 shadow-2xl shadow-black/40 backdrop-blur-xl">
+              <div className="border-b border-white/8 p-4">
+                <div className="flex items-center gap-2">
+                  <div>
+                    <div className="brand-kicker">LIVE ROSTER</div>
+                    <span className="text-lg font-semibold">{m.ops.console}</span>
+                  </div>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="ml-auto size-9"
+                  className="ml-auto size-10 rounded-xl"
                   onClick={() => setRosterOpen(false)}
                   aria-label={m.common.close}
                 >
                   <ChevronLeft className="size-4" />
                 </Button>
+                </div>
+                <div className="mt-4 flex h-11 items-center gap-2 rounded-xl border border-white/8 bg-white/[0.035] px-3 text-sm text-muted-foreground">
+                  <Search className="size-4" />
+                  <span>{m.ops.pilots} / {m.ops.retrievers}</span>
+                </div>
               </div>
-              <ScrollArea className="max-h-[calc(100vh-11rem)]">
+              <ScrollArea className="min-h-0 flex-1">
                 <div className="space-y-4 p-3">
                   <section className="space-y-2">
                     <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">

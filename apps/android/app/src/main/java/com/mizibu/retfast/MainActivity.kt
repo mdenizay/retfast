@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,6 +34,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.FlightTakeoff
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -62,7 +67,12 @@ import com.mizibu.retfast.retriever.RetrieverViewModel
 import com.mizibu.retfast.ui.BigButton
 import com.mizibu.retfast.ui.Hit
 import com.mizibu.retfast.ui.RetfastAmber
+import com.mizibu.retfast.ui.RetfastMuted
+import com.mizibu.retfast.ui.RetfastSuccess
 import com.mizibu.retfast.ui.RetfastTheme
+import com.mizibu.retfast.ui.ScreenTitle
+import com.mizibu.retfast.ui.SectionCard
+import com.mizibu.retfast.ui.StatusPill
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -196,7 +206,18 @@ private fun MainNav(auth: AuthViewModel) {
             Scaffold(
                 topBar = {
                     TopAppBar(
-                        title = { Text("RETFAST", fontWeight = FontWeight.Black) },
+                        title = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(color = Color.Black, contentColor = Color.White, shape = RoundedCornerShape(12.dp), modifier = Modifier.size(36.dp)) {
+                                    Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.Navigation, null, Modifier.size(18.dp)) }
+                                }
+                                Spacer(Modifier.size(10.dp))
+                                Column {
+                                    Text("FLIGHT OPERATIONS", color = RetfastAmber, style = MaterialTheme.typography.labelSmall)
+                                    Text("RETFAST", fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleMedium)
+                                }
+                            }
+                        },
                         actions = { TextButton(onClick = { auth.signOut() }) { Text("Çıkış") } },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = MaterialTheme.colorScheme.background,
@@ -256,26 +277,70 @@ private fun EventsList(
     onOpen: (EventRow) -> Unit,
 ) {
     val mine = events.filter { roles[it.id].orEmpty().isNotEmpty() }
-    LazyColumn(modifier.fillMaxSize().padding(12.dp)) {
-        item { Text("Etkinliklerim", style = MaterialTheme.typography.titleMedium) }
+    LazyColumn(
+        modifier.fillMaxSize().padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item {
+            ScreenTitle(
+                kicker = "Görev merkezi",
+                title = "Etkinliklerim",
+                subtitle = "Uçuş, toplama ve canlı operasyon görevlerine tek ekrandan eriş.",
+                modifier = Modifier.padding(top = 20.dp, bottom = 8.dp),
+            )
+        }
+        item {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Card(Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                    Column(Modifier.padding(14.dp)) {
+                        Icon(Icons.Default.CalendarMonth, null, tint = RetfastAmber)
+                        Spacer(Modifier.height(14.dp))
+                        Text("${mine.size}", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        Text("Aktif etkinlik", color = RetfastMuted, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                Card(Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                    Column(Modifier.padding(14.dp)) {
+                        Icon(Icons.Default.FlightTakeoff, null, tint = RetfastAmber)
+                        Spacer(Modifier.height(14.dp))
+                        Text("Hazır", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        Text("Takip sistemi", color = RetfastMuted, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+        }
         if (mine.isEmpty()) {
             item { Text("Henüz etkinlik yok", style = MaterialTheme.typography.bodyMedium) }
         }
         items(mine) { e ->
             Card(
                 onClick = { onOpen(e) },
-                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(22.dp),
             ) {
-                Column(Modifier.padding(14.dp)) {
-                    Text(e.name, style = MaterialTheme.typography.titleMedium)
+                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(color = RetfastAmber.copy(alpha = .12f), contentColor = RetfastAmber, shape = RoundedCornerShape(14.dp), modifier = Modifier.size(42.dp)) {
+                            Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.Navigation, null, Modifier.size(20.dp)) }
+                        }
+                        Spacer(Modifier.size(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(e.name, style = MaterialTheme.typography.titleMedium)
+                            Text(e.startsAt.take(10), color = RetfastMuted, style = MaterialTheme.typography.bodySmall)
+                        }
+                        Icon(Icons.Default.ArrowForward, null, tint = RetfastMuted)
+                    }
+                    if (e.description.isNotBlank()) Text(e.description, maxLines = 2, color = RetfastMuted, style = MaterialTheme.typography.bodySmall)
                     Text(
                         roles[e.id].orEmpty().joinToString(", ") { roleLabel(it) },
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = RetfastAmber,
                     )
                 }
             }
         }
+        item { Spacer(Modifier.height(24.dp)) }
     }
 }
 
@@ -288,17 +353,21 @@ private fun EventDetail(
     onRetriever: () -> Unit,
     onBack: () -> Unit,
 ) {
-    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = onBack) { Text("‹ Geri") }
+            Spacer(Modifier.weight(1f))
+            StatusPill("Sistem hazır", RetfastSuccess)
         }
-        Text(event.name, style = MaterialTheme.typography.headlineSmall)
-        if (event.description.isNotBlank()) {
-            Text(event.description, style = MaterialTheme.typography.bodyMedium)
+        ScreenTitle("Görev alanı", event.name, event.description.takeIf { it.isNotBlank() })
+        SectionCard("Rol ve görev") {
+            Text(roles.joinToString(" · ") { roleLabel(it) }, color = RetfastMuted)
+            Text("${event.startsAt.take(10)}  →  ${event.endsAt.take(10)}", style = MaterialTheme.typography.bodySmall, color = RetfastMuted)
         }
+        Spacer(Modifier.weight(1f))
         if (roles.contains(EventRole.PILOT)) {
             BigButton(
-                if (openTask == null) "Uçuşu başlat" else "Uçuşa devam et",
+                if (openTask == null) "Pilot görevini aç" else "Aktif uçuşa dön",
                 Modifier.fillMaxWidth(),
                 height = Hit.critical,
                 onClick = onPilot,
@@ -306,7 +375,7 @@ private fun EventDetail(
         }
         if (roles.contains(EventRole.RETRIEVER)) {
             BigButton(
-                "Toplayıcı modu",
+                "Toplayıcı görev merkezini aç",
                 Modifier.fillMaxWidth(),
                 height = Hit.critical,
                 container = MaterialTheme.colorScheme.secondaryContainer,

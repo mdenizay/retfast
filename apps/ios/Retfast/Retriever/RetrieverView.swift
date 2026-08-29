@@ -23,7 +23,7 @@ struct RetrieverView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ZStack(alignment: .topLeading) {
+            ZStack(alignment: .top) {
                 Map(position: $camera) {
                     UserAnnotation()
                     ZoneMapContent(overlays: overlays)
@@ -36,18 +36,29 @@ struct RetrieverView: View {
                         }
                     }
                 }
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "chevron.down")
+                HStack(spacing: 10) {
+                    Button { dismiss() } label: { Image(systemName: "chevron.down") }
+                        .buttonStyle(.mapChip)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("RETRIEVAL CONTROL")
+                            .font(.caption2.weight(.bold)).tracking(1.4)
+                            .foregroundStyle(RetfastBrand.amber)
+                        Text(event.name).font(.subheadline.weight(.bold)).lineLimit(1)
+                    }
+                    .padding(.horizontal, 12)
+                    .frame(minHeight: Hit.min)
+                    .background(RetfastBrand.surface.opacity(0.92), in: Capsule())
+                    Spacer()
+                    StatusPill(
+                        text: model.onDuty ? "retriever.onDuty" : "tracking.off",
+                        color: model.onDuty ? RetfastBrand.success : RetfastBrand.muted
+                    )
                 }
-                .buttonStyle(.mapChip)
                 .padding()
             }
             .frame(maxHeight: .infinity)
 
-            jobsPanel
-                .frame(maxHeight: 380)
+            jobsPanel.frame(maxHeight: 420)
         }
         .task { await model.appear() }
         .onReceive(clock) { now = $0 }
@@ -61,6 +72,14 @@ struct RetrieverView: View {
     private var jobsPanel: some View {
         List {
             Section {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("RETRIEVAL WORKFLOW")
+                        .font(.caption2.weight(.bold)).tracking(1.5)
+                        .foregroundStyle(RetfastBrand.amber)
+                    Text(model.assignments.isEmpty ? "Yeni görev bekleniyor" : "\(model.assignments.count) aktif görev")
+                        .font(.title2.weight(.bold))
+                }
+                .padding(.vertical, 4)
                 Toggle(isOn: Binding(
                     get: { model.onDuty },
                     set: { _ in Task { await model.toggleDuty() } }
@@ -109,6 +128,8 @@ struct RetrieverView: View {
         .scrollContentBackground(.hidden)
         .background(RetfastBrand.graphite)
         .listStyle(.insetGrouped)
+        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .overlay(alignment: .top) { Capsule().fill(.white.opacity(0.18)).frame(width: 42, height: 5).padding(.top, 8) }
     }
 }
 

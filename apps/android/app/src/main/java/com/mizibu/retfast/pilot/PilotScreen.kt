@@ -36,6 +36,9 @@ import com.mizibu.retfast.ui.BigButton
 import com.mizibu.retfast.ui.Hit
 import com.mizibu.retfast.ui.Readout
 import com.mizibu.retfast.ui.RetfastAmber
+import com.mizibu.retfast.ui.RetfastMuted
+import com.mizibu.retfast.ui.ScreenTitle
+import com.mizibu.retfast.ui.StatusPill
 import kotlin.math.roundToInt
 
 /**
@@ -64,7 +67,7 @@ fun PilotScreen(
     val open = state.task?.status == "active" || state.task?.status == "landed"
 
     Column(Modifier.fillMaxSize().padding(12.dp)) {
-        // Status
+        // Mission header
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = onExit) { Text("‹ Geri") }
             Spacer(Modifier.weight(1f))
@@ -74,16 +77,20 @@ fun PilotScreen(
                 System.currentTimeMillis() - tracking.lastFixAtMs > 30_000 -> RetfastAmber to "GPS eski"
                 else -> Color(0xFF16A34A) to "Canlı"
             }
-            Box(Modifier.size(10.dp).clip(CircleShape).background(color))
-            Spacer(Modifier.size(6.dp))
-            Text(label, style = MaterialTheme.typography.labelLarge)
+            StatusPill(label, color)
         }
 
-        Spacer(Modifier.size(8.dp))
+        ScreenTitle(
+            kicker = "Pilot görev merkezi",
+            title = state.task?.title?.ifBlank { "Canlı uçuş" } ?: "Uçuşa hazır",
+            subtitle = if (open) "Konumun operasyon ekibine güvenli biçimde aktarılıyor." else "Görevi başlattığında çevrimdışı dayanıklı takip devreye girer.",
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 10.dp),
+        )
 
         // Telemetry
-        Card(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text("CANLI TELEMETRİ", color = RetfastAmber, style = MaterialTheme.typography.labelSmall)
                 val loc = tracking.lastLocation
                 Row(Modifier.fillMaxWidth()) {
                     Readout("YÜKSEKLİK", loc?.altitude?.roundToInt()?.toString() ?: "—", "m", modifier = Modifier.weight(1f))
@@ -142,17 +149,23 @@ fun PilotScreen(
         }
         state.assignment?.let {
             Spacer(Modifier.size(8.dp))
-            Text("Toplayıcı: ${assignmentLabel(it.status)}", style = MaterialTheme.typography.titleSmall)
+            Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
+                Column(Modifier.padding(14.dp)) {
+                    Text("TOPLAMA DURUMU", color = RetfastAmber, style = MaterialTheme.typography.labelSmall)
+                    Text(assignmentLabel(it.status), style = MaterialTheme.typography.titleMedium)
+                }
+            }
         }
         if (state.assignment == null && state.request?.status == "pending") {
             Spacer(Modifier.size(8.dp))
-            Text("Toplayıcı bekleniyor…", style = MaterialTheme.typography.titleSmall)
+            Text("Toplayıcı teklifi bekleniyor…", color = RetfastMuted, style = MaterialTheme.typography.titleSmall)
         }
 
         Spacer(Modifier.weight(1f))
 
-        // Controls
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // Mission controls
+        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (state.task == null) {
                 BigButton(
                     "Uçuşu başlat",
@@ -212,6 +225,7 @@ fun PilotScreen(
                     )
                 }
             }
+        }
         }
     }
 

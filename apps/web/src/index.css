@@ -73,7 +73,7 @@
     --chart-3: oklch(0.69 0.13 235);
     --chart-4: oklch(0.68 0.15 30);
     --chart-5: oklch(0.72 0.11 325);
-    --radius: 0.9rem;
+    --radius: 1.05rem;
     --sidebar: oklch(0.165 0.011 72);
     --sidebar-foreground: oklch(0.955 0.014 83);
     --sidebar-primary: oklch(0.76 0.165 72);
@@ -125,9 +125,10 @@
   body {
     @apply bg-background text-foreground;
     background-image:
-      radial-gradient(circle at 18% -10%, color-mix(in oklch, var(--primary) 13%, transparent), transparent 32rem),
-      linear-gradient(180deg, color-mix(in oklch, var(--background) 92%, black), var(--background));
+      radial-gradient(circle at 84% -15%, color-mix(in oklch, var(--primary) 10%, transparent), transparent 34rem),
+      linear-gradient(145deg, #11120f 0%, #0b0d0e 52%, #11100c 100%);
     min-height: 100vh;
+    overflow-x: hidden;
     }
   html {
     @apply font-sans;
@@ -146,6 +147,92 @@
   .glass-panel {
     @apply border border-white/8 bg-card/88 shadow-2xl shadow-black/25 backdrop-blur-xl;
   }
+
+  .app-shell {
+    @apply min-h-dvh bg-background text-foreground md:grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+
+  .app-rail {
+    @apply fixed inset-y-0 left-0 z-50 hidden w-[76px] flex-col items-center border-r border-white/8 bg-[#0a0b0c]/96 px-2 py-3 backdrop-blur-xl md:flex;
+  }
+
+  .app-rail-brand {
+    @apply grid size-12 place-items-center rounded-2xl border border-white/12 bg-black text-white shadow-xl shadow-black/40 transition-transform hover:scale-[1.03];
+  }
+
+  .app-rail-nav {
+    @apply mt-8 flex w-full flex-col gap-2;
+  }
+
+  .app-rail-link {
+    @apply relative flex min-h-12 w-full flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[10px] font-semibold text-muted-foreground transition-all hover:bg-white/5 hover:text-foreground;
+  }
+
+  .app-rail-link svg {
+    @apply size-[19px];
+  }
+
+  .app-rail-link.is-active {
+    @apply bg-primary/12 text-primary;
+  }
+
+  .app-rail-link.is-active::before {
+    content: "";
+    @apply absolute -left-2 h-7 w-[3px] rounded-r-full bg-primary shadow-[0_0_14px_color-mix(in_oklch,var(--primary)_70%,transparent)];
+  }
+
+  .app-workspace {
+    @apply min-w-0 md:col-start-2;
+  }
+
+  .command-bar {
+    @apply sticky top-0 z-40 flex h-[72px] items-center gap-5 border-b border-white/8 bg-background/82 px-4 backdrop-blur-2xl sm:px-6;
+  }
+
+  .command-search {
+    @apply ml-4 hidden h-11 w-full max-w-xl items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.035] px-4 text-sm text-muted-foreground lg:flex;
+  }
+
+  .command-search kbd {
+    @apply ml-auto rounded-lg border border-white/10 bg-white/5 px-2 py-1 font-sans text-[10px];
+  }
+
+  .app-content {
+    @apply mx-auto w-full max-w-[1540px] px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-10;
+  }
+
+  .mobile-dock {
+    @apply fixed inset-x-3 bottom-3 z-50 flex h-[68px] items-center justify-around rounded-[22px] border border-white/10 bg-[#101111]/94 p-2 shadow-2xl shadow-black/60 backdrop-blur-xl md:hidden;
+  }
+
+  .mobile-dock .app-rail-link {
+    @apply min-h-12 max-w-24 flex-1;
+  }
+
+  .mobile-dock .app-rail-link.is-active::before {
+    @apply -top-2 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-b-full;
+  }
+
+  .page-heading {
+    @apply text-3xl font-bold tracking-[-0.04em] sm:text-4xl;
+  }
+
+  .page-lead {
+    @apply mt-2 max-w-2xl text-sm leading-6 text-muted-foreground;
+  }
+
+  .metric-card {
+    @apply rounded-[22px] border border-white/8 bg-white/[0.035] p-4 shadow-lg shadow-black/10;
+  }
+
+  .operational-card {
+    @apply border-white/8 bg-[#191a18]/95 shadow-[0_18px_50px_rgba(0,0,0,.22)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25;
+  }
+
+  .map-frame {
+    @apply overflow-hidden rounded-[24px] border border-white/10 shadow-2xl shadow-black/30;
+  }
 }
 
 .maplibregl-map {
@@ -159,6 +246,8 @@
   background: rgb(26 26 24 / 0.9) !important;
   box-shadow: 0 12px 30px rgb(0 0 0 / 0.28) !important;
 }
+
+.maplibregl-canvas { filter: saturate(.78) contrast(1.05); }
 
 .maplibregl-ctrl-group button span {
   filter: invert(1) sepia(.2);

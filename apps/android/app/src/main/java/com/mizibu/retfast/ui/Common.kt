@@ -1,12 +1,16 @@
 package com.mizibu.retfast.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -31,6 +35,8 @@ val RetfastGraphite = Color(0xFF0D0E10)
 val RetfastSurface = Color(0xFF1B1B19)
 val RetfastSurfaceHigh = Color(0xFF25241F)
 val RetfastIvory = Color(0xFFFFF4D6)
+val RetfastMuted = Color(0xFFA8A292)
+val RetfastSuccess = Color(0xFF43D39E)
 
 private val RetfastColors = darkColorScheme(
     primary = RetfastAmber,
@@ -63,7 +69,13 @@ private val RetfastShapes = Shapes(
 fun RetfastTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = RetfastColors,
-        typography = Typography(),
+        typography = Typography(
+            headlineLarge = Typography().headlineLarge.copy(fontWeight = FontWeight.Black, letterSpacing = (-1.2).sp),
+            headlineMedium = Typography().headlineMedium.copy(fontWeight = FontWeight.Bold, letterSpacing = (-0.7).sp),
+            titleLarge = Typography().titleLarge.copy(fontWeight = FontWeight.Bold),
+            titleMedium = Typography().titleMedium.copy(fontWeight = FontWeight.SemiBold),
+            labelSmall = Typography().labelSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 1.1.sp),
+        ),
         shapes = RetfastShapes,
         content = content,
     )
@@ -141,10 +153,37 @@ fun SectionCard(title: String, content: @Composable () -> Unit) {
     Card(
         Modifier.fillMaxWidth().padding(vertical = 6.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(22.dp),
     ) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall)
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(title.uppercase(), style = MaterialTheme.typography.labelSmall, color = RetfastAmber)
             content()
+        }
+    }
+}
+
+@Composable
+fun StatusPill(text: String, color: Color, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .border(1.dp, color.copy(alpha = .22f), CircleShape)
+            .background(color.copy(alpha = .10f), CircleShape)
+            .padding(horizontal = 11.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+    ) {
+        Box(Modifier.background(color, CircleShape).defaultMinSize(minWidth = 7.dp, minHeight = 7.dp))
+        Text(text, style = MaterialTheme.typography.labelMedium, color = color)
+    }
+}
+
+@Composable
+fun ScreenTitle(kicker: String, title: String, subtitle: String? = null, modifier: Modifier = Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(kicker.uppercase(), style = MaterialTheme.typography.labelSmall, color = RetfastAmber)
+        Text(title, style = MaterialTheme.typography.headlineMedium)
+        if (subtitle != null) {
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = RetfastMuted)
         }
     }
 }

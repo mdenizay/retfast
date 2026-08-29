@@ -26,8 +26,8 @@ export function PilotRow({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-lg border p-3 text-left transition-colors ${
-        active ? "border-primary bg-accent" : "hover:bg-accent/60"
+      className={`w-full rounded-2xl border p-3.5 text-left shadow-sm transition-all ${
+        active ? "border-primary/55 bg-primary/10 shadow-primary/5" : "border-white/8 bg-white/[0.025] hover:border-white/15 hover:bg-white/[0.05]"
       }`}
     >
       <div className="flex items-center gap-2">
@@ -43,7 +43,7 @@ export function PilotRow({
 
       {fix ? (
         <>
-          <div className="mt-2 grid grid-cols-4 gap-1.5">
+          <div className="mt-3 grid grid-cols-4 gap-1.5 rounded-xl bg-black/20 p-2">
             <Cell label={m.ops.altitude} value={fmtAltitude(fix.altitude_m)} />
             <Cell label={m.ops.speed} value={fmtSpeed(fix.speed_mps)} />
             <Cell label={m.ops.heading} value={fmtHeading(fix.heading_deg)} />
@@ -96,8 +96,8 @@ export function RetrieverRow({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-lg border p-3 text-left transition-colors ${
-        active ? "border-primary bg-accent" : "hover:bg-accent/60"
+      className={`w-full rounded-2xl border p-3.5 text-left shadow-sm transition-all ${
+        active ? "border-primary/55 bg-primary/10 shadow-primary/5" : "border-white/8 bg-white/[0.025] hover:border-white/15 hover:bg-white/[0.05]"
       }`}
     >
       <div className="flex items-center gap-2">

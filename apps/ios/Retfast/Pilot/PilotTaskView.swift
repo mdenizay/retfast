@@ -89,7 +89,16 @@ struct PilotTaskView: View {
                 }
                 .buttonStyle(.mapChip)
 
-                Spacer()
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("PILOT MISSION")
+                        .font(.caption2.weight(.bold)).tracking(1.5)
+                        .foregroundStyle(RetfastBrand.amber)
+                    Text(event.name).font(.subheadline.weight(.bold)).lineLimit(1)
+                }
+                .padding(.horizontal, 12)
+                .frame(minHeight: Hit.min)
+                .background(RetfastBrand.surface.opacity(0.92), in: Capsule())
+                Spacer(minLength: 8)
                 trackingBadge
             }
 
@@ -159,8 +168,10 @@ struct PilotTaskView: View {
                     .foregroundStyle(fixAge > 120 ? .red : .orange)
             }
         }
-        .padding(12)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .padding(14)
+        .background(RetfastBrand.surface.opacity(0.94), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 22).stroke(RetfastBrand.amber.opacity(0.14)))
+        .shadow(color: .black.opacity(0.24), radius: 20, y: 10)
     }
 
     private func readout(
@@ -247,7 +258,7 @@ struct PilotTaskView: View {
         }
         .padding(.horizontal, 14)
         .frame(minHeight: Hit.min)
-        .background(.thinMaterial, in: Capsule())
+        .background(RetfastBrand.surface.opacity(0.92), in: Capsule())
     }
 
     @ViewBuilder

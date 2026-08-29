@@ -7,6 +7,8 @@ enum RetfastBrand {
     static let surface = Color(red: 0.106, green: 0.106, blue: 0.098)
     static let surfaceHigh = Color(red: 0.145, green: 0.141, blue: 0.122)
     static let ivory = Color(red: 1.0, green: 0.957, blue: 0.839)
+    static let muted = Color(red: 0.66, green: 0.64, blue: 0.57)
+    static let success = Color(red: 0.263, green: 0.827, blue: 0.62)
 }
 
 struct RetfastMark: View {
@@ -125,5 +127,56 @@ extension View {
     /// Guarantees a row/control is at least one comfortable tap target tall.
     func minTapTarget(_ height: CGFloat = Hit.min) -> some View {
         frame(minHeight: height).contentShape(Rectangle())
+    }
+
+    func operationalPanel(padding: CGFloat = 16) -> some View {
+        self
+            .padding(padding)
+            .background(RetfastBrand.surface.opacity(0.96), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(RetfastBrand.amber.opacity(0.12), lineWidth: 1)
+            )
+    }
+}
+
+struct ScreenTitle: View {
+    let kicker: LocalizedStringKey
+    let title: String
+    var subtitle: String? = nil
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(kicker)
+                .font(.caption2.weight(.bold))
+                .tracking(1.7)
+                .foregroundStyle(RetfastBrand.amber)
+            Text(title)
+                .font(.largeTitle.weight(.black))
+                .tracking(-1.2)
+            if let subtitle {
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(RetfastBrand.muted)
+                    .lineSpacing(3)
+            }
+        }
+    }
+}
+
+struct StatusPill: View {
+    let text: LocalizedStringKey
+    var color: Color = RetfastBrand.success
+
+    var body: some View {
+        HStack(spacing: 7) {
+            Circle().fill(color).frame(width: 7, height: 7)
+            Text(text).font(.caption.weight(.semibold))
+        }
+        .foregroundStyle(color)
+        .padding(.horizontal, 11)
+        .frame(minHeight: 34)
+        .background(color.opacity(0.09), in: Capsule())
+        .overlay(Capsule().stroke(color.opacity(0.2), lineWidth: 1))
     }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -26,13 +26,14 @@ import { useI18n } from "@/i18n";
 import { fmtDateTime } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
 import type { EventRole, EventRow, EventVisibility } from "@/lib/types";
+import { Activity, ArrowUpRight, CalendarRange, Compass, Plus, Ticket } from "lucide-react";
 
 interface EventWithRoles extends EventRow {
   roles: EventRole[];
 }
 
 export default function EventsPage() {
-  const { m } = useI18n();
+  const { m, locale } = useI18n();
   const { session, profile } = useAuth();
   const [events, setEvents] = useState<EventWithRoles[]>([]);
   const [code, setCode] = useState("");
@@ -71,48 +72,65 @@ export default function EventsPage() {
   const discover = events.filter((e) => e.roles.length === 0 && !e.is_archived);
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold">{m.events.title}</h1>
-        <form onSubmit={lookupCode} className="ml-auto flex items-center gap-2">
-          <Input
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder={m.events.codePlaceholder}
-            className="w-40"
-          />
-          <Button type="submit" variant="secondary">
-            {m.events.lookup}
-          </Button>
-        </form>
-        {profile?.is_system_admin && <CreateEventDialog onCreated={load} />}
-      </div>
-
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-          {m.events.myEvents}
-        </h2>
-        {mine.length === 0 && <p className="text-sm text-muted-foreground">{m.events.noEvents}</p>}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {mine.map((e) => (
-            <EventCard key={e.id} event={e} />
-          ))}
+    <div className="space-y-10">
+      <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="relative overflow-hidden rounded-[28px] border border-white/8 bg-[#171816] p-6 sm:p-8">
+          <div className="absolute -right-16 -top-24 size-72 rounded-full bg-primary/10 blur-3xl" />
+          <div className="brand-kicker">OPERATIONS HOME</div>
+          <h1 className="page-heading mt-2">{m.events.title}</h1>
+          <p className="page-lead">
+            {locale === "tr"
+              ? "Uçuş operasyonlarını, ekipleri ve canlı görevleri tek bir çalışma alanından yönetin."
+              : "Manage live flight operations, teams and missions from one focused workspace."}
+          </p>
+          <div className="mt-7 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="metric-card">
+              <Activity className="mb-4 size-5 text-primary" />
+              <div className="text-2xl font-bold tabular-nums">{mine.length}</div>
+              <div className="text-xs text-muted-foreground">{m.events.myEvents}</div>
+            </div>
+            <div className="metric-card">
+              <Compass className="mb-4 size-5 text-primary" />
+              <div className="text-2xl font-bold tabular-nums">{discover.length}</div>
+              <div className="text-xs text-muted-foreground">{m.events.discover}</div>
+            </div>
+            <div className="metric-card col-span-2 sm:col-span-1">
+              <CalendarRange className="mb-4 size-5 text-primary" />
+              <div className="text-2xl font-bold tabular-nums">{events.length}</div>
+              <div className="text-xs text-muted-foreground">{locale === "tr" ? "Toplam" : "Total"}</div>
+            </div>
+          </div>
         </div>
+
+        <Card className="operational-card justify-between p-2">
+          <CardHeader>
+            <div className="mb-3 grid size-11 place-items-center rounded-2xl bg-primary/12 text-primary">
+              <Ticket className="size-5" />
+            </div>
+            <CardTitle className="text-xl">{m.events.joinByCode}</CardTitle>
+            <p className="text-sm leading-6 text-muted-foreground">
+              {locale === "tr" ? "Organizatörün paylaştığı kodla özel bir etkinliğe erişin." : "Access a private event with the code shared by its organiser."}
+            </p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={lookupCode} className="flex gap-2">
+              <Input value={code} onChange={(e) => setCode(e.target.value)} placeholder={m.events.codePlaceholder} className="h-12" />
+              <Button type="submit" size="lg" aria-label={m.events.lookup}><ArrowUpRight /></Button>
+            </form>
+            {profile?.is_system_admin && (
+              <div className="mt-3"><CreateEventDialog onCreated={load} /></div>
+            )}
+          </CardContent>
+        </Card>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-          {m.events.discover}
-        </h2>
-        {discover.length === 0 && (
-          <p className="text-sm text-muted-foreground">{m.events.noEvents}</p>
-        )}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {discover.map((e) => (
-            <EventCard key={e.id} event={e} onRequest={() => setJoinTarget(e)} />
-          ))}
-        </div>
-      </section>
+      <EventSection title={m.events.myEvents} count={mine.length} empty={m.events.noEvents}>
+        {mine.map((e) => <EventCard key={e.id} event={e} />)}
+      </EventSection>
+
+      <EventSection title={m.events.discover} count={discover.length} empty={m.events.noEvents}>
+        {discover.map((e) => <EventCard key={e.id} event={e} onRequest={() => setJoinTarget(e)} />)}
+      </EventSection>
 
       {joinTarget && (
         <RequestParticipationDialog
@@ -125,12 +143,32 @@ export default function EventsPage() {
   );
 }
 
+function EventSection({ title, count, empty, children }: { title: string; count: number; empty: string; children: ReactNode }) {
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center gap-3">
+        <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+        <Badge variant="secondary" className="rounded-full">{count}</Badge>
+        <div className="h-px flex-1 bg-white/8" />
+      </div>
+      {count === 0 && <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-sm text-muted-foreground">{empty}</div>}
+      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">{children}</div>
+    </section>
+  );
+}
+
 function EventCard({ event, onRequest }: { event: EventWithRoles | EventRow; onRequest?: () => void }) {
   const { m, locale } = useI18n();
   const roles = "roles" in event ? (event as EventWithRoles).roles : [];
   return (
-    <Card className="flex flex-col">
-      <CardHeader className="pb-2">
+    <Card className="operational-card group flex min-h-64 flex-col">
+      <CardHeader className="pb-3">
+        <div className="mb-5 flex items-center justify-between">
+          <div className="grid size-11 place-items-center rounded-2xl border border-primary/15 bg-primary/8 text-primary">
+            <NavigationMark />
+          </div>
+          <ArrowUpRight className="size-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
+        </div>
         <CardTitle className="flex items-start justify-between gap-2 text-base">
           {roles.length > 0 ? (
             <Link to={`/events/${event.id}`} className="hover:underline">
@@ -142,9 +180,10 @@ function EventCard({ event, onRequest }: { event: EventWithRoles | EventRow; onR
           <Badge variant="outline">{m.events[event.visibility as EventVisibility]}</Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col gap-3">
-        <p className="line-clamp-2 text-sm text-muted-foreground">{event.description}</p>
-        <p className="text-xs text-muted-foreground">
+      <CardContent className="flex flex-1 flex-col gap-4">
+        <p className="line-clamp-2 min-h-10 text-sm leading-5 text-muted-foreground">{event.description}</p>
+        <p className="flex items-center gap-2 text-xs text-muted-foreground">
+          <CalendarRange className="size-4 text-primary" />
           {fmtDateTime(event.starts_at, locale)} → {fmtDateTime(event.ends_at, locale)}
         </p>
         <div className="mt-auto flex flex-wrap items-center gap-1">
@@ -162,6 +201,10 @@ function EventCard({ event, onRequest }: { event: EventWithRoles | EventRow; onR
       </CardContent>
     </Card>
   );
+}
+
+function NavigationMark() {
+  return <Compass className="size-5" />;
 }
 
 function RequestParticipationDialog({
@@ -264,7 +307,7 @@ function CreateEventDialog({ onCreated }: { onCreated: () => void }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>{m.events.newEvent}</Button>
+        <Button variant="outline" className="w-full"><Plus />{m.events.newEvent}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

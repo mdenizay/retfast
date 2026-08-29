@@ -31,6 +31,10 @@ import androidx.compose.ui.unit.dp
 import com.mizibu.retfast.ui.BigButton
 import com.mizibu.retfast.ui.Hit
 import com.mizibu.retfast.ui.RetfastAmber
+import com.mizibu.retfast.ui.RetfastMuted
+import com.mizibu.retfast.ui.RetfastSuccess
+import com.mizibu.retfast.ui.ScreenTitle
+import com.mizibu.retfast.ui.StatusPill
 import kotlinx.coroutines.delay
 import java.time.Instant
 
@@ -54,20 +58,29 @@ fun RetrieverScreen(vm: RetrieverViewModel, onExit: () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = onExit) { Text("‹ Geri") }
             Spacer(Modifier.weight(1f))
-            Text("Kuyruk: $pending", style = MaterialTheme.typography.labelLarge)
+            StatusPill(if (state.onDuty) "Görevde" else "Çevrimdışı", if (state.onDuty) RetfastSuccess else RetfastMuted)
         }
 
-        Card(Modifier.fillMaxWidth()) {
+        ScreenTitle(
+            kicker = "Toplayıcı görev merkezi",
+            title = if (state.assignments.isEmpty()) "Yeni görev bekleniyor" else "${state.assignments.size} aktif görev",
+            subtitle = "Pilot tekliflerini, araç kapasitesini ve görev adımlarını buradan yönet.",
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
+        )
+
+        Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge) {
             Row(
                 Modifier.fillMaxWidth().padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text("Görevde", style = MaterialTheme.typography.titleMedium)
+                    Text("OPERASYON DURUMU", color = RetfastAmber, style = MaterialTheme.typography.labelSmall)
+                    Text(if (state.onDuty) "Tekliflere açığım" else "Görev dışıyım", style = MaterialTheme.typography.titleMedium)
                     state.profile?.let {
                         Text(
-                            "Kapasite ${it.occupiedSeats}/${it.vehicleCapacity} · ${it.vehicleDescription}",
+                            "${it.occupiedSeats}/${it.vehicleCapacity} koltuk · ${it.vehicleDescription}",
                             style = MaterialTheme.typography.bodySmall,
+                            color = RetfastMuted,
                         )
                     }
                 }
@@ -82,8 +95,9 @@ fun RetrieverScreen(vm: RetrieverViewModel, onExit: () -> Unit) {
         // Incoming 60 s offer
         state.pendingRequest?.let { req ->
             val remaining = remainingSeconds(req.expiresAt, now)
-            Card(Modifier.fillMaxWidth()) {
+            Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("YENİ TOPLAMA TEKLİFİ", color = RetfastAmber, style = MaterialTheme.typography.labelSmall)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             state.pilotNames[req.pilotId] ?: "Pilot",
@@ -117,13 +131,18 @@ fun RetrieverScreen(vm: RetrieverViewModel, onExit: () -> Unit) {
             }
         }
 
-        Text("İşler", style = MaterialTheme.typography.titleMedium)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Görev akışı", style = MaterialTheme.typography.titleLarge)
+            Spacer(Modifier.weight(1f))
+            Text("Senkron $pending", color = RetfastMuted, style = MaterialTheme.typography.labelMedium)
+        }
         if (state.assignments.isEmpty()) {
             Text("Aktif iş yok", style = MaterialTheme.typography.bodyMedium)
         }
         state.assignments.forEach { a ->
-            Card(Modifier.fillMaxWidth()) {
+            Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("AKTİF GÖREV", color = RetfastAmber, style = MaterialTheme.typography.labelSmall)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             state.pilotNames[a.pilotId] ?: "Pilot",

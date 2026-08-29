@@ -39,21 +39,26 @@ struct EventDetailView: View {
     @State private var showRetriever = false
 
     var body: some View {
-        List {
-            Section {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                ScreenTitle(
+                    kicker: "MISSION WORKSPACE",
+                    title: event.name,
+                    subtitle: event.description.isEmpty ? nil : event.description
+                )
+
                 Map {
                     ZoneMapContent(overlays: model.overlays)
                 }
-                .frame(height: 240)
-                .listRowInsets(EdgeInsets())
+                .frame(height: 260)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 24).stroke(.white.opacity(0.1)))
                 .allowsHitTesting(false)
-            }
 
-            if !event.description.isEmpty {
-                Section { Text(event.description).font(.subheadline) }
-            }
-
-            Section("event.actions") {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("GÖREV EYLEMLERİ")
+                        .font(.caption2.weight(.bold)).tracking(1.6)
+                        .foregroundStyle(RetfastBrand.amber)
                 if roles.contains(.pilot) {
                     Button {
                         showPilot = true
@@ -64,7 +69,6 @@ struct EventDetailView: View {
                         )
                     }
                     .buttonStyle(.big(.primary, height: Hit.critical))
-                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                 }
                 if roles.contains(.retriever) {
                     Button {
@@ -73,17 +77,22 @@ struct EventDetailView: View {
                         Label("retriever.mode", systemImage: "car.fill")
                     }
                     .buttonStyle(.big(.secondary, height: Hit.critical))
-                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                 }
-            }
+                }
+                .operationalPanel()
 
-            Section("flights.title") {
+                HStack {
+                    Text("flights.title").font(.title3.weight(.bold))
+                    Spacer()
+                    Text("\(model.myTasks.count)").font(.caption.weight(.bold)).foregroundStyle(.secondary)
+                }
                 if model.myTasks.isEmpty {
                     Text("flights.empty").foregroundStyle(.secondary)
                 }
                 ForEach(model.myTasks) { task in
                     NavigationLink(value: task) {
-                        VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                        VStack(alignment: .leading, spacing: 5) {
                             Text(task.title).font(.subheadline)
                             HStack {
                                 Text(task.status.label)
@@ -91,15 +100,20 @@ struct EventDetailView: View {
                                     .foregroundStyle(task.status == .active ? .blue : .secondary)
                                 Text(task.startedAt, style: .date)
                                     .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                .foregroundStyle(.secondary)
                             }
                         }
+                        Spacer()
+                        Image(systemName: "chevron.right").foregroundStyle(.secondary)
+                        }
                         .minTapTarget(Hit.comfortable)
+                        .operationalPanel(padding: 14)
                     }
+                    .buttonStyle(.plain)
                 }
             }
+            .padding(16)
         }
-        .scrollContentBackground(.hidden)
         .background(RetfastBrand.graphite)
         .navigationTitle(event.name)
         .navigationBarTitleDisplayMode(.inline)

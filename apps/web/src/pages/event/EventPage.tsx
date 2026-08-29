@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/auth/AuthProvider";
@@ -14,6 +14,7 @@ import OpsTab from "./OpsTab";
 import FlightsTab from "./FlightsTab";
 import AuditTab from "./AuditTab";
 import SettingsTab from "./SettingsTab";
+import { ArrowLeft, CalendarRange, Radio, ShieldCheck } from "lucide-react";
 
 export default function EventPage() {
   const { id } = useParams<{ id: string }>();
@@ -44,25 +45,41 @@ export default function EventPage() {
   const isOperator = isAdmin || roles.includes("observer");
 
   return (
-    <div className="space-y-4">
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold">{event.name}</h1>
+    <div className="space-y-6">
+      <Link to="/events" className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
+        <ArrowLeft className="size-4" /> {m.events.title}
+      </Link>
+      <section className="relative overflow-hidden rounded-[28px] border border-white/8 bg-[#171816] p-6 sm:p-8">
+        <div className="absolute -right-16 -top-24 size-72 rounded-full bg-primary/10 blur-3xl" />
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end">
+          <div className="min-w-0 flex-1">
+            <div className="brand-kicker">MISSION WORKSPACE</div>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <h1 className="page-heading">{event.name}</h1>
           {roles.map((r) => (
-            <Badge key={r} variant="secondary">
+            <Badge key={r} variant="secondary" className="rounded-full">
               {m.roles[r]}
             </Badge>
           ))}
           {event.is_archived && <Badge variant="destructive">{m.events.archived}</Badge>}
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
+            </div>
+            <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+              <CalendarRange className="size-4 text-primary" />
           {fmtDateTime(event.starts_at, locale)} → {fmtDateTime(event.ends_at, locale)}
-        </p>
-        {event.description && <p className="mt-2 max-w-3xl text-sm">{event.description}</p>}
-      </div>
+            </p>
+            {event.description && <p className="mt-4 max-w-3xl text-sm leading-6 text-muted-foreground">{event.description}</p>}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {isAdmin && <div className="flex h-11 items-center gap-2 rounded-xl border border-white/8 bg-white/4 px-4 text-xs font-semibold text-muted-foreground"><ShieldCheck className="size-4 text-primary" />{m.roles.event_admin}</div>}
+            <Link to={`/events/${id}/ops`} className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/15">
+              <Radio className="size-4" /> {m.ops.openConsole}
+            </Link>
+          </div>
+        </div>
+      </section>
 
       <Tabs value={tab} onValueChange={(v) => setParams({ tab: v })}>
-        <TabsList className="flex-wrap">
+        <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-2xl border border-white/8 bg-white/[0.035] p-1.5">
           <TabsTrigger value="ops">{m.tabs.ops}</TabsTrigger>
           <TabsTrigger value="flights">{m.tabs.flights}</TabsTrigger>
           <TabsTrigger value="zones">{m.tabs.zones}</TabsTrigger>

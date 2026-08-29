@@ -1,0 +1,1815 @@
+androidx.lifecycle.LegacySavedStateHandleController$OnRecreation
+com.mizibu.retfast.auth.AuthViewModel
+kotlinx.serialization.json.JsonNull
+com.google.android.gms.common.api.internal.zzb
+io.ktor.client.engine.okhttp.OkHttpEngine$executeServerSendEventsRequest$1
+io.ktor.client.engine.okhttp.StreamRequestBody
+androidx.compose.ui.input.pointer.PointerInputEventHandler
+androidx.navigation.compose.DialogNavigator
+com.mizibu.retfast.events.EventsViewModel
+androidx.startup.InitializationProvider
+androidx.lifecycle.ProcessLifecycleOwner$attach$1
+com.mizibu.retfast.core.RetrievalAssignmentRow
+com.google.android.gms.location.LocationResult
+com.mizibu.retfast.core.Profile$Companion
+androidx.lifecycle.ReportFragment$LifecycleCallbacks
+androidx.compose.ui.input.pointer.SuspendPointerInputElement
+androidx.compose.ui.draw.ShadowGraphicsLayerElement
+androidx.compose.foundation.layout.HorizontalAlignElement
+androidx.compose.foundation.gestures.DraggableElement
+androidx.lifecycle.ReportFragment
+com.mizibu.retfast.core.EventRow$$serializer
+androidx.lifecycle.LifecycleDispatcher$DispatcherActivityCallback
+com.google.android.gms.common.util.DynamiteApi
+com.google.android.gms.common.api.internal.BasePendingResult
+io.ktor.client.engine.okhttp.OkHttpEngineKt
+androidx.compose.foundation.IndicationModifierElement
+androidx.compose.foundation.layout.LayoutWeightElement
+androidx.compose.material3.ThumbElement
+androidx.compose.foundation.text.handwriting.StylusHandwritingElement
+androidx.compose.ui.semantics.ClearAndSetSemanticsElement
+com.mizibu.retfast.core.RetrievalRequestRow$Companion
+io.ktor.client.engine.okhttp.OkHttpEngineKt$convertToOkHttpBody$3$1
+com.mizibu.retfast.RetfastApplication
+com.mizibu.retfast.tracking.TrackingService
+com.google.android.gms.common.GooglePlayServicesMissingManifestValueException
+androidx.compose.ui.draw.DrawWithCacheElement
+androidx.compose.foundation.lazy.layout.TraversablePrefetchStateModifierElement
+androidx.compose.ui.draw.DrawBehindElement
+com.mizibu.retfast.core.EmergencyRef
+androidx.compose.foundation.lazy.layout.LazyLayoutSemanticsModifier
+io.ktor.client.engine.okhttp.OkUtilsKt$fromOkHttp$1
+androidx.compose.foundation.lazy.layout.LazyLayoutItemAnimator$DisplayingDisappearingItemsElement
+com.mizibu.retfast.core.RetrievalAssignmentRow$$serializer
+io.ktor.client.engine.okhttp.OkHttpEngineKt$toChannel$1
+androidx.compose.ui.focus.FocusRequesterElement
+kotlinx.serialization.encoding.Decoder
+android.support.v4.app.RemoteActionCompatParcelizer
+android.support.v4.graphics.drawable.IconCompatParcelizer
+androidx.browser.browseractions.BrowserActionsFallbackMenuView
+androidx.core.graphics.drawable.IconCompat
+androidx.navigation.NavGraphNavigator
+com.mizibu.retfast.core.TaskRow
+androidx.compose.ui.draw.DrawWithContentElement
+com.google.android.gms.common.api.GoogleApiActivity
+androidx.compose.ui.layout.LayoutElement
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession$outgoing$1
+androidx.compose.material3.MinimumInteractiveModifier
+com.google.android.gms.dynamite.DynamiteModule$DynamiteLoaderClassLoader
+io.ktor.client.engine.okhttp.OkHttpEngine$execute$1
+com.mizibu.retfast.core.RetrieverProfileRow$Companion
+androidx.annotation.Keep
+kotlinx.serialization.json.JsonElement$Companion
+com.mizibu.retfast.core.RetrievalAssignmentRow$Companion
+androidx.navigation.compose.ComposeNavGraphNavigator
+androidx.compose.foundation.relocation.BringIntoViewRequesterElement
+com.mizibu.retfast.core.EmergencyRef$Companion
+androidx.navigation.NavBackStackEntry$SavedStateViewModel
+androidx.core.app.RemoteActionCompatParcelizer
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession
+io.ktor.client.engine.okhttp.OkHttp
+kotlin.reflect.jvm.internal.ReflectionFactoryImpl
+com.google.android.gms.common.api.Scope
+androidx.compose.ui.draganddrop.AndroidDragAndDropManager$modifier$1
+androidx.compose.foundation.text.modifiers.TextAnnotatedStringElement
+androidx.compose.ui.graphics.GraphicsLayerElement
+io.ktor.client.engine.okhttp.OkHttpEngine$executeWebSocketRequest$1
+com.mizibu.retfast.core.Membership$$serializer
+io.ktor.client.engine.okhttp.OkHttpEngine
+io.ktor.client.engine.okhttp.StreamAdapterIOException
+androidx.compose.foundation.text.input.internal.CoreTextFieldSemanticsModifier
+io.ktor.client.engine.okhttp.OkUtilsKt$execute$2$1
+androidx.compose.foundation.text.input.internal.LegacyAdaptingPlatformTextInputModifier
+com.google.android.gms.location.LocationAvailability
+io.ktor.client.engine.okhttp.OkHttpEngine$Companion
+com.mizibu.retfast.core.EmergencyRef$$serializer
+com.mizibu.retfast.core.RetrieverSession$$serializer
+androidx.compose.foundation.ScrollingLayoutElement
+androidx.compose.foundation.selection.ToggleableElement
+androidx.navigation.ActivityNavigator
+kotlinx.serialization.encoding.Encoder
+io.ktor.client.engine.okhttp.OkHttpSSESession
+androidx.compose.ui.graphics.BlockGraphicsLayerElement
+com.google.android.gms.location.LocationRequest
+androidx.compose.foundation.lazy.layout.LazyLayoutBeyondBoundsModifierElement
+androidx.lifecycle.ProcessLifecycleInitializer
+androidx.compose.foundation.text.modifiers.TextStringSimpleElement
+androidx.core.app.RemoteActionCompat
+com.mizibu.retfast.core.EventRow$Companion
+androidx.compose.ui.semantics.EmptySemanticsElement
+androidx.profileinstaller.ProfileInstallerInitializer
+com.google.android.gms.common.GooglePlayServicesIncorrectManifestValueException
+kotlinx.coroutines.android.AndroidDispatcherFactory
+androidx.compose.animation.AnimatedContentTransitionScopeImpl$SizeModifierElement
+com.mizibu.retfast.core.NameRow$Companion
+androidx.core.app.CoreComponentFactory
+com.russhwolf.settings.SettingsInitializer
+com.mizibu.retfast.core.TaskRow$$serializer
+androidx.compose.foundation.ClickableElement
+io.ktor.client.engine.okhttp.OkHttpEngine$1
+com.mizibu.retfast.core.RetrieverProfileRow$$serializer
+androidx.compose.foundation.gestures.ScrollableElement
+com.mizibu.retfast.core.Membership$Companion
+androidx.compose.ui.platform.AndroidComposeView$bringIntoViewNode$1
+com.mizibu.retfast.core.NameRow$$serializer
+com.mizibu.retfast.core.GeoZone$$serializer
+androidx.loader.app.LoaderManagerImpl$LoaderViewModel
+androidx.compose.foundation.layout.FillElement
+kotlinx.serialization.json.JsonObject$Companion
+androidx.versionedparcelable.ParcelImpl
+androidx.navigation.compose.ComposeNavigator
+okhttp3.internal.publicsuffix.PublicSuffixDatabase
+com.mizibu.retfast.core.Profile
+androidx.compose.ui.input.pointer.PointerHoverIconModifierElement
+androidx.compose.ui.input.pointer.StylusHoverIconModifierElement
+kotlinx.serialization.descriptors.SerialDescriptor
+kotlin.Metadata
+androidx.compose.foundation.layout.UnspecifiedConstraintsElement
+io.github.jan.supabase.auth.SupabaseInitializer
+androidx.compose.foundation.layout.BoxChildDataElement
+androidx.emoji2.text.EmojiCompatInitializer
+com.mizibu.retfast.core.NearbyRetriever
+androidx.compose.ui.input.key.KeyInputElement
+androidx.compose.ui.layout.OnGloballyPositionedElement
+com.google.android.gms.common.GooglePlayServicesManifestException
+androidx.compose.foundation.text.modifiers.SelectableTextAnnotatedStringElement
+androidx.compose.ui.focus.FocusChangedElement
+kotlinx.serialization.KSerializer
+com.mizibu.retfast.core.NameRow
+androidx.compose.animation.EnterExitTransitionElement
+androidx.compose.foundation.BackgroundElement
+androidx.compose.ui.platform.AndroidCompositionLocals_androidKt
+kotlinx.coroutines.internal.StackTraceRecoveryKt
+androidx.compose.foundation.ScrollingContainerElement
+kotlinx.serialization.json.JsonArray$Companion
+com.mizibu.retfast.core.NearbyRetriever$$serializer
+com.mizibu.retfast.core.Membership
+androidx.graphics.path.ConicConverter
+com.mizibu.retfast.core.RetrieverProfileRow
+androidx.compose.foundation.layout.IntrinsicWidthElement
+com.mizibu.retfast.core.RetrieverSession
+com.mizibu.retfast.core.GeoZone$Companion
+io.ktor.client.engine.okhttp.OkHttpCallback
+io.ktor.client.engine.okhttp.OkHttpConfig
+androidx.compose.ui.focus.FocusOwnerImpl$modifier$1
+androidx.compose.foundation.layout.SizeElement
+io.ktor.client.engine.okhttp.UnsupportedFrameTypeException
+androidx.profileinstaller.ProfileInstallReceiver
+androidx.compose.foundation.BorderModifierNodeElement
+com.mizibu.retfast.core.RetrievalRequestRow$$serializer
+com.mizibu.retfast.core.RetrievalRequestRow
+androidx.navigation.NavControllerViewModel
+androidx.compose.foundation.FocusableElement
+com.mizibu.retfast.core.Profile$$serializer
+com.google.android.gms.common.api.internal.LifecycleCallback
+com.mizibu.retfast.core.EventRow
+com.mizibu.retfast.MainActivity
+kotlin.coroutines.jvm.internal.BaseContinuationImpl
+androidx.compose.foundation.MagnifierElement
+com.mizibu.retfast.core.NearbyRetriever$Companion
+androidx.lifecycle.SavedStateHandlesVM
+io.ktor.client.engine.okhttp.OkHttpEngine$executeHttpRequest$1
+io.ktor.client.engine.okhttp.OkHttpEngineContainer
+io.ktor.client.engine.okhttp.OkUtilsKt$WhenMappings
+androidx.compose.ui.layout.LayoutIdElement
+com.google.android.gms.auth.api.signin.GoogleSignInAccount
+io.ktor.client.engine.okhttp.OkUtilsKt
+com.mizibu.retfast.core.TaskRow$Companion
+androidx.compose.foundation.layout.WrapContentElement
+kotlinx.serialization.json.JsonPrimitive$Companion
+io.ktor.client.engine.okhttp.OkHttpEngine$clientCache$1
+androidx.compose.ui.input.rotary.RotaryInputElement
+androidx.compose.ui.semantics.AppendedSemanticsElement
+com.mizibu.retfast.core.RetrieverSession$Companion
+androidx.compose.ui.layout.OnSizeChangedModifier
+com.google.android.gms.common.api.Status
+kotlin.jvm.internal.DefaultConstructorMarker
+androidx.versionedparcelable.CustomVersionedParcelable
+androidx.graphics.path.PathIteratorPreApi34Impl
+com.google.android.gms.common.annotation.KeepName
+androidx.core.graphics.drawable.IconCompatParcelizer
+com.mizibu.retfast.core.GeoZone
+androidx.compose.foundation.layout.PaddingElement
+com.google.android.gms.common.ErrorDialogFragment
+androidx.lifecycle.ProcessLifecycleOwner$attach$1$onActivityPreCreated$1
+io.ktor.client.engine.okhttp.OkHttpWebsocketSessionKt
+androidx.compose.foundation.layout.PaddingValuesElement
+com.google.android.gms.common.internal.ReflectedParcelable
+androidx.navigation.compose.BackStackEntryIdViewModel
+io.ktor.client.engine.HttpClientEngineBase: kotlin.Lazy dispatcher$delegate
+io.github.jan.supabase.postgrest.PostgrestErrorResponse: io.github.jan.supabase.postgrest.PostgrestErrorResponse$Companion Companion
+io.ktor.client.engine.okhttp.OkHttpEngineKt$convertToOkHttpBody$3$1: int label
+io.ktor.client.engine.okhttp.OkHttpEngine$execute$1: java.lang.Object result
+io.ktor.client.engine.okhttp.OkHttpEngine$executeHttpRequest$1: java.lang.Object L$1
+com.mizibu.retfast.pilot.ComposableSingletons$PilotScreenKt$lambda$-1945667351$1: com.mizibu.retfast.pilot.ComposableSingletons$PilotScreenKt$lambda$-1945667351$1 INSTANCE
+com.mizibu.retfast.core.NameRow$$serializer: int $stable
+androidx.compose.runtime.ParcelableSnapshotMutableState: android.os.Parcelable$Creator CREATOR
+com.google.android.gms.common.api.Status: android.os.Parcelable$Creator CREATOR
+io.ktor.client.engine.okhttp.OkHttpEngine$executeWebSocketRequest$1: io.ktor.client.engine.okhttp.OkHttpEngine this$0
+io.ktor.client.engine.okhttp.OkHttpEngine$execute$1: java.lang.Object L$1
+androidx.lifecycle.ProcessLifecycleOwner$attach$1$onActivityPreCreated$1: androidx.lifecycle.ProcessLifecycleOwner this$0
+io.ktor.client.engine.okhttp.OkHttpConfig: int clientCacheSize
+kotlinx.coroutines.scheduling.CoroutineScheduler: long controlState$volatile
+io.ktor.client.engine.okhttp.OkHttpEngineKt$toChannel$1: java.lang.Object L$0
+kotlinx.coroutines.JobSupport: java.lang.Object _state$volatile
+kotlinx.datetime.LocalDate: kotlinx.datetime.LocalDate$Companion Companion
+io.ktor.client.engine.HttpClientEngineConfig: kotlinx.coroutines.CoroutineDispatcher dispatcher
+com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$-1487026869$1: com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$-1487026869$1 INSTANCE
+kotlinx.coroutines.internal.LockFreeTaskQueueCore: java.lang.Object _next$volatile
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event[] $VALUES
+io.github.jan.supabase.auth.user.UserInfo$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+com.mizibu.retfast.pilot.ComposableSingletons$PilotScreenKt$lambda$-491226789$1: com.mizibu.retfast.pilot.ComposableSingletons$PilotScreenKt$lambda$-491226789$1 INSTANCE
+kotlin.jvm.internal.CallableReference: java.lang.Object receiver
+io.ktor.util.date.GMTDate$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+kotlinx.coroutines.channels.BufferedChannel: java.lang.Object _closeCause$volatile
+io.ktor.client.engine.okhttp.OkHttpEngine: kotlin.coroutines.CoroutineContext coroutineContext
+kotlinx.coroutines.internal.LockFreeLinkedListNode: java.lang.Object _next$volatile
+com.google.android.gms.internal.location.zze: android.os.Parcelable$Creator CREATOR
+io.ktor.client.engine.HttpClientEngineBase: kotlin.Lazy coroutineContext$delegate
+com.mizibu.retfast.core.EventRow$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+kotlinx.coroutines.internal.ConcurrentLinkedListNode: java.lang.Object _next$volatile
+kotlinx.coroutines.JobSupport$Finishing: java.lang.Object _exceptionsHolder$volatile
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_CREATE
+kotlinx.coroutines.DefaultExecutor: java.lang.Thread _thread
+kotlinx.datetime.DateTimeUnit$MonthBased: kotlinx.datetime.DateTimeUnit$MonthBased$Companion Companion
+io.ktor.client.engine.okhttp.OkHttpEngineKt$convertToOkHttpBody$3$1: io.ktor.http.content.OutgoingContent $this_convertToOkHttpBody
+kotlinx.atomicfu.AtomicRef: java.lang.Object value
+kotlinx.coroutines.UndispatchedCoroutine: boolean threadLocalIsSet
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_DESTROY
+io.ktor.client.engine.okhttp.OkHttpEngineKt$toChannel$1: java.lang.Object L$2
+com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$996285848$1: com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$996285848$1 INSTANCE
+com.google.android.gms.common.internal.RootTelemetryConfiguration: android.os.Parcelable$Creator CREATOR
+com.mizibu.retfast.tracking.SyncEngine: com.mizibu.retfast.tracking.SyncEngine INSTANCE
+kotlinx.coroutines.channels.BufferedChannel: long bufferEnd$volatile
+com.mizibu.retfast.pilot.ComposableSingletons$PilotScreenKt: com.mizibu.retfast.pilot.ComposableSingletons$PilotScreenKt INSTANCE
+io.ktor.client.engine.okhttp.OkHttpEngineKt$toChannel$1: int label
+io.ktor.client.engine.okhttp.OkHttpEngine$executeHttpRequest$1: java.lang.Object L$0
+kotlin.jvm.internal.CallableReference: kotlin.reflect.KCallable reflected
+com.google.android.gms.common.Feature: android.os.Parcelable$Creator CREATOR
+kotlin.coroutines.SafeContinuation: java.lang.Object result
+com.google.android.gms.common.internal.GetServiceRequest: android.os.Parcelable$Creator CREATOR
+io.ktor.client.engine.okhttp.OkHttpEngine: java.util.Set supportedCapabilities
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: kotlinx.coroutines.CompletableDeferred originResponse
+io.ktor.client.engine.okhttp.OkHttpWebsocketSessionKt: io.ktor.websocket.CloseReason DEFAULT_CLOSE_REASON_ERROR
+com.mizibu.retfast.MainActivityKt$EventsList$lambda$42$lambda$41$$inlined$items$default$1: com.mizibu.retfast.MainActivityKt$EventsList$lambda$42$lambda$41$$inlined$items$default$1 INSTANCE
+kotlinx.coroutines.scheduling.CoroutineScheduler: int _isTerminated$volatile
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: kotlinx.coroutines.CompletableDeferred _closeReason
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession$outgoing$1: io.ktor.client.engine.okhttp.OkHttpWebsocketSession this$0
+com.mizibu.retfast.core.NearbyRetriever: com.mizibu.retfast.core.NearbyRetriever$Companion Companion
+io.ktor.client.engine.okhttp.OkUtilsKt$execute$2$1: okhttp3.Call $call
+kotlin.coroutines.jvm.internal.SuspendLambda: int arity
+io.ktor.client.engine.okhttp.OkHttpEngine$executeServerSendEventsRequest$1: java.lang.Object result
+com.mizibu.retfast.core.EmergencyRef$$serializer: com.mizibu.retfast.core.EmergencyRef$$serializer INSTANCE
+io.ktor.utils.io.ByteChannel: int flushBufferSize
+com.google.android.gms.location.LocationResult: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.scheduling.WorkQueue: java.lang.Object lastScheduledTask$volatile
+io.ktor.client.engine.okhttp.OkHttpEngine: kotlin.coroutines.CoroutineContext requestsJob
+androidx.compose.foundation.lazy.layout.DefaultLazyKey: android.os.Parcelable$Creator CREATOR
+io.ktor.client.engine.okhttp.OkHttpConfig: kotlin.jvm.functions.Function1 config
+io.github.jan.supabase.auth.user.UserMfaFactor: io.github.jan.supabase.auth.user.UserMfaFactor$Companion Companion
+kotlinx.coroutines.scheduling.WorkQueue: int producerIndex$volatile
+kotlinx.coroutines.sync.SemaphoreAndMutexImpl: long deqIdx$volatile
+io.ktor.client.engine.okhttp.OkHttpEngine: java.util.Map clientCache
+kotlinx.coroutines.DefaultExecutor: int debugStatus
+com.mizibu.retfast.core.RetrieverProfileRow$$serializer: com.mizibu.retfast.core.RetrieverProfileRow$$serializer INSTANCE
+io.ktor.client.engine.okhttp.OkHttpEngine$executeHttpRequest$1: java.lang.Object L$3
+com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$522296445$1: com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$522296445$1 INSTANCE
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_PAUSE
+kotlinx.coroutines.sync.SemaphoreAndMutexImpl: int _availablePermits$volatile
+androidx.activity.result.ActivityResult: android.os.Parcelable$Creator CREATOR
+io.github.jan.supabase.auth.providers.builtin.Phone$Config$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+androidx.activity.ComponentActivity: androidx.activity.ComponentActivity$Companion Companion
+androidx.concurrent.futures.AbstractResolvableFuture: java.lang.Object value
+io.github.jan.supabase.auth.providers.builtin.Phone$Config: io.github.jan.supabase.auth.providers.builtin.Phone$Config$Companion Companion
+io.ktor.client.engine.HttpClientEngineConfig: boolean pipelining
+com.google.android.gms.common.api.Scope: android.os.Parcelable$Creator CREATOR
+kotlinx.serialization.json.JsonNull: kotlinx.serialization.json.JsonNull INSTANCE
+kotlinx.coroutines.EventLoopImplBase: java.lang.Object _queue$volatile
+io.ktor.client.engine.okhttp.OkHttpEngineKt$toChannel$1: java.lang.Object L$5
+com.mizibu.retfast.core.EventRow$$serializer: int $stable
+com.google.android.gms.common.internal.zat: android.os.Parcelable$Creator CREATOR
+io.ktor.client.engine.okhttp.OkHttpEngine$execute$1: int label
+androidx.activity.result.IntentSenderRequest: android.os.Parcelable$Creator CREATOR
+io.ktor.util.pipeline.Pipeline: java.lang.Object interceptors$delegate
+io.ktor.client.engine.okhttp.OkHttpEngine: io.ktor.client.engine.okhttp.OkHttpConfig config
+kotlinx.datetime.DateTimeUnit$DayBased: kotlinx.datetime.DateTimeUnit$DayBased$Companion Companion
+com.google.android.gms.common.internal.zzk: android.os.Parcelable$Creator CREATOR
+io.ktor.client.engine.HttpClientEngineConfig: java.net.Proxy proxy
+io.ktor.client.engine.okhttp.OkHttpSSESession: kotlinx.coroutines.channels.Channel _incoming
+com.mizibu.retfast.core.RetrievalRequestRow: com.mizibu.retfast.core.RetrievalRequestRow$Companion Companion
+io.ktor.client.engine.okhttp.OkHttpSSESession: okhttp3.sse.EventSource serverSentEventsSource
+io.ktor.client.engine.okhttp.OkHttpEngine$1: io.ktor.client.engine.okhttp.OkHttpEngine this$0
+io.ktor.client.engine.okhttp.OkHttpEngine$executeHttpRequest$1: io.ktor.client.engine.okhttp.OkHttpEngine this$0
+kotlinx.coroutines.flow.StateFlowImpl: java.lang.Object _state$volatile
+io.github.jan.supabase.auth.providers.IDTokenProvider: io.github.jan.supabase.auth.providers.IDTokenProvider$Companion Companion
+io.github.jan.supabase.auth.GoTrueErrorResponse$WeakPassword: io.github.jan.supabase.auth.GoTrueErrorResponse$WeakPassword$Companion Companion
+io.github.jan.supabase.auth.GoTrueErrorResponse$WeakPassword$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+io.ktor.client.engine.okhttp.OkHttpConfig: okhttp3.WebSocket$Factory webSocketFactory
+com.google.android.gms.common.internal.TelemetryData: android.os.Parcelable$Creator CREATOR
+io.ktor.client.engine.okhttp.OkHttpEngine$executeServerSendEventsRequest$1: int label
+com.mizibu.retfast.tracking.PointBuffer: com.mizibu.retfast.tracking.PointBuffer$Companion Companion
+com.google.android.gms.signin.internal.zak: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.channels.BufferedChannel: long sendersAndCloseStatus$volatile
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: androidx.lifecycle.ReportFragment$LifecycleCallbacks$Companion Companion
+kotlinx.coroutines.internal.LockFreeLinkedListNode: java.lang.Object _removedRef$volatile
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: okhttp3.WebSocket$Factory webSocketFactory
+com.mizibu.retfast.tracking.TrackingService: com.mizibu.retfast.tracking.TrackingService$Companion Companion
+kotlin.jvm.internal.CallableReference: boolean isTopLevel
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession$outgoing$1: int label
+io.ktor.client.engine.okhttp.OkUtilsKt$fromOkHttp$1: okhttp3.Headers $this_fromOkHttp
+com.mizibu.retfast.core.TaskRow$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+com.google.android.gms.common.internal.MethodInvocation: android.os.Parcelable$Creator CREATOR
+io.ktor.client.engine.okhttp.OkHttpEngine$1: int label
+com.google.android.gms.location.LocationRequest: android.os.Parcelable$Creator CREATOR
+kotlinx.datetime.UtcOffset: kotlinx.datetime.UtcOffset$Companion Companion
+com.mizibu.retfast.core.Profile: com.mizibu.retfast.core.Profile$Companion Companion
+com.mizibu.retfast.core.GeoZone$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+com.mizibu.retfast.ComposableSingletons$MainActivityKt: com.mizibu.retfast.ComposableSingletons$MainActivityKt INSTANCE
+androidx.lifecycle.ProcessLifecycleOwner$attach$1: androidx.lifecycle.ProcessLifecycleOwner this$0
+kotlinx.coroutines.internal.LimitedDispatcher: int runningWorkers$volatile
+com.google.android.gms.signin.internal.zai: android.os.Parcelable$Creator CREATOR
+io.github.jan.supabase.auth.user.Identity$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+io.ktor.client.engine.okhttp.OkHttpSSESession: kotlinx.coroutines.CompletableDeferred originResponse
+io.ktor.client.engine.okhttp.OkHttpEngineKt$toChannel$1: java.lang.Object L$4
+com.mizibu.retfast.retriever.ComposableSingletons$RetrieverScreenKt$lambda$2006102579$1: com.mizibu.retfast.retriever.ComposableSingletons$RetrieverScreenKt$lambda$2006102579$1 INSTANCE
+io.ktor.utils.io.ByteChannel: java.lang.Object _closedCause
+io.ktor.client.engine.okhttp.OkHttpEngine: io.ktor.client.engine.okhttp.OkHttpEngine$Companion Companion
+kotlin.coroutines.jvm.internal.BaseContinuationImpl: kotlin.coroutines.Continuation completion
+com.mizibu.retfast.core.NearbyRetriever$$serializer: com.mizibu.retfast.core.NearbyRetriever$$serializer INSTANCE
+com.mizibu.retfast.core.RetrieverSession$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+com.mizibu.retfast.core.Profile$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+kotlinx.coroutines.sync.SemaphoreAndMutexImpl: java.lang.Object head$volatile
+kotlinx.serialization.json.JsonObject: kotlinx.serialization.json.JsonObject$Companion Companion
+io.ktor.client.engine.okhttp.OkHttpEngine$executeWebSocketRequest$1: java.lang.Object L$2
+com.mizibu.retfast.pilot.ComposableSingletons$PilotScreenKt$lambda$-1835157376$1: com.mizibu.retfast.pilot.ComposableSingletons$PilotScreenKt$lambda$-1835157376$1 INSTANCE
+kotlinx.coroutines.channels.BufferedChannel: java.lang.Object receiveSegment$volatile
+kotlinx.coroutines.sync.SemaphoreAndMutexImpl: long enqIdx$volatile
+kotlinx.coroutines.android.AndroidExceptionPreHandler: java.lang.Object _preHandler
+io.ktor.client.engine.HttpClientEngineBase: java.util.concurrent.atomic.AtomicIntegerFieldUpdater closed$FU
+androidx.versionedparcelable.ParcelImpl: android.os.Parcelable$Creator CREATOR
+io.ktor.utils.io.pool.DefaultPool: long top
+okhttp3.RequestBody: okhttp3.RequestBody$Companion Companion
+kotlinx.coroutines.sync.MutexImpl: java.lang.Object owner$volatile
+com.mizibu.retfast.core.Membership: com.mizibu.retfast.core.Membership$Companion Companion
+io.ktor.client.engine.okhttp.OkHttp: io.ktor.client.engine.okhttp.OkHttp INSTANCE
+io.ktor.client.engine.okhttp.StreamRequestBody: java.lang.Long contentLength
+com.mizibu.retfast.core.RetrieverProfileRow: com.mizibu.retfast.core.RetrieverProfileRow$Companion Companion
+com.google.android.gms.common.internal.ConnectionTelemetryConfiguration: android.os.Parcelable$Creator CREATOR
+kotlin.coroutines.jvm.internal.ContinuationImpl: kotlin.coroutines.CoroutineContext _context
+com.mizibu.retfast.core.RetrieverProfileRow$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+com.mizibu.retfast.core.RetrievalAssignmentRow$$serializer: int $stable
+io.ktor.client.engine.okhttp.OkHttpEngine$executeWebSocketRequest$1: int label
+com.mizibu.retfast.core.RetrievalRequestRow$$serializer: com.mizibu.retfast.core.RetrievalRequestRow$$serializer INSTANCE
+kotlin.jvm.internal.CallableReference: java.lang.Class owner
+com.mizibu.retfast.core.NearbyRetriever$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+com.mizibu.retfast.core.NameRow$$serializer: com.mizibu.retfast.core.NameRow$$serializer INSTANCE
+kotlinx.coroutines.EventLoopImplBase: java.lang.Object _delayed$volatile
+com.google.android.gms.common.ConnectionResult: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.internal.ThreadSafeHeap: int _size$volatile
+androidx.concurrent.futures.AbstractResolvableFuture$Waiter: java.lang.Thread thread
+io.ktor.client.engine.okhttp.OkHttpEngine: kotlin.Lazy okHttpClientPrototype$delegate
+io.github.jan.supabase.auth.user.Identity: io.github.jan.supabase.auth.user.Identity$Companion Companion
+kotlinx.coroutines.flow.ChannelAsFlow: int consumed$volatile
+androidx.compose.runtime.ParcelableSnapshotMutableFloatState: android.os.Parcelable$Creator CREATOR
+io.github.jan.supabase.auth.GoTrueErrorResponse: io.github.jan.supabase.auth.GoTrueErrorResponse$Companion Companion
+kotlinx.serialization.json.JsonElement: kotlinx.serialization.json.JsonElement$Companion Companion
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: kotlin.coroutines.CoroutineContext coroutineContext
+androidx.fragment.app.FragmentManagerState: android.os.Parcelable$Creator CREATOR
+io.ktor.http.Url: io.ktor.http.Url$Companion Companion
+com.mizibu.retfast.core.TaskRow: com.mizibu.retfast.core.TaskRow$Companion Companion
+com.mizibu.retfast.core.TaskRow$$serializer: int $stable
+com.mizibu.retfast.pilot.ComposableSingletons$PilotScreenKt$lambda$-1604140615$1: com.mizibu.retfast.pilot.ComposableSingletons$PilotScreenKt$lambda$-1604140615$1 INSTANCE
+io.ktor.client.engine.okhttp.OkHttpEngine$executeServerSendEventsRequest$1: java.lang.Object L$0
+io.ktor.util.date.GMTDate: io.ktor.util.date.GMTDate$Companion Companion
+com.mizibu.retfast.core.EmergencyRef: com.mizibu.retfast.core.EmergencyRef$Companion Companion
+kotlinx.io.RefCountingCopyTracker: int copyCount
+io.ktor.client.engine.okhttp.OkHttpEngine$executeServerSendEventsRequest$1: java.lang.Object L$1
+kotlinx.coroutines.CancellableContinuationImpl: int _decisionAndIndex$volatile
+kotlinx.datetime.Instant: kotlinx.datetime.Instant$Companion Companion
+com.mizibu.retfast.core.EventRow: com.mizibu.retfast.core.EventRow$Companion Companion
+com.google.android.gms.internal.location.zzl: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.channels.BufferedChannel: long receivers$volatile
+kotlin.jvm.internal.FunctionReference: int flags
+io.ktor.client.engine.okhttp.OkUtilsKt$fromOkHttp$1: boolean caseInsensitiveName
+kotlinx.coroutines.internal.LockFreeLinkedListNode: java.lang.Object _prev$volatile
+com.mizibu.retfast.core.RetrieverSession$$serializer: int $stable
+kotlinx.coroutines.EventLoopImplBase: int _isCompleted$volatile
+androidx.fragment.app.BackStackState: android.os.Parcelable$Creator CREATOR
+io.ktor.client.HttpClient: int closed
+com.mizibu.retfast.retriever.ComposableSingletons$RetrieverScreenKt: com.mizibu.retfast.retriever.ComposableSingletons$RetrieverScreenKt INSTANCE
+io.ktor.client.engine.okhttp.OkHttpEngine$executeHttpRequest$1: int label
+com.mizibu.retfast.core.RetrievalAssignmentRow$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+com.mizibu.retfast.pilot.ComposableSingletons$PilotScreenKt$lambda$2145954107$1: com.mizibu.retfast.pilot.ComposableSingletons$PilotScreenKt$lambda$2145954107$1 INSTANCE
+io.ktor.client.engine.okhttp.OkHttpEngine$executeWebSocketRequest$1: java.lang.Object L$1
+kotlin.jvm.internal.FunctionReference: int arity
+com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$-1663652179$1: com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$-1663652179$1 INSTANCE
+kotlinx.coroutines.channels.BufferedChannel: long completedExpandBuffersAndPauseFlag$volatile
+kotlinx.datetime.DateTimeUnit: kotlinx.datetime.DateTimeUnit$Companion Companion
+com.google.android.gms.signin.internal.zaa: android.os.Parcelable$Creator CREATOR
+kotlinx.datetime.DateTimeUnit$DateBased: kotlinx.datetime.DateTimeUnit$DateBased$Companion Companion
+kotlinx.coroutines.CancellableContinuationImpl: java.lang.Object _parentHandle$volatile
+com.mizibu.retfast.pilot.ComposableSingletons$PilotScreenKt$lambda$1018107874$1: com.mizibu.retfast.pilot.ComposableSingletons$PilotScreenKt$lambda$1018107874$1 INSTANCE
+kotlinx.coroutines.channels.BufferedChannel: java.lang.Object bufferEndSegment$volatile
+androidx.navigation.NavBackStackEntryState: android.os.Parcelable$Creator CREATOR
+io.ktor.client.engine.okhttp.OkHttpEngine$executeHttpRequest$1: java.lang.Object L$2
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: kotlinx.coroutines.channels.Channel _incoming
+kotlinx.coroutines.internal.ConcurrentLinkedListNode: java.lang.Object _prev$volatile
+com.google.android.gms.common.internal.ClientIdentity: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.channels.BufferedChannel: java.lang.Object sendSegment$volatile
+kotlinx.datetime.DateTimeUnit$TimeBased: kotlinx.datetime.DateTimeUnit$TimeBased$Companion Companion
+com.mizibu.retfast.core.RetrievalRequestRow$$serializer: int $stable
+kotlinx.serialization.json.internal.InternalJsonWriter: kotlinx.serialization.json.internal.InternalJsonWriter$Companion Companion
+io.ktor.client.engine.okhttp.OkHttpEngine$execute$1: java.lang.Object L$0
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_STOP
+com.mizibu.retfast.core.NameRow$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+kotlinx.coroutines.EventLoopImplBase$DelayedTask: java.lang.Object _heap
+io.ktor.client.plugins.internal.ByteChannelReplay: java.lang.Object content
+kotlinx.coroutines.sync.SemaphoreAndMutexImpl: java.lang.Object tail$volatile
+io.github.jan.supabase.auth.user.UserMfaFactor$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+com.mizibu.retfast.core.RetrievalRequestRow$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+io.github.jan.supabase.auth.user.UserInfo: io.github.jan.supabase.auth.user.UserInfo$Companion Companion
+kotlinx.serialization.json.JsonPrimitive: kotlinx.serialization.json.JsonPrimitive$Companion Companion
+kotlinx.coroutines.scheduling.WorkQueue: int blockingTasksInBuffer$volatile
+kotlinx.coroutines.InvokeOnCancelling: int _invoked$volatile
+kotlin.jvm.internal.CallableReference: java.lang.String name
+androidx.fragment.app.FragmentState: android.os.Parcelable$Creator CREATOR
+com.google.android.gms.signin.internal.zag: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.JobSupport$Finishing: java.lang.Object _rootCause$volatile
+com.google.android.gms.dynamite.DynamiteModule$DynamiteLoaderClassLoader: java.lang.ClassLoader sClassLoader
+com.mizibu.retfast.core.GeoZone$$serializer: com.mizibu.retfast.core.GeoZone$$serializer INSTANCE
+com.mizibu.retfast.MainActivityKt$EventsList$1$1$1$2$1$1$1: com.mizibu.retfast.MainActivityKt$EventsList$1$1$1$2$1$1$1 INSTANCE
+com.mizibu.retfast.core.Profile$$serializer: int $stable
+io.ktor.client.engine.okhttp.OkUtilsKt$WhenMappings: int[] $EnumSwitchMapping$0
+kotlinx.coroutines.CompletedExceptionally: int _handled$volatile
+io.github.jan.supabase.auth.providers.builtin.DefaultAuthProvider$Config: io.github.jan.supabase.auth.providers.builtin.DefaultAuthProvider$Config$Companion Companion
+io.ktor.client.engine.HttpClientEngineBase: int closed
+com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$1605404604$1: com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$1605404604$1 INSTANCE
+io.ktor.client.engine.okhttp.OkHttpEngine$executeServerSendEventsRequest$1: io.ktor.client.engine.okhttp.OkHttpEngine this$0
+io.ktor.utils.io.SourceByteReadChannel: io.ktor.utils.io.CloseToken closed
+kotlin.SafePublicationLazyImpl: java.lang.Object _value
+com.google.android.gms.internal.location.zzei: android.os.Parcelable$Creator CREATOR
+kotlin.jvm.internal.CallableReference: java.lang.Object NO_RECEIVER
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession$outgoing$1: java.lang.Object L$0
+io.github.jan.supabase.auth.user.UserSession$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+io.ktor.client.engine.okhttp.StreamRequestBody: kotlin.jvm.functions.Function0 block
+com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$1602900677$1: com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$1602900677$1 INSTANCE
+com.mizibu.retfast.core.Membership$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: okhttp3.OkHttpClient engine
+com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$-1226048767$1: com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$-1226048767$1 INSTANCE
+io.github.jan.supabase.auth.user.UserSession: io.github.jan.supabase.auth.user.UserSession$Companion Companion
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: kotlinx.coroutines.CompletableDeferred self
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession$outgoing$1: okhttp3.Request $engineRequest
+com.mizibu.retfast.core.EmergencyRef$$serializer: int $stable
+io.github.jan.supabase.auth.providers.builtin.IDToken$Config: io.github.jan.supabase.auth.providers.builtin.IDToken$Config$Companion Companion
+kotlinx.coroutines.JobSupport: java.lang.Object _parentHandle$volatile
+kotlinx.coroutines.scheduling.CoroutineScheduler$Worker: int indexInArray
+com.google.android.gms.internal.location.zzeg: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.channels.BufferedChannel: java.lang.Object closeHandler$volatile
+com.mizibu.retfast.core.GeoZone$$serializer: int $stable
+androidx.concurrent.futures.AbstractResolvableFuture: androidx.concurrent.futures.AbstractResolvableFuture$Waiter waiters
+com.mizibu.retfast.core.Membership$$serializer: com.mizibu.retfast.core.Membership$$serializer INSTANCE
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession$outgoing$1: java.lang.Object L$1
+io.ktor.client.engine.okhttp.OkHttpEngineKt$toChannel$1: kotlin.coroutines.CoroutineContext $context
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession$outgoing$1: java.lang.Object L$2
+androidx.concurrent.futures.AbstractResolvableFuture: androidx.concurrent.futures.AbstractResolvableFuture$Listener listeners
+com.mizibu.retfast.core.GeoZone: com.mizibu.retfast.core.GeoZone$Companion Companion
+com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$2093640680$1: com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$2093640680$1 INSTANCE
+io.ktor.client.engine.okhttp.OkHttpEngineKt$convertToOkHttpBody$3$1: java.lang.Object L$0
+androidx.compose.runtime.ParcelableSnapshotMutableLongState: android.os.Parcelable$Creator CREATOR
+com.google.android.gms.auth.api.signin.GoogleSignInAccount: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.scheduling.WorkQueue: int consumerIndex$volatile
+io.ktor.client.engine.okhttp.OkHttpEngine$executeServerSendEventsRequest$1: java.lang.Object L$3
+com.mizibu.retfast.core.EmergencyRef$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+com.mizibu.retfast.core.RetrievalAssignmentRow: com.mizibu.retfast.core.RetrievalAssignmentRow$Companion Companion
+kotlinx.serialization.json.JsonArray: kotlinx.serialization.json.JsonArray$Companion Companion
+io.ktor.client.engine.okhttp.OkHttpEngineKt$toChannel$1: io.ktor.client.request.HttpRequestData $requestData
+io.ktor.client.engine.okhttp.OkHttpEngine$execute$1: io.ktor.client.engine.okhttp.OkHttpEngine this$0
+io.github.jan.supabase.postgrest.PostgrestErrorResponse$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+io.ktor.client.engine.okhttp.OkHttpEngineKt$toChannel$1: okio.BufferedSource $this_toChannel
+kotlinx.coroutines.DispatchedCoroutine: int _decision$volatile
+kotlinx.coroutines.internal.DispatchedContinuation: java.lang.Object _reusableCancellableContinuation$volatile
+androidx.compose.runtime.ParcelableSnapshotMutableIntState: android.os.Parcelable$Creator CREATOR
+io.ktor.client.engine.okhttp.OkHttpCallback: kotlinx.coroutines.CancellableContinuation continuation
+io.ktor.util.collections.CopyOnWriteHashMap: java.lang.Object current
+com.mizibu.retfast.pilot.ComposableSingletons$PilotScreenKt$lambda$-292747720$1: com.mizibu.retfast.pilot.ComposableSingletons$PilotScreenKt$lambda$-292747720$1 INSTANCE
+kotlinx.coroutines.internal.Segment: int cleanedAndPointers$volatile
+io.ktor.client.engine.okhttp.OkHttpEngine$executeWebSocketRequest$1: java.lang.Object result
+io.github.jan.supabase.auth.providers.builtin.IDToken$Config$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event$Companion Companion
+kotlin.coroutines.jvm.internal.ContinuationImpl: kotlin.coroutines.Continuation intercepted
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_ANY
+io.github.jan.supabase.auth.providers.builtin.Email$Config: io.github.jan.supabase.auth.providers.builtin.Email$Config$Companion Companion
+io.ktor.client.engine.HttpClientEngineConfig: int threadsCount
+io.ktor.client.engine.okhttp.OkHttpEngine$executeWebSocketRequest$1: java.lang.Object L$3
+com.google.android.gms.location.LocationAvailability: android.os.Parcelable$Creator CREATOR
+io.ktor.client.engine.okhttp.OkHttpEngine$executeWebSocketRequest$1: java.lang.Object L$0
+io.ktor.utils.io.ByteChannel: java.lang.Object suspensionSlot
+com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$294725322$1: com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$294725322$1 INSTANCE
+com.mizibu.retfast.core.Profile$$serializer: com.mizibu.retfast.core.Profile$$serializer INSTANCE
+com.mizibu.retfast.core.Membership$$serializer: int $stable
+kotlinx.coroutines.internal.LockFreeTaskQueue: java.lang.Object _cur$volatile
+kotlinx.coroutines.CancelledContinuation: int _resumed$volatile
+kotlinx.datetime.LocalTime: kotlinx.datetime.LocalTime$Companion Companion
+com.mizibu.retfast.core.EventRole: com.mizibu.retfast.core.EventRole$Companion Companion
+io.ktor.client.engine.okhttp.OkHttpCallback: io.ktor.client.request.HttpRequestData requestData
+io.ktor.client.engine.okhttp.OkHttpEngine$executeHttpRequest$1: java.lang.Object result
+com.mizibu.retfast.core.NameRow: com.mizibu.retfast.core.NameRow$Companion Companion
+kotlinx.coroutines.android.HandlerDispatcherKt: android.view.Choreographer choreographer
+io.ktor.client.engine.okhttp.OkHttpSSESession: kotlin.coroutines.CoroutineContext coroutineContext
+com.mizibu.retfast.core.RetrievalAssignmentRow$$serializer: com.mizibu.retfast.core.RetrievalAssignmentRow$$serializer INSTANCE
+kotlinx.coroutines.internal.LockFreeTaskQueueCore: long _state$volatile
+io.ktor.client.engine.okhttp.OkHttpEngine$executeServerSendEventsRequest$1: java.lang.Object L$2
+com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$30575214$1: com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$30575214$1 INSTANCE
+com.google.android.gms.internal.location.zzee: android.os.Parcelable$Creator CREATOR
+com.google.android.gms.location.zzal: android.os.Parcelable$Creator CREATOR
+io.ktor.client.engine.okhttp.OkHttpEngineContainer: io.ktor.client.engine.HttpClientEngineFactory factory
+com.mizibu.retfast.core.TaskRow$$serializer: com.mizibu.retfast.core.TaskRow$$serializer INSTANCE
+com.mizibu.retfast.core.NearbyRetriever$$serializer: int $stable
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: kotlinx.coroutines.channels.SendChannel outgoing
+io.ktor.client.engine.okhttp.OkHttpConfig: okhttp3.OkHttpClient preconfigured
+com.mizibu.retfast.core.RetrieverSession: com.mizibu.retfast.core.RetrieverSession$Companion Companion
+io.ktor.client.engine.okhttp.OkHttpEngineKt$toChannel$1: java.lang.Object L$1
+kotlinx.coroutines.scheduling.CoroutineScheduler: long parkedWorkersStack$volatile
+io.ktor.client.call.HttpClientCall: int received
+io.github.jan.supabase.auth.providers.builtin.Email$Config$$serializer: kotlinx.serialization.descriptors.SerialDescriptor descriptor
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_START
+com.mizibu.retfast.core.EventRow$$serializer: com.mizibu.retfast.core.EventRow$$serializer INSTANCE
+com.mizibu.retfast.ui.Hit: com.mizibu.retfast.ui.Hit INSTANCE
+kotlinx.coroutines.CancellableContinuationImpl: java.lang.Object _state$volatile
+com.mizibu.retfast.core.RetrieverProfileRow$$serializer: int $stable
+com.google.android.gms.common.internal.zav: android.os.Parcelable$Creator CREATOR
+com.mizibu.retfast.core.RetrieverSession$$serializer: com.mizibu.retfast.core.RetrieverSession$$serializer INSTANCE
+io.github.jan.supabase.auth.providers.builtin.Phone$Channel: io.github.jan.supabase.auth.providers.builtin.Phone$Channel$Companion Companion
+androidx.concurrent.futures.AbstractResolvableFuture$Waiter: androidx.concurrent.futures.AbstractResolvableFuture$Waiter next
+io.ktor.client.engine.HttpClientEngineBase: java.lang.String engineName
+io.ktor.client.engine.okhttp.OkHttpEngineKt$toChannel$1: java.lang.Object L$3
+kotlinx.coroutines.internal.ResizableAtomicArray: java.util.concurrent.atomic.AtomicReferenceArray array
+kotlinx.coroutines.scheduling.CoroutineScheduler$Worker: java.lang.Object nextParkedWorker
+kotlinx.coroutines.JobSupport$Finishing: int _isCompleting$volatile
+kotlinx.coroutines.scheduling.CoroutineScheduler$Worker: int workerCtl$volatile
+kotlin.jvm.internal.CallableReference: java.lang.String signature
+io.ktor.client.engine.okhttp.UnsupportedFrameTypeException: io.ktor.websocket.Frame frame
+com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$-1220612941$1: com.mizibu.retfast.ComposableSingletons$MainActivityKt$lambda$-1220612941$1 INSTANCE
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_RESUME
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.text.input.TextInputService getTextInputService()
+androidx.core.app.NotificationCompatBuilder$Api21Impl: android.app.Notification$Builder addPerson(android.app.Notification$Builder,java.lang.String)
+androidx.compose.ui.platform.AndroidComposeView: void getFontLoader$annotations()
+androidx.core.view.ViewCompat$Api21Impl: android.graphics.PorterDuff$Mode getBackgroundTintMode(android.view.View)
+co.touchlab.kermit.Severity: co.touchlab.kermit.Severity valueOf(java.lang.String)
+androidx.compose.ui.platform.DrawChildContainer: int getChildCount()
+androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getRootStableInsets()
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: void terminate()
+kotlin.Metadata: int xi()
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api30Impl: java.lang.Object createRangeInfo(int,float,float,float)
+androidx.core.view.DisplayCutoutCompat$Api28Impl: int getSafeInsetBottom(android.view.DisplayCutout)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.spatial.RectManager getRectManager()
+com.mizibu.retfast.core.Membership$$serializer: Membership$$serializer()
+io.ktor.websocket.CloseReason$Codes: io.ktor.websocket.CloseReason$Codes valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkUtilsKt: boolean isConnectException(java.io.IOException)
+io.ktor.client.engine.okhttp.OkHttpEngine: java.util.Map access$getClientCache$p(io.ktor.client.engine.okhttp.OkHttpEngine)
+com.mizibu.retfast.core.Profile$$serializer: kotlinx.serialization.descriptors.SerialDescriptor getDescriptor()
+androidx.core.graphics.drawable.IconCompat$Api30Impl: android.graphics.drawable.Icon createWithAdaptiveBitmapContentUri(android.net.Uri)
+androidx.core.view.ViewCompat$Api28Impl: boolean isAccessibilityHeading(android.view.View)
+io.github.jan.supabase.logging.LogLevel: io.github.jan.supabase.logging.LogLevel valueOf(java.lang.String)
+io.ktor.util.Platform$JsPlatform: io.ktor.util.Platform$JsPlatform[] values()
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api34Impl: boolean isAccessibilityDataSensitive(android.view.accessibility.AccessibilityNodeInfo)
+androidx.core.view.ViewCompat$Api23Impl: int getScrollIndicators(android.view.View)
+kotlin.reflect.jvm.internal.impl.renderer.RenderingFormat: kotlin.reflect.jvm.internal.impl.renderer.RenderingFormat valueOf(java.lang.String)
+androidx.compose.ui.window.PopupLayout: android.view.WindowManager$LayoutParams getParams$ui_release()
+kotlinx.datetime.Instant$Companion: kotlinx.serialization.KSerializer serializer()
+androidx.core.view.WindowInsetsCompat$Impl20: WindowInsetsCompat$Impl20(androidx.core.view.WindowInsetsCompat,android.view.WindowInsets)
+androidx.compose.material3.internal.InputPhase: androidx.compose.material3.internal.InputPhase[] values()
+androidx.core.view.WindowInsetsCompat$Impl: void copyWindowDataInto(androidx.core.view.WindowInsetsCompat)
+kotlin.io.encoding.Base64$PaddingOption: kotlin.io.encoding.Base64$PaddingOption[] values()
+com.mizibu.retfast.core.EmergencyRef$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,com.mizibu.retfast.core.EmergencyRef)
+androidx.core.view.ViewCompat$Api21Impl$1: android.view.WindowInsets onApplyWindowInsets(android.view.View,android.view.WindowInsets)
+kotlin.coroutines.jvm.internal.ContinuationImpl: kotlin.coroutines.Continuation intercepted()
+kotlin.reflect.jvm.internal.impl.resolve.deprecation.DeprecationLevelValue: kotlin.reflect.jvm.internal.impl.resolve.deprecation.DeprecationLevelValue valueOf(java.lang.String)
+androidx.compose.animation.core.PreconditionsKt: void throwIllegalArgumentException(java.lang.String)
+androidx.core.view.ViewCompat$Api21Impl: void setBackgroundTintList(android.view.View,android.content.res.ColorStateList)
+androidx.compose.material3.MinimumInteractiveModifier: MinimumInteractiveModifier()
+io.ktor.client.engine.okhttp.OkHttpEngine: void close()
+androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivitySaveInstanceState(android.app.Activity,android.os.Bundle)
+androidx.compose.ui.state.ToggleableState: androidx.compose.ui.state.ToggleableState[] values()
+io.ktor.client.engine.okhttp.OkHttpSSESession: void onFailure(okhttp3.sse.EventSource,java.lang.Throwable,okhttp3.Response)
+androidx.core.view.ViewCompat$Api21Impl: boolean startNestedScroll(android.view.View,int)
+kotlin.jvm.internal.FunctionReference: java.lang.String toString()
+androidx.compose.ui.platform.actionmodecallback.MenuItemOption: androidx.compose.ui.platform.actionmodecallback.MenuItemOption valueOf(java.lang.String)
+androidx.core.app.NotificationCompatBuilder$Api26Impl: android.app.Notification$Builder setSettingsText(android.app.Notification$Builder,java.lang.CharSequence)
+com.mizibu.retfast.core.NearbyRetriever$$serializer: NearbyRetriever$$serializer()
+kotlin.coroutines.jvm.internal.SuspendLambda: java.lang.String toString()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.modifier.ModifierLocalManager getModifierLocalManager()
+androidx.core.view.WindowInsetsCompat$Impl20: boolean equals(java.lang.Object)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.unit.LayoutDirection getLayoutDirection()
+okhttp3.Protocol: okhttp3.Protocol[] values()
+androidx.core.app.NotificationManagerCompat$Api24Impl: boolean areNotificationsEnabled(android.app.NotificationManager)
+com.russhwolf.settings.SettingsInitializer: SettingsInitializer()
+com.mizibu.retfast.core.NearbyRetriever$Companion: kotlinx.serialization.KSerializer serializer()
+androidx.core.location.LocationCompat$Api26Impl: void removeBearingAccuracy(android.location.Location)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.WindowInfo getWindowInfo()
+com.mizibu.retfast.core.EventRow$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,com.mizibu.retfast.core.EventRow)
+kotlin.Metadata: java.lang.String pn()
+androidx.core.view.WindowInsetsCompat$Impl29: WindowInsetsCompat$Impl29(androidx.core.view.WindowInsetsCompat,androidx.core.view.WindowInsetsCompat$Impl29)
+androidx.compose.ui.node.LayoutNode$LayoutState: androidx.compose.ui.node.LayoutNode$LayoutState[] values()
+androidx.core.app.NotificationCompatBuilder$Api20Impl: android.app.Notification$Action$Builder addRemoteInput(android.app.Notification$Action$Builder,android.app.RemoteInput)
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getSystemWindowInsets()
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.view.WindowInsetsCompat consumeDisplayCutout()
+androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getInsets(int)
+androidx.compose.foundation.layout.Direction: androidx.compose.foundation.layout.Direction valueOf(java.lang.String)
+io.github.jan.supabase.auth.providers.builtin.Email$Config$Companion: kotlinx.serialization.KSerializer serializer()
+com.mizibu.retfast.tracking.TrackingService$Mode: com.mizibu.retfast.tracking.TrackingService$Mode valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: void setPingIntervalMillis(long)
+io.ktor.client.engine.okhttp.OkHttpConfig: okhttp3.WebSocket$Factory getWebSocketFactory()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidAccessibilityManager getAccessibilityManager()
+kotlin.jvm.internal.FunctionReference: kotlin.reflect.KCallable computeReflected()
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: java.util.List getExtensions()
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: void setTimeoutMillis(long)
+io.ktor.client.engine.okhttp.OkHttpEngine: kotlin.coroutines.CoroutineContext access$getRequestsJob$p(io.ktor.client.engine.okhttp.OkHttpEngine)
+androidx.lifecycle.LegacySavedStateHandleController$OnRecreation: LegacySavedStateHandleController$OnRecreation()
+androidx.compose.ui.text.style.ResolvedTextDirection: androidx.compose.ui.text.style.ResolvedTextDirection valueOf(java.lang.String)
+androidx.compose.ui.platform.AbstractComposeView: boolean getShowLayoutBounds()
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$MemberKind: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$MemberKind[] values()
+androidx.compose.animation.core.AnimationEndReason: androidx.compose.animation.core.AnimationEndReason valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpConfig: void setWebSocketFactory(okhttp3.WebSocket$Factory)
+androidx.core.view.WindowInsetsCompat$BuilderImpl29: void setStableInsets(androidx.core.graphics.Insets)
+kotlinx.coroutines.scheduling.CoroutineScheduler$WorkerState: kotlinx.coroutines.scheduling.CoroutineScheduler$WorkerState valueOf(java.lang.String)
+io.github.jan.supabase.auth.user.UserInfo$Companion: kotlinx.serialization.KSerializer serializer()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.semantics.SemanticsOwner getSemanticsOwner()
+kotlin.reflect.jvm.internal.impl.load.java.SpecialGenericSignatures$TypeSafeBarrierDescription: kotlin.reflect.jvm.internal.impl.load.java.SpecialGenericSignatures$TypeSafeBarrierDescription[] values()
+androidx.compose.ui.input.pointer.util.VelocityTracker1D$Strategy: androidx.compose.ui.input.pointer.util.VelocityTracker1D$Strategy valueOf(java.lang.String)
+androidx.core.location.LocationCompat$Api26Impl: boolean hasSpeedAccuracy(android.location.Location)
+androidx.core.view.WindowInsetsCompat$BuilderImpl: void setStableInsets(androidx.core.graphics.Insets)
+kotlinx.datetime.DateTimeUnit$MonthBased$Companion: kotlinx.serialization.KSerializer serializer()
+com.mizibu.retfast.tracking.TrackingService$Mode: com.mizibu.retfast.tracking.TrackingService$Mode[] values()
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: kotlinx.coroutines.CompletableDeferred getOriginResponse$ktor_client_okhttp()
+androidx.core.view.ViewCompat$Api28Impl: java.lang.Object requireViewById(android.view.View,int)
+io.ktor.client.engine.okhttp.OkHttpSSESession: kotlinx.coroutines.flow.Flow getIncoming()
+androidx.compose.ui.graphics.AndroidPath_androidKt: void throwIllegalStateException(java.lang.String)
+androidx.compose.material.ripple.RippleHostView: void setRippleState(boolean)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession$outgoing$1: java.lang.Object invoke(java.lang.Object,java.lang.Object)
+kotlin.jvm.internal.CallableReference: java.lang.String getSignature()
+io.ktor.client.engine.okhttp.OkHttpEngine: java.lang.Object executeServerSendEventsRequest(okhttp3.OkHttpClient,okhttp3.Request,kotlin.coroutines.CoroutineContext,kotlin.coroutines.Continuation)
+android.support.v4.app.RemoteActionCompatParcelizer: RemoteActionCompatParcelizer()
+kotlin.reflect.jvm.internal.impl.types.model.TypeVariance: kotlin.reflect.jvm.internal.impl.types.model.TypeVariance valueOf(java.lang.String)
+kotlin.reflect.jvm.internal.impl.renderer.RenderingFormat: kotlin.reflect.jvm.internal.impl.renderer.RenderingFormat[] values()
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPreStopped(android.app.Activity)
+io.ktor.client.engine.okhttp.OkHttpCallback: OkHttpCallback(io.ktor.client.request.HttpRequestData,kotlinx.coroutines.CancellableContinuation)
+androidx.core.view.WindowInsetsCompat$Impl: boolean isVisible(int)
+androidx.core.os.BundleCompat$Api33Impl: android.util.SparseArray getSparseParcelableArray(android.os.Bundle,java.lang.String,java.lang.Class)
+androidx.compose.ui.node.LayoutNode$LayoutState: androidx.compose.ui.node.LayoutNode$LayoutState valueOf(java.lang.String)
+okhttp3.RequestBody: okhttp3.RequestBody create(okhttp3.MediaType,byte[],int)
+io.ktor.client.engine.okhttp.OkHttpEngine: io.ktor.client.engine.HttpClientEngineConfig getConfig()
+kotlin.reflect.jvm.internal.impl.types.model.CaptureStatus: kotlin.reflect.jvm.internal.impl.types.model.CaptureStatus[] values()
+androidx.compose.ui.platform.AndroidComposeView: boolean getHasPendingMeasureOrLayout()
+androidx.compose.ui.platform.ViewLayer: void setCameraDistancePx(float)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.draganddrop.AndroidDragAndDropManager getDragAndDropManager()
+androidx.core.view.ViewCompat$Api29Impl: void setSystemGestureExclusionRects(android.view.View,java.util.List)
+io.ktor.client.engine.okhttp.OkHttpEngine$executeServerSendEventsRequest$1: java.lang.Object invokeSuspend(java.lang.Object)
+androidx.core.view.ViewCompat$Api29Impl: void saveAttributeDataForStyleable(android.view.View,android.content.Context,int[],android.util.AttributeSet,android.content.res.TypedArray,int,int)
+androidx.compose.ui.platform.ViewLayer: androidx.compose.ui.graphics.Path getManualClipPath()
+okhttp3.RequestBody: okhttp3.RequestBody create(java.io.File,okhttp3.MediaType)
+kotlin.reflect.jvm.internal.impl.descriptors.Modality: kotlin.reflect.jvm.internal.impl.descriptors.Modality valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpEngine: java.lang.Object access$executeWebSocketRequest(io.ktor.client.engine.okhttp.OkHttpEngine,okhttp3.OkHttpClient,okhttp3.Request,kotlin.coroutines.CoroutineContext,kotlin.coroutines.Continuation)
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api33Impl: androidx.core.view.accessibility.AccessibilityNodeInfoCompat getChild(android.view.accessibility.AccessibilityNodeInfo,int,int)
+io.github.jan.supabase.postgrest.query.Count: io.github.jan.supabase.postgrest.query.Count valueOf(java.lang.String)
+androidx.compose.ui.node.LookaheadPassDelegate$PlacedState: androidx.compose.ui.node.LookaheadPassDelegate$PlacedState valueOf(java.lang.String)
+okhttp3.RequestBody: okhttp3.RequestBody create(okhttp3.MediaType,java.io.File)
+androidx.core.graphics.drawable.IconCompat$Api23Impl: android.net.Uri getUri(java.lang.Object)
+androidx.compose.runtime.InvalidationResult: androidx.compose.runtime.InvalidationResult[] values()
+androidx.core.app.ActivityCompat$Api23Impl: void onSharedElementsReady(java.lang.Object)
+androidx.graphics.path.PathIteratorPreApi34Impl: boolean internalPathIteratorHasNext(long)
+com.mizibu.retfast.core.TaskRow$$serializer: TaskRow$$serializer()
+com.mizibu.retfast.core.RetrieverProfileRow$Companion: kotlinx.serialization.KSerializer serializer()
+androidx.compose.ui.graphics.layer.ViewLayer: boolean getCanUseCompositingLayer$ui_graphics_release()
+io.ktor.client.engine.okhttp.OkUtilsKt$fromOkHttp$1: boolean contains(java.lang.String,java.lang.String)
+com.mizibu.retfast.core.RetrievalAssignmentRow$$serializer: kotlinx.serialization.KSerializer[] typeParametersSerializers()
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api33Impl: void setUniqueId(android.view.accessibility.AccessibilityNodeInfo,java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpSSESession: void onEvent(okhttp3.sse.EventSource,java.lang.String,java.lang.String,java.lang.String)
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api33Impl: java.lang.String getUniqueId(android.view.accessibility.AccessibilityNodeInfo)
+io.ktor.client.engine.okhttp.OkHttpEngineKt: java.lang.Throwable mapExceptions(java.lang.Throwable,io.ktor.client.request.HttpRequestData)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.focus.FocusOwner getFocusOwner()
+androidx.core.view.WindowInsetsCompat$BuilderImpl20: WindowInsetsCompat$BuilderImpl20()
+androidx.compose.ui.platform.AndroidComposeView: void setLastMatrixRecalculationAnimationTime$ui_release(long)
+io.ktor.client.engine.HttpClientEngineConfig: void getThreadsCount$annotations()
+androidx.compose.ui.platform.AndroidComposeView: void setDensity(androidx.compose.ui.unit.Density)
+androidx.core.app.NotificationCompatBuilder$Api31Impl: android.app.Notification$Action$Builder setAuthenticationRequired(android.app.Notification$Action$Builder,boolean)
+com.mizibu.retfast.core.Profile$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,java.lang.Object)
+androidx.core.view.ViewCompat$Api21Impl: void setTransitionName(android.view.View,java.lang.String)
+kotlin.reflect.jvm.internal.impl.types.model.TypeVariance: kotlin.reflect.jvm.internal.impl.types.model.TypeVariance[] values()
+com.google.android.gms.common.api.GoogleApiActivity: GoogleApiActivity()
+com.mizibu.retfast.events.EventsViewModel: EventsViewModel()
+androidx.core.view.ViewCompat$Api28Impl: void setScreenReaderFocusable(android.view.View,boolean)
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api34Impl: void setAccessibilityDataSensitive(android.view.accessibility.AccessibilityNodeInfo,boolean)
+androidx.core.app.RemoteActionCompatParcelizer: void write(androidx.core.app.RemoteActionCompat,androidx.versionedparcelable.VersionedParcel)
+kotlin.reflect.jvm.internal.impl.builtins.jvm.JvmBuiltIns$Kind: kotlin.reflect.jvm.internal.impl.builtins.jvm.JvmBuiltIns$Kind[] values()
+kotlin.reflect.jvm.internal.impl.resolve.jvm.JvmPrimitiveType: kotlin.reflect.jvm.internal.impl.resolve.jvm.JvmPrimitiveType valueOf(java.lang.String)
+kotlinx.serialization.json.ClassDiscriminatorMode: kotlinx.serialization.json.ClassDiscriminatorMode[] values()
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Effect$EffectType: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Effect$EffectType[] values()
+com.mizibu.retfast.core.GeoZone$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,java.lang.Object)
+io.ktor.client.engine.okhttp.OkHttpConfig: kotlin.Unit config$lambda$0(okhttp3.OkHttpClient$Builder)
+androidx.core.app.RemoteInput$Api20Impl: void addResultsToIntent(java.lang.Object,android.content.Intent,android.os.Bundle)
+androidx.compose.runtime.collection.MutableVectorKt: void throwOutOfRangeException(int,int)
+androidx.core.view.ViewCompat$Api20Impl: android.view.WindowInsets onApplyWindowInsets(android.view.View,android.view.WindowInsets)
+kotlin.reflect.jvm.internal.impl.types.error.ErrorScopeKind: kotlin.reflect.jvm.internal.impl.types.error.ErrorScopeKind[] values()
+kotlin.reflect.jvm.internal.impl.types.model.CaptureStatus: kotlin.reflect.jvm.internal.impl.types.model.CaptureStatus valueOf(java.lang.String)
+kotlin.reflect.jvm.internal.impl.load.java.typeEnhancement.MutabilityQualifier: kotlin.reflect.jvm.internal.impl.load.java.typeEnhancement.MutabilityQualifier valueOf(java.lang.String)
+kotlin.reflect.jvm.internal.calls.AnnotationConstructorCaller$Origin: kotlin.reflect.jvm.internal.calls.AnnotationConstructorCaller$Origin[] values()
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api33Impl: java.lang.String getCollectionItemColumnTitle(java.lang.Object)
+androidx.core.location.LocationCompat$Api26Impl: void removeSpeedAccuracy(android.location.Location)
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getMandatorySystemGestureInsets()
+kotlin.reflect.jvm.internal.impl.builtins.UnsignedArrayType: kotlin.reflect.jvm.internal.impl.builtins.UnsignedArrayType[] values()
+androidx.compose.ui.platform.AndroidComposeView: long getLastMatrixRecalculationAnimationTime$ui_release()
+kotlinx.coroutines.flow.SharingCommand: kotlinx.coroutines.flow.SharingCommand valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: kotlinx.coroutines.channels.SendChannel getOutgoing()
+kotlin.reflect.jvm.internal.impl.types.error.ErrorEntity: kotlin.reflect.jvm.internal.impl.types.error.ErrorEntity[] values()
+androidx.core.view.ViewCompat$Api29Impl: android.view.contentcapture.ContentCaptureSession getContentCaptureSession(android.view.View)
+io.github.jan.supabase.functions.FunctionRegion: io.github.jan.supabase.functions.FunctionRegion[] values()
+io.ktor.client.engine.okhttp.OkHttpCallback: void onFailure(okhttp3.Call,java.io.IOException)
+kotlin.reflect.jvm.internal.impl.incremental.components.NoLookupLocation: kotlin.reflect.jvm.internal.impl.incremental.components.NoLookupLocation[] values()
+io.ktor.util.date.WeekDay: io.ktor.util.date.WeekDay[] values()
+androidx.core.view.DisplayCutoutCompat$Api28Impl: int getSafeInsetTop(android.view.DisplayCutout)
+androidx.core.view.ViewCompat$Api30Impl: boolean isImportantForContentCapture(android.view.View)
+android.support.v4.app.RemoteActionCompatParcelizer: void write(androidx.core.app.RemoteActionCompat,androidx.versionedparcelable.VersionedParcel)
+io.ktor.client.engine.okhttp.OkHttpEngineContainer: io.ktor.client.engine.HttpClientEngineFactory getFactory()
+io.ktor.client.engine.okhttp.StreamRequestBody: void writeTo(okio.BufferedSink)
+androidx.core.view.WindowInsetsCompat$Impl21: androidx.core.view.WindowInsetsCompat consumeStableInsets()
+com.mizibu.retfast.core.RetrievalRequestRow$$serializer: kotlinx.serialization.KSerializer[] typeParametersSerializers()
+com.mizibu.retfast.core.GeoZone$$serializer: kotlinx.serialization.KSerializer[] childSerializers()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.unit.Density getDensity()
+kotlin.reflect.jvm.internal.impl.types.TypeUsage: kotlin.reflect.jvm.internal.impl.types.TypeUsage[] values()
+kotlin.reflect.jvm.internal.impl.descriptors.annotations.AnnotationUseSiteTarget: kotlin.reflect.jvm.internal.impl.descriptors.annotations.AnnotationUseSiteTarget[] values()
+androidx.core.location.LocationCompat$Api26Impl: float getSpeedAccuracyMetersPerSecond(android.location.Location)
+androidx.compose.ui.platform.ViewLayer: long getOwnerViewId()
+kotlin.jvm.internal.CallableReference: boolean isFinal()
+androidx.compose.ui.platform.AndroidComposeViewForceDarkModeQ: void disallowForceDark(android.view.View)
+androidx.core.view.WindowInsetsCompat$BuilderImpl: void setInsets(int,androidx.core.graphics.Insets)
+kotlin.reflect.jvm.internal.impl.load.kotlin.AbstractBinaryClassAnnotationLoader$PropertyRelatedElement: kotlin.reflect.jvm.internal.impl.load.kotlin.AbstractBinaryClassAnnotationLoader$PropertyRelatedElement valueOf(java.lang.String)
+android.support.v4.graphics.drawable.IconCompatParcelizer: void write(androidx.core.graphics.drawable.IconCompat,androidx.versionedparcelable.VersionedParcel)
+androidx.core.view.ViewCompat$Api21Impl: boolean dispatchNestedPreScroll(android.view.View,int,int,int[],int[])
+com.mizibu.retfast.core.TaskRow$$serializer: java.lang.Object deserialize(kotlinx.serialization.encoding.Decoder)
+androidx.core.view.ViewCompat$Api21Impl$1: ViewCompat$Api21Impl$1(android.view.View,androidx.core.view.OnApplyWindowInsetsListener)
+androidx.core.graphics.drawable.IconCompatParcelizer: IconCompatParcelizer()
+kotlin.reflect.jvm.internal.impl.load.java.AnnotationQualifierApplicabilityType: kotlin.reflect.jvm.internal.impl.load.java.AnnotationQualifierApplicabilityType[] values()
+com.mizibu.retfast.core.RetrievalAssignmentRow$Companion: kotlinx.serialization.KSerializer serializer()
+io.ktor.util.date.Month: io.ktor.util.date.Month valueOf(java.lang.String)
+kotlin.jvm.internal.CallableReference: kotlin.reflect.KCallable compute()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidClipboard getClipboard()
+com.google.android.gms.common.api.internal.zzb: zzb()
+io.ktor.client.engine.HttpClientEngineConfig: void setThreadsCount(int)
+androidx.compose.ui.platform.AndroidComposeViewStartDragAndDropN: boolean startDragAndDrop(android.view.View,androidx.compose.ui.draganddrop.DragAndDropTransferData,androidx.compose.ui.draganddrop.ComposeDragShadowBuilder)
+androidx.compose.ui.platform.AndroidComposeView: boolean getShowLayoutBounds()
+androidx.compose.material3.tokens.ColorSchemeKeyTokens: androidx.compose.material3.tokens.ColorSchemeKeyTokens[] values()
+io.github.jan.supabase.postgrest.query.Order: io.github.jan.supabase.postgrest.query.Order valueOf(java.lang.String)
+androidx.core.view.ViewCompat$Api21Impl: float getTranslationZ(android.view.View)
+kotlin.jvm.internal.FunctionReference: kotlin.reflect.KCallable getReflected()
+io.ktor.client.engine.okhttp.OkHttpConfig: kotlin.Unit config$lambda$1(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,okhttp3.OkHttpClient$Builder)
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Modality: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Modality[] values()
+com.mizibu.retfast.core.RetrieverProfileRow$$serializer: java.lang.Object deserialize(kotlinx.serialization.encoding.Decoder)
+kotlin.reflect.jvm.internal.impl.builtins.jvm.JvmBuiltIns$Kind: kotlin.reflect.jvm.internal.impl.builtins.jvm.JvmBuiltIns$Kind valueOf(java.lang.String)
+kotlin.reflect.KVisibility: kotlin.reflect.KVisibility valueOf(java.lang.String)
+androidx.compose.ui.node.NodeMeasuringIntrinsics$IntrinsicWidthHeight: androidx.compose.ui.node.NodeMeasuringIntrinsics$IntrinsicWidthHeight valueOf(java.lang.String)
+androidx.compose.ui.layout.MeasuringIntrinsics$IntrinsicWidthHeight: androidx.compose.ui.layout.MeasuringIntrinsics$IntrinsicWidthHeight valueOf(java.lang.String)
+androidx.graphics.path.PathIteratorPreApi34Impl: long createInternalPathIterator(android.graphics.Path,int,float)
+androidx.compose.ui.platform.CalculateMatrixToWindowApi29: void calculateMatrixToWindow-EL8BTi8(android.view.View,float[])
+androidx.compose.ui.node.LayoutNode$UsageByParent: androidx.compose.ui.node.LayoutNode$UsageByParent[] values()
+androidx.core.view.ViewCompat$Api30Impl: int getImportantForContentCapture(android.view.View)
+co.touchlab.kermit.Severity: co.touchlab.kermit.Severity[] values()
+androidx.core.app.CoreComponentFactory: CoreComponentFactory()
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Visibility: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Visibility valueOf(java.lang.String)
+androidx.compose.ui.platform.ComposeView: java.lang.CharSequence getAccessibilityClassName()
+androidx.compose.ui.platform.AndroidComposeView: void setConfigurationChangeObserver(kotlin.jvm.functions.Function1)
+androidx.lifecycle.Lifecycle$State: androidx.lifecycle.Lifecycle$State valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: boolean getMasking()
+kotlin.reflect.jvm.internal.impl.serialization.deserialization.AnnotatedCallableKind: kotlin.reflect.jvm.internal.impl.serialization.deserialization.AnnotatedCallableKind valueOf(java.lang.String)
+kotlin.reflect.jvm.internal.impl.renderer.PropertyAccessorRenderingPolicy: kotlin.reflect.jvm.internal.impl.renderer.PropertyAccessorRenderingPolicy valueOf(java.lang.String)
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$QualifiedNameTable$QualifiedName$Kind: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$QualifiedNameTable$QualifiedName$Kind valueOf(java.lang.String)
+com.mizibu.retfast.core.RetrievalAssignmentRow$$serializer: java.lang.Object deserialize(kotlinx.serialization.encoding.Decoder)
+androidx.core.graphics.drawable.IconCompat$Api28Impl: int getType(java.lang.Object)
+kotlin.reflect.jvm.internal.impl.types.Variance: kotlin.reflect.jvm.internal.impl.types.Variance[] values()
+com.mizibu.retfast.core.EventRow$$serializer: kotlinx.serialization.KSerializer[] typeParametersSerializers()
+kotlin.reflect.jvm.internal.calls.AnnotationConstructorCaller$Origin: kotlin.reflect.jvm.internal.calls.AnnotationConstructorCaller$Origin valueOf(java.lang.String)
+com.mizibu.retfast.core.RetrieverSession$$serializer: com.mizibu.retfast.core.RetrieverSession deserialize(kotlinx.serialization.encoding.Decoder)
+androidx.core.view.WindowInsetsCompat$Impl: boolean isConsumed()
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Effect$EffectType: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Effect$EffectType valueOf(java.lang.String)
+androidx.core.view.ViewCompat$Api29Impl: java.util.List getSystemGestureExclusionRects(android.view.View)
+androidx.compose.ui.window.PopupLayout: androidx.compose.ui.window.PopupPositionProvider getPositionProvider()
+androidx.core.view.ViewCompat$Api23Impl: void setScrollIndicators(android.view.View,int)
+kotlin.reflect.jvm.internal.impl.builtins.PrimitiveType: kotlin.reflect.jvm.internal.impl.builtins.PrimitiveType valueOf(java.lang.String)
+kotlin.coroutines.jvm.internal.BaseContinuationImpl: void resumeWith(java.lang.Object)
+io.ktor.client.engine.okhttp.OkHttpEngine$1: java.lang.Object invoke(java.lang.Object,java.lang.Object)
+androidx.compose.ui.window.PopupLayout: void setParentLayoutDirection(androidx.compose.ui.unit.LayoutDirection)
+kotlin.Metadata: int k()
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityResumed(android.app.Activity)
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api34Impl: long getMinDurationBetweenContentChangeMillis(android.view.accessibility.AccessibilityNodeInfo)
+com.mizibu.retfast.core.EventRow$$serializer: java.lang.Object deserialize(kotlinx.serialization.encoding.Decoder)
+okhttp3.RequestBody: okhttp3.RequestBody create(java.lang.String,okhttp3.MediaType)
+androidx.lifecycle.ProcessLifecycleOwner$attach$1$onActivityPreCreated$1: void onActivityPostResumed(android.app.Activity)
+androidx.core.os.BundleCompat$Api33Impl: java.lang.Object[] getParcelableArray(android.os.Bundle,java.lang.String,java.lang.Class)
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityDestroyed(android.app.Activity)
+androidx.compose.runtime.ComposerKt: java.lang.Void composeRuntimeError(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: okhttp3.WebSocket$Factory access$getWebSocketFactory$p(io.ktor.client.engine.okhttp.OkHttpWebsocketSession)
+org.slf4j.helpers.Reporter$TargetChoice: org.slf4j.helpers.Reporter$TargetChoice[] values()
+kotlin.reflect.jvm.internal.calls.AnnotationConstructorCaller$CallMode: kotlin.reflect.jvm.internal.calls.AnnotationConstructorCaller$CallMode[] values()
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: java.lang.Object send(io.ktor.websocket.Frame,kotlin.coroutines.Continuation)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: long getTimeoutMillis()
+com.mizibu.retfast.core.RetrieverProfileRow$$serializer: RetrieverProfileRow$$serializer()
+com.mizibu.retfast.core.GeoZone$$serializer: GeoZone$$serializer()
+androidx.core.app.NotificationCompatBuilder$Api20Impl: android.app.Notification$Builder setGroupSummary(android.app.Notification$Builder,boolean)
+com.mizibu.retfast.core.RetrieverSession$$serializer: java.lang.Object deserialize(kotlinx.serialization.encoding.Decoder)
+androidx.core.view.ViewCompat$Api20Impl: void requestApplyInsets(android.view.View)
+kotlinx.coroutines.android.AndroidDispatcherFactory: AndroidDispatcherFactory()
+kotlin.reflect.jvm.internal.impl.builtins.PrimitiveType: kotlin.reflect.jvm.internal.impl.builtins.PrimitiveType[] values()
+com.mizibu.retfast.auth.AuthViewModel: AuthViewModel()
+kotlin.coroutines.jvm.internal.BaseContinuationImpl: kotlin.coroutines.Continuation create(kotlin.coroutines.Continuation)
+com.mizibu.retfast.core.RetrieverSession$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,com.mizibu.retfast.core.RetrieverSession)
+androidx.compose.foundation.text.HandleState: androidx.compose.foundation.text.HandleState[] values()
+androidx.core.location.LocationCompat$Api26Impl: float getVerticalAccuracyMeters(android.location.Location)
+androidx.core.view.WindowInsetsCompat$Impl20: WindowInsetsCompat$Impl20(androidx.core.view.WindowInsetsCompat,androidx.core.view.WindowInsetsCompat$Impl20)
+androidx.compose.animation.core.RepeatMode: androidx.compose.animation.core.RepeatMode valueOf(java.lang.String)
+androidx.profileinstaller.FileSectionType: androidx.profileinstaller.FileSectionType valueOf(java.lang.String)
+io.ktor.websocket.FrameType: io.ktor.websocket.FrameType valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpConfig: kotlin.Unit addNetworkInterceptor$lambda$3(okhttp3.Interceptor,okhttp3.OkHttpClient$Builder)
+androidx.compose.animation.EnterExitState: androidx.compose.animation.EnterExitState[] values()
+io.ktor.client.engine.okhttp.UnsupportedFrameTypeException: io.ktor.client.engine.okhttp.UnsupportedFrameTypeException createCopy()
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityStarted(android.app.Activity)
+com.mizibu.retfast.core.Membership$$serializer: java.lang.Object deserialize(kotlinx.serialization.encoding.Decoder)
+kotlinx.coroutines.CoroutineStart: kotlinx.coroutines.CoroutineStart valueOf(java.lang.String)
+androidx.core.view.ViewCompat$Api21Impl: androidx.core.view.WindowInsetsCompat getRootWindowInsets(android.view.View)
+androidx.compose.ui.platform.AndroidComposeViewVerificationHelperMethodsN: void setPointerIcon(android.view.View,androidx.compose.ui.input.pointer.PointerIcon)
+kotlin.reflect.jvm.internal.impl.load.java.SpecialGenericSignatures$TypeSafeBarrierDescription: kotlin.reflect.jvm.internal.impl.load.java.SpecialGenericSignatures$TypeSafeBarrierDescription valueOf(java.lang.String)
+kotlinx.coroutines.channels.BufferOverflow: kotlinx.coroutines.channels.BufferOverflow valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpEngineContainer: OkHttpEngineContainer()
+kotlin.reflect.jvm.internal.impl.types.TypeUsage: kotlin.reflect.jvm.internal.impl.types.TypeUsage valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpEngineKt$convertToOkHttpBody$3$1: kotlin.coroutines.Continuation create(java.lang.Object,kotlin.coroutines.Continuation)
+androidx.compose.ui.internal.InlineClassHelperKt: void throwIllegalStateException(java.lang.String)
+kotlin.reflect.jvm.internal.impl.protobuf.WireFormat$JavaType: kotlin.reflect.jvm.internal.impl.protobuf.WireFormat$JavaType[] values()
+androidx.compose.ui.window.PopupLayout: androidx.compose.ui.unit.LayoutDirection getParentLayoutDirection()
+androidx.compose.animation.EnterExitState: androidx.compose.animation.EnterExitState valueOf(java.lang.String)
+kotlin.jvm.internal.CallableReference: java.util.List getAnnotations()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.input.InputModeManager getInputModeManager()
+androidx.navigation.serialization.RouteBuilder$ParamType: androidx.navigation.serialization.RouteBuilder$ParamType valueOf(java.lang.String)
+androidx.compose.ui.graphics.layer.view.DrawChildContainer: int getChildCount()
+io.github.jan.supabase.auth.FlowType: io.github.jan.supabase.auth.FlowType[] values()
+io.ktor.client.engine.okhttp.OkHttpEngineKt$toChannel$1: kotlin.Unit invokeSuspend$lambda$2$lambda$1(kotlin.jvm.internal.Ref$IntRef,okio.BufferedSource,io.ktor.client.request.HttpRequestData,kotlin.coroutines.CoroutineContext,java.nio.ByteBuffer)
+io.github.jan.supabase.auth.FlowType: io.github.jan.supabase.auth.FlowType valueOf(java.lang.String)
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$VersionRequirement$Level: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$VersionRequirement$Level[] values()
+io.ktor.client.engine.HttpClientEngineConfig: kotlinx.coroutines.CoroutineDispatcher getDispatcher()
+kotlin.reflect.jvm.internal.impl.descriptors.CallableMemberDescriptor$Kind: kotlin.reflect.jvm.internal.impl.descriptors.CallableMemberDescriptor$Kind[] values()
+com.mizibu.retfast.core.EmergencyRef$$serializer: kotlinx.serialization.descriptors.SerialDescriptor getDescriptor()
+kotlin.reflect.jvm.internal.impl.resolve.deprecation.DeprecationLevelValue: kotlin.reflect.jvm.internal.impl.resolve.deprecation.DeprecationLevelValue[] values()
+androidx.core.app.NotificationCompatBuilder$Api20Impl: android.app.Notification$Builder addAction(android.app.Notification$Builder,android.app.Notification$Action)
+androidx.compose.ui.autofill.AutofillType: androidx.compose.ui.autofill.AutofillType[] values()
+androidx.compose.ui.contentcapture.ContentCaptureEventType: androidx.compose.ui.contentcapture.ContentCaptureEventType valueOf(java.lang.String)
+io.github.jan.supabase.auth.SignOutScope: io.github.jan.supabase.auth.SignOutScope valueOf(java.lang.String)
+kotlin.jvm.internal.CallableReference: java.lang.Object callBy(java.util.Map)
+io.ktor.client.engine.okhttp.OkHttpEngineKt: io.ktor.utils.io.ByteReadChannel toChannel(okio.BufferedSource,kotlin.coroutines.CoroutineContext,io.ktor.client.request.HttpRequestData)
+androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivityCreated(android.app.Activity,android.os.Bundle)
+androidx.core.view.ViewCompat$Api23Impl: androidx.core.view.WindowInsetsCompat getRootWindowInsets(android.view.View)
+androidx.compose.ui.unit.ConstraintsKt: java.lang.Void throwInvalidConstraintsSizeException(int)
+androidx.lifecycle.Lifecycle$State: androidx.lifecycle.Lifecycle$State[] values()
+okhttp3.RequestBody: okhttp3.RequestBody create(byte[])
+androidx.core.view.ViewCompat$Api21Impl: boolean isNestedScrollingEnabled(android.view.View)
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Annotation$Argument$Value$Type: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Annotation$Argument$Value$Type valueOf(java.lang.String)
+kotlin.reflect.jvm.internal.impl.types.error.ErrorTypeKind: kotlin.reflect.jvm.internal.impl.types.error.ErrorTypeKind[] values()
+io.github.jan.supabase.auth.mfa.AuthenticatorAssuranceLevel: io.github.jan.supabase.auth.mfa.AuthenticatorAssuranceLevel[] values()
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Class$Kind: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Class$Kind[] values()
+io.ktor.client.engine.okhttp.OkHttpEngineKt$toChannel$1: java.lang.Object invoke(java.lang.Object,java.lang.Object)
+androidx.core.app.NotificationCompatBuilder$Api20Impl: android.app.Notification$Action$Builder addExtras(android.app.Notification$Action$Builder,android.os.Bundle)
+com.mizibu.retfast.core.GeoZone$$serializer: java.lang.Object deserialize(kotlinx.serialization.encoding.Decoder)
+com.mizibu.retfast.core.Profile$Companion: kotlinx.serialization.KSerializer serializer()
+androidx.core.app.NotificationCompatBuilder$Api29Impl: android.app.Notification$Builder setAllowSystemGeneratedContextualActions(android.app.Notification$Builder,boolean)
+androidx.compose.ui.platform.AndroidComposeView: long getMeasureIteration()
+io.ktor.client.engine.okhttp.OkHttp: OkHttp()
+kotlin.reflect.KVariance: kotlin.reflect.KVariance[] values()
+kotlin.reflect.jvm.internal.impl.load.kotlin.header.KotlinClassHeader$Kind: kotlin.reflect.jvm.internal.impl.load.kotlin.header.KotlinClassHeader$Kind[] values()
+kotlin.reflect.jvm.internal.impl.serialization.deserialization.descriptors.DeserializedContainerAbiStability: kotlin.reflect.jvm.internal.impl.serialization.deserialization.descriptors.DeserializedContainerAbiStability[] values()
+kotlin.reflect.jvm.internal.impl.load.java.SpecialGenericSignatures$SpecialSignatureInfo: kotlin.reflect.jvm.internal.impl.load.java.SpecialGenericSignatures$SpecialSignatureInfo[] values()
+androidx.core.view.ViewCompat$Api29Impl: void setContentCaptureSession(android.view.View,androidx.core.view.contentcapture.ContentCaptureSessionCompat)
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.view.WindowInsetsCompat inset(int,int,int,int)
+androidx.compose.foundation.layout.IntrinsicSize: androidx.compose.foundation.layout.IntrinsicSize valueOf(java.lang.String)
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api33Impl: android.view.accessibility.AccessibilityNodeInfo$ExtraRenderingInfo getExtraRenderingInfo(android.view.accessibility.AccessibilityNodeInfo)
+androidx.core.app.RemoteActionCompat: RemoteActionCompat()
+kotlin.reflect.jvm.internal.impl.load.java.typeEnhancement.MutabilityQualifier: kotlin.reflect.jvm.internal.impl.load.java.typeEnhancement.MutabilityQualifier[] values()
+androidx.core.app.NotificationCompatBuilder$Api21Impl: android.app.Notification$Builder setCategory(android.app.Notification$Builder,java.lang.String)
+com.mizibu.retfast.core.GeoZone$Companion: kotlinx.serialization.KSerializer serializer()
+androidx.core.app.NotificationCompatBuilder$Api24Impl: android.app.Notification$Builder setCustomContentView(android.app.Notification$Builder,android.widget.RemoteViews)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.input.pointer.PointerIconService getPointerIconService()
+io.ktor.client.engine.okhttp.OkHttpEngine$executeServerSendEventsRequest$1: OkHttpEngine$executeServerSendEventsRequest$1(io.ktor.client.engine.okhttp.OkHttpEngine,kotlin.coroutines.Continuation)
+com.mizibu.retfast.core.NearbyRetriever$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,com.mizibu.retfast.core.NearbyRetriever)
+com.mizibu.retfast.core.Membership$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,com.mizibu.retfast.core.Membership)
+okhttp3.TlsVersion: okhttp3.TlsVersion[] values()
+androidx.graphics.path.ConicConverter: int internalConicToQuadratics(float[],int,float[],float,float)
+com.mizibu.retfast.core.Membership$$serializer: kotlinx.serialization.KSerializer[] typeParametersSerializers()
+androidx.compose.foundation.text.selection.CrossStatus: androidx.compose.foundation.text.selection.CrossStatus valueOf(java.lang.String)
+androidx.core.view.DisplayCutoutCompat$Api28Impl: int getSafeInsetLeft(android.view.DisplayCutout)
+androidx.core.view.WindowInsetsCompat$Impl30: boolean isVisible(int)
+androidx.core.view.WindowInsetsCompat$Impl30: WindowInsetsCompat$Impl30(androidx.core.view.WindowInsetsCompat,androidx.core.view.WindowInsetsCompat$Impl30)
+io.ktor.client.engine.okhttp.StreamRequestBody: StreamRequestBody(java.lang.Long,kotlin.jvm.functions.Function0)
+androidx.compose.ui.focus.FocusStateImpl: androidx.compose.ui.focus.FocusStateImpl valueOf(java.lang.String)
+androidx.compose.foundation.layout.internal.InlineClassHelperKt: void throwIllegalStateException(java.lang.String)
+kotlin.reflect.jvm.internal.impl.incremental.components.ScopeKind: kotlin.reflect.jvm.internal.impl.incremental.components.ScopeKind[] values()
+okhttp3.Protocol: okhttp3.Protocol valueOf(java.lang.String)
+com.mizibu.retfast.core.RetrievalAssignmentRow$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,com.mizibu.retfast.core.RetrievalAssignmentRow)
+androidx.core.view.WindowInsetsCompat$Impl29: void setStableInsets(androidx.core.graphics.Insets)
+com.mizibu.retfast.core.TaskRow$$serializer: kotlinx.serialization.KSerializer[] typeParametersSerializers()
+androidx.core.view.WindowInsetsCompat$Impl20: void loadReflectionField()
+androidx.activity.Api34Impl: float touchX(android.window.BackEvent)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: long getMaxFrameSize()
+io.github.jan.supabase.auth.providers.builtin.Phone$Channel$Companion: kotlinx.serialization.KSerializer serializer()
+androidx.compose.foundation.layout.IntrinsicSize: androidx.compose.foundation.layout.IntrinsicSize[] values()
+androidx.compose.ui.graphics.layer.ViewLayer: androidx.compose.ui.graphics.CanvasHolder getCanvasHolder()
+androidx.compose.ui.window.PopupLayout: androidx.compose.ui.unit.IntRect getVisibleDisplayBounds()
+kotlinx.serialization.json.JsonObject$Companion: kotlinx.serialization.KSerializer serializer()
+io.ktor.client.engine.okhttp.OkHttpEngine$Companion: OkHttpEngine$Companion()
+androidx.activity.Api34Impl: int swipeEdge(android.window.BackEvent)
+androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getInsetsIgnoringVisibility(int)
+androidx.compose.runtime.Recomposer$State: androidx.compose.runtime.Recomposer$State valueOf(java.lang.String)
+io.github.jan.supabase.auth.exception.AuthErrorCode: io.github.jan.supabase.auth.exception.AuthErrorCode valueOf(java.lang.String)
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Effect$InvocationKind: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Effect$InvocationKind[] values()
+androidx.core.app.NotificationCompatBuilder$Api20Impl: android.app.Notification$Builder setLocalOnly(android.app.Notification$Builder,boolean)
+io.ktor.client.engine.okhttp.OkHttpEngine$1: java.lang.Object invokeSuspend(java.lang.Object)
+okhttp3.RequestBody: okhttp3.RequestBody create(okhttp3.MediaType,okio.ByteString)
+io.ktor.client.engine.okhttp.OkHttpEngine$executeWebSocketRequest$1: java.lang.Object invokeSuspend(java.lang.Object)
+kotlin.reflect.jvm.internal.impl.incremental.components.ScopeKind: kotlin.reflect.jvm.internal.impl.incremental.components.ScopeKind valueOf(java.lang.String)
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Class$Kind: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Class$Kind valueOf(java.lang.String)
+androidx.activity.Api34Impl: android.window.BackEvent createOnBackEvent(float,float,float,int)
+okhttp3.TlsVersion: okhttp3.TlsVersion valueOf(java.lang.String)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.graphics.GraphicsContext getGraphicsContext()
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getTappableElementInsets()
+com.mizibu.retfast.core.RetrievalRequestRow$Companion: kotlinx.serialization.KSerializer serializer()
+androidx.core.view.WindowInsetsCompat$Impl20: void setRootViewData(androidx.core.graphics.Insets)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: void getOutgoing$annotations()
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Expression$ConstantValue: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Expression$ConstantValue[] values()
+androidx.compose.ui.layout.IntrinsicWidthHeight: androidx.compose.ui.layout.IntrinsicWidthHeight[] values()
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: void onMessage(okhttp3.WebSocket,java.lang.String)
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$TypeParameter$Variance: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$TypeParameter$Variance valueOf(java.lang.String)
+com.mizibu.retfast.core.NearbyRetriever$$serializer: kotlinx.serialization.KSerializer[] childSerializers()
+androidx.compose.ui.layout.MeasuringIntrinsics$IntrinsicMinMax: androidx.compose.ui.layout.MeasuringIntrinsics$IntrinsicMinMax valueOf(java.lang.String)
+com.mizibu.retfast.core.RetrieverSession$$serializer: RetrieverSession$$serializer()
+com.mizibu.retfast.core.RetrieverProfileRow$$serializer: com.mizibu.retfast.core.RetrieverProfileRow deserialize(kotlinx.serialization.encoding.Decoder)
+androidx.compose.runtime.collection.MutableVectorKt: void throwListIndexOutOfBoundsException(int,int)
+androidx.core.view.WindowInsetsCompat$Impl28: androidx.core.view.DisplayCutoutCompat getDisplayCutout()
+androidx.compose.ui.node.LayoutNode: java.lang.String exceptionMessageForParentingOrOwnership(androidx.compose.ui.node.LayoutNode)
+androidx.compose.ui.platform.AndroidComposeView: android.view.View findViewByAccessibilityIdTraversal(int)
+androidx.core.graphics.drawable.IconCompat$Api26Impl: android.graphics.drawable.Drawable createAdaptiveIconDrawable(android.graphics.drawable.Drawable,android.graphics.drawable.Drawable)
+androidx.loader.app.LoaderManagerImpl$LoaderViewModel: LoaderManagerImpl$LoaderViewModel()
+androidx.navigation.NavControllerViewModel: NavControllerViewModel()
+androidx.compose.foundation.text.KeyCommand: androidx.compose.foundation.text.KeyCommand[] values()
+io.ktor.client.engine.okhttp.OkUtilsKt$execute$2$1: java.lang.Object invoke(java.lang.Object)
+androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivityPaused(android.app.Activity)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession$outgoing$1: java.lang.Object invoke(kotlinx.coroutines.channels.ActorScope,kotlin.coroutines.Continuation)
+kotlin.reflect.jvm.internal.impl.builtins.UnsignedArrayType: kotlin.reflect.jvm.internal.impl.builtins.UnsignedArrayType valueOf(java.lang.String)
+kotlinx.datetime.DateTimeUnit$DateBased$Companion: kotlinx.serialization.KSerializer serializer()
+io.ktor.client.engine.okhttp.StreamAdapterIOException: StreamAdapterIOException(java.lang.Throwable)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSessionKt: boolean access$isReserved(io.ktor.websocket.CloseReason)
+androidx.core.location.LocationCompat$Api26Impl: void setBearingAccuracyDegrees(android.location.Location,float)
+org.slf4j.helpers.Reporter$TargetChoice: org.slf4j.helpers.Reporter$TargetChoice valueOf(java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getVisibleInsets(android.view.View)
+io.ktor.client.engine.okhttp.OkHttpEngine: io.ktor.client.request.HttpResponseData buildResponseData(okhttp3.Response,io.ktor.util.date.GMTDate,java.lang.Object,kotlin.coroutines.CoroutineContext)
+kotlin.reflect.jvm.internal.impl.types.checker.TypeIntersector$ResultNullability: kotlin.reflect.jvm.internal.impl.types.checker.TypeIntersector$ResultNullability valueOf(java.lang.String)
+io.ktor.client.engine.HttpClientEngineConfig: void setDispatcher(kotlinx.coroutines.CoroutineDispatcher)
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api34Impl: void setMinDurationBetweenContentChangeMillis(android.view.accessibility.AccessibilityNodeInfo,long)
+androidx.core.view.WindowInsetsCompat$Impl28: WindowInsetsCompat$Impl28(androidx.core.view.WindowInsetsCompat,androidx.core.view.WindowInsetsCompat$Impl28)
+androidx.compose.ui.platform.AndroidComposeViewAssistHelperMethodsO: void setClassName(android.view.ViewStructure,android.view.View)
+androidx.core.view.ViewCompat$Api21Impl: boolean hasNestedScrollingParent(android.view.View)
+io.ktor.client.engine.okhttp.OkHttpEngine$1: OkHttpEngine$1(io.ktor.client.engine.okhttp.OkHttpEngine,kotlin.coroutines.Continuation)
+kotlinx.coroutines.flow.SharingCommand: kotlinx.coroutines.flow.SharingCommand[] values()
+androidx.compose.ui.node.LookaheadPassDelegate$PlacedState: androidx.compose.ui.node.LookaheadPassDelegate$PlacedState[] values()
+kotlin.Metadata: java.lang.String xs()
+androidx.core.location.LocationCompat$Api26Impl: void setVerticalAccuracyMeters(android.location.Location,float)
+androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivityStopped(android.app.Activity)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.autofill.AutofillManager getAutofillManager()
+kotlinx.datetime.UtcOffset$Companion: kotlinx.serialization.KSerializer serializer()
+kotlin.reflect.jvm.internal.impl.protobuf.WireFormat$FieldType: kotlin.reflect.jvm.internal.impl.protobuf.WireFormat$FieldType[] values()
+com.mizibu.retfast.core.TaskRow$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,com.mizibu.retfast.core.TaskRow)
+androidx.core.os.ConfigurationCompat$Api24Impl: void setLocales(android.content.res.Configuration,androidx.core.os.LocaleListCompat)
+com.google.android.gms.common.GooglePlayServicesMissingManifestValueException: GooglePlayServicesMissingManifestValueException()
+io.ktor.client.engine.okhttp.OkHttpEngine: OkHttpEngine(io.ktor.client.engine.okhttp.OkHttpConfig)
+com.mizibu.retfast.core.RetrieverSession$$serializer: kotlinx.serialization.KSerializer[] typeParametersSerializers()
+okhttp3.RequestBody: okhttp3.RequestBody create(byte[],okhttp3.MediaType)
+io.ktor.client.engine.okhttp.OkHttpEngine$executeHttpRequest$1: java.lang.Object invokeSuspend(java.lang.Object)
+androidx.core.app.NotificationCompatBuilder$Api20Impl: android.app.Notification$Action$Builder createBuilder(int,java.lang.CharSequence,android.app.PendingIntent)
+kotlin.time.DurationUnit: kotlin.time.DurationUnit valueOf(java.lang.String)
+androidx.compose.ui.window.PopupLayout: boolean getCanCalculatePosition()
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: kotlinx.coroutines.channels.ReceiveChannel getIncoming()
+kotlin.reflect.jvm.internal.impl.types.error.ErrorEntity: kotlin.reflect.jvm.internal.impl.types.error.ErrorEntity valueOf(java.lang.String)
+com.mizibu.retfast.core.RetrieverProfileRow$$serializer: kotlinx.serialization.KSerializer[] typeParametersSerializers()
+com.mizibu.retfast.core.NearbyRetriever$$serializer: kotlinx.serialization.KSerializer[] typeParametersSerializers()
+io.ktor.client.engine.okhttp.OkHttpConfig: void setClientCacheSize(int)
+io.ktor.client.engine.okhttp.OkHttpEngineKt$toChannel$1: java.lang.Object invokeSuspend(java.lang.Object)
+com.mizibu.retfast.core.RetrieverProfileRow$$serializer: kotlinx.serialization.descriptors.SerialDescriptor getDescriptor()
+kotlin.jvm.internal.CallableReference: java.util.List getParameters()
+kotlin.reflect.jvm.internal.KDeclarationContainerImpl$MemberBelonginess: kotlin.reflect.jvm.internal.KDeclarationContainerImpl$MemberBelonginess[] values()
+io.ktor.client.engine.okhttp.OkUtilsKt$fromOkHttp$1: void forEach(kotlin.jvm.functions.Function2)
+androidx.lifecycle.LifecycleDispatcher$DispatcherActivityCallback: void onActivityCreated(android.app.Activity,android.os.Bundle)
+androidx.core.view.ViewCompat$Api30Impl: void setImportantForContentCapture(android.view.View,int)
+androidx.compose.ui.unit.LayoutDirection: androidx.compose.ui.unit.LayoutDirection valueOf(java.lang.String)
+androidx.compose.foundation.text.TextContextMenuItems: androidx.compose.foundation.text.TextContextMenuItems[] values()
+androidx.compose.ui.platform.AbstractComposeView: void getDisposeViewCompositionStrategy$annotations()
+androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivityStarted(android.app.Activity)
+androidx.compose.ui.platform.ComposeView: void getShouldCreateCompositionOnAttachedToWindow$annotations()
+androidx.core.view.WindowInsetsCompat$BuilderImpl: WindowInsetsCompat$BuilderImpl(androidx.core.view.WindowInsetsCompat)
+androidx.profileinstaller.ProfileInstallReceiver: ProfileInstallReceiver()
+io.ktor.util.date.WeekDay: io.ktor.util.date.WeekDay valueOf(java.lang.String)
+androidx.compose.runtime.collection.MutableVectorKt: void throwReversedIndicesException(int,int)
+androidx.core.view.ViewCompat$Api30Impl: void setStateDescription(android.view.View,java.lang.CharSequence)
+io.ktor.client.engine.okhttp.OkHttpEngine$Companion: okhttp3.OkHttpClient getOkHttpClientPrototype()
+androidx.core.view.WindowInsetsCompat$BuilderImpl20: WindowInsetsCompat$BuilderImpl20(androidx.core.view.WindowInsetsCompat)
+kotlin.reflect.jvm.internal.ReflectionFactoryImpl: ReflectionFactoryImpl()
+androidx.browser.browseractions.BrowserActionsFallbackMenuView: BrowserActionsFallbackMenuView(android.content.Context,android.util.AttributeSet)
+io.github.jan.supabase.auth.providers.builtin.Phone$Channel: io.github.jan.supabase.auth.providers.builtin.Phone$Channel[] values()
+io.ktor.client.engine.okhttp.OkHttpEngine$1: java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
+androidx.emoji2.text.EmojiCompatInitializer: EmojiCompatInitializer()
+kotlin.jvm.internal.FunctionReference: boolean equals(java.lang.Object)
+androidx.core.view.WindowInsetsCompat$BuilderImpl: void setTappableElementInsets(androidx.core.graphics.Insets)
+androidx.core.app.NotificationCompatBuilder$Api24Impl: android.app.Notification$Builder setCustomBigContentView(android.app.Notification$Builder,android.widget.RemoteViews)
+io.ktor.client.engine.okhttp.OkHttpConfig: void config(kotlin.jvm.functions.Function1)
+kotlin.reflect.KParameter$Kind: kotlin.reflect.KParameter$Kind valueOf(java.lang.String)
+okhttp3.RequestBody: okhttp3.RequestBody create(byte[],okhttp3.MediaType,int,int)
+androidx.compose.animation.core.PreconditionsKt: void throwIllegalStateException(java.lang.String)
+androidx.core.view.WindowInsetsCompat$BuilderImpl29: WindowInsetsCompat$BuilderImpl29(androidx.core.view.WindowInsetsCompat)
+kotlin.LazyThreadSafetyMode: kotlin.LazyThreadSafetyMode valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: void onMessage(okhttp3.WebSocket,okio.ByteString)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: long getPingIntervalMillis()
+androidx.compose.foundation.internal.InlineClassHelperKt: void throwIllegalStateException(java.lang.String)
+io.github.jan.supabase.auth.providers.builtin.DefaultAuthProvider$Config$Companion: kotlinx.serialization.KSerializer serializer()
+io.ktor.client.engine.okhttp.OkHttpEngine$executeWebSocketRequest$1: OkHttpEngine$executeWebSocketRequest$1(io.ktor.client.engine.okhttp.OkHttpEngine,kotlin.coroutines.Continuation)
+com.google.android.gms.common.api.internal.LifecycleCallback: com.google.android.gms.common.api.internal.LifecycleFragment getChimeraLifecycleFragmentImpl(com.google.android.gms.common.api.internal.LifecycleActivity)
+androidx.compose.ui.platform.TextToolbarStatus: androidx.compose.ui.platform.TextToolbarStatus valueOf(java.lang.String)
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$VersionRequirement$VersionKind: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$VersionRequirement$VersionKind valueOf(java.lang.String)
+androidx.graphics.path.PathIteratorPreApi34Impl: int internalPathIteratorSize(long)
+com.mizibu.retfast.core.NearbyRetriever$$serializer: kotlinx.serialization.descriptors.SerialDescriptor getDescriptor()
+io.ktor.util.date.Month: io.ktor.util.date.Month[] values()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.TextToolbar getTextToolbar()
+androidx.core.graphics.drawable.IconCompatParcelizer: void write(androidx.core.graphics.drawable.IconCompat,androidx.versionedparcelable.VersionedParcel)
+androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivityDestroyed(android.app.Activity)
+androidx.navigation.NavBackStackEntry$SavedStateViewModel: NavBackStackEntry$SavedStateViewModel(androidx.lifecycle.SavedStateHandle)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession$outgoing$1: kotlin.coroutines.Continuation create(java.lang.Object,kotlin.coroutines.Continuation)
+kotlinx.coroutines.channels.BufferOverflow: kotlinx.coroutines.channels.BufferOverflow[] values()
+androidx.compose.ui.platform.MotionEventVerifierApi29: boolean isValidMotionEvent(android.view.MotionEvent,int)
+androidx.core.view.WindowInsetsCompat$Impl21: androidx.core.view.WindowInsetsCompat consumeSystemWindowInsets()
+kotlinx.serialization.json.internal.WriteMode: kotlinx.serialization.json.internal.WriteMode valueOf(java.lang.String)
+androidx.compose.ui.input.pointer.PointerInputEventHandler: java.lang.Object invoke(androidx.compose.ui.input.pointer.PointerInputScope,kotlin.coroutines.Continuation)
+androidx.core.view.WindowInsetsCompat$Impl29: androidx.core.graphics.Insets getTappableElementInsets()
+kotlin.reflect.jvm.internal.impl.builtins.jvm.JvmBuiltInsCustomizer$JDKMemberStatus: kotlin.reflect.jvm.internal.impl.builtins.jvm.JvmBuiltInsCustomizer$JDKMemberStatus valueOf(java.lang.String)
+kotlin.DeprecationLevel: kotlin.DeprecationLevel valueOf(java.lang.String)
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event[] values()
+com.mizibu.retfast.core.NearbyRetriever$$serializer: java.lang.Object deserialize(kotlinx.serialization.encoding.Decoder)
+androidx.compose.ui.graphics.layer.ViewLayer: void setCanUseCompositingLayer$ui_graphics_release(boolean)
+androidx.compose.material3.ScaffoldLayoutContent: androidx.compose.material3.ScaffoldLayoutContent[] values()
+okhttp3.RequestBody: okhttp3.RequestBody create(byte[],okhttp3.MediaType,int)
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPostCreated(android.app.Activity,android.os.Bundle)
+androidx.compose.ui.platform.AndroidComposeView: androidx.collection.IntObjectMap getLayoutNodes()
+io.ktor.client.engine.okhttp.OkUtilsKt$fromOkHttp$1: java.lang.String get(java.lang.String)
+kotlin.reflect.jvm.internal.impl.builtins.functions.FunctionClassKind: kotlin.reflect.jvm.internal.impl.builtins.functions.FunctionClassKind[] values()
+androidx.compose.ui.platform.AndroidViewsHandler: java.util.HashMap getLayoutNodeToHolder()
+kotlin.jvm.internal.FunctionReference: int hashCode()
+androidx.core.view.WindowInsetsCompat$BuilderImpl30: WindowInsetsCompat$BuilderImpl30(androidx.core.view.WindowInsetsCompat)
+androidx.compose.ui.window.PopupLayout: void setPopupContentSize-fhxjrPA(androidx.compose.ui.unit.IntSize)
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPrePaused(android.app.Activity)
+androidx.lifecycle.EmptyActivityLifecycleCallbacks: void onActivityResumed(android.app.Activity)
+androidx.core.view.DisplayCutoutCompat$Api28Impl: java.util.List getBoundingRects(android.view.DisplayCutout)
+io.github.jan.supabase.auth.user.Identity$Companion: kotlinx.serialization.KSerializer serializer()
+io.ktor.client.engine.okhttp.OkHttpSSESession: void onClosed(okhttp3.sse.EventSource)
+io.ktor.client.engine.okhttp.OkHttpEngineKt: okhttp3.OkHttpClient$Builder setupTimeoutAttributes(okhttp3.OkHttpClient$Builder,io.ktor.client.plugins.HttpTimeoutConfig)
+androidx.core.app.NotificationCompatBuilder$Api29Impl: android.app.Notification$Builder setBubbleMetadata(android.app.Notification$Builder,android.app.Notification$BubbleMetadata)
+com.mizibu.retfast.core.EventRole: com.mizibu.retfast.core.EventRole[] values()
+androidx.core.content.res.FontResourcesParserCompat$Api21Impl: int getType(android.content.res.TypedArray,int)
+kotlinx.coroutines.selects.TrySelectDetailedResult: kotlinx.coroutines.selects.TrySelectDetailedResult[] values()
+androidx.core.view.WindowInsetsCompat$Impl30: WindowInsetsCompat$Impl30(androidx.core.view.WindowInsetsCompat,android.view.WindowInsets)
+androidx.compose.runtime.InvalidationResult: androidx.compose.runtime.InvalidationResult valueOf(java.lang.String)
+kotlinx.serialization.json.JsonNull: kotlinx.serialization.KSerializer serializer()
+kotlin.jvm.internal.FunctionReference: boolean isInfix()
+androidx.core.app.RemoteInput$Api29Impl: int getEditChoicesBeforeSending(java.lang.Object)
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api34Impl: java.lang.CharSequence getContainerTitle(android.view.accessibility.AccessibilityNodeInfo)
+androidx.core.view.ViewCompat$Api30Impl: java.lang.CharSequence getStateDescription(android.view.View)
+androidx.compose.ui.platform.AndroidComposeView: int getImportantForAutofill()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.node.LayoutNodeDrawScope getSharedDrawScope()
+kotlin.reflect.jvm.internal.impl.descriptors.CallableMemberDescriptor$Kind: kotlin.reflect.jvm.internal.impl.descriptors.CallableMemberDescriptor$Kind valueOf(java.lang.String)
+com.mizibu.retfast.core.Membership$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,java.lang.Object)
+androidx.core.graphics.drawable.IconCompat$Api28Impl: android.net.Uri getUri(java.lang.Object)
+io.github.jan.supabase.auth.GoTrueErrorResponse$Companion: kotlinx.serialization.KSerializer serializer()
+androidx.core.view.ViewGroupCompat$Api21Impl: void setTransitionGroup(android.view.ViewGroup,boolean)
+com.mizibu.retfast.core.RetrieverProfileRow$$serializer: kotlinx.serialization.KSerializer[] childSerializers()
+com.mizibu.retfast.RetfastApplication: RetfastApplication()
+com.mizibu.retfast.core.EmergencyRef$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,java.lang.Object)
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Expression$ConstantValue: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Expression$ConstantValue valueOf(java.lang.String)
+kotlin.coroutines.jvm.internal.BaseContinuationImpl: kotlin.coroutines.Continuation getCompletion()
+androidx.core.view.WindowInsetsCompat$Impl30: void copyRootViewBounds(android.view.View)
+androidx.compose.foundation.MutatePriority: androidx.compose.foundation.MutatePriority valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkUtilsKt: io.ktor.http.Headers fromOkHttp(okhttp3.Headers)
+androidx.core.view.DisplayCutoutCompat$Api30Impl: android.view.DisplayCutout createDisplayCutout(android.graphics.Insets,android.graphics.Rect,android.graphics.Rect,android.graphics.Rect,android.graphics.Rect,android.graphics.Insets)
+io.github.jan.supabase.auth.user.UserMfaFactor$Companion: kotlinx.serialization.KSerializer serializer()
+kotlin.reflect.jvm.internal.impl.storage.LockBasedStorageManager$NotValue: kotlin.reflect.jvm.internal.impl.storage.LockBasedStorageManager$NotValue valueOf(java.lang.String)
+androidx.lifecycle.ProcessLifecycleOwner$attach$1: void onActivityStopped(android.app.Activity)
+kotlin.jvm.internal.FunctionReference: boolean isExternal()
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: void onFailure(okhttp3.WebSocket,java.lang.Throwable,okhttp3.Response)
+kotlin.reflect.jvm.internal.impl.load.java.JavaIncompatibilityRulesOverridabilityCondition: JavaIncompatibilityRulesOverridabilityCondition()
+kotlin.reflect.jvm.internal.impl.renderer.ParameterNameRenderingPolicy: kotlin.reflect.jvm.internal.impl.renderer.ParameterNameRenderingPolicy[] values()
+androidx.compose.ui.window.PopupLayout: void setTestTag(java.lang.String)
+androidx.compose.ui.platform.AndroidComposeViewTranslationCallbackS: void setViewTranslationCallback(android.view.View)
+androidx.compose.ui.platform.AndroidComposeView: kotlin.jvm.functions.Function1 getConfigurationChangeObserver()
+androidx.core.view.ViewGroupCompat$Api21Impl: boolean isTransitionGroup(android.view.ViewGroup)
+androidx.core.view.WindowInsetsCompat$Impl29: WindowInsetsCompat$Impl29(androidx.core.view.WindowInsetsCompat,android.view.WindowInsets)
+kotlin.reflect.jvm.internal.impl.descriptors.ClassKind: kotlin.reflect.jvm.internal.impl.descriptors.ClassKind valueOf(java.lang.String)
+androidx.startup.InitializationProvider: InitializationProvider()
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Type$Argument$Projection: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Type$Argument$Projection valueOf(java.lang.String)
+io.github.jan.supabase.auth.GoTrueErrorResponse$WeakPassword$Companion: kotlinx.serialization.KSerializer serializer()
+androidx.compose.ui.window.PopupLayout: boolean getShouldCreateCompositionOnAttachedToWindow()
+kotlin.reflect.jvm.internal.impl.types.checker.TypeIntersector$ResultNullability: kotlin.reflect.jvm.internal.impl.types.checker.TypeIntersector$ResultNullability[] values()
+androidx.core.app.NotificationCompat$BubbleMetadata$Api29Impl: android.app.Notification$BubbleMetadata toPlatform(androidx.core.app.NotificationCompat$BubbleMetadata)
+androidx.core.view.WindowInsetsCompat$Impl21: WindowInsetsCompat$Impl21(androidx.core.view.WindowInsetsCompat,androidx.core.view.WindowInsetsCompat$Impl21)
+androidx.core.app.NotificationCompatBuilder$Api24Impl: android.app.Notification$Action$Builder setAllowGeneratedReplies(android.app.Notification$Action$Builder,boolean)
+androidx.compose.runtime.Recomposer$State: androidx.compose.runtime.Recomposer$State[] values()
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.view.WindowInsetsCompat consumeSystemWindowInsets()
+io.ktor.client.engine.okhttp.OkHttpEngineKt$convertToOkHttpBody$3$1: java.lang.Object invokeSuspend(java.lang.Object)
+androidx.compose.ui.platform.AndroidComposeView: void setOnViewTreeOwnersAvailable(kotlin.jvm.functions.Function1)
+androidx.core.view.WindowInsetsCompat$Impl28: int hashCode()
+com.mizibu.retfast.core.Profile$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,com.mizibu.retfast.core.Profile)
+kotlin.reflect.jvm.internal.impl.types.error.ErrorScopeKind: kotlin.reflect.jvm.internal.impl.types.error.ErrorScopeKind valueOf(java.lang.String)
+com.mizibu.retfast.core.RetrievalAssignmentRow$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,java.lang.Object)
+okhttp3.RequestBody: okhttp3.RequestBody create(okhttp3.MediaType,java.lang.String)
+androidx.core.app.RemoteInput$Api20Impl: android.os.Bundle getResultsFromIntent(android.content.Intent)
+kotlin.reflect.jvm.internal.impl.types.TypeCheckerState$LowerCapturedTypePolicy: kotlin.reflect.jvm.internal.impl.types.TypeCheckerState$LowerCapturedTypePolicy[] values()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidClipboardManager getClipboardManager()
+io.ktor.client.engine.okhttp.OkHttpWebsocketSessionKt: io.ktor.websocket.CloseReason access$getDEFAULT_CLOSE_REASON_ERROR$p()
+androidx.compose.ui.platform.ViewLayer: androidx.compose.ui.platform.DrawChildContainer getContainer()
+androidx.compose.ui.graphics.Path$Direction: androidx.compose.ui.graphics.Path$Direction[] values()
+kotlin.reflect.jvm.internal.impl.load.java.descriptors.JavaMethodDescriptor$ParameterNamesStatus: kotlin.reflect.jvm.internal.impl.load.java.descriptors.JavaMethodDescriptor$ParameterNamesStatus[] values()
+androidx.core.app.RemoteInput$Api26Impl: java.util.Set getAllowedDataTypes(java.lang.Object)
+androidx.compose.ui.text.internal.InlineClassHelperKt: java.lang.Void throwIllegalArgumentExceptionForNullCheck(java.lang.String)
+kotlin.reflect.KVariance: kotlin.reflect.KVariance valueOf(java.lang.String)
+androidx.core.app.RemoteInput$Api26Impl: java.util.Map getDataResultsFromIntent(android.content.Intent,java.lang.String)
+kotlin.reflect.jvm.internal.impl.descriptors.annotations.KotlinRetention: kotlin.reflect.jvm.internal.impl.descriptors.annotations.KotlinRetention valueOf(java.lang.String)
+androidx.core.view.WindowInsetsCompat$BuilderImpl: void setSystemWindowInsets(androidx.core.graphics.Insets)
+kotlin.reflect.jvm.internal.impl.name.State: kotlin.reflect.jvm.internal.impl.name.State valueOf(java.lang.String)
+io.github.jan.supabase.postgrest.query.filter.FilterOperator: io.github.jan.supabase.postgrest.query.filter.FilterOperator valueOf(java.lang.String)
+androidx.compose.ui.platform.AndroidCompositionLocals_androidKt: androidx.compose.runtime.ProvidableCompositionLocal getLocalLifecycleOwner()
+kotlinx.coroutines.scheduling.CoroutineScheduler$WorkerState: kotlinx.coroutines.scheduling.CoroutineScheduler$WorkerState[] values()
+kotlinx.datetime.format.AmPmMarker: kotlinx.datetime.format.AmPmMarker valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: kotlin.coroutines.CoroutineContext getCoroutineContext()
+com.mizibu.retfast.core.NameRow$$serializer: kotlinx.serialization.KSerializer[] childSerializers()
+androidx.core.app.NotificationCompatBuilder$Api20Impl: android.app.Notification$Builder setGroup(android.app.Notification$Builder,java.lang.String)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.autofill.AutofillTree getAutofillTree()
+io.ktor.client.engine.okhttp.OkHttpEngineKt$convertToOkHttpBody$3$1: OkHttpEngineKt$convertToOkHttpBody$3$1(io.ktor.http.content.OutgoingContent,kotlin.coroutines.Continuation)
+androidx.core.view.WindowInsetsCompat$Impl: boolean equals(java.lang.Object)
+kotlin.reflect.jvm.internal.impl.types.TypeSubstitutor$VarianceConflictType: kotlin.reflect.jvm.internal.impl.types.TypeSubstitutor$VarianceConflictType[] values()
+androidx.compose.ui.contentcapture.AndroidContentCaptureManager$TranslateStatus: androidx.compose.ui.contentcapture.AndroidContentCaptureManager$TranslateStatus valueOf(java.lang.String)
+androidx.compose.foundation.text.selection.SelectionHandleAnchor: androidx.compose.foundation.text.selection.SelectionHandleAnchor valueOf(java.lang.String)
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPaused(android.app.Activity)
+io.ktor.client.engine.okhttp.StreamRequestBody: okhttp3.MediaType contentType()
+io.github.jan.supabase.postgrest.query.Order: io.github.jan.supabase.postgrest.query.Order[] values()
+androidx.lifecycle.ReportFragment: ReportFragment()
+io.ktor.client.engine.okhttp.OkUtilsKt$fromOkHttp$1: java.util.Set names()
+okhttp3.RequestBody: okhttp3.RequestBody create(okhttp3.MediaType,byte[],int,int)
+com.mizibu.retfast.core.EmergencyRef$$serializer: java.lang.Object deserialize(kotlinx.serialization.encoding.Decoder)
+androidx.profileinstaller.ProfileInstallerInitializer: ProfileInstallerInitializer()
+androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getSystemWindowInsets()
+kotlinx.datetime.LocalDate$Companion: kotlinx.serialization.KSerializer serializer()
+androidx.activity.Api34Impl: float progress(android.window.BackEvent)
+androidx.compose.ui.layout.MeasuringIntrinsics$IntrinsicMinMax: androidx.compose.ui.layout.MeasuringIntrinsics$IntrinsicMinMax[] values()
+androidx.compose.foundation.MutatePriority: androidx.compose.foundation.MutatePriority[] values()
+androidx.compose.ui.platform.AndroidComposeView: void setLayoutDirection(androidx.compose.ui.unit.LayoutDirection)
+androidx.compose.ui.text.font.FontWeightAdjustmentHelperApi31: int fontWeightAdjustment(android.content.Context)
+androidx.core.view.WindowInsetsCompat$Impl: boolean isRound()
+androidx.compose.ui.window.PopupLayout: androidx.compose.ui.layout.LayoutCoordinates getParentLayoutCoordinates()
+androidx.compose.foundation.text.selection.CrossStatus: androidx.compose.foundation.text.selection.CrossStatus[] values()
+com.mizibu.retfast.core.RetrievalRequestRow$$serializer: RetrievalRequestRow$$serializer()
+io.ktor.client.engine.okhttp.OkHttpEngine: java.lang.Object access$executeServerSendEventsRequest(io.ktor.client.engine.okhttp.OkHttpEngine,okhttp3.OkHttpClient,okhttp3.Request,kotlin.coroutines.CoroutineContext,kotlin.coroutines.Continuation)
+io.ktor.client.engine.okhttp.OkHttpEngine$Companion: OkHttpEngine$Companion(kotlin.jvm.internal.DefaultConstructorMarker)
+androidx.core.view.ViewCompat$Api21Impl: java.lang.String getTransitionName(android.view.View)
+androidx.compose.foundation.internal.InlineClassHelperKt: java.lang.Void throwIllegalArgumentExceptionForNullCheck(java.lang.String)
+io.github.jan.supabase.auth.user.UserSession$Companion: kotlinx.serialization.KSerializer serializer()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.ClipboardManager getClipboardManager()
+io.ktor.client.engine.okhttp.OkHttpConfig: void setPreconfigured(okhttp3.OkHttpClient)
+kotlin.jvm.internal.CallableReference: boolean isAbstract()
+androidx.core.os.BundleApi21ImplKt: void putSize(android.os.Bundle,java.lang.String,android.util.Size)
+kotlin.reflect.jvm.internal.impl.resolve.ExternalOverridabilityCondition$Contract: kotlin.reflect.jvm.internal.impl.resolve.ExternalOverridabilityCondition$Contract[] values()
+org.slf4j.event.Level: org.slf4j.event.Level valueOf(java.lang.String)
+androidx.navigation.serialization.RouteBuilder$ParamType: androidx.navigation.serialization.RouteBuilder$ParamType[] values()
+androidx.compose.ui.platform.AndroidComposeView: void setAccessibilityEventBatchIntervalMillis(long)
+io.ktor.client.engine.okhttp.OkUtilsKt$fromOkHttp$1: boolean contains(java.lang.String)
+androidx.core.app.RemoteActionCompatParcelizer: androidx.core.app.RemoteActionCompat read(androidx.versionedparcelable.VersionedParcel)
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivitySaveInstanceState(android.app.Activity,android.os.Bundle)
+kotlin.reflect.jvm.internal.impl.load.java.typeEnhancement.NullabilityQualifier: kotlin.reflect.jvm.internal.impl.load.java.typeEnhancement.NullabilityQualifier valueOf(java.lang.String)
+androidx.core.view.ViewCompat$Api29Impl: android.view.View$AccessibilityDelegate getAccessibilityDelegate(android.view.View)
+androidx.core.view.WindowInsetsCompat$Impl28: WindowInsetsCompat$Impl28(androidx.core.view.WindowInsetsCompat,android.view.WindowInsets)
+kotlinx.datetime.DateTimeUnit$TimeBased$Companion: kotlinx.serialization.KSerializer serializer()
+androidx.compose.ui.layout.IntrinsicMinMax: androidx.compose.ui.layout.IntrinsicMinMax[] values()
+androidx.graphics.path.PathIteratorPreApi34Impl: void destroyInternalPathIterator(long)
+androidx.compose.ui.window.PopupLayout: kotlin.jvm.functions.Function2 getContent()
+androidx.core.view.ViewCompat$Api21Impl: float getElevation(android.view.View)
+io.ktor.client.engine.okhttp.OkUtilsKt$fromOkHttp$1: boolean getCaseInsensitiveName()
+androidx.core.view.DisplayCutoutCompat$Api28Impl: int getSafeInsetRight(android.view.DisplayCutout)
+com.mizibu.retfast.core.TaskRow$$serializer: kotlinx.serialization.descriptors.SerialDescriptor getDescriptor()
+androidx.core.view.WindowInsetsCompat$BuilderImpl29: void setMandatorySystemGestureInsets(androidx.core.graphics.Insets)
+androidx.core.view.WindowInsetsCompat$Impl20: void setRootWindowInsets(androidx.core.view.WindowInsetsCompat)
+com.mizibu.retfast.core.RetrievalAssignmentRow$$serializer: com.mizibu.retfast.core.RetrievalAssignmentRow deserialize(kotlinx.serialization.encoding.Decoder)
+io.ktor.client.engine.okhttp.OkHttpEngineKt$toChannel$1: kotlin.coroutines.Continuation create(java.lang.Object,kotlin.coroutines.Continuation)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession$outgoing$1: OkHttpWebsocketSession$outgoing$1(io.ktor.client.engine.okhttp.OkHttpWebsocketSession,okhttp3.Request,kotlin.coroutines.Continuation)
+com.mizibu.retfast.core.RetrievalAssignmentRow$$serializer: kotlinx.serialization.KSerializer[] childSerializers()
+io.ktor.client.engine.okhttp.OkHttpEngine$clientCache$1: java.lang.Object invoke(java.lang.Object)
+kotlinx.datetime.format.Padding: kotlinx.datetime.format.Padding[] values()
+androidx.graphics.path.PathIteratorPreApi34Impl: int internalPathIteratorPeek(long)
+androidx.core.app.NotificationCompatBuilder$Api23Impl: android.app.Notification$Builder setSmallIcon(android.app.Notification$Builder,java.lang.Object)
+androidx.compose.ui.window.SecureFlagPolicy: androidx.compose.ui.window.SecureFlagPolicy[] values()
+androidx.core.app.NotificationManagerCompat$Api24Impl: int getImportance(android.app.NotificationManager)
+androidx.core.view.DisplayCutoutCompat$Api30Impl: android.graphics.Insets getWaterfallInsets(android.view.DisplayCutout)
+androidx.core.app.NotificationCompatBuilder$Api26Impl: android.app.Notification$Builder createBuilder(android.content.Context,java.lang.String)
+com.mizibu.retfast.core.RetrieverProfileRow$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,java.lang.Object)
+kotlinx.datetime.LocalTime$Companion: kotlinx.serialization.KSerializer serializer()
+androidx.compose.ui.platform.AbstractComposeView: void getShowLayoutBounds$annotations()
+io.ktor.client.engine.HttpClientEngineConfig: void setProxy(java.net.Proxy)
+io.ktor.client.engine.okhttp.OkHttpEngine$execute$1: java.lang.Object invokeSuspend(java.lang.Object)
+kotlin.reflect.jvm.internal.impl.resolve.jvm.JvmPrimitiveType: kotlin.reflect.jvm.internal.impl.resolve.jvm.JvmPrimitiveType[] values()
+io.github.jan.supabase.postgrest.query.Count: io.github.jan.supabase.postgrest.query.Count[] values()
+androidx.core.app.NotificationCompatBuilder$Api21Impl: android.app.Notification$Builder setPublicVersion(android.app.Notification$Builder,android.app.Notification)
+androidx.lifecycle.ProcessLifecycleOwner$attach$1: ProcessLifecycleOwner$attach$1(androidx.lifecycle.ProcessLifecycleOwner)
+io.ktor.client.engine.okhttp.OkHttpCallback: void onResponse(okhttp3.Call,okhttp3.Response)
+com.mizibu.retfast.core.Membership$$serializer: kotlinx.serialization.KSerializer[] childSerializers()
+androidx.compose.ui.platform.AbstractComposeView: void setParentCompositionContext(androidx.compose.runtime.CompositionContext)
+androidx.compose.ui.internal.InlineClassHelperKt: void throwIndexOutOfBoundsException(java.lang.String)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.node.RootForTest getRootForTest()
+kotlin.reflect.jvm.internal.impl.renderer.DescriptorRendererModifier: kotlin.reflect.jvm.internal.impl.renderer.DescriptorRendererModifier valueOf(java.lang.String)
+androidx.compose.ui.platform.AbstractComposeView: void setShowLayoutBounds(boolean)
+androidx.core.view.WindowInsetsCompat$Impl20: void setOverriddenInsets(androidx.core.graphics.Insets[])
+com.mizibu.retfast.core.EventRole: com.mizibu.retfast.core.EventRole valueOf(java.lang.String)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.autofill.AndroidAutofillManager get_autofillManager$ui_release()
+kotlin.reflect.jvm.internal.impl.load.kotlin.header.KotlinClassHeader$Kind: kotlin.reflect.jvm.internal.impl.load.kotlin.header.KotlinClassHeader$Kind valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.StreamRequestBody: long contentLength()
+kotlin.reflect.jvm.internal.calls.AnnotationConstructorCaller$CallMode: kotlin.reflect.jvm.internal.calls.AnnotationConstructorCaller$CallMode valueOf(java.lang.String)
+kotlin.reflect.jvm.internal.impl.builtins.functions.FunctionClassKind: kotlin.reflect.jvm.internal.impl.builtins.functions.FunctionClassKind valueOf(java.lang.String)
+androidx.core.view.ViewConfigurationCompat$Api26Impl: float getScaledHorizontalScrollFactor(android.view.ViewConfiguration)
+kotlin.reflect.jvm.internal.impl.load.java.typeEnhancement.TypeComponentPosition: kotlin.reflect.jvm.internal.impl.load.java.typeEnhancement.TypeComponentPosition[] values()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.ViewConfiguration getViewConfiguration()
+androidx.compose.ui.node.NodeMeasuringIntrinsics$IntrinsicMinMax: androidx.compose.ui.node.NodeMeasuringIntrinsics$IntrinsicMinMax[] values()
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Modality: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Modality valueOf(java.lang.String)
+androidx.compose.ui.platform.actionmodecallback.MenuItemOption: androidx.compose.ui.platform.actionmodecallback.MenuItemOption[] values()
+androidx.compose.ui.focus.CustomDestinationResult: androidx.compose.ui.focus.CustomDestinationResult valueOf(java.lang.String)
+androidx.core.view.ViewCompat$Api28Impl: void setAutofillId(android.view.View,androidx.core.view.autofill.AutofillIdCompat)
+kotlin.Metadata: int[] bv()
+io.github.jan.supabase.auth.mfa.AuthenticatorAssuranceLevel: io.github.jan.supabase.auth.mfa.AuthenticatorAssuranceLevel valueOf(java.lang.String)
+androidx.compose.foundation.gestures.Orientation: androidx.compose.foundation.gestures.Orientation[] values()
+androidx.core.view.WindowInsetsCompat$BuilderImpl: void setSystemGestureInsets(androidx.core.graphics.Insets)
+kotlin.reflect.jvm.internal.impl.builtins.jvm.JvmBuiltInsCustomizer$JDKMemberStatus: kotlin.reflect.jvm.internal.impl.builtins.jvm.JvmBuiltInsCustomizer$JDKMemberStatus[] values()
+androidx.core.view.WindowInsetsCompat$Impl: int hashCode()
+io.ktor.http.Url$Companion: kotlinx.serialization.KSerializer serializer()
+kotlin.Metadata: java.lang.String[] d1()
+io.ktor.client.engine.okhttp.OkHttpEngineKt$toChannel$1: OkHttpEngineKt$toChannel$1(okio.BufferedSource,kotlin.coroutines.CoroutineContext,io.ktor.client.request.HttpRequestData,kotlin.coroutines.Continuation)
+androidx.core.view.WindowInsetsCompat$Impl21: androidx.core.graphics.Insets getStableInsets()
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityCreated(android.app.Activity,android.os.Bundle)
+kotlinx.coroutines.selects.TrySelectDetailedResult: kotlinx.coroutines.selects.TrySelectDetailedResult valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpSSESession: io.ktor.client.plugins.sse.SSEClientException mapException$unexpectedError()
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getStableInsets()
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: void onOpen(okhttp3.WebSocket,okhttp3.Response)
+androidx.compose.ui.platform.AndroidComposeView: boolean getScrollCaptureInProgress$ui_release()
+io.github.jan.supabase.logging.LogLevel: io.github.jan.supabase.logging.LogLevel[] values()
+androidx.core.view.ViewCompat$Api23Impl: void setScrollIndicators(android.view.View,int,int)
+androidx.core.view.WindowInsetsCompat$Impl28: androidx.core.view.WindowInsetsCompat consumeDisplayCutout()
+androidx.activity.Api34Impl: float touchY(android.window.BackEvent)
+kotlin.reflect.jvm.internal.impl.resolve.constants.IntegerLiteralTypeConstructor$Companion$Mode: kotlin.reflect.jvm.internal.impl.resolve.constants.IntegerLiteralTypeConstructor$Companion$Mode[] values()
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: void start()
+androidx.core.app.NotificationCompatBuilder$Api28Impl: android.app.Notification$Builder addPerson(android.app.Notification$Builder,android.app.Person)
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event valueOf(java.lang.String)
+androidx.compose.ui.window.SecureFlagPolicy: androidx.compose.ui.window.SecureFlagPolicy valueOf(java.lang.String)
+androidx.compose.ui.unit.ConstraintsKt: void throwInvalidConstraintException(int,int)
+kotlin.coroutines.jvm.internal.SuspendLambda: int getArity()
+io.ktor.client.engine.okhttp.OkHttpEngine$executeHttpRequest$1: OkHttpEngine$executeHttpRequest$1(io.ktor.client.engine.okhttp.OkHttpEngine,kotlin.coroutines.Continuation)
+kotlinx.coroutines.CoroutineStart: kotlinx.coroutines.CoroutineStart[] values()
+kotlin.reflect.jvm.internal.impl.renderer.AnnotationArgumentsRenderingPolicy: kotlin.reflect.jvm.internal.impl.renderer.AnnotationArgumentsRenderingPolicy valueOf(java.lang.String)
+androidx.core.app.NotificationCompatBuilder$Api29Impl: android.app.Notification$Action$Builder setContextual(android.app.Notification$Action$Builder,boolean)
+io.ktor.client.engine.okhttp.OkHttpEngine: io.ktor.client.engine.okhttp.OkHttpConfig getConfig()
+androidx.core.view.WindowInsetsCompat$BuilderImpl30: WindowInsetsCompat$BuilderImpl30()
+io.github.jan.supabase.auth.providers.builtin.Phone$Channel: io.github.jan.supabase.auth.providers.builtin.Phone$Channel valueOf(java.lang.String)
+kotlinx.datetime.DateTimeUnit$DayBased$Companion: kotlinx.serialization.KSerializer serializer()
+io.ktor.client.engine.okhttp.OkHttpConfig: okhttp3.OkHttpClient getPreconfigured()
+android.support.v4.graphics.drawable.IconCompatParcelizer: androidx.core.graphics.drawable.IconCompat read(androidx.versionedparcelable.VersionedParcel)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AccessibilityManager getAccessibilityManager()
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Visibility: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Visibility[] values()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.draganddrop.DragAndDropManager getDragAndDropManager()
+io.ktor.client.engine.okhttp.OkHttpEngine: kotlin.Unit clientCache$lambda$0(okhttp3.OkHttpClient)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSessionKt: boolean isReserved(io.ktor.websocket.CloseReason)
+androidx.lifecycle.LifecycleDispatcher$DispatcherActivityCallback: LifecycleDispatcher$DispatcherActivityCallback()
+androidx.core.location.LocationCompat$Api26Impl: boolean hasBearingAccuracy(android.location.Location)
+androidx.core.view.WindowInsetsCompat$BuilderImpl: void setMandatorySystemGestureInsets(androidx.core.graphics.Insets)
+kotlin.reflect.jvm.internal.impl.descriptors.annotations.AnnotationUseSiteTarget: kotlin.reflect.jvm.internal.impl.descriptors.annotations.AnnotationUseSiteTarget valueOf(java.lang.String)
+androidx.compose.ui.text.AnnotationType: androidx.compose.ui.text.AnnotationType valueOf(java.lang.String)
+androidx.compose.ui.focus.CustomDestinationResult: androidx.compose.ui.focus.CustomDestinationResult[] values()
+androidx.core.graphics.PaintCompat$Api23Impl: boolean hasGlyph(android.graphics.Paint,java.lang.String)
+kotlinx.datetime.format.AmPmMarker: kotlinx.datetime.format.AmPmMarker[] values()
+com.mizibu.retfast.core.EventRow$$serializer: EventRow$$serializer()
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPostStarted(android.app.Activity)
+io.ktor.client.engine.okhttp.OkHttpConfig: int getClientCacheSize()
+androidx.core.location.LocationCompat$Api26Impl: float getBearingAccuracyDegrees(android.location.Location)
+androidx.compose.ui.text.style.ResolvedTextDirection: androidx.compose.ui.text.style.ResolvedTextDirection[] values()
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$VersionRequirement$Level: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$VersionRequirement$Level valueOf(java.lang.String)
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void registerIn(android.app.Activity)
+androidx.core.view.WindowInsetsCompat$Impl21: void setStableInsets(androidx.core.graphics.Insets)
+io.ktor.client.engine.okhttp.OkHttpSSESession: void onOpen(okhttp3.sse.EventSource,okhttp3.Response)
+okhttp3.RequestBody: boolean isDuplex()
+kotlin.jvm.internal.CallableReference: kotlin.reflect.KType getReturnType()
+io.ktor.client.engine.okhttp.OkHttpEngineKt: io.ktor.utils.io.ByteReadChannel convertToOkHttpBody$lambda$4(kotlin.coroutines.CoroutineContext,io.ktor.http.content.OutgoingContent)
+androidx.compose.ui.platform.AbstractComposeView: void setParentContext(androidx.compose.runtime.CompositionContext)
+androidx.core.app.NotificationCompatBuilder$Api29Impl: android.app.Notification$Builder setLocusId(android.app.Notification$Builder,java.lang.Object)
+androidx.compose.ui.unit.InlineClassHelperKt: void throwIllegalArgumentException(java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getInsetsIgnoringVisibility(int)
+io.ktor.client.engine.HttpClientEngineBase: void install(io.ktor.client.HttpClient)
+androidx.core.view.ViewCompat$Api20Impl: android.view.WindowInsets dispatchApplyWindowInsets(android.view.View,android.view.WindowInsets)
+kotlin.reflect.KParameter$Kind: kotlin.reflect.KParameter$Kind[] values()
+io.github.jan.supabase.postgrest.RpcMethod: io.github.jan.supabase.postgrest.RpcMethod[] values()
+io.ktor.client.engine.okhttp.OkHttpEngineKt: java.lang.Throwable access$mapExceptions(java.lang.Throwable,io.ktor.client.request.HttpRequestData)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidComposeView$ViewTreeOwners get_viewTreeOwners()
+androidx.core.graphics.drawable.IconCompatParcelizer: androidx.core.graphics.drawable.IconCompat read(androidx.versionedparcelable.VersionedParcel)
+androidx.core.app.ActivityCompat$Api23Impl: boolean shouldShowRequestPermissionRationale(android.app.Activity,java.lang.String)
+androidx.core.app.NotificationCompatBuilder$Api21Impl: android.app.Notification$Builder setVisibility(android.app.Notification$Builder,int)
+com.mizibu.retfast.core.Profile$$serializer: java.lang.Object deserialize(kotlinx.serialization.encoding.Decoder)
+kotlin.reflect.jvm.internal.impl.load.java.ReportLevel: kotlin.reflect.jvm.internal.impl.load.java.ReportLevel valueOf(java.lang.String)
+okhttp3.internal.http2.ErrorCode: okhttp3.internal.http2.ErrorCode[] values()
+io.ktor.client.engine.okhttp.OkHttpConfig: kotlin.jvm.functions.Function1 getConfig$ktor_client_okhttp()
+androidx.core.app.NotificationCompatBuilder$Api26Impl: android.app.Notification$Builder setGroupAlertBehavior(android.app.Notification$Builder,int)
+androidx.compose.ui.platform.OutlineVerificationHelper: void setPath(android.graphics.Outline,androidx.compose.ui.graphics.Path)
+com.mizibu.retfast.core.RetrievalRequestRow$$serializer: kotlinx.serialization.KSerializer[] childSerializers()
+androidx.core.view.WindowInsetsCompat$BuilderImpl: void applyInsetTypes()
+com.mizibu.retfast.core.Profile$$serializer: Profile$$serializer()
+kotlin.reflect.jvm.internal.impl.load.java.typeEnhancement.TypeComponentPosition: kotlin.reflect.jvm.internal.impl.load.java.typeEnhancement.TypeComponentPosition valueOf(java.lang.String)
+androidx.compose.material3.tokens.ShapeKeyTokens: androidx.compose.material3.tokens.ShapeKeyTokens valueOf(java.lang.String)
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api33Impl: androidx.core.view.accessibility.AccessibilityNodeInfoCompat$CollectionItemInfoCompat buildCollectionItemInfoCompat(boolean,int,int,int,int,boolean,java.lang.String,java.lang.String)
+io.github.jan.supabase.postgrest.RpcMethod: io.github.jan.supabase.postgrest.RpcMethod valueOf(java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl: void setOverriddenInsets(androidx.core.graphics.Insets[])
+io.ktor.client.engine.okhttp.OkHttpEngineKt: okhttp3.RequestBody convertToOkHttpBody(io.ktor.http.content.OutgoingContent,kotlin.coroutines.CoroutineContext)
+androidx.compose.ui.platform.TextToolbarStatus: androidx.compose.ui.platform.TextToolbarStatus[] values()
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: OkHttpWebsocketSession(okhttp3.OkHttpClient,okhttp3.WebSocket$Factory,okhttp3.Request,kotlin.coroutines.CoroutineContext)
+androidx.compose.ui.window.PopupLayout: androidx.compose.ui.unit.IntSize getPopupContentSize-bOM6tXw()
+io.ktor.client.engine.okhttp.OkUtilsKt$execute$2$1: void invoke(java.lang.Throwable)
+kotlin.jvm.internal.CallableReference: java.lang.Object getBoundReceiver()
+androidx.compose.foundation.text.Handle: androidx.compose.foundation.text.Handle[] values()
+io.ktor.client.engine.okhttp.OkHttpEngine$clientCache$1: okhttp3.OkHttpClient invoke(io.ktor.client.plugins.HttpTimeoutConfig)
+androidx.compose.ui.platform.AbstractComposeView: boolean getShouldCreateCompositionOnAttachedToWindow()
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession$outgoing$1: java.lang.Object invokeSuspend(java.lang.Object)
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityStopped(android.app.Activity)
+androidx.core.app.RemoteInput$Api26Impl: android.app.RemoteInput$Builder setAllowDataType(android.app.RemoteInput$Builder,java.lang.String,boolean)
+androidx.compose.material3.internal.InputPhase: androidx.compose.material3.internal.InputPhase valueOf(java.lang.String)
+androidx.compose.ui.text.input.TextInputServiceAndroid$TextInputCommand: androidx.compose.ui.text.input.TextInputServiceAndroid$TextInputCommand[] values()
+androidx.compose.ui.platform.AndroidComposeView: void getTextInputService$annotations()
+kotlin.time.DurationUnit: kotlin.time.DurationUnit[] values()
+androidx.core.view.WindowInsetsCompat$Impl20: boolean isTypeVisible(int)
+io.github.jan.supabase.auth.providers.IDTokenProvider$Companion: kotlinx.serialization.KSerializer serializer()
+androidx.core.app.NotificationCompat$BubbleMetadata$Api30Impl: android.app.Notification$BubbleMetadata toPlatform(androidx.core.app.NotificationCompat$BubbleMetadata)
+kotlinx.serialization.json.JsonPrimitive$Companion: kotlinx.serialization.KSerializer serializer()
+kotlin.jvm.internal.FunctionReference: boolean isInline()
+androidx.compose.ui.platform.AndroidComposeView: kotlin.coroutines.CoroutineContext getCoroutineContext()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.SoftwareKeyboardController getSoftwareKeyboardController()
+kotlin.reflect.KVisibility: kotlin.reflect.KVisibility[] values()
+androidx.core.view.ViewCompat$Api21Impl: void setBackgroundTintMode(android.view.View,android.graphics.PorterDuff$Mode)
+com.mizibu.retfast.core.RetrievalRequestRow$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,com.mizibu.retfast.core.RetrievalRequestRow)
+androidx.compose.ui.state.ToggleableState: androidx.compose.ui.state.ToggleableState valueOf(java.lang.String)
+androidx.emoji2.text.EmojiExclusions$EmojiExclusions_Api34: java.util.Set getExclusions()
+androidx.core.os.BundleCompat$Api33Impl: java.lang.Object getParcelable(android.os.Bundle,java.lang.String,java.lang.Class)
+io.ktor.client.engine.okhttp.OkHttpEngine: okhttp3.OkHttpClient okHttpClientPrototype_delegate$lambda$5()
+androidx.lifecycle.ProcessLifecycleOwner$attach$1: void onActivityPaused(android.app.Activity)
+androidx.core.app.NotificationCompatBuilder$Api20Impl: android.app.Notification$Action build(android.app.Notification$Action$Builder)
+androidx.compose.ui.node.TraversableNode$Companion$TraverseDescendantsAction: androidx.compose.ui.node.TraversableNode$Companion$TraverseDescendantsAction[] values()
+io.ktor.client.engine.okhttp.OkHttpEngineKt: okhttp3.OkHttpClient$Builder access$setupTimeoutAttributes(okhttp3.OkHttpClient$Builder,io.ktor.client.plugins.HttpTimeoutConfig)
+com.mizibu.retfast.MainActivity: MainActivity()
+okhttp3.RequestBody: okhttp3.RequestBody create(okio.ByteString,okhttp3.MediaType)
+com.mizibu.retfast.core.RetrievalAssignmentRow$$serializer: RetrievalAssignmentRow$$serializer()
+kotlin.coroutines.intrinsics.CoroutineSingletons: kotlin.coroutines.intrinsics.CoroutineSingletons[] values()
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Type$Argument$Projection: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Type$Argument$Projection[] values()
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPreDestroyed(android.app.Activity)
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getInsets(int)
+kotlinx.datetime.format.Padding: kotlinx.datetime.format.Padding valueOf(java.lang.String)
+androidx.compose.material3.tokens.TypographyKeyTokens: androidx.compose.material3.tokens.TypographyKeyTokens valueOf(java.lang.String)
+androidx.compose.ui.platform.AndroidComposeViewTranslationCallbackS: void clearViewTranslationCallback(android.view.View)
+kotlin.reflect.jvm.internal.impl.renderer.OverrideRenderingPolicy: kotlin.reflect.jvm.internal.impl.renderer.OverrideRenderingPolicy valueOf(java.lang.String)
+kotlin.reflect.jvm.internal.impl.resolve.OverridingUtil$OverrideCompatibilityInfo$Result: kotlin.reflect.jvm.internal.impl.resolve.OverridingUtil$OverrideCompatibilityInfo$Result valueOf(java.lang.String)
+androidx.compose.ui.window.PopupLayout: void setContent(kotlin.jvm.functions.Function2)
+io.ktor.client.engine.okhttp.OkHttpEngineKt$convertToOkHttpBody$3$1: java.lang.Object invoke(java.lang.Object,java.lang.Object)
+androidx.core.view.WindowInsetsCompat$Impl21: WindowInsetsCompat$Impl21(androidx.core.view.WindowInsetsCompat,android.view.WindowInsets)
+androidx.core.view.ViewGroupCompat$Api21Impl: int getNestedScrollAxes(android.view.ViewGroup)
+androidx.activity.OnBackPressedDispatcher$Api33Impl: void registerOnBackInvokedCallback(java.lang.Object,int,java.lang.Object)
+com.mizibu.retfast.core.NameRow$Companion: kotlinx.serialization.KSerializer serializer()
+io.ktor.client.engine.okhttp.OkHttpEngineKt: io.ktor.utils.io.ByteReadChannel access$toChannel(okio.BufferedSource,kotlin.coroutines.CoroutineContext,io.ktor.client.request.HttpRequestData)
+io.github.jan.supabase.postgrest.PostgrestErrorResponse$Companion: kotlinx.serialization.KSerializer serializer()
+io.ktor.client.engine.okhttp.OkHttpEngine: okhttp3.OkHttpClient createOkHttpClient(io.ktor.client.plugins.HttpTimeoutConfig)
+androidx.compose.ui.autofill.AutofillType: androidx.compose.ui.autofill.AutofillType valueOf(java.lang.String)
+androidx.compose.material3.internal.TextFieldType: androidx.compose.material3.internal.TextFieldType[] values()
+androidx.compose.ui.graphics.InlineClassHelperKt: void throwIllegalArgumentException(java.lang.String)
+kotlin.reflect.jvm.internal.impl.protobuf.WireFormat$JavaType: kotlin.reflect.jvm.internal.impl.protobuf.WireFormat$JavaType valueOf(java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.view.DisplayCutoutCompat getDisplayCutout()
+androidx.core.graphics.Insets$Api29Impl: android.graphics.Insets of(int,int,int,int)
+androidx.core.view.WindowInsetsCompat$Impl20: boolean isVisible(int)
+androidx.compose.ui.input.pointer.PointerEventPass: androidx.compose.ui.input.pointer.PointerEventPass valueOf(java.lang.String)
+kotlin.coroutines.jvm.internal.BaseContinuationImpl: java.lang.String toString()
+androidx.compose.ui.window.PopupLayout: android.view.View getViewRoot()
+androidx.compose.ui.platform.AndroidComposeView: void getLastMatrixRecalculationAnimationTime$ui_release$annotations()
+io.github.jan.supabase.auth.SignOutScope: io.github.jan.supabase.auth.SignOutScope[] values()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidViewsHandler getAndroidViewsHandler$ui_release()
+io.ktor.client.engine.okhttp.OkHttpSSESession: kotlin.coroutines.CoroutineContext getCoroutineContext()
+androidx.compose.material3.internal.TextFieldType: androidx.compose.material3.internal.TextFieldType valueOf(java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl29: androidx.core.view.WindowInsetsCompat inset(int,int,int,int)
+kotlin.reflect.jvm.internal.impl.serialization.deserialization.AnnotatedCallableKind: kotlin.reflect.jvm.internal.impl.serialization.deserialization.AnnotatedCallableKind[] values()
+androidx.core.location.LocationCompat$Api26Impl: void removeVerticalAccuracy(android.location.Location)
+com.mizibu.retfast.core.GeoZone$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,com.mizibu.retfast.core.GeoZone)
+androidx.compose.foundation.internal.InlineClassHelperKt: void throwIllegalArgumentException(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpSSESession: kotlinx.coroutines.CompletableDeferred getOriginResponse$ktor_client_okhttp()
+io.ktor.client.engine.okhttp.OkHttpConfig: void addNetworkInterceptor(okhttp3.Interceptor)
+com.mizibu.retfast.core.RetrievalRequestRow$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,java.lang.Object)
+io.ktor.client.engine.okhttp.OkHttpEngine$execute$1: OkHttpEngine$execute$1(io.ktor.client.engine.okhttp.OkHttpEngine,kotlin.coroutines.Continuation)
+io.ktor.client.engine.okhttp.UnsupportedFrameTypeException: UnsupportedFrameTypeException(io.ktor.websocket.Frame)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.Clipboard getClipboard()
+com.mizibu.retfast.core.RetrieverProfileRow$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,com.mizibu.retfast.core.RetrieverProfileRow)
+androidx.core.view.ViewCompat$Api21Impl: boolean dispatchNestedScroll(android.view.View,int,int,int,int,int[])
+androidx.core.view.WindowInsetsCompat$Impl20: void copyWindowDataInto(androidx.core.view.WindowInsetsCompat)
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$TypeParameter$Variance: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$TypeParameter$Variance[] values()
+kotlin.reflect.jvm.internal.impl.metadata.jvm.JvmProtoBuf$StringTableTypes$Record$Operation: kotlin.reflect.jvm.internal.impl.metadata.jvm.JvmProtoBuf$StringTableTypes$Record$Operation[] values()
+kotlin.reflect.jvm.internal.KDeclarationContainerImpl$MemberBelonginess: kotlin.reflect.jvm.internal.KDeclarationContainerImpl$MemberBelonginess valueOf(java.lang.String)
+androidx.compose.material3.tokens.ShapeKeyTokens: androidx.compose.material3.tokens.ShapeKeyTokens[] values()
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api33Impl: java.lang.String getCollectionItemRowTitle(java.lang.Object)
+kotlin.DeprecationLevel: kotlin.DeprecationLevel[] values()
+androidx.core.app.NotificationCompatBuilder$Api24Impl: android.app.Notification$Builder setRemoteInputHistory(android.app.Notification$Builder,java.lang.CharSequence[])
+com.mizibu.retfast.core.EventRow$$serializer: com.mizibu.retfast.core.EventRow deserialize(kotlinx.serialization.encoding.Decoder)
+androidx.core.app.NotificationCompatBuilder$Api24Impl: android.app.Notification$Builder setCustomHeadsUpContentView(android.app.Notification$Builder,android.widget.RemoteViews)
+kotlin.LazyThreadSafetyMode: kotlin.LazyThreadSafetyMode[] values()
+kotlin.reflect.jvm.internal.impl.descriptors.ClassKind: kotlin.reflect.jvm.internal.impl.descriptors.ClassKind[] values()
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api34Impl: void setBoundsInWindow(android.view.accessibility.AccessibilityNodeInfo,android.graphics.Rect)
+com.mizibu.retfast.core.GeoZone$$serializer: kotlinx.serialization.descriptors.SerialDescriptor getDescriptor()
+com.mizibu.retfast.core.NameRow$$serializer: java.lang.Object deserialize(kotlinx.serialization.encoding.Decoder)
+androidx.compose.ui.contentcapture.AndroidContentCaptureManager$TranslateStatus: androidx.compose.ui.contentcapture.AndroidContentCaptureManager$TranslateStatus[] values()
+androidx.compose.ui.node.NodeMeasuringIntrinsics$IntrinsicWidthHeight: androidx.compose.ui.node.NodeMeasuringIntrinsics$IntrinsicWidthHeight[] values()
+androidx.core.os.LocaleListCompat$Api24Impl: android.os.LocaleList getDefault()
+androidx.core.app.RemoteInput$Api29Impl: android.app.RemoteInput$Builder setEditChoicesBeforeSending(android.app.RemoteInput$Builder,int)
+kotlin.reflect.jvm.internal.impl.load.java.structure.LightClassOriginKind: kotlin.reflect.jvm.internal.impl.load.java.structure.LightClassOriginKind valueOf(java.lang.String)
+com.mizibu.retfast.core.RetrieverSession$$serializer: kotlinx.serialization.descriptors.SerialDescriptor getDescriptor()
+androidx.core.view.WindowInsetsCompat$Impl: void copyRootViewBounds(android.view.View)
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Effect$InvocationKind: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Effect$InvocationKind valueOf(java.lang.String)
+androidx.core.view.WindowInsetsCompat$BuilderImpl30: void setInsets(int,androidx.core.graphics.Insets)
+io.ktor.client.engine.okhttp.OkHttpSSESession: OkHttpSSESession(okhttp3.OkHttpClient,okhttp3.Request,kotlin.coroutines.CoroutineContext)
+io.ktor.client.engine.okhttp.OkHttpEngine: java.lang.Object executeHttpRequest(okhttp3.OkHttpClient,okhttp3.Request,kotlin.coroutines.CoroutineContext,io.ktor.client.request.HttpRequestData,kotlin.coroutines.Continuation)
+androidx.core.view.WindowInsetsCompat$BuilderImpl29: androidx.core.view.WindowInsetsCompat build()
+androidx.compose.ui.window.PopupLayout: void getParams$ui_release$annotations()
+androidx.compose.ui.platform.AndroidViewsHandler: java.util.HashMap getHolderToLayoutNode()
+androidx.core.view.ViewCompat$Api28Impl: boolean isScreenReaderFocusable(android.view.View)
+androidx.core.app.RemoteInput$Api26Impl: void addDataResultToIntent(androidx.core.app.RemoteInput,android.content.Intent,java.util.Map)
+io.ktor.client.engine.okhttp.OkHttpEngineKt$convertToOkHttpBody$3$1: java.lang.Object invoke(io.ktor.utils.io.WriterScope,kotlin.coroutines.Continuation)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: kotlinx.coroutines.CompletableDeferred access$getSelf$p(io.ktor.client.engine.okhttp.OkHttpWebsocketSession)
+androidx.core.view.WindowInsetsCompat$Impl: void setStableInsets(androidx.core.graphics.Insets)
+androidx.compose.foundation.layout.internal.InlineClassHelperKt: void throwIllegalArgumentException(java.lang.String)
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api30Impl: java.lang.CharSequence getStateDescription(android.view.accessibility.AccessibilityNodeInfo)
+io.github.jan.supabase.auth.providers.builtin.Phone$Config$Companion: kotlinx.serialization.KSerializer serializer()
+io.ktor.client.engine.okhttp.StreamRequestBody: boolean isOneShot()
+com.mizibu.retfast.core.NearbyRetriever$$serializer: com.mizibu.retfast.core.NearbyRetriever deserialize(kotlinx.serialization.encoding.Decoder)
+androidx.core.app.NotificationCompatBuilder$Api20Impl: android.app.Notification$Builder setSortKey(android.app.Notification$Builder,java.lang.String)
+com.mizibu.retfast.core.TaskRow$Companion: kotlinx.serialization.KSerializer serializer()
+com.mizibu.retfast.core.Membership$$serializer: kotlinx.serialization.descriptors.SerialDescriptor getDescriptor()
+kotlin.reflect.jvm.internal.impl.resolve.ExternalOverridabilityCondition$Result: kotlin.reflect.jvm.internal.impl.resolve.ExternalOverridabilityCondition$Result[] values()
+androidx.compose.ui.window.PopupLayout: void setParentLayoutCoordinates(androidx.compose.ui.layout.LayoutCoordinates)
+androidx.core.view.WindowInsetsCompat$Impl29: androidx.core.graphics.Insets getMandatorySystemGestureInsets()
+io.ktor.client.engine.okhttp.OkHttpEngine: okhttp3.OkHttpClient access$createOkHttpClient(io.ktor.client.engine.okhttp.OkHttpEngine,io.ktor.client.plugins.HttpTimeoutConfig)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.text.font.Font$ResourceLoader getFontLoader()
+androidx.compose.runtime.SlotTableKt: void throwConcurrentModificationException()
+com.mizibu.retfast.core.GeoZone$$serializer: com.mizibu.retfast.core.GeoZone deserialize(kotlinx.serialization.encoding.Decoder)
+com.mizibu.retfast.core.NameRow$$serializer: NameRow$$serializer()
+androidx.core.view.WindowInsetsCompat$Impl: void setRootViewData(androidx.core.graphics.Insets)
+androidx.compose.foundation.text.TextContextMenuItems: androidx.compose.foundation.text.TextContextMenuItems valueOf(java.lang.String)
+com.google.android.gms.common.ErrorDialogFragment: ErrorDialogFragment()
+androidx.core.view.ViewCompat$Api21Impl: boolean dispatchNestedPreFling(android.view.View,float,float)
+androidx.compose.animation.core.MutatePriority: androidx.compose.animation.core.MutatePriority valueOf(java.lang.String)
+com.mizibu.retfast.core.RetrieverSession$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,java.lang.Object)
+androidx.compose.foundation.internal.InlineClassHelperKt: void throwIndexOutOfBoundsException(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpEngineKt: kotlin.Unit convertToOkHttpRequest$lambda$1$lambda$0(okhttp3.Request$Builder,java.lang.String,java.lang.String)
+kotlin.reflect.jvm.internal.impl.types.TypeSubstitutor$VarianceConflictType: kotlin.reflect.jvm.internal.impl.types.TypeSubstitutor$VarianceConflictType valueOf(java.lang.String)
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api33Impl: boolean isTextSelectable(android.view.accessibility.AccessibilityNodeInfo)
+kotlin.reflect.jvm.internal.impl.load.java.ReportLevel: kotlin.reflect.jvm.internal.impl.load.java.ReportLevel[] values()
+androidx.activity.OnBackPressedDispatcher$Api34Impl: android.window.OnBackInvokedCallback createOnBackAnimationCallback(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0)
+androidx.compose.ui.platform.AndroidComposeView: void setContentCaptureManager$ui_release(androidx.compose.ui.contentcapture.AndroidContentCaptureManager)
+androidx.core.view.ViewCompat$Api21Impl: void setTranslationZ(android.view.View,float)
+kotlin.reflect.jvm.internal.impl.descriptors.annotations.KotlinTarget: kotlin.reflect.jvm.internal.impl.descriptors.annotations.KotlinTarget[] values()
+androidx.navigation.compose.ComposeNavigator: ComposeNavigator()
+androidx.core.graphics.drawable.IconCompat$Api28Impl: int getResId(java.lang.Object)
+io.ktor.client.engine.HttpClientEngineBase: kotlinx.coroutines.CoroutineDispatcher getDispatcher()
+androidx.compose.ui.platform.AbstractComposeView: void setViewCompositionStrategy(androidx.compose.ui.platform.ViewCompositionStrategy)
+androidx.graphics.path.PathIteratorPreApi34Impl: int internalPathIteratorNext(long,float[],int)
+kotlin.reflect.jvm.internal.impl.serialization.deserialization.builtins.BuiltInsLoaderImpl: BuiltInsLoaderImpl()
+kotlin.reflect.jvm.internal.impl.resolve.OverridingUtil$OverrideCompatibilityInfo$Result: kotlin.reflect.jvm.internal.impl.resolve.OverridingUtil$OverrideCompatibilityInfo$Result[] values()
+com.mizibu.retfast.core.RetrieverSession$$serializer: kotlinx.serialization.KSerializer[] childSerializers()
+androidx.compose.ui.window.PopupLayout: void setPositionProvider(androidx.compose.ui.window.PopupPositionProvider)
+kotlin.coroutines.intrinsics.CoroutineSingletons: kotlin.coroutines.intrinsics.CoroutineSingletons valueOf(java.lang.String)
+androidx.core.os.LocaleListCompat$Api24Impl: android.os.LocaleList getAdjustedDefault()
+androidx.lifecycle.ProcessLifecycleOwner$attach$1: void onActivityPreCreated(android.app.Activity,android.os.Bundle)
+androidx.compose.runtime.ComposerKt: void composeImmediateRuntimeError(java.lang.String)
+io.github.jan.supabase.auth.providers.builtin.IDToken$Config$Companion: kotlinx.serialization.KSerializer serializer()
+io.ktor.client.engine.okhttp.UnsupportedFrameTypeException: java.lang.Throwable createCopy()
+com.mizibu.retfast.core.NameRow$$serializer: kotlinx.serialization.descriptors.SerialDescriptor getDescriptor()
+androidx.core.graphics.drawable.IconCompat$Api23Impl: android.graphics.drawable.Icon toIcon(androidx.core.graphics.drawable.IconCompat,android.content.Context)
+androidx.compose.ui.node.LayoutNode$UsageByParent: androidx.compose.ui.node.LayoutNode$UsageByParent valueOf(java.lang.String)
+androidx.compose.animation.core.AnimationEndReason: androidx.compose.animation.core.AnimationEndReason[] values()
+androidx.compose.ui.input.pointer.util.VelocityTracker1D$Strategy: androidx.compose.ui.input.pointer.util.VelocityTracker1D$Strategy[] values()
+androidx.core.os.LocaleListCompat$Api24Impl: android.os.LocaleList createLocaleList(java.util.Locale[])
+androidx.core.app.NotificationCompatBuilder$Api26Impl: android.app.Notification$Builder setBadgeIconType(android.app.Notification$Builder,int)
+io.ktor.client.engine.okhttp.OkHttpEngine: java.util.Set getSupportedCapabilities()
+androidx.core.app.NotificationCompatBuilder$Api26Impl: android.app.Notification$Builder setShortcutId(android.app.Notification$Builder,java.lang.String)
+androidx.compose.foundation.layout.Direction: androidx.compose.foundation.layout.Direction[] values()
+androidx.compose.ui.platform.ViewLayer: void setInvalidated(boolean)
+com.mizibu.retfast.core.NameRow$$serializer: com.mizibu.retfast.core.NameRow deserialize(kotlinx.serialization.encoding.Decoder)
+androidx.compose.ui.platform.ComposeView: void setContent(kotlin.jvm.functions.Function2)
+androidx.compose.ui.text.input.TextInputServiceAndroid$TextInputCommand: androidx.compose.ui.text.input.TextInputServiceAndroid$TextInputCommand valueOf(java.lang.String)
+androidx.core.view.ViewCompat$Api28Impl: java.lang.CharSequence getAccessibilityPaneTitle(android.view.View)
+io.ktor.client.engine.okhttp.OkHttpEngineKt: okhttp3.Request convertToOkHttpRequest(io.ktor.client.request.HttpRequestData,kotlin.coroutines.CoroutineContext)
+androidx.core.app.NotificationCompatBuilder$Api21Impl: android.app.Notification$Builder setSound(android.app.Notification$Builder,android.net.Uri,java.lang.Object)
+org.slf4j.event.Level: org.slf4j.event.Level[] values()
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: void onClosed(okhttp3.WebSocket,int,java.lang.String)
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api33Impl: androidx.core.view.accessibility.AccessibilityNodeInfoCompat getParent(android.view.accessibility.AccessibilityNodeInfo,int)
+com.mizibu.retfast.core.RetrievalAssignmentRow$$serializer: kotlinx.serialization.descriptors.SerialDescriptor getDescriptor()
+android.support.v4.graphics.drawable.IconCompatParcelizer: IconCompatParcelizer()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.layout.Placeable$PlacementScope getPlacementScope()
+kotlin.reflect.jvm.internal.impl.types.error.ErrorTypeKind: kotlin.reflect.jvm.internal.impl.types.error.ErrorTypeKind valueOf(java.lang.String)
+kotlin.jvm.internal.CallableReference: kotlin.reflect.KDeclarationContainer getOwner()
+io.ktor.client.engine.okhttp.OkHttpConfig: void addInterceptor(okhttp3.Interceptor)
+androidx.compose.ui.node.TraversableNode$Companion$TraverseDescendantsAction: androidx.compose.ui.node.TraversableNode$Companion$TraverseDescendantsAction valueOf(java.lang.String)
+kotlin.coroutines.jvm.internal.ContinuationImpl: void releaseIntercepted()
+kotlinx.datetime.DateTimeUnit$Companion: kotlinx.serialization.KSerializer serializer()
+com.mizibu.retfast.core.RetrieverSession$Companion: kotlinx.serialization.KSerializer serializer()
+androidx.core.app.RemoteActionCompatParcelizer: RemoteActionCompatParcelizer()
+kotlin.reflect.jvm.internal.impl.serialization.deserialization.descriptors.DeserializedContainerAbiStability: kotlin.reflect.jvm.internal.impl.serialization.deserialization.descriptors.DeserializedContainerAbiStability valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpEngine$clientCache$1: OkHttpEngine$clientCache$1(java.lang.Object)
+androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getInsetsForType(int,boolean)
+androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.graphics.Insets getInsets(int,boolean)
+kotlin.Metadata: int[] mv()
+androidx.core.view.ViewCompat$Api21Impl: void setElevation(android.view.View,float)
+io.ktor.util.date.GMTDate$Companion: kotlinx.serialization.KSerializer serializer()
+kotlin.reflect.jvm.internal.impl.descriptors.Modality: kotlin.reflect.jvm.internal.impl.descriptors.Modality[] values()
+androidx.core.view.WindowInsetsCompat$Impl: void setRootWindowInsets(androidx.core.view.WindowInsetsCompat)
+androidx.core.view.WindowInsetsCompat$Impl30: androidx.core.graphics.Insets getInsets(int)
+com.mizibu.retfast.core.EmergencyRef$$serializer: kotlinx.serialization.KSerializer[] childSerializers()
+kotlin.reflect.jvm.internal.impl.load.java.FieldOverridabilityCondition: FieldOverridabilityCondition()
+kotlin.reflect.jvm.internal.impl.builtins.UnsignedType: kotlin.reflect.jvm.internal.impl.builtins.UnsignedType valueOf(java.lang.String)
+androidx.profileinstaller.FileSectionType: androidx.profileinstaller.FileSectionType[] values()
+androidx.lifecycle.ProcessLifecycleOwner$attach$1$onActivityPreCreated$1: void onActivityPostStarted(android.app.Activity)
+kotlin.Metadata: java.lang.String[] d2()
+io.ktor.client.engine.okhttp.OkUtilsKt$fromOkHttp$1: java.util.List getAll(java.lang.String)
+androidx.core.view.ViewCompat$Api21Impl: void stopNestedScroll(android.view.View)
+androidx.compose.ui.internal.InlineClassHelperKt: java.lang.Void throwIllegalStateExceptionForNullCheck(java.lang.String)
+com.mizibu.retfast.core.TaskRow$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,java.lang.Object)
+kotlin.reflect.jvm.internal.impl.load.java.SpecialGenericSignatures$SpecialSignatureInfo: kotlin.reflect.jvm.internal.impl.load.java.SpecialGenericSignatures$SpecialSignatureInfo valueOf(java.lang.String)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.autofill.Autofill getAutofill()
+io.github.jan.supabase.postgrest.query.filter.FilterOperator: io.github.jan.supabase.postgrest.query.filter.FilterOperator[] values()
+androidx.compose.ui.layout.IntrinsicWidthHeight: androidx.compose.ui.layout.IntrinsicWidthHeight valueOf(java.lang.String)
+androidx.core.app.ActivityCompat$Api23Impl: void requestPermissions(android.app.Activity,java.lang.String[],int)
+androidx.core.view.ViewCompat$Api21Impl: boolean isImportantForAccessibility(android.view.View)
+com.mizibu.retfast.core.Profile$$serializer: kotlinx.serialization.KSerializer[] typeParametersSerializers()
+androidx.lifecycle.ProcessLifecycleInitializer: ProcessLifecycleInitializer()
+androidx.compose.ui.input.pointer.PointerEventPass: androidx.compose.ui.input.pointer.PointerEventPass[] values()
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: ReportFragment$LifecycleCallbacks()
+androidx.core.app.NotificationCompatBuilder$Api20Impl: java.lang.String getGroup(android.app.Notification)
+kotlin.reflect.jvm.internal.impl.types.TypeCheckerState$LowerCapturedTypePolicy: kotlin.reflect.jvm.internal.impl.types.TypeCheckerState$LowerCapturedTypePolicy valueOf(java.lang.String)
+kotlin.coroutines.jvm.internal.BaseContinuationImpl: kotlin.coroutines.jvm.internal.CoroutineStackFrame getCallerFrame()
+io.github.jan.supabase.auth.SupabaseInitializer: SupabaseInitializer()
+androidx.core.app.NotificationCompatBuilder$Api31Impl: android.app.Notification$Builder setForegroundServiceBehavior(android.app.Notification$Builder,int)
+kotlin.reflect.jvm.internal.impl.load.java.lazy.types.JavaTypeFlexibility: kotlin.reflect.jvm.internal.impl.load.java.lazy.types.JavaTypeFlexibility valueOf(java.lang.String)
+okhttp3.RequestBody: okhttp3.RequestBody create(okhttp3.MediaType,byte[])
+org.slf4j.helpers.Reporter$Level: org.slf4j.helpers.Reporter$Level[] values()
+kotlin.coroutines.jvm.internal.BaseContinuationImpl: java.lang.StackTraceElement getStackTraceElement()
+io.ktor.client.engine.okhttp.OkHttpConfig: kotlin.Unit addInterceptor$lambda$2(okhttp3.Interceptor,okhttp3.OkHttpClient$Builder)
+androidx.compose.ui.node.NodeMeasuringIntrinsics$IntrinsicMinMax: androidx.compose.ui.node.NodeMeasuringIntrinsics$IntrinsicMinMax valueOf(java.lang.String)
+androidx.core.view.ViewCompat$Api21Impl: void setOnApplyWindowInsetsListener(android.view.View,androidx.core.view.OnApplyWindowInsetsListener)
+com.mizibu.retfast.core.RetrievalRequestRow$$serializer: com.mizibu.retfast.core.RetrievalRequestRow deserialize(kotlinx.serialization.encoding.Decoder)
+kotlinx.serialization.json.DecodeSequenceMode: kotlinx.serialization.json.DecodeSequenceMode valueOf(java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl20: androidx.core.view.WindowInsetsCompat inset(int,int,int,int)
+kotlin.reflect.jvm.internal.impl.renderer.PropertyAccessorRenderingPolicy: kotlin.reflect.jvm.internal.impl.renderer.PropertyAccessorRenderingPolicy[] values()
+kotlin.io.encoding.Base64$PaddingOption: kotlin.io.encoding.Base64$PaddingOption valueOf(java.lang.String)
+androidx.compose.ui.graphics.Path$Direction: androidx.compose.ui.graphics.Path$Direction valueOf(java.lang.String)
+kotlin.jvm.internal.CallableReference: java.util.List getTypeParameters()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.hapticfeedback.HapticFeedback getHapticFeedBack()
+kotlinx.serialization.json.ClassDiscriminatorMode: kotlinx.serialization.json.ClassDiscriminatorMode valueOf(java.lang.String)
+io.ktor.websocket.CloseReason$Codes: io.ktor.websocket.CloseReason$Codes[] values()
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.view.WindowInsetsCompat consumeStableInsets()
+io.ktor.client.engine.okhttp.OkHttpEngine: kotlin.coroutines.CoroutineContext getCoroutineContext()
+androidx.compose.ui.contentcapture.ContentCaptureEventType: androidx.compose.ui.contentcapture.ContentCaptureEventType[] values()
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api34Impl: void setQueryFromAppProcessEnabled(android.view.accessibility.AccessibilityNodeInfo,android.view.View,boolean)
+androidx.core.os.BundleCompat$Api33Impl: java.util.ArrayList getParcelableArrayList(android.os.Bundle,java.lang.String,java.lang.Class)
+androidx.core.view.WindowCompat$Api30Impl: void setDecorFitsSystemWindows(android.view.Window,boolean)
+androidx.compose.ui.util.ListUtilsKt: void throwUnsupportedOperationException(java.lang.String)
+com.mizibu.retfast.core.EventRow$Companion: kotlinx.serialization.KSerializer serializer()
+io.github.jan.supabase.functions.FunctionRegion: io.github.jan.supabase.functions.FunctionRegion valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpSSESession: io.ktor.client.plugins.sse.SSEClientException mapException(okhttp3.Response)
+androidx.emoji2.text.ConcurrencyHelpers$Handler28Impl: android.os.Handler createAsync(android.os.Looper)
+com.mizibu.retfast.core.EventRow$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,java.lang.Object)
+androidx.compose.ui.graphics.layer.ViewLayer: void setInvalidated(boolean)
+androidx.core.os.BundleCompat$Api33Impl: java.io.Serializable getSerializable(android.os.Bundle,java.lang.String,java.lang.Class)
+io.ktor.client.engine.HttpClientEngineConfig: boolean getPipelining()
+com.mizibu.retfast.core.NearbyRetriever$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,java.lang.Object)
+com.mizibu.retfast.core.EmergencyRef$$serializer: kotlinx.serialization.KSerializer[] typeParametersSerializers()
+androidx.compose.foundation.text.KeyCommand: androidx.compose.foundation.text.KeyCommand valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpEngineKt: io.ktor.utils.io.ByteReadChannel convertToOkHttpBody$lambda$3(io.ktor.http.content.OutgoingContent)
+kotlin.reflect.jvm.internal.impl.renderer.OverrideRenderingPolicy: kotlin.reflect.jvm.internal.impl.renderer.OverrideRenderingPolicy[] values()
+kotlin.reflect.jvm.internal.impl.resolve.ExternalOverridabilityCondition$Result: kotlin.reflect.jvm.internal.impl.resolve.ExternalOverridabilityCondition$Result valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpEngine: java.lang.Object execute(io.ktor.client.request.HttpRequestData,kotlin.coroutines.Continuation)
+androidx.core.view.ViewCompat$Api21Impl: boolean dispatchNestedFling(android.view.View,float,float,boolean)
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api33Impl: void setTextSelectable(android.view.accessibility.AccessibilityNodeInfo,boolean)
+io.ktor.client.engine.okhttp.OkHttpEngine: kotlin.Unit executeHttpRequest$lambda$2(okhttp3.ResponseBody,java.lang.Throwable)
+com.mizibu.retfast.core.Profile$$serializer: kotlinx.serialization.KSerializer[] childSerializers()
+io.ktor.client.engine.okhttp.OkHttpEngine: java.lang.Object executeWebSocketRequest(okhttp3.OkHttpClient,okhttp3.Request,kotlin.coroutines.CoroutineContext,kotlin.coroutines.Continuation)
+io.ktor.client.engine.okhttp.OkUtilsKt$fromOkHttp$1: java.util.Set entries()
+androidx.compose.ui.unit.InlineClassHelperKt: void throwIllegalStateException(java.lang.String)
+com.mizibu.retfast.core.TaskRow$$serializer: com.mizibu.retfast.core.TaskRow deserialize(kotlinx.serialization.encoding.Decoder)
+androidx.core.view.ViewCompat$Api28Impl: void setAccessibilityPaneTitle(android.view.View,java.lang.CharSequence)
+com.mizibu.retfast.core.EmergencyRef$$serializer: com.mizibu.retfast.core.EmergencyRef deserialize(kotlinx.serialization.encoding.Decoder)
+androidx.core.view.WindowInsetsCompat$BuilderImpl29: void setSystemGestureInsets(androidx.core.graphics.Insets)
+androidx.compose.ui.platform.AbstractComposeView: void setPreviousAttachedWindowToken(android.os.IBinder)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.node.LayoutNode getRoot()
+androidx.core.os.ConfigurationCompat$Api24Impl: android.os.LocaleList getLocales(android.content.res.Configuration)
+okhttp3.internal.publicsuffix.PublicSuffixDatabase: PublicSuffixDatabase()
+androidx.core.graphics.drawable.IconCompat$Api23Impl: android.graphics.drawable.Drawable loadDrawable(android.graphics.drawable.Icon,android.content.Context)
+androidx.core.location.LocationCompat$Api26Impl: boolean hasVerticalAccuracy(android.location.Location)
+androidx.navigation.compose.DialogNavigator: DialogNavigator()
+androidx.navigation.compose.BackStackEntryIdViewModel: BackStackEntryIdViewModel(androidx.lifecycle.SavedStateHandle)
+kotlin.reflect.jvm.internal.impl.renderer.DescriptorRendererModifier: kotlin.reflect.jvm.internal.impl.renderer.DescriptorRendererModifier[] values()
+com.mizibu.retfast.core.NameRow$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,java.lang.Object)
+io.ktor.client.engine.HttpClientEngineConfig: void setPipelining(boolean)
+com.google.android.gms.dynamite.DynamiteModule$DynamiteLoaderClassLoader: DynamiteModule$DynamiteLoaderClassLoader()
+androidx.compose.foundation.text.Handle: androidx.compose.foundation.text.Handle valueOf(java.lang.String)
+androidx.compose.ui.layout.MeasuringIntrinsics$IntrinsicWidthHeight: androidx.compose.ui.layout.MeasuringIntrinsics$IntrinsicWidthHeight[] values()
+io.ktor.client.engine.okhttp.OkUtilsKt$execute$2$1: OkUtilsKt$execute$2$1(okhttp3.Call)
+androidx.core.graphics.drawable.IconCompat$Api28Impl: java.lang.String getResPackage(java.lang.Object)
+androidx.compose.ui.text.internal.InlineClassHelperKt: void throwIllegalArgumentException(java.lang.String)
+androidx.core.view.ViewCompat$Api21Impl: androidx.core.view.WindowInsetsCompat computeSystemWindowInsets(android.view.View,androidx.core.view.WindowInsetsCompat,android.graphics.Rect)
+kotlin.reflect.jvm.internal.impl.load.kotlin.AbstractBinaryClassAnnotationLoader$PropertyRelatedElement: kotlin.reflect.jvm.internal.impl.load.kotlin.AbstractBinaryClassAnnotationLoader$PropertyRelatedElement[] values()
+io.ktor.client.engine.okhttp.OkHttpEngineKt: okhttp3.Request access$convertToOkHttpRequest(io.ktor.client.request.HttpRequestData,kotlin.coroutines.CoroutineContext)
+kotlin.reflect.jvm.internal.impl.builtins.UnsignedType: kotlin.reflect.jvm.internal.impl.builtins.UnsignedType[] values()
+androidx.compose.material.ripple.RippleHostView: void setRippleState$lambda$2(androidx.compose.material.ripple.RippleHostView)
+androidx.core.view.WindowInsetsCompat$BuilderImpl20: void setStableInsets(androidx.core.graphics.Insets)
+com.mizibu.retfast.core.RetrievalRequestRow$$serializer: java.lang.Object deserialize(kotlinx.serialization.encoding.Decoder)
+androidx.compose.ui.unit.LayoutDirection: androidx.compose.ui.unit.LayoutDirection[] values()
+kotlin.reflect.jvm.internal.impl.load.java.ErasedOverridabilityCondition: ErasedOverridabilityCondition()
+androidx.compose.ui.platform.ViewLayerContainer: void dispatchGetDisplayList()
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: void setMaxFrameSize(long)
+kotlinx.coroutines.android.AndroidExceptionPreHandler: AndroidExceptionPreHandler()
+androidx.core.view.ViewCompat$Api21Impl: float getZ(android.view.View)
+androidx.compose.runtime.PreconditionsKt: void throwIllegalStateException(java.lang.String)
+com.mizibu.retfast.core.GeoZone$$serializer: kotlinx.serialization.KSerializer[] typeParametersSerializers()
+androidx.core.view.WindowInsetsCompat$Impl: androidx.core.graphics.Insets getSystemGestureInsets()
+androidx.compose.ui.platform.AndroidComposeView: void getShowLayoutBounds$annotations()
+kotlin.reflect.jvm.internal.impl.descriptors.annotations.KotlinRetention: kotlin.reflect.jvm.internal.impl.descriptors.annotations.KotlinRetention[] values()
+androidx.compose.foundation.gestures.Orientation: androidx.compose.foundation.gestures.Orientation valueOf(java.lang.String)
+kotlin.jvm.internal.FunctionReference: int getArity()
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: void start(java.util.List)
+io.ktor.client.engine.okhttp.OkHttpEngine: kotlin.Lazy access$getOkHttpClientPrototype$delegate$cp()
+androidx.core.view.ViewCompat$Api21Impl: void setNestedScrollingEnabled(android.view.View,boolean)
+androidx.compose.animation.core.RepeatMode: androidx.compose.animation.core.RepeatMode[] values()
+androidx.compose.ui.focus.FocusStateImpl: androidx.compose.ui.focus.FocusStateImpl[] values()
+androidx.graphics.path.PathIteratorPreApi34Impl: int internalPathIteratorRawSize(long)
+com.mizibu.retfast.core.EventRow$$serializer: kotlinx.serialization.descriptors.SerialDescriptor getDescriptor()
+kotlinx.serialization.json.internal.WriteMode: kotlinx.serialization.json.internal.WriteMode[] values()
+androidx.core.view.WindowInsetsCompat$Impl29: androidx.core.graphics.Insets getSystemGestureInsets()
+org.slf4j.helpers.Reporter$Level: org.slf4j.helpers.Reporter$Level valueOf(java.lang.String)
+kotlinx.serialization.json.JsonArray$Companion: kotlinx.serialization.KSerializer serializer()
+androidx.lifecycle.ProcessLifecycleOwner$Api29Impl: void registerActivityLifecycleCallbacks(android.app.Activity,android.app.Application$ActivityLifecycleCallbacks)
+androidx.core.view.WindowInsetsCompat$BuilderImpl29: void setSystemWindowInsets(androidx.core.graphics.Insets)
+com.mizibu.retfast.core.NameRow$$serializer: void serialize(kotlinx.serialization.encoding.Encoder,com.mizibu.retfast.core.NameRow)
+androidx.compose.ui.platform.AbstractComposeView: void setTransitionGroup(boolean)
+androidx.compose.ui.platform.AndroidComposeView: void set_viewTreeOwners(androidx.compose.ui.platform.AndroidComposeView$ViewTreeOwners)
+androidx.core.view.WindowInsetsCompat$BuilderImpl29: void setTappableElementInsets(androidx.core.graphics.Insets)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: kotlinx.coroutines.Deferred getCloseReason()
+kotlin.reflect.jvm.internal.impl.renderer.ParameterNameRenderingPolicy: kotlin.reflect.jvm.internal.impl.renderer.ParameterNameRenderingPolicy valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkUtilsKt: io.ktor.http.HttpProtocolVersion fromOkHttp(okhttp3.Protocol)
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api34Impl: void setContainerTitle(android.view.accessibility.AccessibilityNodeInfo,java.lang.CharSequence)
+androidx.activity.OnBackPressedDispatcher$Api33Impl: void unregisterOnBackInvokedCallback(java.lang.Object,java.lang.Object)
+kotlin.reflect.jvm.internal.impl.storage.LockBasedStorageManager$NotValue: kotlin.reflect.jvm.internal.impl.storage.LockBasedStorageManager$NotValue[] values()
+androidx.core.app.NotificationCompatBuilder$Api28Impl: android.app.Notification$Action$Builder setSemanticAction(android.app.Notification$Action$Builder,int)
+kotlin.reflect.jvm.internal.impl.load.java.AnnotationQualifierApplicabilityType: kotlin.reflect.jvm.internal.impl.load.java.AnnotationQualifierApplicabilityType valueOf(java.lang.String)
+io.ktor.util.Platform$JsPlatform: io.ktor.util.Platform$JsPlatform valueOf(java.lang.String)
+androidx.compose.foundation.text.selection.SelectionHandleAnchor: androidx.compose.foundation.text.selection.SelectionHandleAnchor[] values()
+androidx.compose.ui.graphics.layer.ViewLayer: android.view.View getOwnerView()
+kotlin.reflect.jvm.internal.impl.load.java.lazy.types.JavaTypeFlexibility: kotlin.reflect.jvm.internal.impl.load.java.lazy.types.JavaTypeFlexibility[] values()
+androidx.core.os.BundleApi21ImplKt: void putSizeF(android.os.Bundle,java.lang.String,android.util.SizeF)
+androidx.compose.ui.platform.AndroidComposeView: androidx.collection.MutableIntObjectMap getLayoutNodes()
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$VersionRequirement$VersionKind: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$VersionRequirement$VersionKind[] values()
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api34Impl: android.view.accessibility.AccessibilityNodeInfo$AccessibilityAction getActionScrollInDirection()
+android.support.v4.app.RemoteActionCompatParcelizer: androidx.core.app.RemoteActionCompat read(androidx.versionedparcelable.VersionedParcel)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.node.OwnerSnapshotObserver getSnapshotObserver()
+androidx.core.app.NotificationCompatBuilder$Api26Impl: android.app.Notification$Builder setTimeoutAfter(android.app.Notification$Builder,long)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.text.font.FontFamily$Resolver getFontFamilyResolver()
+kotlin.reflect.jvm.internal.impl.protobuf.WireFormat$FieldType: kotlin.reflect.jvm.internal.impl.protobuf.WireFormat$FieldType valueOf(java.lang.String)
+androidx.compose.ui.platform.ViewLayer: long getLayerId()
+kotlin.reflect.jvm.internal.impl.resolve.constants.IntegerLiteralTypeConstructor$Companion$Mode: kotlin.reflect.jvm.internal.impl.resolve.constants.IntegerLiteralTypeConstructor$Companion$Mode valueOf(java.lang.String)
+androidx.core.view.ViewCompat$Api28Impl: void addOnUnhandledKeyEventListener(android.view.View,androidx.core.view.ViewCompat$OnUnhandledKeyEventListenerCompat)
+io.ktor.client.engine.okhttp.OkUtilsKt$fromOkHttp$1: boolean isEmpty()
+androidx.compose.ui.window.PopupLayout: void setLayoutDirection(int)
+kotlin.reflect.jvm.internal.impl.renderer.AnnotationArgumentsRenderingPolicy: kotlin.reflect.jvm.internal.impl.renderer.AnnotationArgumentsRenderingPolicy[] values()
+androidx.core.view.WindowInsetsCompat$BuilderImpl20: androidx.core.view.WindowInsetsCompat build()
+com.mizibu.retfast.core.TaskRow$$serializer: kotlinx.serialization.KSerializer[] childSerializers()
+androidx.core.view.WindowInsetsCompat$TypeImpl30: int toPlatformType(int)
+androidx.compose.material3.ScaffoldLayoutContent: androidx.compose.material3.ScaffoldLayoutContent valueOf(java.lang.String)
+androidx.compose.ui.platform.AbstractComposeView: boolean getHasComposition()
+androidx.core.app.NotificationCompatBuilder$Api26Impl: android.app.Notification$Builder setColorized(android.app.Notification$Builder,boolean)
+androidx.core.view.DisplayCutoutCompat$Api28Impl: android.view.DisplayCutout createDisplayCutout(android.graphics.Rect,java.util.List)
+kotlin.coroutines.jvm.internal.ContinuationImpl: kotlin.coroutines.CoroutineContext getContext()
+androidx.compose.ui.platform.ViewLayer: float getCameraDistancePx()
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Annotation$Argument$Value$Type: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$Annotation$Argument$Value$Type[] values()
+androidx.core.view.WindowInsetsCompat$Impl20: void copyRootViewBounds(android.view.View)
+com.mizibu.retfast.core.Membership$$serializer: com.mizibu.retfast.core.Membership deserialize(kotlinx.serialization.encoding.Decoder)
+kotlin.reflect.jvm.internal.impl.load.java.structure.LightClassOriginKind: kotlin.reflect.jvm.internal.impl.load.java.structure.LightClassOriginKind[] values()
+androidx.compose.ui.platform.AndroidComposeView: void setCoroutineContext(kotlin.coroutines.CoroutineContext)
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api30Impl: void setStateDescription(android.view.accessibility.AccessibilityNodeInfo,java.lang.CharSequence)
+com.mizibu.retfast.core.Profile$$serializer: com.mizibu.retfast.core.Profile deserialize(kotlinx.serialization.encoding.Decoder)
+androidx.compose.ui.text.internal.InlineClassHelperKt: void throwIllegalStateException(java.lang.String)
+com.mizibu.retfast.core.EmergencyRef$$serializer: EmergencyRef$$serializer()
+androidx.lifecycle.ProcessLifecycleOwner$attach$1$onActivityPreCreated$1: ProcessLifecycleOwner$attach$1$onActivityPreCreated$1(androidx.lifecycle.ProcessLifecycleOwner)
+androidx.core.view.WindowInsetsCompat$Impl21: boolean isConsumed()
+androidx.compose.runtime.PreconditionsKt: void throwIllegalArgumentException(java.lang.String)
+io.ktor.client.engine.okhttp.OkUtilsKt: java.lang.Throwable mapOkHttpException(io.ktor.client.request.HttpRequestData,java.io.IOException)
+kotlin.jvm.internal.FunctionReference: boolean isSuspend()
+kotlin.reflect.jvm.internal.impl.types.Variance: kotlin.reflect.jvm.internal.impl.types.Variance valueOf(java.lang.String)
+com.mizibu.retfast.core.RetrievalRequestRow$$serializer: kotlinx.serialization.descriptors.SerialDescriptor getDescriptor()
+androidx.core.location.LocationCompat$Api26Impl: void setSpeedAccuracyMetersPerSecond(android.location.Location,float)
+androidx.compose.ui.platform.ViewLayer: float[] getUnderlyingMatrix-sQKQjiQ()
+androidx.core.app.NotificationCompatBuilder$Api23Impl: android.app.Notification$Action$Builder createBuilder(android.graphics.drawable.Icon,java.lang.CharSequence,android.app.PendingIntent)
+kotlin.reflect.jvm.internal.impl.load.java.typeEnhancement.NullabilityQualifier: kotlin.reflect.jvm.internal.impl.load.java.typeEnhancement.NullabilityQualifier[] values()
+androidx.core.view.WindowInsetsCompat$Impl30: androidx.core.graphics.Insets getInsetsIgnoringVisibility(int)
+androidx.core.view.ViewCompat$Api21Impl: void callCompatInsetAnimationCallback(android.view.WindowInsets,android.view.View)
+androidx.compose.ui.window.PopupLayout: androidx.compose.ui.platform.AbstractComposeView getSubCompositionView()
+androidx.core.app.NotificationCompatBuilder$Api23Impl: android.app.Notification$Builder setLargeIcon(android.app.Notification$Builder,android.graphics.drawable.Icon)
+io.ktor.client.engine.okhttp.OkHttpConfig: void setConfig$ktor_client_okhttp(kotlin.jvm.functions.Function1)
+androidx.compose.ui.window.PopupLayout: java.lang.String getTestTag()
+androidx.core.view.WindowInsetsCompat$Impl28: boolean equals(java.lang.Object)
+com.mizibu.retfast.core.Membership$Companion: kotlinx.serialization.KSerializer serializer()
+io.ktor.client.engine.okhttp.OkHttpEngineKt$toChannel$1: java.lang.Object invoke(io.ktor.utils.io.WriterScope,kotlin.coroutines.Continuation)
+androidx.compose.animation.core.MutatePriority: androidx.compose.animation.core.MutatePriority[] values()
+io.ktor.client.engine.okhttp.OkHttp: io.ktor.client.engine.HttpClientEngine create(kotlin.jvm.functions.Function1)
+androidx.core.app.NotificationCompatBuilder$Api21Impl: android.app.Notification$Builder setColor(android.app.Notification$Builder,int)
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$QualifiedNameTable$QualifiedName$Kind: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$QualifiedNameTable$QualifiedName$Kind[] values()
+kotlin.jvm.internal.CallableReference: kotlin.reflect.KVisibility getVisibility()
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.contentcapture.AndroidContentCaptureManager getContentCaptureManager$ui_release()
+androidx.core.view.ViewCompat$Api28Impl: void removeOnUnhandledKeyEventListener(android.view.View,androidx.core.view.ViewCompat$OnUnhandledKeyEventListenerCompat)
+io.ktor.websocket.FrameType: io.ktor.websocket.FrameType[] values()
+kotlin.jvm.internal.FunctionReference: boolean isOperator()
+androidx.core.view.ViewCompat$Api21Impl: void setZ(android.view.View,float)
+androidx.compose.ui.platform.ComposeView: boolean getShouldCreateCompositionOnAttachedToWindow()
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api34Impl: boolean hasRequestInitialAccessibilityFocus(android.view.accessibility.AccessibilityNodeInfo)
+androidx.core.view.ViewConfigurationCompat$Api26Impl: float getScaledVerticalScrollFactor(android.view.ViewConfiguration)
+io.ktor.client.engine.okhttp.OkHttpEngineContainer: java.lang.String toString()
+io.ktor.client.engine.okhttp.OkHttpEngine: java.lang.Object access$executeHttpRequest(io.ktor.client.engine.okhttp.OkHttpEngine,okhttp3.OkHttpClient,okhttp3.Request,kotlin.coroutines.CoroutineContext,io.ktor.client.request.HttpRequestData,kotlin.coroutines.Continuation)
+androidx.compose.ui.platform.AndroidComposeView: androidx.compose.ui.platform.AndroidComposeView$ViewTreeOwners getViewTreeOwners()
+kotlin.reflect.jvm.internal.impl.load.java.descriptors.JavaMethodDescriptor$ParameterNamesStatus: kotlin.reflect.jvm.internal.impl.load.java.descriptors.JavaMethodDescriptor$ParameterNamesStatus valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpEngine$1: kotlin.coroutines.Continuation create(java.lang.Object,kotlin.coroutines.Continuation)
+androidx.core.graphics.drawable.IconCompat$Api26Impl: android.graphics.drawable.Icon createWithAdaptiveBitmap(android.graphics.Bitmap)
+androidx.compose.ui.internal.InlineClassHelperKt: void throwIllegalArgumentException(java.lang.String)
+androidx.lifecycle.SavedStateHandlesVM: SavedStateHandlesVM()
+androidx.compose.foundation.text.HandleState: androidx.compose.foundation.text.HandleState valueOf(java.lang.String)
+androidx.compose.ui.layout.IntrinsicMinMax: androidx.compose.ui.layout.IntrinsicMinMax valueOf(java.lang.String)
+androidx.compose.ui.platform.AndroidComposeView: void setShowLayoutBounds(boolean)
+io.ktor.client.engine.okhttp.OkUtilsKt$fromOkHttp$1: OkUtilsKt$fromOkHttp$1(okhttp3.Headers)
+com.mizibu.retfast.core.NameRow$$serializer: kotlinx.serialization.KSerializer[] typeParametersSerializers()
+androidx.compose.ui.platform.AndroidComposeViewVerificationHelperMethodsO: void focusable(android.view.View,int,boolean)
+androidx.activity.ComponentActivity$Api33Impl: android.window.OnBackInvokedDispatcher getOnBackInvokedDispatcher(android.app.Activity)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: void setMasking(boolean)
+kotlin.jvm.internal.FunctionReference: kotlin.reflect.KFunction getReflected()
+androidx.lifecycle.ProcessLifecycleOwner$attach$1: void onActivityCreated(android.app.Activity,android.os.Bundle)
+androidx.versionedparcelable.CustomVersionedParcelable: CustomVersionedParcelable()
+kotlin.jvm.internal.CallableReference: boolean isOpen()
+kotlin.jvm.internal.CallableReference: java.lang.String getName()
+androidx.compose.ui.platform.AndroidComposeView: android.view.View getView()
+androidx.compose.runtime.collection.MutableVectorKt: void throwNegativeIndexException(int)
+androidx.core.view.WindowInsetsCompat$BuilderImpl20: void setSystemWindowInsets(androidx.core.graphics.Insets)
+androidx.core.view.WindowInsetsCompat$BuilderImpl: WindowInsetsCompat$BuilderImpl()
+androidx.compose.ui.platform.ViewLayer: androidx.compose.ui.platform.AndroidComposeView getOwnerView()
+kotlin.reflect.jvm.internal.impl.name.State: kotlin.reflect.jvm.internal.impl.name.State[] values()
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api34Impl: void setRequestInitialAccessibilityFocus(android.view.accessibility.AccessibilityNodeInfo,boolean)
+androidx.activity.OnBackPressedDispatcher$Api33Impl: android.window.OnBackInvokedCallback createOnBackInvokedCallback(kotlin.jvm.functions.Function0)
+kotlin.reflect.jvm.internal.impl.descriptors.annotations.KotlinTarget: kotlin.reflect.jvm.internal.impl.descriptors.annotations.KotlinTarget valueOf(java.lang.String)
+io.ktor.client.engine.okhttp.OkHttpConfig: OkHttpConfig()
+androidx.compose.ui.text.AnnotationType: androidx.compose.ui.text.AnnotationType[] values()
+io.github.jan.supabase.auth.exception.AuthErrorCode: io.github.jan.supabase.auth.exception.AuthErrorCode[] values()
+androidx.compose.ui.platform.AndroidComposeView: void setFontFamilyResolver(androidx.compose.ui.text.font.FontFamily$Resolver)
+androidx.lifecycle.ReportFragment$LifecycleCallbacks: void onActivityPostResumed(android.app.Activity)
+kotlinx.serialization.json.JsonElement$Companion: kotlinx.serialization.KSerializer serializer()
+androidx.core.view.ViewCompat$Api28Impl: void setAccessibilityHeading(android.view.View,boolean)
+androidx.compose.material3.tokens.TypographyKeyTokens: androidx.compose.material3.tokens.TypographyKeyTokens[] values()
+kotlin.coroutines.jvm.internal.BaseContinuationImpl: kotlin.coroutines.Continuation create(java.lang.Object,kotlin.coroutines.Continuation)
+kotlin.jvm.internal.CallableReference: java.lang.Object call(java.lang.Object[])
+okhttp3.internal.http2.ErrorCode: okhttp3.internal.http2.ErrorCode valueOf(java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl20: boolean isRound()
+androidx.core.view.ViewCompat$Api21Impl: android.content.res.ColorStateList getBackgroundTintList(android.view.View)
+kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$MemberKind: kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf$MemberKind valueOf(java.lang.String)
+androidx.core.graphics.drawable.IconCompat: IconCompat()
+com.mizibu.retfast.core.EmergencyRef$Companion: kotlinx.serialization.KSerializer serializer()
+io.ktor.client.engine.HttpClientEngineConfig: java.net.Proxy getProxy()
+io.ktor.serialization.kotlinx.json.KotlinxSerializationJsonExtensionProvider: KotlinxSerializationJsonExtensionProvider()
+io.ktor.client.engine.okhttp.OkUtilsKt: java.lang.Throwable access$mapOkHttpException(io.ktor.client.request.HttpRequestData,java.io.IOException)
+kotlin.reflect.jvm.internal.impl.incremental.components.NoLookupLocation: kotlin.reflect.jvm.internal.impl.incremental.components.NoLookupLocation valueOf(java.lang.String)
+com.mizibu.retfast.tracking.TrackingService: TrackingService()
+kotlin.reflect.jvm.internal.impl.resolve.ExternalOverridabilityCondition$Contract: kotlin.reflect.jvm.internal.impl.resolve.ExternalOverridabilityCondition$Contract valueOf(java.lang.String)
+androidx.core.view.WindowInsetsCompat$Impl: WindowInsetsCompat$Impl(androidx.core.view.WindowInsetsCompat)
+androidx.core.view.accessibility.AccessibilityNodeInfoCompat$Api34Impl: void getBoundsInWindow(android.view.accessibility.AccessibilityNodeInfo,android.graphics.Rect)
+androidx.core.view.WindowInsetsCompat$BuilderImpl: androidx.core.view.WindowInsetsCompat build()
+com.mizibu.retfast.core.EventRow$$serializer: kotlinx.serialization.KSerializer[] childSerializers()
+io.ktor.client.engine.okhttp.OkUtilsKt: java.lang.Object execute(okhttp3.OkHttpClient,okhttp3.Request,io.ktor.client.request.HttpRequestData,kotlin.coroutines.CoroutineContext,kotlin.coroutines.Continuation)
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: java.lang.Object flush(kotlin.coroutines.Continuation)
+androidx.core.view.WindowInsetsCompat$BuilderImpl29: WindowInsetsCompat$BuilderImpl29()
+androidx.compose.material3.tokens.ColorSchemeKeyTokens: androidx.compose.material3.tokens.ColorSchemeKeyTokens valueOf(java.lang.String)
+kotlinx.serialization.json.DecodeSequenceMode: kotlinx.serialization.json.DecodeSequenceMode[] values()
+io.ktor.client.engine.okhttp.OkHttpWebsocketSession: void onClosing(okhttp3.WebSocket,int,java.lang.String)
+io.ktor.client.engine.HttpClientEngineConfig: int getThreadsCount()
+kotlin.reflect.jvm.internal.impl.metadata.jvm.JvmProtoBuf$StringTableTypes$Record$Operation: kotlin.reflect.jvm.internal.impl.metadata.jvm.JvmProtoBuf$StringTableTypes$Record$Operation valueOf(java.lang.String)
+androidx.activity.ComponentActivity: void setContentView(android.view.View)
+androidx.core.view.WindowInsetsCompat$BuilderImpl20: android.view.WindowInsets createWindowInsetsInstance()

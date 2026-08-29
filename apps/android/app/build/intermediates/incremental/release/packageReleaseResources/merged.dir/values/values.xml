@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#111418</color>
+    <string name="app_name">RETFAST</string>
+    <string name="tracking_channel">Flight tracking</string>
+    <string name="tracking_notification_body">Sharing your position with the operation</string>
+    <string name="tracking_notification_title">RETFAST is tracking</string>
+    <style name="Theme.Retfast" parent="android:Theme.Material.Light.NoActionBar"/>
+</resources>

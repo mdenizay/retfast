@@ -1,0 +1,4 @@
+#Sat Aug 29 17:41:17 TRT 2026
+base.0=/Users/mdenizay/Github/retfast/apps/android/app/build/intermediates/dex/release/minifyReleaseWithR8/classes.dex
+path.0=classes.dex
+renamed.0=classes.dex

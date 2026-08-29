@@ -1,0 +1,18 @@
+<lint-module
+    format="1"
+    dir="/Users/mdenizay/Github/retfast/apps/android/app"
+    name=":app"
+    type="APP"
+    maven="Retfast:app:unspecified"
+    agpVersion="8.13.2"
+    buildFolder="build"
+    bootClassPath="/Users/mdenizay/android-sdk/platforms/android-36/android.jar:/Users/mdenizay/android-sdk/build-tools/35.0.0/core-lambda-stubs.jar"
+    javaSourceLevel="17"
+    compileTarget="android-36">
+  <lintOptions
+      abortOnError="true"
+      absolutePaths="true"
+      checkReleaseBuilds="true"
+      explainIssues="true"/>
+  <variant name="release"/>
+</lint-module>

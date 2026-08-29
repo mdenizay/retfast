@@ -1,0 +1,19 @@
+# secrets — never commit
+.env
+.env.*
+!.env.example
+
+# macOS
+.DS_Store
+
+# node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# ios
+apps/ios/Retfast.xcodeproj/
+apps/ios/DerivedData/
+apps/ios/.build/
+xcuserdata/
+*.xcuserstate

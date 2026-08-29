@@ -332,7 +332,7 @@ begin
     values (p_event, auth.uid()) returning * into v;
   end if;
   update public.retriever_profiles
-     set availability = case when occupied_seats >= vehicle_capacity then 'busy' else 'available' end,
+     set availability = (case when occupied_seats >= vehicle_capacity then 'busy' else 'available' end)::public.retriever_availability,
          updated_at = now()
    where event_id = p_event and user_id = auth.uid();
   perform public.log_audit(p_event, 'retriever.duty_started', 'retriever_session', v.id::text, '{}'::jsonb);

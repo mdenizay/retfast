@@ -12,9 +12,10 @@ application table**.
    Tables with invariants (memberships, tasks, points, retrieval, emergencies)
    have *no* insert/update policies at all; the RPCs validate roles, state
    machines and ownership, then write as the function owner.
-3. **Column-level grants** — on top of RLS for sensitive columns:
-   - `events.invite_code`: not selectable/updatable by any client role;
-     admins use the `event_invite_code(event, rotate)` RPC.
+3. **Column grants & locked tables** — on top of RLS:
+   - `event_invite_codes`: RLS enabled with **zero policies** — no client
+     role can read codes; admins use the `event_invite_code(event, rotate)`
+     RPC and joining goes through `join_event_by_code`.
    - `profiles.is_system_admin`: not updatable by clients (service role only).
    - `participation_requests`: clients may only update `status` (withdrawal).
    - `retriever_profiles`: clients may only update vehicle fields.

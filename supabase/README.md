@@ -9,6 +9,7 @@ database schema, authorization model and server-side logic.
   - `0001_schema.sql` — extensions (PostGIS), enums, tables, indexes, integrity triggers
   - `0002_functions.sql` — RLS helper predicates + the entire RPC surface
   - `0003_rls.sql` — RLS policies, column-level grants, realtime publication
+  - `0004_invite_codes.sql` — invitation codes moved to a locked-down table
 - `seed/` — idempotent dev seed (**Çameli XC-Open 2026**), runs with the service-role key
 - `functions/notify-emergency/` — Edge Function: emergency email fanout via Resend
 
@@ -48,6 +49,6 @@ participation request and a resolved emergency.
 - Clients talk to tables for **reads** (RLS-guarded) and to **RPC functions**
   for every state transition; tables with invariants have no insert/update
   policies at all.
-- `events.invite_code` and `profiles.is_system_admin` are additionally locked
-  down with column grants — no client role can select/update them directly.
+- Invitation codes (`event_invite_codes`) and `profiles.is_system_admin` are
+  additionally locked down — no client role can read/update them directly.
 - The service-role key is used only by the seed script and Edge Functions.

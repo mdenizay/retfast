@@ -30,8 +30,9 @@ settable via the service role).
 
 ### `events`
 `name, description, starts_at, ends_at, visibility(public|unlisted|private),
-invite_code (unique, hidden from clients), settings jsonb, is_archived`.
-Settings is a free-form bag for event options (timezone, languages…).
+settings jsonb, is_archived`. Settings is a free-form bag for event options
+(timezone, languages…). The invitation code lives in `event_invite_codes`
+(auto-created by trigger, unreadable by clients — RPC access only).
 
 ### `event_members`
 One row per **(event, user, role)** — a user can hold multiple roles in one

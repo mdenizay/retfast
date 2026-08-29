@@ -304,11 +304,11 @@ begin
 
   update public.retriever_profiles
      set occupied_seats = v_occupied,
-         availability = case
+         availability = (case
            when availability = 'offline' then 'offline'
            when v_active > 0 and v_occupied >= vehicle_capacity then 'busy'
            else 'available'
-         end,
+         end)::public.retriever_availability,
          updated_at = now()
    where event_id = v_event and user_id = v_retriever;
   return coalesce(new, old);

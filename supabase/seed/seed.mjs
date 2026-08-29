@@ -79,13 +79,13 @@ async function main() {
             starts_at: "2026-09-05T06:00:00Z",
             ends_at: "2026-09-13T18:00:00Z",
             visibility: "public",
-            invite_code: "CAMELI26",
             settings: { timezone: "Europe/Istanbul", languages: ["tr", "en"] },
             created_by: ids["admin@retfast.test"],
           })
           .select()
           .single()
       );
+  must(await db.from("event_invite_codes").upsert({ event_id: event.id, code: "CAMELI26" }));
   console.log(`   event ${event.id} (invite code CAMELI26)`);
 
   console.log("→ memberships");
@@ -116,19 +116,28 @@ async function main() {
   }
 
   // A pending participation request for the admins to approve in the UI.
-  must(
+  // (Plain select+insert: the pending-uniqueness is a partial index, which
+  // PostgREST upsert cannot arbitrate on.)
+  const existingReq = must(
     await db
       .from("participation_requests")
-      .upsert(
-        {
-          event_id: event.id,
-          user_id: ids["pilot3@retfast.test"],
-          requested_role: "retriever",
-          message: "İkinci araçla da destek verebilirim.",
-        },
-        { onConflict: "event_id,user_id,requested_role", ignoreDuplicates: true }
-      )
+      .select("id")
+      .eq("event_id", event.id)
+      .eq("user_id", ids["pilot3@retfast.test"])
+      .eq("requested_role", "retriever")
+      .eq("status", "pending")
+      .maybeSingle()
   );
+  if (!existingReq) {
+    must(
+      await db.from("participation_requests").insert({
+        event_id: event.id,
+        user_id: ids["pilot3@retfast.test"],
+        requested_role: "retriever",
+        message: "İkinci araçla da destek verebilirim.",
+      })
+    );
+  }
 
   console.log("→ zones");
   const zones = [

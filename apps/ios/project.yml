@@ -20,6 +20,12 @@ targets:
       path: Retfast/Info.plist
       properties:
         CFBundleDisplayName: RETFAST
+        # Bind the bundle version to the build settings — XcodeGen otherwise
+        # writes a static "1"/"1.0" here and silently ignores
+        # MARKETING_VERSION / CURRENT_PROJECT_VERSION, which App Store Connect
+        # then rejects as a duplicate build number.
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UIBackgroundModes: [location]
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
@@ -34,7 +40,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.mizibu.retfast
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         MARKETING_VERSION: 0.1.0
-        CURRENT_PROJECT_VERSION: 1
+        CURRENT_PROJECT_VERSION: 2
         SWIFT_VERSION: 5.10
         DEVELOPMENT_TEAM: JHW499P7S3
         TARGETED_DEVICE_FAMILY: 1

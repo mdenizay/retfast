@@ -26,9 +26,9 @@ map/data stays visually dominant while controls remain obvious outdoors.
 
 ## App icon
 
-The shared icon combines a paraglider canopy, a live signal and a location pin.
-The exact same raster master is used by iOS, Android and the web install icon;
-platforms apply their own required mask.
+The shared icon is a single white navigation arrow on a pure black field. The
+same master is used by iOS, Android and the web install icon; platforms apply
+their own required mask.
 
 ## Version policy
 

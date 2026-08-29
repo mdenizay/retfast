@@ -13,8 +13,8 @@ android {
         applicationId = "com.mizibu.retfast"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.1.1"
 
         // Supabase config is baked in at build time; the anon key is public by
         // design (RLS is the actual boundary — see docs/rls.md).

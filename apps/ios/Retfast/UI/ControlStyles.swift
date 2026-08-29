@@ -15,13 +15,17 @@ struct RetfastMark: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
-                .fill(RetfastBrand.amber)
+                .fill(.black)
+                .overlay(
+                    RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
+                        .stroke(.white.opacity(0.16), lineWidth: 1)
+                )
             Image(systemName: "location.north.fill")
                 .font(.system(size: size * 0.42, weight: .black))
-                .foregroundStyle(RetfastBrand.graphite)
+                .foregroundStyle(.white)
         }
         .frame(width: size, height: size)
-        .shadow(color: RetfastBrand.amber.opacity(0.18), radius: 18, y: 8)
+        .shadow(color: .black.opacity(0.3), radius: 18, y: 8)
     }
 }
 

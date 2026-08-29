@@ -31,6 +31,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -58,7 +62,6 @@ import com.mizibu.retfast.retriever.RetrieverViewModel
 import com.mizibu.retfast.ui.BigButton
 import com.mizibu.retfast.ui.Hit
 import com.mizibu.retfast.ui.RetfastAmber
-import com.mizibu.retfast.ui.RetfastGraphite
 import com.mizibu.retfast.ui.RetfastTheme
 
 class MainActivity : ComponentActivity() {
@@ -117,12 +120,16 @@ private fun LoginScreen(auth: AuthViewModel) {
     ) {
         Surface(
             modifier = Modifier.size(64.dp),
-            color = RetfastAmber,
-            contentColor = RetfastGraphite,
+            color = Color.Black,
+            contentColor = Color.White,
             shape = RoundedCornerShape(20.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Text("R›", fontWeight = FontWeight.Black, style = MaterialTheme.typography.headlineSmall)
+                Icon(
+                    imageVector = Icons.Default.Navigation,
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                )
             }
         }
         Spacer(Modifier.size(16.dp))

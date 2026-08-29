@@ -9,7 +9,7 @@ import {
 import { useAuth } from "@/auth/AuthProvider";
 import { useI18n, LOCALES } from "@/i18n";
 import { supabase } from "@/lib/supabase";
-import { CircleUser, Globe, RadioTower } from "lucide-react";
+import { CircleUser, Globe, Navigation } from "lucide-react";
 
 export default function Layout() {
   const { profile } = useAuth();
@@ -26,8 +26,8 @@ export default function Layout() {
       <header className="sticky top-0 z-40 border-b border-white/8 bg-background/82 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
           <Link to="/events" className="flex items-center gap-2.5">
-            <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/15">
-              <RadioTower className="size-5" />
+            <span className="grid size-9 place-items-center rounded-xl border border-white/15 bg-black text-white shadow-lg shadow-black/30">
+              <Navigation className="size-5 fill-current" />
             </span>
             <span className="brand-wordmark text-lg">RET<span className="text-primary">FAST</span></span>
           </Link>

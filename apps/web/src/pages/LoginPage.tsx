@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { useI18n } from "@/i18n";
-import { MapPin, RadioTower, Route } from "lucide-react";
+import { MapPin, Navigation, Route } from "lucide-react";
 
 export default function LoginPage() {
   const { m, locale } = useI18n();
@@ -51,8 +51,8 @@ export default function LoginPage() {
       </div>
       <Card className="glass-panel relative w-full max-w-md">
         <CardHeader className="items-center gap-3 pb-2 pt-3 text-center">
-          <span className="grid size-14 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-xl shadow-primary/20">
-            <RadioTower className="size-7" />
+          <span className="grid size-14 place-items-center rounded-2xl border border-white/15 bg-black text-white shadow-xl shadow-black/30">
+            <Navigation className="size-7 fill-current" />
           </span>
           <div>
             <div className="brand-kicker mb-1">LIVE FLIGHT OPERATIONS</div>

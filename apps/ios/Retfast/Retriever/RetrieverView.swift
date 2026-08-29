@@ -40,9 +40,8 @@ struct RetrieverView: View {
                     dismiss()
                 } label: {
                     Image(systemName: "chevron.down")
-                        .padding(10)
-                        .background(.thinMaterial, in: Circle())
                 }
+                .buttonStyle(.mapChip)
                 .padding()
             }
             .frame(maxHeight: .infinity)
@@ -75,7 +74,8 @@ struct RetrieverView: View {
                         Text("\(p.occupiedSeats)/\(p.vehicleCapacity)")
                             .foregroundStyle(.secondary)
                         Button("retriever.editVehicle") { showVehicleEditor = true }
-                            .font(.footnote)
+                            .buttonStyle(.borderless)
+                            .minTapTarget()
                     }
                 }
                 if model.onDuty {
@@ -131,21 +131,18 @@ private struct IncomingRequestRow: View {
                     Task { await model.respond(request, accept: true) }
                 } label: {
                     Label("retrieval.accept", systemImage: "checkmark")
-                        .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.green)
+                .buttonStyle(.big(.success, height: Hit.critical))
+
                 Button {
                     Task { await model.respond(request, accept: false) }
                 } label: {
                     Label("retrieval.decline", systemImage: "xmark")
-                        .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.bordered)
-                .tint(.red)
+                .buttonStyle(.big(.secondary, height: Hit.critical))
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 8)
     }
 }
 
@@ -160,21 +157,20 @@ private struct AssignmentRow: View {
                     .font(.headline)
                 Spacer()
                 Text(assignment.status.pilotLabel)
-                    .font(.caption.weight(.semibold))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
                     .background(.secondary.opacity(0.15), in: Capsule())
             }
             if let pin = model.pilotPins.first(where: { $0.id == assignment.taskId }) {
                 NavigationAppsRow(coordinate: pin.coordinate, name: pin.name)
             }
-            HStack {
+            HStack(spacing: 10) {
                 ForEach(nextActions(), id: \.self) { action in
                     Button(actionLabel(action)) {
                         Task { await model.advance(assignment, action: action) }
                     }
-                    .buttonStyle(.bordered)
-                    .font(.footnote)
+                    .buttonStyle(.big(action == "cancel" ? .secondary : .primary))
                 }
             }
         }
@@ -227,8 +223,7 @@ struct NavigationAppsRow: View {
                 Button("nav.yandex") { UIApplication.shared.open(yandex) }
             }
         }
-        .font(.footnote)
-        .buttonStyle(.bordered)
+        .buttonStyle(.big(.secondary, height: Hit.min))
     }
 }
 

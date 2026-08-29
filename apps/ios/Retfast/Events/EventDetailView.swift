@@ -63,6 +63,8 @@ struct EventDetailView: View {
                             systemImage: "paperplane.fill"
                         )
                     }
+                    .buttonStyle(.big(.primary, height: Hit.critical))
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                 }
                 if roles.contains(.retriever) {
                     Button {
@@ -70,6 +72,8 @@ struct EventDetailView: View {
                     } label: {
                         Label("retriever.mode", systemImage: "car.fill")
                     }
+                    .buttonStyle(.big(.secondary, height: Hit.critical))
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                 }
             }
 
@@ -79,7 +83,7 @@ struct EventDetailView: View {
                 }
                 ForEach(model.myTasks) { task in
                     NavigationLink(value: task) {
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 4) {
                             Text(task.title).font(.subheadline)
                             HStack {
                                 Text(task.status.label)
@@ -90,6 +94,7 @@ struct EventDetailView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
+                        .minTapTarget(Hit.comfortable)
                     }
                 }
             }

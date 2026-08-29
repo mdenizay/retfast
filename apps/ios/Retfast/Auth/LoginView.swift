@@ -16,13 +16,14 @@ struct LoginView: View {
             Form {
                 Section {
                     if mode == .signUp {
-                        TextField(String(localized: "auth.displayName"), text: $displayName)
+                        TextField(String(localized: "auth.displayName"), text: $displayName).minTapTarget()
                     }
                     TextField(String(localized: "auth.email"), text: $email)
+                        .minTapTarget()
                         .keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                    SecureField(String(localized: "auth.password"), text: $password)
+                    SecureField(String(localized: "auth.password"), text: $password).minTapTarget()
                 }
                 if let error {
                     Section { Text(error).foregroundStyle(.red).font(.footnote) }
@@ -30,18 +31,21 @@ struct LoginView: View {
                 Section {
                     Button(action: submit) {
                         if busy {
-                            ProgressView().frame(maxWidth: .infinity)
+                            ProgressView()
                         } else {
                             Text(mode == .signIn ? "auth.signIn" : "auth.signUp")
-                                .frame(maxWidth: .infinity)
                         }
                     }
+                    .buttonStyle(.big(.primary, height: Hit.comfortable))
                     .disabled(busy || email.isEmpty || password.count < 8)
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+
                     Button(mode == .signIn ? "auth.toSignUp" : "auth.toSignIn") {
                         mode = mode == .signIn ? .signUp : .signIn
                         error = nil
                     }
-                    .font(.footnote)
+                    .buttonStyle(.borderless)
+                    .minTapTarget()
                 }
             }
             .navigationTitle("RETFAST")

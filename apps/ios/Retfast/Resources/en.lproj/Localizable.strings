@@ -92,3 +92,12 @@
 /* Common */
 "common.save" = "Save";
 "common.back" = "Back";
+
+/* Telemetry labels (shared with web wording) */
+"ops.altitude" = "Altitude";
+"ops.speed" = "Speed";
+"ops.heading" = "Heading";
+"ops.accuracy" = "Accuracy";
+"ops.battery" = "Battery";
+"ops.capacity" = "Capacity";
+"tracking.lastFixAgo" = "No fix for %ds";

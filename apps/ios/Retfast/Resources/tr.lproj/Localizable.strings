@@ -92,3 +92,12 @@
 /* Common */
 "common.save" = "Kaydet";
 "common.back" = "Geri";
+
+/* Telemetri etiketleri */
+"ops.altitude" = "Yükseklik";
+"ops.speed" = "Hız";
+"ops.heading" = "Yön";
+"ops.accuracy" = "Hassasiyet";
+"ops.battery" = "Batarya";
+"ops.capacity" = "Kapasite";
+"tracking.lastFixAgo" = "%d sn'dir konum yok";

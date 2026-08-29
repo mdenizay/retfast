@@ -4,14 +4,19 @@ import UIKit
 /// CoreLocation wrapper implementing the adaptive profiles from
 /// docs/ios-tracking.md. Captured points go synchronously into PointBuffer;
 /// SyncEngine uploads them in batches.
-final class TrackingEngine: NSObject, ObservableObject, CLLocationManagerDelegate {
+///
+/// The whole type is `@MainActor`: it touches `UIApplication` / `UIDevice`,
+/// publishes to SwiftUI, and CoreLocation delivers its callbacks on the thread
+/// that created the manager — which is pinned to main below.
+@MainActor
+final class TrackingEngine: NSObject, ObservableObject, @preconcurrency CLLocationManagerDelegate {
     static let shared = TrackingEngine()
 
     enum Profile: String {
         case performance, balanced, lowPower = "low_power", retriever
     }
 
-    enum Target {
+    enum Target: Equatable {
         case task(id: UUID)
         case retrieverSession(id: UUID)
     }
@@ -20,30 +25,30 @@ final class TrackingEngine: NSObject, ObservableObject, CLLocationManagerDelegat
     @Published private(set) var authorization: CLAuthorizationStatus = .notDetermined
     @Published private(set) var lastLocation: CLLocation?
     @Published private(set) var profile: Profile = .performance
+    /// -1 when the device does not report battery (simulator).
+    @Published private(set) var batteryPercent: Int = -1
 
-    private var manager: CLLocationManager!
+    private let manager = CLLocationManager()
     private var target: Target?
 
     override private init() {
         super.init()
-        // CLLocationManager delivers callbacks on the runloop of the thread it
-        // was created on. The singleton can be first touched from an async
-        // context (background executor), so pin creation to the main thread —
-        // otherwise delegate callbacks are scheduled onto a dead thread and
-        // never arrive.
-        let setup = {
-            let m = CLLocationManager()
-            m.delegate = self
-            m.allowsBackgroundLocationUpdates = false
-            m.pausesLocationUpdatesAutomatically = false
-            m.showsBackgroundLocationIndicator = true
-            self.manager = m
-            UIDevice.current.isBatteryMonitoringEnabled = true
-        }
-        if Thread.isMainThread {
-            setup()
-        } else {
-            DispatchQueue.main.sync(execute: setup)
+        manager.delegate = self
+        manager.allowsBackgroundLocationUpdates = false
+        manager.pausesLocationUpdatesAutomatically = false
+        manager.showsBackgroundLocationIndicator = true
+        // Tells iOS this is vehicle/flight movement, which keeps updates
+        // flowing instead of aggressively pausing them when stationary.
+        manager.activityType = .otherNavigation
+
+        UIDevice.current.isBatteryMonitoringEnabled = true
+        batteryPercent = Self.readBattery()
+        NotificationCenter.default.addObserver(
+            forName: UIDevice.batteryLevelDidChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.batteryPercent = Self.readBattery() }
         }
     }
 
@@ -62,14 +67,16 @@ final class TrackingEngine: NSObject, ObservableObject, CLLocationManagerDelegat
         self.target = target
         requestPermissions()
         applyProfile(pick())
-        // CoreLocation asserts (and kills the app) if this is enabled without
-        // the "location" background mode — guard so a misbuilt bundle merely
-        // loses background tracking instead of crashing mid-flight.
+
+        // CoreLocation traps if this is enabled without the "location"
+        // background mode — guard so a misbuilt bundle merely loses background
+        // tracking instead of crashing mid-flight.
         let modes = Bundle.main.object(forInfoDictionaryKey: "UIBackgroundModes") as? [String] ?? []
         manager.allowsBackgroundLocationUpdates = modes.contains("location")
+
         manager.startUpdatingLocation()
         // Relaunch insurance: if iOS terminates the app, a significant-change
-        // event restarts it and AppDelegate resumes precise tracking.
+        // event restarts it and TrackingResume picks the target back up.
         manager.startMonitoringSignificantLocationChanges()
         isTracking = true
     }
@@ -85,8 +92,8 @@ final class TrackingEngine: NSObject, ObservableObject, CLLocationManagerDelegat
     // MARK: profiles
 
     private func pick() -> Profile {
-        let battery = batteryPct()
         if case .retrieverSession = target { return .retriever }
+        let battery = batteryPercent
         if battery >= 0 && battery < 15 { return .lowPower }
         if battery >= 0 && battery < 30 { return .balanced }
         return .performance
@@ -110,13 +117,13 @@ final class TrackingEngine: NSObject, ObservableObject, CLLocationManagerDelegat
         }
     }
 
-    private func batteryPct() -> Int {
+    private static func readBattery() -> Int {
         let level = UIDevice.current.batteryLevel
         return level < 0 ? -1 : Int(level * 100)
     }
 
     private var trackingState: String {
-        if UIDevice.current.batteryLevel >= 0 && batteryPct() < 15 { return "low_power" }
+        if batteryPercent >= 0 && batteryPercent < 15 { return "low_power" }
         return UIApplication.shared.applicationState == .active ? "foreground" : "background"
     }
 
@@ -128,34 +135,59 @@ final class TrackingEngine: NSObject, ObservableObject, CLLocationManagerDelegat
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let target else { return }
+        let state = trackingState
+        let battery = batteryPercent
+        let iso = Self.isoFormatter
+
         for loc in locations {
+            // Drop obviously bogus fixes rather than poisoning the track.
+            guard loc.horizontalAccuracy >= 0 else { continue }
             lastLocation = loc
+
+            let id = UUID()
             var payload: [String: Any] = [
-                "id": UUID().uuidString.lowercased(),
-                "recorded_at": ISO8601DateFormatter().string(from: loc.timestamp),
+                "id": id.uuidString.lowercased(),
+                "recorded_at": iso.string(from: loc.timestamp),
                 "lat": loc.coordinate.latitude,
                 "lng": loc.coordinate.longitude,
                 "altitude_m": loc.altitude,
                 "h_accuracy_m": loc.horizontalAccuracy,
                 "v_accuracy_m": loc.verticalAccuracy,
-                "tracking_state": trackingState,
+                "tracking_state": state,
             ]
             if loc.speed >= 0 { payload["speed_mps"] = loc.speed }
             if loc.course >= 0 { payload["heading_deg"] = loc.course }
-            let battery = batteryPct()
             if battery >= 0 { payload["battery_pct"] = battery }
             switch target {
-            case .task(let id): payload["task_id"] = id.uuidString.lowercased()
-            case .retrieverSession(let id): payload["retriever_session_id"] = id.uuidString.lowercased()
+            case .task(let taskId): payload["task_id"] = taskId.uuidString.lowercased()
+            case .retrieverSession(let sid): payload["retriever_session_id"] = sid.uuidString.lowercased()
             }
-            PointBuffer.shared.enqueue(id: UUID(uuidString: payload["id"] as! String)!, payload: payload)
+            PointBuffer.shared.enqueue(id: id, payload: payload)
         }
-        // Re-evaluate the battery-aware profile as conditions change.
+
+        // The location callback is the only trigger that reliably fires while
+        // the app is backgrounded — timers do not. Everything else is a bonus.
+        SyncEngine.shared.flushIfDue()
+
         let next = pick()
         if next != profile { applyProfile(next) }
     }
 
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        // Transient GPS errors are fine; the HUD shows fix quality via lastLocation age.
+    /// iOS paused updates (e.g. long stationary period) — resume so a landed
+    /// pilot does not silently drop off the operation's map.
+    func locationManagerDidPauseLocationUpdates(_ manager: CLLocationManager) {
+        guard target != nil else { return }
+        manager.startUpdatingLocation()
     }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        // Transient GPS errors are expected; the HUD surfaces staleness via
+        // lastLocation's age rather than reacting to every failure here.
+    }
+
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
 }

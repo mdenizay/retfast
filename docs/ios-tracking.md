@@ -54,6 +54,32 @@ pending_points(id TEXT PK,          -- UUID generated on device
 - The queue survives app termination and device reboot; on launch,
   `SyncEngine` resets in-flight rows to pending and resumes.
 
+## Staying alive in the background
+
+Three rules keep the process from being suspended or killed mid-flight. They
+exist because violating them produced exactly that failure:
+
+1. **Never sleep while holding the drain lock.** iOS grants only a short
+   execution window after each background location event. An early version
+   slept up to 300 s for backoff *inside* the drain, so suspension prevented
+   the lock from ever clearing — sync wedged permanently, the buffer grew
+   without bound, and jetsam terminated the app. Backoff is now a recorded
+   deadline (`nextAttemptAt`) that is checked and returned from.
+2. **Hold a background-task assertion across every upload**
+   (`beginBackgroundTask` / `endBackgroundTask` with an expiration handler) so
+   iOS does not suspend the process mid-request.
+3. **Drive flushes from the location callback, not just a timer.** `Timer`
+   does not fire reliably once the app is suspended; the CoreLocation callback
+   is the one trigger that does. `TrackingEngine` calls
+   `SyncEngine.flushIfDue()` on every fix.
+
+Supporting details: the queue is capped at 50 000 points (oldest dropped) so a
+long offline stretch cannot exhaust memory; `activityType = .otherNavigation`
+keeps updates flowing; `locationManagerDidPauseLocationUpdates` restarts them;
+and `TrackingEngine`/`SyncEngine` are `@MainActor`-isolated, which removes the
+data race their previously free-threaded state had on `draining`/`backoff` and
+guarantees `UIApplication`/`UIDevice` are only touched on the main thread.
+
 ## Batched synchronization
 
 `SyncEngine` drains the queue via the `ingest_location_points` RPC:

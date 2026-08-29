@@ -38,6 +38,12 @@ final class PointBuffer {
         sqlite3_exec(db, sql, nil, nil, nil)
     }
 
+    /// Hard ceiling on queued points (~15 MB). A device that has been offline
+    /// for days must not grow the buffer until iOS kills the app for memory —
+    /// the oldest fixes are the least operationally useful, so they go first.
+    private static let maxQueued = 50_000
+    private var insertsSincePrune = 0
+
     func enqueue(id: UUID, payload: [String: Any]) {
         queue.sync {
             guard let json = try? JSONSerialization.data(withJSONObject: payload),
@@ -53,6 +59,17 @@ final class PointBuffer {
             sqlite3_bind_text(stmt, 2, text, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
             sqlite3_bind_int64(stmt, 3, Int64(Date().timeIntervalSince1970))
             sqlite3_step(stmt)
+
+            insertsSincePrune += 1
+            if insertsSincePrune >= 500 {
+                insertsSincePrune = 0
+                exec("""
+                    DELETE FROM pending_points WHERE id IN (
+                      SELECT id FROM pending_points ORDER BY created_at DESC
+                      LIMIT -1 OFFSET \(Self.maxQueued)
+                    )
+                    """)
+            }
         }
     }
 

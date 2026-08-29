@@ -47,6 +47,7 @@ enum TrackingResume {
         UserDefaults.standard.removeObject(forKey: key)
     }
 
+    @MainActor
     static func resumeIfNeeded() async {
         guard !TrackingEngine.shared.isTracking,
               let dict = UserDefaults.standard.dictionary(forKey: key) as? [String: String]

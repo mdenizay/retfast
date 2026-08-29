@@ -109,8 +109,9 @@ struct PilotTaskView: View {
     /// Two rows of large, glanceable readouts.
     private var telemetryPanel: some View {
         let loc = tracking.lastLocation
-        let battery = UIDevice.current.batteryLevel
-        let batteryPct = battery < 0 ? nil : Int(battery * 100)
+        // Battery is published by TrackingEngine so UIDevice is only ever read
+        // on the main actor, and only when it actually changes.
+        let batteryPct = tracking.batteryPercent < 0 ? nil : tracking.batteryPercent
         let fixAge = loc.map { now.timeIntervalSince($0.timestamp) }
 
         return VStack(spacing: 10) {

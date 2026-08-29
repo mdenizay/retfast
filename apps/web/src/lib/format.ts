@@ -26,6 +26,40 @@ export function fmtAltitude(m: number | null | undefined): string {
   return `${Math.round(m)} m`;
 }
 
+/** Elapsed time between two instants as `1s 04d` style `H:MM`. */
+export function fmtDuration(fromIso: string | null | undefined, toIso?: string | null): string {
+  if (!fromIso) return "—";
+  const end = toIso ? Date.parse(toIso) : Date.now();
+  const s = Math.max(0, (end - Date.parse(fromIso)) / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return h > 0 ? `${h}s ${String(m).padStart(2, "0")}d` : `${m}d`;
+}
+
+const CARDINALS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
+
+/** 137° → "SE" (8-point compass). */
+export function cardinal(deg: number | null | undefined): string {
+  if (deg == null || !Number.isFinite(deg)) return "—";
+  return CARDINALS[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
+}
+
+export function fmtHeading(deg: number | null | undefined): string {
+  if (deg == null || !Number.isFinite(deg)) return "—";
+  return `${Math.round(((deg % 360) + 360) % 360)}° ${cardinal(deg)}`;
+}
+
+export function fmtAccuracy(m: number | null | undefined): string {
+  if (m == null || m < 0) return "—";
+  return `±${Math.round(m)} m`;
+}
+
+/** Seconds since a timestamp, or null when absent. */
+export function ageSeconds(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  return Math.max(0, (Date.now() - Date.parse(iso)) / 1000);
+}
+
 export function fmtAgo(iso: string | null | undefined, locale: string): string {
   if (!iso) return "—";
   const s = Math.max(0, (Date.now() - Date.parse(iso)) / 1000);

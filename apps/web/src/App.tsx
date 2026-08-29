@@ -6,6 +6,7 @@ import Layout from "@/components/Layout";
 import LoginPage from "@/pages/LoginPage";
 import EventsPage from "@/pages/EventsPage";
 import EventPage from "@/pages/event/EventPage";
+import OpsConsole from "@/pages/event/OpsConsole";
 import ReplayPage from "@/pages/ReplayPage";
 import ProfilePage from "@/pages/ProfilePage";
 import UsersPage from "@/pages/UsersPage";
@@ -32,6 +33,8 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route element={<RequireAuth />}>
+              {/* Full-bleed ops console lives outside the padded Layout chrome. */}
+              <Route path="/events/:id/ops" element={<OpsConsole />} />
               <Route element={<Layout />}>
                 <Route path="/" element={<Navigate to="/events" replace />} />
                 <Route path="/events" element={<EventsPage />} />

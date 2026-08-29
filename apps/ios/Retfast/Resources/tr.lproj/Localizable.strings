@@ -1,0 +1,94 @@
+/* Auth */
+"auth.displayName" = "Görünen ad";
+"auth.email" = "E-posta";
+"auth.password" = "Şifre";
+"auth.signIn" = "Giriş yap";
+"auth.signUp" = "Hesap oluştur";
+"auth.toSignUp" = "Hesabın yok mu? Oluştur";
+"auth.toSignIn" = "Zaten hesabın var mı? Giriş yap";
+"auth.signOut" = "Çıkış yap";
+
+/* Events */
+"events.mine" = "Etkinliklerim";
+"events.none" = "Henüz etkinlik yok";
+"events.discover" = "Keşfet / katıl";
+"events.codePlaceholder" = "Davet kodu";
+"events.lookup" = "Sorgula";
+"events.requestedRole" = "Rol";
+"events.sendRequest" = "İstek gönder";
+"events.requestRole" = "Katılım isteği";
+"event.actions" = "İşlemler";
+
+/* Roles */
+"role.pilot" = "Pilot";
+"role.retriever" = "Toplayıcı";
+"role.observer" = "Gözlemci";
+"role.eventAdmin" = "Etkinlik yöneticisi";
+
+/* Tasks */
+"task.start" = "Uçuşu başlat";
+"task.resume" = "Uçuşa devam et";
+"task.landed" = "İndim";
+"task.finish" = "Bitir";
+"task.cancel" = "Uçuşu iptal et";
+"task.cancelReason" = "Uçuş iptal edilsin mi?";
+"task.cancelReasonPlaceholder" = "Sebep";
+"task.status.active" = "Uçuşta";
+"task.status.landed" = "İndi";
+"task.status.completed" = "Tamamlandı";
+"task.status.cancelled" = "İptal";
+"flights.title" = "Uçuşlarım";
+"flights.empty" = "Henüz uçuş yok";
+
+/* Tracking HUD */
+"tracking.off" = "Takip kapalı";
+"tracking.stopped" = "TAKİP DURDU";
+"tracking.stale" = "GPS eski";
+"tracking.live" = "Canlı";
+"tracking.queue" = "Bekleyen nokta";
+
+/* SOS */
+"sos.confirm" = "SOS onayla";
+"sos.notDelivered" = "SOS henüz İLETİLEMEDİ — tekrar deneniyor";
+
+/* Retrieval (pilot) */
+"retrieval.request" = "Toplayıcı iste";
+"retrieval.pick" = "Yakındaki toplayıcılar";
+"retrieval.nobodyNearby" = "Yakında müsait toplayıcı yok.";
+"retrieval.seatsFree" = "boş koltuk";
+"retrieval.waiting" = "Toplayıcı bekleniyor…";
+"retrieval.declined" = "Reddedildi / süresi doldu — başka seç";
+"retrieval.assigned" = "Toplayıcı atandı";
+"retrieval.enRoute" = "Toplayıcı yolda";
+"retrieval.pickedUp" = "Araca alındın";
+"retrieval.delivered" = "Teslim edildi";
+"retrieval.completed" = "Tamamlandı";
+"retrieval.cancelled" = "İptal";
+
+/* Retrieval (retriever) */
+"retrieval.incoming" = "Gelen istek";
+"retrieval.accept" = "Kabul et";
+"retrieval.decline" = "Reddet";
+"retrieval.action.enRoute" = "Yola çıktım";
+"retrieval.action.pickedUp" = "Pilotu aldım";
+"retrieval.action.delivered" = "Teslim ettim";
+"retrieval.action.completed" = "Tamamla";
+"retrieval.action.cancel" = "İptal";
+
+/* Retriever mode */
+"retriever.mode" = "Toplayıcı modu";
+"retriever.onDuty" = "Görevde";
+"retriever.capacity" = "Kapasite";
+"retriever.editVehicle" = "Aracı düzenle";
+"retriever.vehicleDescription" = "Araç açıklaması";
+"retriever.jobs" = "İşler";
+"retriever.noJobs" = "Aktif iş yok";
+
+/* Navigation apps */
+"nav.appleMaps" = "Apple Haritalar";
+"nav.googleMaps" = "Google Haritalar";
+"nav.yandex" = "Yandex";
+
+/* Common */
+"common.save" = "Kaydet";
+"common.back" = "Geri";

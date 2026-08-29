@@ -1,0 +1,94 @@
+/* Auth */
+"auth.displayName" = "Display name";
+"auth.email" = "Email";
+"auth.password" = "Password";
+"auth.signIn" = "Sign in";
+"auth.signUp" = "Create account";
+"auth.toSignUp" = "No account yet? Create one";
+"auth.toSignIn" = "Already have an account? Sign in";
+"auth.signOut" = "Sign out";
+
+/* Events */
+"events.mine" = "My events";
+"events.none" = "No events yet";
+"events.discover" = "Discover / join";
+"events.codePlaceholder" = "Invitation code";
+"events.lookup" = "Look up";
+"events.requestedRole" = "Role";
+"events.sendRequest" = "Send request";
+"events.requestRole" = "Request participation";
+"event.actions" = "Actions";
+
+/* Roles */
+"role.pilot" = "Pilot";
+"role.retriever" = "Retriever";
+"role.observer" = "Observer";
+"role.eventAdmin" = "Event admin";
+
+/* Tasks */
+"task.start" = "Start flight";
+"task.resume" = "Resume flight";
+"task.landed" = "Landed";
+"task.finish" = "Finish";
+"task.cancel" = "Cancel flight";
+"task.cancelReason" = "Cancel flight?";
+"task.cancelReasonPlaceholder" = "Reason";
+"task.status.active" = "In flight";
+"task.status.landed" = "Landed";
+"task.status.completed" = "Completed";
+"task.status.cancelled" = "Cancelled";
+"flights.title" = "My flights";
+"flights.empty" = "No flights yet";
+
+/* Tracking HUD */
+"tracking.off" = "Not tracking";
+"tracking.stopped" = "TRACKING STOPPED";
+"tracking.stale" = "GPS stale";
+"tracking.live" = "Live";
+"tracking.queue" = "Buffered points";
+
+/* SOS */
+"sos.confirm" = "Confirm SOS";
+"sos.notDelivered" = "SOS NOT yet delivered — retrying";
+
+/* Retrieval (pilot) */
+"retrieval.request" = "Request retriever";
+"retrieval.pick" = "Nearby retrievers";
+"retrieval.nobodyNearby" = "No available retriever nearby yet.";
+"retrieval.seatsFree" = "seats free";
+"retrieval.waiting" = "Waiting for retriever…";
+"retrieval.declined" = "Declined / expired — pick another";
+"retrieval.assigned" = "Retriever assigned";
+"retrieval.enRoute" = "Retriever en route";
+"retrieval.pickedUp" = "Picked up";
+"retrieval.delivered" = "Delivered";
+"retrieval.completed" = "Completed";
+"retrieval.cancelled" = "Cancelled";
+
+/* Retrieval (retriever) */
+"retrieval.incoming" = "Incoming request";
+"retrieval.accept" = "Accept";
+"retrieval.decline" = "Decline";
+"retrieval.action.enRoute" = "En route";
+"retrieval.action.pickedUp" = "Picked up";
+"retrieval.action.delivered" = "Delivered";
+"retrieval.action.completed" = "Complete";
+"retrieval.action.cancel" = "Cancel";
+
+/* Retriever mode */
+"retriever.mode" = "Retriever mode";
+"retriever.onDuty" = "On duty";
+"retriever.capacity" = "Capacity";
+"retriever.editVehicle" = "Edit vehicle";
+"retriever.vehicleDescription" = "Vehicle description";
+"retriever.jobs" = "Jobs";
+"retriever.noJobs" = "No active jobs";
+
+/* Navigation apps */
+"nav.appleMaps" = "Apple Maps";
+"nav.googleMaps" = "Google Maps";
+"nav.yandex" = "Yandex";
+
+/* Common */
+"common.save" = "Save";
+"common.back" = "Back";

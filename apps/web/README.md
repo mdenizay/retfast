@@ -1,32 +1,31 @@
-# React + TypeScript + Vite
+# RETFAST Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + TypeScript + Vite + Tailwind CSS + shadcn/ui dashboard for Observers,
+Event Admins and System Admins.
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```sh
+cp .env.example .env   # fill VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Structure
+
+- `src/lib/` — Supabase client, row types, WKB point parser, formatting,
+  `map/provider.ts` (map style abstraction — set `VITE_MAP_STYLE_URL` for a
+  vector style; falls back to OSM raster).
+- `src/i18n/` — typed catalogs (`en`, `tr`); `useI18n().m` gives compile-time
+  checked message access.
+- `src/pages/EventsPage` — discover public events, join by invitation code,
+  request participation, create events (system admin).
+- `src/pages/event/*` — per-event tabs:
+  - **Operations** — live map (Supabase Realtime), pilot/retriever markers,
+    emergency monitor with acknowledge/resolve, manual retrieval dispatch,
+    assignment progression.
+  - **Flights** — task history with **Replay** (route + timeline scrubbing).
+  - **Zones** — GeoJSON editor (terra-draw): areas, lines, points, typed and
+    colored.
+  - **Members / Requests / Audit / Settings** — roster & role management,
+    approvals, audit trail, event settings + invitation code (RPC-guarded).
+- `src/pages/ReplayPage` — `task_track` RPC → simplified line + full points +
+  play/pause/scrub timeline.

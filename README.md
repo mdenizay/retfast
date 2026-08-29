@@ -13,6 +13,7 @@ Event-based real-time athlete tracking and retrieval platform for free-flight (p
 | [`/supabase`](supabase/) | Database migrations (schema, RLS, functions), seed scripts, Edge Functions |
 | [`/apps/web`](apps/web/) | React + TypeScript + Vite + Tailwind + shadcn/ui dashboard |
 | [`/apps/ios`](apps/ios/) | Native Swift / SwiftUI app for Pilots and Retrievers (`com.mizibu.retfast`) |
+| [`/apps/android`](apps/android/) | Native Kotlin / Compose app for Pilots and Retrievers |
 | [`/docs`](docs/) | Architecture, schema, RLS model, realtime strategy, iOS tracking & offline sync |
 
 ## Stack
@@ -20,6 +21,7 @@ Event-based real-time athlete tracking and retrieval platform for free-flight (p
 - **Backend/BaaS:** self-hosted [Supabase](https://supabase.com/docs/guides/self-hosting) (Postgres + PostGIS, GoTrue Auth, Realtime, Storage, Edge Functions) deployed with Dokploy.
 - **Web:** React 19, TypeScript, Vite, Tailwind CSS, shadcn/ui, MapLibre GL (behind a map-provider abstraction).
 - **iOS:** SwiftUI, `supabase-swift`, CoreLocation background tracking, local SQLite buffer.
+- **Android:** Kotlin, Jetpack Compose, `supabase-kt`, a `location` foreground service, same SQLite buffer contract.
 - **Email:** Resend. **Domain:** `retfast.com`.
 
 ## Getting started
@@ -35,6 +37,7 @@ Event-based real-time athlete tracking and retrieval platform for free-flight (p
 3. Seed the development scenario **Çameli XC-Open 2026**: `cd supabase/seed && npm install && npm run seed`.
 4. Web: `cd apps/web && npm install && npm run dev`.
 5. iOS: `cd apps/ios && xcodegen generate && open Retfast.xcodeproj` (requires [XcodeGen](https://github.com/yonaskolb/XcodeGen)).
+6. Android: see [`apps/android/README.md`](apps/android/README.md).
 
 ## Documentation
 

@@ -29,7 +29,7 @@ export default function EventScreen() {
   const role = ev.membership?.role;
   return (
     <>
-      <Stack.Screen options={{ title: ev.name }} />
+      <Stack.Screen options={{ title: ev.name, headerShown: !role }} />
       {role === 'pilot' ? <PilotView ev={ev} /> : role === 'retriever' ? <RetrieverView ev={ev} /> : role ? <StaffView ev={ev} /> : <ApplyView ev={ev} onDone={load} />}
     </>
   );

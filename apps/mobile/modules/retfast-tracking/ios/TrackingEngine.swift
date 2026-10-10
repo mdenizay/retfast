@@ -19,6 +19,8 @@ final class TrackingEngine: NSObject, @preconcurrency CLLocationManagerDelegate 
     private var lastFix: CLLocation?
     private var lastEmit = Date.distantPast
     private var heartbeat: Timer?
+    /// Telefonun pusulası (CLHeading). Yalnızca ön plandayken dinlenir: arka planda sürekli manyetometre pil yer.
+    private var compass: (deg: Double, at: Date)?
     private(set) var isTracking = false
 
     var onStatus: (([String: Any]) -> Void)?
@@ -30,6 +32,12 @@ final class TrackingEngine: NSObject, @preconcurrency CLLocationManagerDelegate 
         manager.pausesLocationUpdatesAutomatically = false
         manager.showsBackgroundLocationIndicator = true
         UIDevice.current.isBatteryMonitoringEnabled = true
+        NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.startHeadingIfNeeded() }
+        }
+        NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.manager.stopUpdatingHeading() }
+        }
         SyncEngine.shared.onChange = { [weak self] in self?.emitStatus(force: true) }
         SyncEngine.shared.onSessionEvent = { [weak self] kind in self?.handleSessionEvent(kind) }
     }
@@ -88,6 +96,7 @@ final class TrackingEngine: NSObject, @preconcurrency CLLocationManagerDelegate 
         // iOS süreci öldürürse bu olay uygulamayı yeniden başlatır ve LaunchSubscriber takibi sürdürür.
         manager.startMonitoringSignificantLocationChanges()
         isTracking = true
+        startHeadingIfNeeded()
         SyncEngine.shared.configure(session: s, token: token)
         startHeartbeat()
         emitStatus(force: true)
@@ -96,6 +105,7 @@ final class TrackingEngine: NSObject, @preconcurrency CLLocationManagerDelegate 
     func stop() {
         manager.stopUpdatingLocation()
         manager.stopMonitoringSignificantLocationChanges()
+        manager.stopUpdatingHeading()
         manager.allowsBackgroundLocationUpdates = false
         heartbeat?.invalidate()
         heartbeat = nil
@@ -182,6 +192,31 @@ final class TrackingEngine: NSObject, @preconcurrency CLLocationManagerDelegate 
         }
     }
 
+    // MARK: yön
+
+    private func startHeadingIfNeeded() {
+        guard isTracking, CLLocationManager.headingAvailable(), UIApplication.shared.applicationState == .active else { return }
+        manager.headingFilter = 5
+        manager.startUpdatingHeading()
+    }
+
+    /// Baktığı yön: yeterince hızlı hareket ediyorsa GPS rotası (uçuşta ve araçta doğru), değilse pusula.
+    private func effectiveHeading(_ fix: CLLocation?) -> Double? {
+        if let f = fix, f.speed >= 1.0, f.course >= 0 { return f.course }
+        if let c = compass, Date().timeIntervalSince(c.at) < 15 { return c.deg }
+        return nil
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+        guard newHeading.headingAccuracy >= 0 else { return }
+        let h = newHeading.trueHeading >= 0 ? newHeading.trueHeading : newHeading.magneticHeading
+        guard h >= 0 else { return }
+        compass = (h, Date())
+        emitStatus(force: false)
+    }
+
+    func locationManagerShouldDisplayHeadingCalibration(_ manager: CLLocationManager) -> Bool { false }
+
     // MARK: CLLocationManagerDelegate
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) { emitStatus(force: true) }
@@ -216,7 +251,7 @@ final class TrackingEngine: NSObject, @preconcurrency CLLocationManagerDelegate 
         var point: [String: Any] = ["t": t, "lat": loc.coordinate.latitude, "lon": loc.coordinate.longitude, "acc": loc.horizontalAccuracy]
         if loc.verticalAccuracy >= 0 { point["alt"] = loc.altitude }
         if loc.speed >= 0 { point["spd"] = loc.speed }
-        if loc.course >= 0 { point["hdg"] = loc.course }
+        if let h = effectiveHeading(loc) { point["hdg"] = h }
         let level = UIDevice.current.batteryLevel
         if level >= 0 { point["bat"] = Int((level * 100).rounded()) }
         PointStore.shared.enqueue(sessionId: s.sessionId, t: t, point: point)
@@ -246,7 +281,9 @@ final class TrackingEngine: NSObject, @preconcurrency CLLocationManagerDelegate 
         let level = UIDevice.current.batteryLevel
         if level >= 0 { out["battery"] = Int((level * 100).rounded()) }
         if let f = lastFix {
-            out["lastFix"] = ["lat": f.coordinate.latitude, "lon": f.coordinate.longitude, "acc": f.horizontalAccuracy, "t": Int64(f.timestamp.timeIntervalSince1970 * 1000)]
+            var fix: [String: Any] = ["lat": f.coordinate.latitude, "lon": f.coordinate.longitude, "acc": f.horizontalAccuracy, "t": Int64(f.timestamp.timeIntervalSince1970 * 1000)]
+            if let h = effectiveHeading(f) { fix["hdg"] = h }
+            out["lastFix"] = fix
         }
         if let t = SyncEngine.shared.lastSyncAt { out["lastSyncAt"] = Int64(t.timeIntervalSince1970 * 1000) }
         if let e = SyncEngine.shared.lastError { out["lastError"] = e }

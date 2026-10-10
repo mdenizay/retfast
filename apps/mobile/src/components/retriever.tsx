@@ -7,13 +7,14 @@ import { api, errorCode } from '../lib/api';
 import { distanceKm } from '../lib/geo';
 import { useI18n } from '../lib/i18n';
 import { useLive } from '../lib/live';
+import { buildPeople } from '../lib/people';
 import { useSession } from '../lib/session';
-import { STATE_COLOR, useColors } from '../lib/theme';
+import { useColors } from '../lib/theme';
 import { useTracker } from '../lib/tracker';
 import { AnnouncementsCard } from './announcements';
-import { EventMap, type MapPerson } from './event-map';
+import { MapScreen } from './map-screen';
 import { TrackingCard } from './tracking-card';
-import { Badge, Button, Card, ErrorBox, Screen, Segmented, Text } from './ui';
+import { Badge, Button, Card, ErrorBox, Text } from './ui';
 
 export function RetrieverView({ ev }: { ev: EventDetail }) {
   const { t, err } = useI18n();
@@ -21,14 +22,13 @@ export function RetrieverView({ ev }: { ev: EventDetail }) {
   const { user } = useSession();
   const tr = useTracker();
   const { live } = useLive(ev.id, ev.status === 'active');
-  const [tab, setTab] = useState<'jobs' | 'map'>('jobs');
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState<string | null>(null);
 
   const me = live?.members.find((m) => m.user_id === user?.id);
   const fix = tr.status?.lastFix;
   const byId = useMemo(() => new Map((live?.members ?? []).map((m) => [m.user_id, m])), [live?.members]);
-  const posOf = (id: string) => live?.positions[id];
+  const people = useMemo(() => buildPeople(live, user?.id), [live, user?.id]);
 
   const open = (live?.retrieves ?? []).filter((r) => r.status === 'open');
   const mine = (live?.retrieves ?? []).filter((r) => r.retriever_id === user?.id);
@@ -77,38 +77,27 @@ export function RetrieverView({ ev }: { ev: EventDetail }) {
     );
   };
 
-  const people: MapPerson[] = Object.values(live?.positions ?? {}).flatMap((pos) => {
-    const m = byId.get(pos.u);
-    if (!m || m.user_id === user?.id || (m.role !== 'pilot' && m.role !== 'retriever')) return [];
-    return [{ id: pos.u, lon: pos.lon, lat: pos.lat, color: m.role === 'retriever' ? '#ffb020' : (STATE_COLOR[m.pilot_state ?? 'preparing'] ?? '#8e8e93'), label: m.bib ? `#${m.bib}` : m.first_name, retriever: m.role === 'retriever' }];
-  });
-  const center: [number, number] = [ev.center_lon ?? ev.points[0]?.lon ?? 29.3, ev.center_lat ?? ev.points[0]?.lat ?? 37.1];
+  const header = (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+      <View style={{ flex: 1, paddingRight: 12 }}>
+        <Text v="headline">{t('m.ret.available')}</Text>
+        <Text v="foot" numberOfLines={1}>
+          {vehicle ? `${vehicle.name}${vehicle.plate ? ` · ${vehicle.plate}` : ''} · ${t('live.capacity', { used: mine.length, cap: vehicle.capacity })}` : `${t('m.ret.mine')}: ${mine.length}`}
+        </Text>
+      </View>
+      <Switch value={!!me?.is_available} disabled={ev.status !== 'active'} onValueChange={(v) => void run('avail', () => api.ops.availability(ev.id, { available: v }))} />
+    </View>
+  );
 
   return (
-    <Screen>
-      <Segmented value={tab} onChange={setTab} options={[{ value: 'jobs', label: t('m.tab.jobs') }, { value: 'map', label: t('m.tab.map') }]} />
-      {tab === 'map' ? (
-        <EventMap center={center} height={520} me={fix ?? null} people={people} points={ev.points.map((p) => ({ id: p.id, lon: p.lon, lat: p.lat, name: p.name, color: '#0a84ff' }))} />
-      ) : (
-        <>
-          <AnnouncementsCard eventId={ev.id} />
-          <Card>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View style={{ flex: 1, paddingRight: 12 }}>
-                <Text v="headline">{t('m.ret.available')}</Text>
-                {vehicle ? <Text v="foot">{t('m.ret.vehicle')}: {vehicle.name}{vehicle.plate ? ` · ${vehicle.plate}` : ''} · {t('live.capacity', { used: mine.length, cap: vehicle.capacity })}</Text> : null}
-              </View>
-              <Switch value={!!me?.is_available} disabled={ev.status !== 'active'} onValueChange={(v) => void run('avail', () => api.ops.availability(ev.id, { available: v }))} />
-            </View>
-          </Card>
-          <TrackingCard ev={ev} role="retriever" />
-          <Text v="section" style={{ paddingHorizontal: 8 }}>{t('m.ret.mine')}</Text>
-          {mine.length === 0 ? <Text v="sub" style={{ paddingHorizontal: 8 }}>{t('m.ret.none')}</Text> : mine.map((r) => <JobCard key={r.id} r={r} mineJob />)}
-          {open.length > 0 && <Text v="section" style={{ paddingHorizontal: 8 }}>{t('m.ret.open')}</Text>}
-          {open.map((r) => <JobCard key={r.id} r={r} mineJob={false} />)}
-          <ErrorBox>{error}</ErrorBox>
-        </>
-      )}
-    </Screen>
+    <MapScreen ev={ev} people={people} me={fix ? { lon: fix.lon, lat: fix.lat, hdg: fix.hdg } : null} header={header}>
+      <Text v="section" style={{ paddingHorizontal: 4 }}>{t('m.ret.mine')}</Text>
+      {mine.length === 0 ? <Text v="sub" style={{ paddingHorizontal: 4 }}>{t('m.ret.none')}</Text> : mine.map((r) => <JobCard key={r.id} r={r} mineJob />)}
+      {open.length > 0 && <Text v="section" style={{ paddingHorizontal: 4 }}>{t('m.ret.open')}</Text>}
+      {open.map((r) => <JobCard key={r.id} r={r} mineJob={false} />)}
+      <TrackingCard ev={ev} role="retriever" />
+      <AnnouncementsCard eventId={ev.id} />
+      <ErrorBox>{error}</ErrorBox>
+    </MapScreen>
   );
 }

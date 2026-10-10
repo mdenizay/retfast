@@ -150,14 +150,16 @@ export function LiveConsole({ eventId }: { eventId: string }) {
         const f = freshness(age(p));
         const sos = sosBy.has(p.u);
         const stateKey = sos ? "sos" : (mem.pilot_state ?? "preparing");
-        const moving = mem.role === "pilot" && (p.spd ?? 0) > 1.5 && p.hdg != null;
+        const roleKey = mem.role === "retriever" ? "retriever" : stateKey;
         return [{
           type: "Feature" as const, id: p.u,
           geometry: { type: "Point" as const, coordinates: [p.lon, p.lat] },
           properties: {
             id: p.u, role: mem.role, sos: sos ? 1 : 0, selected: p.u === selected ? 1 : 0,
-            icon: mem.role === "retriever" ? "car" : `${moving ? "arrow" : "dot"}-${stateKey}`,
-            hdg: moving ? p.hdg : 0,
+            icon: mem.role === "retriever" ? "car" : `dot-${stateKey}`,
+            // Baktığı yön biliniyorsa (GPS rotası veya telefon pusulası) renkli koni çizilir.
+            cone: p.hdg != null ? `cone-${roleKey}` : "",
+            hdg: p.hdg ?? 0,
             opacity: f === "live" ? 1 : f === "stale" ? 0.62 : 0.34,
             label: mem.bib ? `#${mem.bib}` : mem.first_name,
           },
@@ -226,9 +228,13 @@ export function LiveConsole({ eventId }: { eventId: string }) {
           filter: ["any", ["==", ["get", "sos"], 1], ["==", ["get", "selected"], 1]],
           paint: { "circle-radius": 24, "circle-color": ["case", ["==", ["get", "sos"], 1], "rgba(255,69,58,0.3)", "rgba(255,176,32,0.3)"],
             "circle-stroke-width": 1.5, "circle-stroke-color": ["case", ["==", ["get", "sos"], 1], "#ff453a", "#ffb020"] } });
+        m.addLayer({ id: "people-cone", type: "symbol", source: "people", filter: ["!=", ["get", "cone"], ""],
+          layout: { "icon-image": ["get", "cone"], "icon-rotate": ["get", "hdg"], "icon-rotation-alignment": "map", "icon-allow-overlap": true, "icon-ignore-placement": true,
+            "icon-size": ["interpolate", ["linear"], ["zoom"], 8, 0.5, 14, 1.15] },
+          paint: { "icon-opacity": ["get", "opacity"] } });
         m.addLayer({ id: "people", type: "symbol", source: "people",
           layout: {
-            "icon-image": ["get", "icon"], "icon-rotate": ["get", "hdg"], "icon-rotation-alignment": "map",
+            "icon-image": ["get", "icon"], "icon-rotation-alignment": "map",
             "icon-allow-overlap": true, "icon-ignore-placement": true,
             "icon-size": ["case", ["==", ["get", "selected"], 1], 1.18, 1],
             "text-field": ["get", "label"], "text-font": ["Noto Sans Regular"], "text-size": 11.5,

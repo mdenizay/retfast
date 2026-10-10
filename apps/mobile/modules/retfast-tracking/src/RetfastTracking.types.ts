@@ -12,7 +12,8 @@ export type TrackingStatus = {
   mode: TrackingMode;
   batteryLow: boolean;
   battery?: number;
-  lastFix?: { lat: number; lon: number; acc: number; t: number };
+  /** `hdg`: baktığı yön (derece); hareket ederken GPS rotası, dururken pusula. */
+  lastFix?: { lat: number; lon: number; acc: number; t: number; hdg?: number };
   lastSyncAt?: number;
   lastError?: string;
 };

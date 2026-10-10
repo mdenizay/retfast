@@ -37,6 +37,19 @@ Varsayılan API `https://retfast.com/api/v1`. Expo Go kullanılamaz (yerel modü
 Sunucu GPS hızından tahmin üretir ve `flight.suggestion` olayını WebSocket'ten yollar; pilotun ekranında "Kalkış yapmış gibisin…"
 bandı çıkar. **Pilot onaylamadıkça durum değişmez.** Detay ve eşikler: `docs/02-api-ve-yetki.md`.
 
+## Ekran düzeni (tek ekran)
+
+Pilot, retriever ve gözlemci için tek ekran: **tam ekran harita** + üstte yüzen çubuk (geri, etkinlik adı + takip durumu, pilotta
+kırmızı SOS) + altta 3 duraklı sürüklenebilir panel (`src/components/sheet.tsx`: peek / yarım / tam). Panelin başlığı durum ve
+o anki tek ana eylemdir; gövdesi (retrieve kartı, takip, duyurular, SOS) yukarı çekilince açılır. Sorumlu bileşen:
+`src/components/map-screen.tsx`; rol görünümleri (`pilot.tsx`, `retriever.tsx`, `staff.tsx`) yalnızca başlık ve gövde verir.
+
+## Bakış yönü
+
+Koni haritada kişinin baktığı yönü gösterir (web: `marker-icons.ts` + `live-console.tsx`; mobil: `assets/cones/*.png`,
+`event-map.tsx`). Yön: hız ≥ 1 m/s iken GPS rotası, aksi halde telefon pusulası (yalnızca ön planda, <15 sn tazelikte);
+`hdg` alanı konum noktalarıyla sunucuya gider. Simülatörde pusula yoktur, kendi konumunuzda koni görünmez.
+
 ## TestFlight'a yükleme
 
 Takım `JHW499P7S3` (Individual), App Store Connect kaydı **RETFAST** (`com.mizibu.retfast`). Sürüm `app.json` → `version` / `ios.buildNumber`

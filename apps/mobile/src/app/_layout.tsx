@@ -2,6 +2,7 @@ import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { UserRound } from 'lucide-react-native';
 import { Pressable } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Loading } from '../components/ui';
 import { useI18n } from '../lib/i18n';
@@ -45,12 +46,14 @@ function Navigator() {
 
 export default function Root() {
   return (
-    <SafeAreaProvider>
-      <SessionProvider>
-        <TrackerProvider>
-          <Navigator />
-        </TrackerProvider>
-      </SessionProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <SessionProvider>
+          <TrackerProvider>
+            <Navigator />
+          </TrackerProvider>
+        </SessionProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

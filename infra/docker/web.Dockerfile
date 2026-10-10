@@ -9,8 +9,6 @@ COPY packages/core/package.json packages/core/
 RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile
 COPY packages/core packages/core
 COPY apps/web apps/web
-ARG NEXT_PUBLIC_MAP_STYLE=""
-ENV NEXT_TELEMETRY_DISABLED=1 NEXT_PUBLIC_MAP_STYLE=${NEXT_PUBLIC_MAP_STYLE}
 RUN cd apps/web && bun run build
 
 FROM node:22-slim

@@ -1,28 +1,40 @@
 "use client";
+import {
+  ArrowLeft, Check, CircleCheck, Clock, Copy, LifeBuoy, ListFilter, LocateFixed, Minus, Navigation, PlaneLanding, Plus, Phone, Route,
+  Scan, Search, Settings2, Siren, Spline, WifiOff, X, Car, CarFront,
+} from "lucide-react";
 import Link from "next/link";
 import type { GeoJSONSource, Map as MlMap } from "maplibre-gl";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import {
   connectLive, freshness, positionAge, shortAge, type ConnectionStatus, type EventDetail, type LiveMember, type LiveState,
   type MessageKey, type OpEvent, type PilotState, type Position, type Retrieve, type SosAlert,
 } from "@retfast/core";
-import { MapView, setEventFeatures } from "@/components/map";
-import { Badge, Button, ErrorText, Pills, Select, Spinner, cx } from "@/components/ui";
+import { MapView, THREE_D, setEventFeatures } from "@/components/map";
+import { MapLayerControl } from "@/components/map-controls";
+import {
+  Badge, Button, ConfirmDialog, ErrorText, IconButton, Pills, Select, Sheet, SheetContent, SheetHeader, SheetTitle, Spinner, cx,
+} from "@/components/ui";
 import { api, errorCode, wsBase } from "@/lib/api";
+import { isDarkBase, type BasemapId } from "@/lib/basemaps";
+import { useMapPrefs } from "@/lib/map-prefs";
 import { formatDate, useI18n } from "@/lib/i18n";
+import { STATE_COLOR, addMarkerImages } from "@/lib/marker-icons";
 
-const STATE_COLOR: Record<PilotState, string> = {
-  preparing: "#7d8088",
-  flying: "#6cc0ff",
-  landed: "#f3c112",
-  awaiting_retrieve: "#ff8a3d",
-  retriever_assigned: "#b79cff",
-  picked_up: "#45d483",
-  completed: "#55585f",
+type Icon = ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+
+const STATE_ICON: Record<PilotState, Icon> = {
+  preparing: Clock,
+  flying: Navigation,
+  landed: PlaneLanding,
+  awaiting_retrieve: LifeBuoy,
+  retriever_assigned: Route,
+  picked_up: CarFront,
+  completed: CircleCheck,
 };
-const RETRIEVER_COLOR = "#f4f4f5";
-// Detay paneli haritanın sağını kapatır; odaklanan nokta görünür alanın ortasına gelsin.
-const PANEL_PADDING = { top: 120, bottom: 40, left: 400, right: 390 };
+const RETRIEVER_COLOR = "#e5e5ea";
+// Yüzen paneller haritanın iki yanını kapatır; odaklanan nokta görünür alanın ortasına gelsin.
+const PANEL_PADDING = { top: 100, bottom: 100, left: 430, right: 400 };
 
 type Group = "sos" | "waiting" | "assigned" | "flying" | "landed" | "picked_up" | "lost" | "retrievers" | "preparing" | "done";
 const GROUPS: Group[] = ["sos", "waiting", "assigned", "flying", "landed", "picked_up", "lost", "retrievers", "preparing", "done"];
@@ -48,6 +60,8 @@ function beep() {
   }
 }
 
+const boundMaps = new WeakSet<MlMap>();
+
 export function LiveConsole({ eventId }: { eventId: string }) {
   const { t, err, locale } = useI18n();
   const [ev, setEv] = useState<EventDetail | null>(null);
@@ -60,8 +74,13 @@ export function LiveConsole({ eventId }: { eventId: string }) {
   const [now, setNow] = useState(() => Date.now());
   const [track, setTrack] = useState<[number, number][] | null>(null);
   const [error, setError] = useState<string>();
+  const [drawer, setDrawer] = useState(false);
   const map = useRef<MlMap | null>(null);
-  const [mapReady, setMapReady] = useState(false);
+  // Her stil yüklemesinde artar; harita verisini yeniden yazma tetikleyicisi.
+  const [styleRev, setStyleRev] = useState(0);
+  const [base, setBase] = useState<BasemapId>("dark");
+  const onDark = isDarkBase(base);
+  const { threeD } = useMapPrefs();
 
   useEffect(() => {
     void api.events.get(eventId).then(setEv).catch((x) => setError(err(errorCode(x))));
@@ -119,78 +138,125 @@ export function LiveConsole({ eventId }: { eventId: string }) {
     return out;
   }, [live?.members, query, groupOf]);
 
-  // Harita katmanları: yüzlerce işaretçi için DOM yerine tek GeoJSON kaynağı.
+  // Harita verisi: yüzlerce işaretçi için DOM yerine tek GeoJSON kaynağı.
   useEffect(() => {
     const m = map.current;
-    if (!m || !mapReady || !live) return;
-    const features = Object.values(live.positions).flatMap((p) => {
-      const mem = members.get(p.u);
-      if (!mem || (mem.role !== "pilot" && mem.role !== "retriever")) return [];
-      const f = freshness(age(p));
-      const color = sosBy.has(p.u) ? "#ff4d3d" : mem.role === "retriever" ? RETRIEVER_COLOR : STATE_COLOR[mem.pilot_state ?? "preparing"];
-      return [{
-        type: "Feature" as const, id: p.u,
-        geometry: { type: "Point" as const, coordinates: [p.lon, p.lat] },
-        properties: { id: p.u, color, role: mem.role, opacity: f === "live" ? 1 : f === "stale" ? 0.6 : 0.3,
-          label: mem.bib ? `#${mem.bib}` : mem.first_name, selected: p.u === selected ? 1 : 0, sos: sosBy.has(p.u) ? 1 : 0 },
-      }];
-    });
-    const requests = (live.retrieves ?? []).map((r) => ({
-      type: "Feature" as const, id: r.id, geometry: { type: "Point" as const, coordinates: [r.lon, r.lat] },
-      properties: { id: r.pilot_id, open: r.status === "open" ? 1 : 0 },
-    }));
-    (m.getSource("people") as GeoJSONSource).setData({ type: "FeatureCollection", features });
-    (m.getSource("requests") as GeoJSONSource).setData({ type: "FeatureCollection", features: requests });
-  }, [live, members, sosBy, selected, mapReady, age]);
+    if (!m || styleRev === 0 || !live) return;
+    try {
+      const features = Object.values(live.positions).flatMap((p) => {
+        const mem = members.get(p.u);
+        if (!mem || (mem.role !== "pilot" && mem.role !== "retriever")) return [];
+        const f = freshness(age(p));
+        const sos = sosBy.has(p.u);
+        const stateKey = sos ? "sos" : (mem.pilot_state ?? "preparing");
+        const moving = mem.role === "pilot" && (p.spd ?? 0) > 1.5 && p.hdg != null;
+        return [{
+          type: "Feature" as const, id: p.u,
+          geometry: { type: "Point" as const, coordinates: [p.lon, p.lat] },
+          properties: {
+            id: p.u, role: mem.role, sos: sos ? 1 : 0, selected: p.u === selected ? 1 : 0,
+            icon: mem.role === "retriever" ? "car" : `${moving ? "arrow" : "dot"}-${stateKey}`,
+            hdg: moving ? p.hdg : 0,
+            opacity: f === "live" ? 1 : f === "stale" ? 0.62 : 0.34,
+            label: mem.bib ? `#${mem.bib}` : mem.first_name,
+          },
+        }];
+      });
+      const requests = (live.retrieves ?? []).map((r) => ({
+        type: "Feature" as const, id: r.id, geometry: { type: "Point" as const, coordinates: [r.lon, r.lat] },
+        properties: { id: r.pilot_id, open: r.status === "open" ? 1 : 0 },
+      }));
+      (m.getSource("people") as GeoJSONSource | undefined)?.setData({ type: "FeatureCollection", features });
+      (m.getSource("requests") as GeoJSONSource | undefined)?.setData({ type: "FeatureCollection", features: requests });
+    } catch {
+      /* stil değişiyor; sonraki stil yüklemesi veriyi yeniden yazar */
+    }
+  }, [live, members, sosBy, selected, styleRev, age]);
+
+  // Etiket renkleri zemine göre.
+  useEffect(() => {
+    const m = map.current;
+    if (!m || styleRev === 0 || !m.getLayer("people")) return;
+    m.setPaintProperty("people", "text-color", onDark ? "#ffffff" : "#1c1c1e");
+    m.setPaintProperty("people", "text-halo-color", onDark ? "rgba(0,0,0,0.75)" : "rgba(255,255,255,0.92)");
+  }, [onDark, styleRev]);
 
   useEffect(() => {
     const m = map.current;
-    if (!m || !mapReady) return;
-    (m.getSource("track") as GeoJSONSource).setData({ type: "FeatureCollection",
+    if (!m || styleRev === 0) return;
+    (m.getSource("track") as GeoJSONSource | undefined)?.setData({ type: "FeatureCollection",
       features: track ? [{ type: "Feature", geometry: { type: "LineString", coordinates: track }, properties: {} }] : [] });
-  }, [track, mapReady]);
+  }, [track, styleRev]);
 
   const selPos = selected ? live?.positions[selected] : undefined;
   useEffect(() => {
     if (follow && selPos && map.current) map.current.easeTo({ center: [selPos.lon, selPos.lat], duration: 800, padding: PANEL_PADDING });
   }, [follow, selPos]);
 
-  const onMapReady = useCallback((m: MlMap) => {
+  const onMapReady = useCallback(async (m: MlMap, b: BasemapId) => {
     map.current = m;
-    m.addSource("track", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-    m.addLayer({ id: "track", type: "line", source: "track", paint: { "line-color": "#f3a712", "line-width": 3, "line-opacity": 0.85 } });
-    m.addSource("requests", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-    m.addLayer({ id: "requests", type: "circle", source: "requests",
-      paint: { "circle-radius": ["case", ["==", ["get", "open"], 1], 16, 13], "circle-color": "transparent",
-        "circle-stroke-color": "#ff8a3d", "circle-stroke-width": 2.5, "circle-stroke-opacity": 0.9 } });
-    m.addSource("people", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-    m.addLayer({ id: "people", type: "circle", source: "people",
-      paint: {
-        "circle-radius": ["case", ["==", ["get", "selected"], 1], 10, ["==", ["get", "sos"], 1], 10, 7],
-        "circle-color": ["get", "color"], "circle-opacity": ["get", "opacity"],
-        "circle-stroke-color": ["case", ["==", ["get", "role"], "retriever"], "#f3a712", "#0a0b0d"],
-        "circle-stroke-width": ["case", ["==", ["get", "selected"], 1], 4, ["==", ["get", "role"], "retriever"], 3, 1.5],
-        "circle-stroke-opacity": ["get", "opacity"],
-      } });
-    m.addLayer({ id: "people-label", type: "symbol", source: "people",
-      layout: { "text-field": ["get", "label"], "text-size": 11, "text-font": ["Noto Sans Regular"], "text-offset": [0, 1.4], "text-anchor": "top", "text-allow-overlap": false },
-      paint: { "text-color": "#ffffff", "text-halo-color": "#0a0b0d", "text-halo-width": 1.6, "text-opacity": ["get", "opacity"] } });
-    for (const layer of ["people", "requests"]) {
-      m.on("click", layer, (e) => {
-        const id = e.features?.[0]?.properties?.id as string | undefined;
-        if (id) setSelected(id);
-        const c = (e.features?.[0]?.geometry as { coordinates?: [number, number] } | undefined)?.coordinates;
-        if (c) m.easeTo({ center: c, padding: PANEL_PADDING });
-      });
-      m.on("mouseenter", layer, () => (m.getCanvas().style.cursor = "pointer"));
-      m.on("mouseleave", layer, () => (m.getCanvas().style.cursor = ""));
+    setBase(b);
+    try {
+      await addMarkerImages(m);
+      const empty = { type: "FeatureCollection" as const, features: [] };
+      if (!m.getSource("track")) {
+        m.addSource("track", { type: "geojson", data: empty });
+        m.addLayer({ id: "track-casing", type: "line", source: "track", layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": "#000000", "line-opacity": 0.35, "line-width": 6.5 } });
+        m.addLayer({ id: "track", type: "line", source: "track", layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": "#ffb020", "line-width": 3.5 } });
+      }
+      if (!m.getSource("requests")) {
+        m.addSource("requests", { type: "geojson", data: empty });
+        m.addLayer({ id: "requests", type: "circle", source: "requests",
+          paint: { "circle-radius": ["case", ["==", ["get", "open"], 1], 20, 16], "circle-color": "rgba(255,159,10,0.16)",
+            "circle-stroke-color": "#ff9f0a", "circle-stroke-width": 2.5 } });
+      }
+      if (!m.getSource("people")) {
+        m.addSource("people", { type: "geojson", data: empty });
+        m.addLayer({ id: "people-halo", type: "circle", source: "people",
+          filter: ["any", ["==", ["get", "sos"], 1], ["==", ["get", "selected"], 1]],
+          paint: { "circle-radius": 24, "circle-color": ["case", ["==", ["get", "sos"], 1], "rgba(255,69,58,0.3)", "rgba(255,176,32,0.3)"],
+            "circle-stroke-width": 1.5, "circle-stroke-color": ["case", ["==", ["get", "sos"], 1], "#ff453a", "#ffb020"] } });
+        m.addLayer({ id: "people", type: "symbol", source: "people",
+          layout: {
+            "icon-image": ["get", "icon"], "icon-rotate": ["get", "hdg"], "icon-rotation-alignment": "map",
+            "icon-allow-overlap": true, "icon-ignore-placement": true,
+            "icon-size": ["case", ["==", ["get", "selected"], 1], 1.18, 1],
+            "text-field": ["get", "label"], "text-font": ["Noto Sans Regular"], "text-size": 11.5,
+            "text-offset": [0, 1.55], "text-anchor": "top", "text-optional": true,
+          },
+          paint: { "icon-opacity": ["get", "opacity"], "text-opacity": ["get", "opacity"], "text-halo-width": 1.5 } });
+      }
+      if (!boundMaps.has(m)) {
+        boundMaps.add(m);
+        for (const layer of ["people", "requests"]) {
+          m.on("click", layer, (e) => {
+            const id = e.features?.[0]?.properties?.id as string | undefined;
+            if (id) setSelected(id);
+            const c = (e.features?.[0]?.geometry as { coordinates?: [number, number] } | undefined)?.coordinates;
+            if (c) m.easeTo({ center: c, padding: PANEL_PADDING });
+          });
+          m.on("mouseenter", layer, () => (m.getCanvas().style.cursor = "pointer"));
+          m.on("mouseleave", layer, () => (m.getCanvas().style.cursor = ""));
+        }
+      }
+      setStyleRev((r) => r + 1);
+    } catch {
+      /* stil yükleme sırasında değişti; yeni style.load yeniden çağırır */
     }
-    setMapReady(true);
   }, []);
 
   useEffect(() => {
-    if (ev && map.current && mapReady) setEventFeatures(map.current, ev.points, ev.zones);
-  }, [ev, mapReady]);
+    const m = map.current;
+    if (ev && m && styleRev > 0) {
+      try {
+        setEventFeatures(m, ev.points, ev.zones, onDark);
+      } catch {
+        /* stil değişiyor */
+      }
+    }
+  }, [ev, styleRev, onDark]);
 
   useEffect(() => {
     setTrack(null);
@@ -201,12 +267,15 @@ export function LiveConsole({ eventId }: { eventId: string }) {
   const fitted = useRef(false);
   useEffect(() => {
     const pts = Object.values(live?.positions ?? {});
-    if (fitted.current || !mapReady || !map.current || pts.length === 0) return;
+    if (fitted.current || styleRev === 0 || !map.current || pts.length === 0) return;
     fitted.current = true;
     const lons = pts.map((p) => p.lon), lats = pts.map((p) => p.lat);
+    // Eğik kamerada sınır hesabı çok uzaktan başlar: önce düz bak, sonra 3B'ye yumuşakça geç.
     map.current.fitBounds([[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]],
-      { padding: { top: 140, bottom: 100, left: 420, right: 400 }, maxZoom: 13, duration: 0 });
-  }, [live?.positions, mapReady]);
+      { padding: PANEL_PADDING, maxZoom: 13, duration: 0, pitch: 0, bearing: 0 });
+    if (threeD) map.current.easeTo({ pitch: THREE_D.pitch, bearing: THREE_D.bearing, duration: 1200 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live?.positions, styleRev]);
 
   if (error) return <div className="p-8"><ErrorText>{error}</ErrorText></div>;
   if (!ev) return <div className="flex h-dvh items-center justify-center"><Spinner /></div>;
@@ -221,101 +290,101 @@ export function LiveConsole({ eventId }: { eventId: string }) {
     const pts = Object.values(live?.positions ?? {});
     if (!map.current || pts.length === 0) return;
     const lons = pts.map((p) => p.lon), lats = pts.map((p) => p.lat);
-    map.current.fitBounds([[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]],
-      { padding: { top: 140, bottom: 100, left: 440, right: sel ? 440 : 400 }, maxZoom: 14, duration: 700 });
+    const bounds: [[number, number], [number, number]] = [[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]];
+    map.current.fitBounds(bounds, { padding: PANEL_PADDING, maxZoom: 14, duration: 700, ...(threeD ? {} : { pitch: 0, bearing: 0 }) });
   };
   const focus = (id: string) => {
     setSelected(id);
+    setDrawer(false);
     const p = live?.positions[id];
     if (p) map.current?.easeTo({ center: [p.lon, p.lat], zoom: Math.max(map.current.getZoom(), 12), padding: PANEL_PADDING });
   };
 
+  const listPanel = (
+    <>
+      <div className="flex items-center gap-2 px-3 pb-2 pt-3">
+        <Pills value={tab} onChange={setTab} className="min-w-0 flex-1 [&>div]:w-full"
+          options={[{ value: "ops", label: t("live.all") }, { value: "log", label: t("live.timeline") }]} />
+      </div>
+      {tab === "ops" ? (
+        <>
+          <div className="px-3 pb-2">
+            <div className="relative">
+              <Search size={16} strokeWidth={2} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-label-2" />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("live.search")}
+                className="h-10 w-full rounded-full bg-fill pl-10 pr-4 text-[15px] outline-none transition placeholder:text-label-3 focus:bg-fill-2 focus:ring-2 focus:ring-tint/45" />
+            </div>
+          </div>
+          <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-3 pb-4">
+            {!live && <div className="flex justify-center py-8"><Spinner /></div>}
+            {GROUPS.map((g) => {
+              const list = grouped.get(g);
+              if (!list?.length) return null;
+              return (
+                <section key={g} className="mt-3 first:mt-1">
+                  <p className={cx("t-section px-2 pb-1.5", g === "sos" && "text-danger")}>{t(`live.group.${g}` as MessageKey)} · {list.length}</p>
+                  <div className="group">
+                    {list.map((m) => (
+                      <MemberRow key={m.user_id} m={m} pos={live?.positions[m.user_id]} ageMs={age(live?.positions[m.user_id])}
+                        stops={stopsByRetriever.get(m.user_id)?.length ?? 0} selected={selected === m.user_id} sos={sosBy.has(m.user_id)} onClick={() => focus(m.user_id)} />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <Timeline eventId={eventId} members={members} lastSeq={live?.last_seq ?? 0} />
+      )}
+    </>
+  );
+
   return (
     <div className="relative h-dvh overflow-hidden bg-ink">
-      <MapView center={center} zoom={ev.center_lat ? 11 : 8} onReady={onMapReady} controls={false} className="absolute inset-0" />
+      <MapView center={center} zoom={ev.center_lat ? 11 : 8} onReady={onMapReady} chrome={false} className="absolute inset-0" />
 
-      {/* Sol sütun: gezinme, özet, liste */}
-      <aside className="pointer-events-none absolute inset-y-4 left-4 z-10 flex w-[372px] flex-col gap-3 max-md:hidden">
-        <nav className="glass pointer-events-auto flex items-center gap-1 rounded-full p-1.5">
-          <Link href={`/events/${eventId}`} aria-label={t("common.back")} className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-white/10 hover:text-ivory">
-            <svg viewBox="0 0 1024 1024" className="h-5 w-5" aria-hidden><path fill="#F3A712" d="M512 164 790 850 512 704 234 850 512 164Zm0 176-125 310 125-66 125 66-125-310Z" /></svg>
-          </Link>
-          <span className="h-9 rounded-full bg-white/[0.12] px-4 text-[13px] leading-9">{t("live.title")}</span>
-          <Link href={`/app/events/${eventId}/manage`} className="h-9 rounded-full px-4 text-[13px] leading-9 text-muted hover:text-ivory">{t("events.manage")}</Link>
-          <Link href={`/events/${eventId}`} className="h-9 rounded-full px-4 text-[13px] leading-9 text-muted hover:text-ivory">{t("live.event")}</Link>
-        </nav>
+      {/* Sol sütun: başlık çubuğu, özet, liste (md+) */}
+      <aside className="pointer-events-none absolute left-4 top-4 z-10 flex w-[388px] flex-col gap-3 max-md:right-4 max-md:w-auto md:bottom-4">
+        <header className="glass pointer-events-auto flex items-center gap-1.5 rounded-full p-1.5 pr-3">
+          <Link href={`/events/${eventId}`} aria-label={t("common.back")} className="press flex size-10 items-center justify-center rounded-full bg-fill hover:bg-fill-2"><ArrowLeft size={19} /></Link>
+          <div className="min-w-0 flex-1 px-1.5">
+            <h1 className="truncate text-[16px] font-semibold leading-tight tracking-[-0.02em]">{ev.name}</h1>
+            <p className="t-foot flex items-center gap-1.5">
+              <span className={cx("h-1.5 w-1.5 rounded-full", status === "live" ? "bg-ok" : status === "offline" ? "bg-danger" : "animate-pulse bg-tint")} />
+              {t(`live.connection.${status}`)} · {t("events.members", { n: live?.members.length ?? ev.member_count })}
+            </p>
+          </div>
+          <Link href={`/app/events/${eventId}/manage`} aria-label={t("events.manage")} className="press flex size-10 items-center justify-center rounded-full hover:bg-fill-2"><Settings2 size={19} /></Link>
+        </header>
 
-        <div className="pointer-events-auto grid grid-cols-2 gap-2">
-          <Stat2 label={t("live.group.flying")} value={count("flying")} dot={STATE_COLOR.flying} />
-          <Stat2 label={t("live.group.waiting")} value={count("waiting")} dot={STATE_COLOR.awaiting_retrieve} />
-          <Stat2 label={t("live.group.picked_up")} value={count("picked_up") + count("assigned")} dot={STATE_COLOR.picked_up} />
-          <Stat2 label={t("live.group.lost")} value={count("lost")} dot="#8b8d94" alert={count("lost") > 0} />
+        <div className="pointer-events-auto grid grid-cols-2 gap-2.5 max-md:hidden">
+          <Metric icon={Navigation} color={STATE_COLOR.flying!} label={t("live.group.flying")} value={count("flying")} />
+          <Metric icon={LifeBuoy} color={STATE_COLOR.awaiting_retrieve!} label={t("live.group.waiting")} value={count("waiting")} />
+          <Metric icon={CarFront} color={STATE_COLOR.picked_up!} label={t("live.group.picked_up")} value={count("picked_up") + count("assigned")} />
+          <Metric icon={WifiOff} color="#8e8e93" label={t("live.group.lost")} value={count("lost")} alert={count("lost") > 0} />
         </div>
 
-        <section className="glass pointer-events-auto flex min-h-0 flex-1 flex-col rounded-[28px]">
-          <div className="flex items-center gap-2 p-3 pb-2">
-            <Pills value={tab} onChange={setTab} options={[{ value: "ops", label: t("live.all") }, { value: "log", label: t("live.timeline") }]} />
-            <span className="ml-auto flex items-center gap-1.5 pr-1 text-xs text-muted">
-              <span className={cx("h-1.5 w-1.5 rounded-full", status === "live" ? "bg-ok" : status === "offline" ? "bg-danger" : "animate-pulse bg-amber")} />
-              {t(`live.connection.${status}`)}
-            </span>
-          </div>
-          {tab === "ops" ? (
-            <>
-              <div className="px-3 pb-2">
-                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("live.search")}
-                  className="h-10 w-full rounded-full border border-white/[0.06] bg-white/[0.04] px-4 text-sm placeholder:text-muted/60 focus:border-amber/50 focus:outline-none" />
-              </div>
-              <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-2 pb-3">
-                {!live && <div className="flex justify-center py-8"><Spinner /></div>}
-                {GROUPS.map((g) => {
-                  const list = grouped.get(g);
-                  if (!list?.length) return null;
-                  return (
-                    <section key={g} className="mt-1">
-                      <p className={cx("kicker px-2 pb-1 pt-3", g === "sos" && "text-danger")}>{t(`live.group.${g}` as MessageKey)} · {list.length}</p>
-                      <div className="space-y-1">
-                        {list.map((m) => (
-                          <MemberRow key={m.user_id} m={m} pos={live?.positions[m.user_id]} ageMs={age(live?.positions[m.user_id])}
-                            stops={stopsByRetriever.get(m.user_id)?.length ?? 0} selected={selected === m.user_id} onClick={() => focus(m.user_id)} />
-                        ))}
-                      </div>
-                    </section>
-                  );
-                })}
-              </div>
-            </>
-          ) : (
-            <Timeline eventId={eventId} members={members} lastSeq={live?.last_seq ?? 0} />
-          )}
-        </section>
+        <section className="glass pointer-events-auto flex min-h-0 flex-1 flex-col rounded-[28px] max-md:hidden">{listPanel}</section>
       </aside>
 
-      {/* Başlık */}
-      <div className="pointer-events-none absolute left-[408px] top-6 z-10 max-xl:hidden">
-        <h1 className="text-[34px] font-light leading-tight tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">{ev.name}</h1>
-        <div className="mt-2 flex gap-2">
-          <Badge tone={ev.status === "active" ? "amber" : "default"}>{t(`status.${ev.status}`)}</Badge>
-          <Badge>{t("events.members", { n: live?.members.length ?? ev.member_count })}</Badge>
-        </div>
-      </div>
-
       {/* Sağ sütun: uyarılar + seçili kişi */}
-      <aside className="pointer-events-none absolute inset-y-4 right-4 z-10 flex w-[360px] max-w-[calc(100vw-2rem)] flex-col gap-3">
+      <aside className="pointer-events-none absolute right-4 top-4 z-10 flex w-[372px] max-w-[calc(100vw-2rem)] flex-col gap-3 bottom-[88px] max-md:top-[84px]">
         {(activeSos.length > 0 || (!sel && (waiting.length > 0 || lost.length > 0))) && (
-          <section className="glass pointer-events-auto max-h-[50%] overflow-y-auto rounded-[28px] p-3 scroll-thin">
-            {!sel && <p className="kicker px-2 pb-2">{t("live.alerts")}</p>}
+          <section className="glass pointer-events-auto scroll-thin max-h-[50%] shrink-0 overflow-y-auto rounded-[28px] p-3">
+            {!sel && <p className="t-section px-2 pb-2">{t("live.alerts")}</p>}
             <div className="space-y-2">
               {activeSos.map((s) => {
                 const m = members.get(s.user_id);
                 return (
                   <button key={s.id} onClick={() => focus(s.user_id)}
-                    className={cx("w-full rounded-[20px] border border-danger/30 bg-danger/15 p-3 text-left", s.status === "active" && "sos-pulse")}>
-                    <span className="flex items-center gap-2 text-sm font-medium text-white">
-                      <span className="rounded-full bg-danger px-2 py-0.5 text-[11px] font-bold">SOS</span>
-                      {m ? name(m) : "?"}
+                    className={cx("press w-full rounded-[20px] bg-danger/15 p-3.5 text-left ring-1 ring-inset ring-danger/30", s.status === "active" && "sos-pulse")}>
+                    <span className="flex items-center gap-2 text-[14px] font-semibold">
+                      <Siren size={17} className="text-danger" />
+                      <span className="rounded-full bg-danger px-2 py-0.5 text-[11px] font-bold text-white">SOS</span>
+                      <span className="truncate">{m ? name(m) : "?"}</span>
                     </span>
-                    <span className="num mt-1 block text-xs text-white/70">
+                    <span className="num t-foot mt-1 block">
                       {formatDate(locale, s.created_at, { hour: "2-digit", minute: "2-digit" })}{s.status === "acknowledged" ? ` · ${t("live.sos_ack")}` : ""}{s.message ? ` · ${s.message}` : ""}
                     </span>
                   </button>
@@ -324,23 +393,24 @@ export function LiveConsole({ eventId }: { eventId: string }) {
               {!sel && waiting.map((r) => {
                 const m = members.get(r.pilot_id);
                 return (
-                  <button key={r.id} onClick={() => focus(r.pilot_id)} className="tile w-full rounded-[20px] p-3 text-left hover:bg-white/[0.07]">
-                    <span className="flex items-center gap-2 text-sm">
-                      <span className="h-2 w-2 rounded-full" style={{ background: STATE_COLOR.awaiting_retrieve }} />
-                      {m ? name(m) : "?"}
-                      <span className="num ml-auto text-xs text-muted">{shortAge(locale, now - Date.parse(r.requested_at))}</span>
+                  <button key={r.id} onClick={() => focus(r.pilot_id)} className="press tile w-full rounded-[20px] p-3.5 text-left hover:bg-fill-2">
+                    <span className="flex items-center gap-2.5 text-[14px] font-medium">
+                      <span className="flex size-7 items-center justify-center rounded-full" style={{ background: `${STATE_COLOR.awaiting_retrieve}2e`, color: STATE_COLOR.awaiting_retrieve }}><LifeBuoy size={15} /></span>
+                      <span className="truncate">{m ? name(m) : "?"}</span>
+                      <span className="num t-foot ml-auto">{shortAge(locale, now - Date.parse(r.requested_at))}</span>
                     </span>
-                    <span className="mt-1 block text-xs text-muted">{t("pilot.awaiting_retrieve")}{r.note ? ` · “${r.note}”` : ""}</span>
+                    <span className="t-foot mt-1 block">{t("pilot.awaiting_retrieve")}{r.note ? ` · “${r.note}”` : ""}</span>
                   </button>
                 );
               })}
               {!sel && lost.map((m) => (
-                <button key={m.user_id} onClick={() => focus(m.user_id)} className="tile w-full rounded-[20px] p-3 text-left hover:bg-white/[0.07]">
-                  <span className="flex items-center gap-2 text-sm">
-                    <span className="h-2 w-2 rounded-full bg-muted" />{name(m)}
-                    <span className="num ml-auto text-xs text-muted">{shortAge(locale, age(live?.positions[m.user_id]))}</span>
+                <button key={m.user_id} onClick={() => focus(m.user_id)} className="press tile w-full rounded-[20px] p-3.5 text-left hover:bg-fill-2">
+                  <span className="flex items-center gap-2.5 text-[14px] font-medium">
+                    <span className="flex size-7 items-center justify-center rounded-full bg-fill-2 text-label-2"><WifiOff size={15} /></span>
+                    <span className="truncate">{name(m)}</span>
+                    <span className="num t-foot ml-auto">{shortAge(locale, age(live?.positions[m.user_id]))}</span>
                   </span>
-                  <span className="mt-1 block text-xs text-muted">{t("live.group.lost")}</span>
+                  <span className="t-foot mt-1 block">{t("live.group.lost")}</span>
                 </button>
               ))}
             </div>
@@ -373,51 +443,63 @@ export function LiveConsole({ eventId }: { eventId: string }) {
       </aside>
 
       {/* Harita kontrolleri */}
-      <div className="absolute bottom-5 left-[408px] z-10 flex gap-2 max-md:left-4">
-        <RoundButton label="+" onClick={() => map.current?.zoomIn()} />
-        <RoundButton label="◎" title={t("live.fit_all")} onClick={fitAll} />
-        <RoundButton label="−" onClick={() => map.current?.zoomOut()} />
+      <div className="absolute bottom-9 left-[420px] z-10 flex items-center gap-2.5 max-md:bottom-4 max-md:left-4">
+        <div className="glass pointer-events-auto flex items-center gap-0.5 rounded-full p-1">
+          <IconButton label={t("map.zoom_out")} onClick={() => map.current?.zoomOut()}><Minus /></IconButton>
+          <IconButton label={t("map.zoom_in")} onClick={() => map.current?.zoomIn()}><Plus /></IconButton>
+          <IconButton label={t("live.fit_all")} onClick={fitAll}><Scan /></IconButton>
+        </div>
+        <Button variant="secondary" size="md" className="glass md:hidden" onClick={() => setDrawer(true)}><ListFilter />{t("live.all")}</Button>
       </div>
+      <div className="absolute bottom-9 right-4 z-10 max-md:bottom-4"><MapLayerControl placement="up" /></div>
+
+      {/* Mobil: liste alt çekmecede */}
+      <Sheet open={drawer} onOpenChange={setDrawer}>
+        <SheetContent side="bottom" className="glass flex h-[78dvh] flex-col rounded-t-[28px] border-0 p-0">
+          <SheetHeader className="sr-only"><SheetTitle>{t("live.all")}</SheetTitle></SheetHeader>
+          {listPanel}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
 
-function RoundButton({ label, title, onClick }: { label: string; title?: string; onClick: () => void }) {
+function Metric({ icon: Icon, color, label, value, alert }: { icon: Icon; color: string; label: string; value: number; alert?: boolean }) {
   return (
-    <button onClick={onClick} title={title} aria-label={title ?? label}
-      className="glass flex h-11 w-11 items-center justify-center rounded-full text-lg text-ivory hover:bg-white/10">{label}</button>
-  );
-}
-
-function Stat2({ label, value, dot, alert }: { label: string; value: number; dot: string; alert?: boolean }) {
-  return (
-    <div className={cx("glass rounded-[22px] px-4 py-3", alert && "border-danger/30")}>
-      <p className="flex items-center gap-2 text-[12px] text-muted"><span className="h-2 w-2 rounded-full" style={{ background: dot }} />{label}</p>
-      <p className="num mt-1 text-[32px] font-light leading-none tracking-tight">{value}</p>
+    <div className={cx("glass rounded-[24px] p-4", alert && "ring-1 ring-danger/40")}>
+      <div className="flex items-center gap-2.5">
+        <span className="flex size-8 items-center justify-center rounded-full" style={{ background: `${color}2e`, color }}><Icon size={17} strokeWidth={2} /></span>
+        <span className="t-foot leading-tight">{label}</span>
+      </div>
+      <p className="t-metric mt-3">{value}</p>
     </div>
   );
 }
 
-function MemberRow({ m, pos, ageMs, stops, selected, onClick }: {
-  m: LiveMember; pos?: Position; ageMs: number; stops: number; selected: boolean; onClick: () => void;
+function MemberRow({ m, pos, ageMs, stops, selected, sos, onClick }: {
+  m: LiveMember; pos?: Position; ageMs: number; stops: number; selected: boolean; sos: boolean; onClick: () => void;
 }) {
   const { t, locale } = useI18n();
   const f = pos ? freshness(ageMs) : null;
-  const color = m.role === "retriever" ? RETRIEVER_COLOR : STATE_COLOR[m.pilot_state ?? "preparing"];
+  const key = m.pilot_state ?? "preparing";
+  const color = sos ? STATE_COLOR.sos! : m.role === "retriever" ? "#ffb020" : STATE_COLOR[key]!;
+  const Ico: Icon = sos ? Siren : m.role === "retriever" ? Car : STATE_ICON[key];
   return (
-    <button onClick={onClick} className={cx("flex w-full items-center gap-3 rounded-[18px] px-3 py-2.5 text-left transition hover:bg-white/[0.06]", selected && "bg-white/[0.09]")}>
-      <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: color, opacity: f === "lost" ? 0.35 : 1, boxShadow: `0 0 0 3px ${color}22` }} />
+    <button onClick={onClick} className={cx("press flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-fill-2", selected && "bg-fill-2")}>
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-full" style={{ background: `${color}2e`, color, opacity: f === "lost" ? 0.5 : 1 }}>
+        <Ico size={18} strokeWidth={2} className={cx(key === "flying" && !sos && m.role === "pilot" && "-rotate-[20deg]")} />
+      </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm">{name(m)}</span>
-        <span className="block truncate text-xs text-muted">
+        <span className="block truncate text-[15px] font-medium leading-tight">{name(m)}</span>
+        <span className="t-foot block truncate">
           {m.role === "retriever"
             ? stops ? `${t("live.on_duty")} · ${t("live.stops", { n: stops })}` : m.is_available ? t("live.available") : t("live.busy")
-            : t(`pilot.${m.pilot_state ?? "preparing"}`)}
+            : t(`pilot.${key}`)}
         </span>
       </span>
-      <span className={cx("num shrink-0 text-right text-xs", f === "live" ? "text-ok" : f === "stale" ? "text-amber" : "text-muted")}>
+      <span className={cx("num shrink-0 text-right text-[12.5px] font-medium", f === "live" ? "text-ok" : f === "stale" ? "text-tint" : "text-label-2")}>
         {pos ? shortAge(locale, ageMs) : m.tracking ? "…" : "—"}
-        {pos?.bat != null && <span className="block text-muted">{pos.bat}%</span>}
+        {pos?.bat != null && <span className="t-foot block font-normal">{pos.bat}%</span>}
       </span>
     </button>
   );
@@ -433,6 +515,7 @@ function DetailPanel(props: {
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   async function run(fn: () => Promise<unknown>) {
     setBusy(true);
@@ -448,27 +531,33 @@ function DetailPanel(props: {
 
   const retrievers = [...members.values()].filter((x) => x.role === "retriever");
   const state = m.pilot_state;
+  const key = state ?? "preparing";
   const f = pos ? freshness(ageMs) : null;
   const vehicle = props.vehicles.find((v) => v.id === m.vehicle_id);
+  const color = m.role === "retriever" ? "#ffb020" : STATE_COLOR[key]!;
+  const Ico: Icon = m.role === "retriever" ? Car : STATE_ICON[key];
 
   return (
     <div className="glass pointer-events-auto flex min-h-0 flex-1 flex-col rounded-[28px]">
       <div className="flex items-start gap-3 p-5 pb-3">
-        <div className="min-w-0 flex-1">
-          <p className="kicker">{t(`role.${m.role}`)}</p>
-          <h2 className="truncate text-2xl font-light tracking-tight">{name(m)}</h2>
-          {m.role === "pilot" && <Badge tone="amber">{t(`pilot.${state ?? "preparing"}`)}</Badge>}
-          {m.role === "retriever" && <Badge tone={m.is_available ? "ok" : "default"}>{m.is_available ? t("live.available") : t("live.busy")}</Badge>}
+        <span className="flex size-12 shrink-0 items-center justify-center rounded-full" style={{ background: `${color}2e`, color }}><Ico size={24} strokeWidth={1.9} /></span>
+        <div className="min-w-0 flex-1 pt-0.5">
+          <h2 className="t-title truncate !text-[22px]">{name(m)}</h2>
+          <div className="mt-1.5 flex items-center gap-2">
+            <span className="t-foot">{t(`role.${m.role}`)}</span>
+            {m.role === "pilot" && <Badge tone="amber">{t(`pilot.${key}`)}</Badge>}
+            {m.role === "retriever" && <Badge tone={m.is_available ? "ok" : "default"}>{m.is_available ? t("live.available") : t("live.busy")}</Badge>}
+          </div>
         </div>
-        <button onClick={props.onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.06] text-lg text-muted hover:text-ivory" aria-label={t("common.close")}>×</button>
+        <IconButton label={t("common.close")} className="size-9 bg-fill" onClick={props.onClose}><X /></IconButton>
       </div>
 
-      <div className="scroll-thin min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pb-5">
+      <div className="scroll-thin min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pb-5">
         {sos && (
-          <div className="rounded-[20px] border border-danger/40 bg-danger/15 p-4">
-            <p className="font-bold text-danger">SOS · {formatDate(locale, sos.created_at, { hour: "2-digit", minute: "2-digit" })}</p>
-            {sos.message && <p className="mt-1 text-sm">{sos.message}</p>}
-            <p className="mt-2 text-xs text-muted">{t("live.sos_disclaimer")}</p>
+          <div className="rounded-[20px] bg-danger/15 p-4 ring-1 ring-inset ring-danger/30">
+            <p className="flex items-center gap-2 font-semibold text-danger"><Siren size={17} />SOS · {formatDate(locale, sos.created_at, { hour: "2-digit", minute: "2-digit" })}</p>
+            {sos.message && <p className="mt-1.5 text-[14px]">{sos.message}</p>}
+            <p className="t-foot mt-2">{t("live.sos_disclaimer")}</p>
             <div className="mt-3 flex gap-2">
               {sos.status === "active" && <Button size="sm" variant="danger" disabled={busy} onClick={() => run(() => api.ops.sosAction(sos.id, "ack"))}>{t("live.sos_ack")}</Button>}
               <Button size="sm" disabled={busy} onClick={() => run(() => api.ops.sosAction(sos.id, "resolve"))}>{t("live.sos_resolve")}</Button>
@@ -476,67 +565,64 @@ function DetailPanel(props: {
           </div>
         )}
 
-        <div>
-          <p className="kicker">{t("live.last_fix")}</p>
-          {pos ? (
-            <>
-              <p className={cx("num mt-1 text-sm", f === "live" ? "text-ok" : f === "stale" ? "text-amber" : "text-danger")}>
-                {t("live.age", { age: shortAge(locale, ageMs) })}{pos.acc != null && ` · ${t("live.accuracy", { m: Math.round(pos.acc) })}`}
-              </p>
-              <div className="num mt-3 grid grid-cols-2 gap-2">
-                <Stat label={t("live.altitude")} value={pos.alt != null ? `${Math.round(pos.alt)} m` : "—"} />
-                <Stat label={t("live.speed")} value={pos.spd != null ? `${Math.round(pos.spd * 3.6)} km/h` : "—"} />
-                <Stat label={t("live.battery")} value={pos.bat != null ? `${pos.bat}%` : "—"} />
-                <Stat label={t("live.heading")} value={pos.hdg != null ? `${Math.round(pos.hdg)}°` : "—"} />
-              </div>
-              <p className="num mt-2 text-xs text-muted">{pos.lat.toFixed(5)}, {pos.lon.toFixed(5)}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button size="sm" onClick={props.onFollow}>{props.follow ? t("live.unfollow") : t("live.follow")}</Button>
-                <Button size="sm" onClick={props.onTrack}>{props.trackShown ? t("live.hide_track") : t("live.track")}</Button>
-                <Button size="sm" onClick={() => {
+        {pos ? (
+          <>
+            <p className={cx("num flex items-center gap-1.5 text-[13px] font-medium", f === "live" ? "text-ok" : f === "stale" ? "text-tint" : "text-danger")}>
+              <span className="size-1.5 rounded-full bg-current" />
+              {t("live.last_fix")}: {t("live.age", { age: shortAge(locale, ageMs) })}{pos.acc != null && ` · ${t("live.accuracy", { m: Math.round(pos.acc) })}`}
+            </p>
+            <div className="grid grid-cols-2 gap-2.5">
+              <Stat label={t("live.altitude")} value={pos.alt != null ? Math.round(pos.alt) : null} unit="m" />
+              <Stat label={t("live.speed")} value={pos.spd != null ? Math.round(pos.spd * 3.6) : null} unit="km/h" />
+              <Stat label={t("live.battery")} value={pos.bat} unit="%" />
+              <Stat label={t("live.heading")} value={pos.hdg != null ? Math.round(pos.hdg) : null} unit="°" />
+            </div>
+            <div className="group">
+              <ActionRow icon={LocateFixed} label={props.follow ? t("live.unfollow") : t("live.follow")} active={props.follow} onClick={props.onFollow} />
+              <ActionRow icon={Spline} label={props.trackShown ? t("live.hide_track") : t("live.track")} active={props.trackShown} onClick={props.onTrack} />
+              <ActionRow icon={copied ? Check : Copy} label={copied ? t("live.copied") : t("live.copy_position")} hint={`${pos.lat.toFixed(5)}, ${pos.lon.toFixed(5)}`}
+                onClick={() => {
                   void navigator.clipboard.writeText(`${m.first_name} ${m.last_name}: https://maps.google.com/?q=${pos.lat.toFixed(6)},${pos.lon.toFixed(6)}`);
                   setCopied(true);
                   setTimeout(() => setCopied(false), 1500);
-                }}>{copied ? t("live.copied") : t("live.copy_position")}</Button>
-              </div>
-            </>
-          ) : (
-            <p className="mt-1 text-sm text-muted">{m.tracking ? t("live.no_position") : t("live.not_tracking")}</p>
-          )}
-        </div>
-
-        {m.phone && (
-          <div>
-            <p className="kicker">{t("live.phone")}</p>
-            <a href={`tel:${m.phone}`} className="mt-1 block text-amber">{m.phone}</a>
-          </div>
+                }} />
+              {m.phone && <ActionRow icon={Phone} label={m.phone} href={`tel:${m.phone}`} />}
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="t-sub">{m.tracking ? t("live.no_position") : t("live.not_tracking")}</p>
+            {m.phone && <div className="group"><ActionRow icon={Phone} label={m.phone} href={`tel:${m.phone}`} /></div>}
+          </>
         )}
 
         {m.role === "pilot" && (
           <div className="space-y-3">
             {retrieve && (
-              <div className="tile rounded-[20px] p-4">
-                <p className="kicker">{t(`retrieve.${retrieve.status}`)}</p>
-                <p className="num mt-1 text-sm text-muted">{t("live.since", { time: formatDate(locale, retrieve.requested_at, { hour: "2-digit", minute: "2-digit" }) })}</p>
-                {retrieve.note && <p className="mt-1 text-sm">“{retrieve.note}”</p>}
-                {retrieve.retriever_id && <p className="mt-2 text-sm">→ {members.get(retrieve.retriever_id) ? name(members.get(retrieve.retriever_id)!) : "?"}</p>}
+              <div className="tile rounded-[22px] p-4">
+                <div className="flex items-center justify-between">
+                  <p className="t-headline">{t(`retrieve.${retrieve.status}`)}</p>
+                  <span className="num t-foot">{t("live.since", { time: formatDate(locale, retrieve.requested_at, { hour: "2-digit", minute: "2-digit" }) })}</span>
+                </div>
+                {retrieve.note && <p className="t-sub mt-1">“{retrieve.note}”</p>}
+                {retrieve.retriever_id && (
+                  <p className="mt-2 flex items-center gap-2 text-[14px] font-medium"><Route size={16} className="text-label-2" />{members.get(retrieve.retriever_id) ? name(members.get(retrieve.retriever_id)!) : "?"}</p>
+                )}
                 {retrieve.status !== "picked_up" && (
                   <Select className="mt-3" value="" disabled={busy}
                     onChange={(e) => e.target.value && run(() => api.ops.retrieve(retrieve.id, "assign", { retriever_id: e.target.value }))}>
                     <option value="">{t("live.choose_retriever")}</option>
                     {retrievers.map((r) => (
-                      <option key={r.user_id} value={r.user_id}>
-                        {name(r)} · {r.is_available ? t("live.available") : t("live.busy")}
-                      </option>
+                      <option key={r.user_id} value={r.user_id}>{name(r)} · {r.is_available ? t("live.available") : t("live.busy")}</option>
                     ))}
                   </Select>
                 )}
-                <div className="mt-2 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap gap-2">
                   {(retrieve.status === "assigned" || retrieve.status === "arrived") && (
                     <Button size="sm" disabled={busy} onClick={() => run(() => api.ops.retrieve(retrieve.id, "release"))}>{t("live.release")}</Button>
                   )}
                   {retrieve.status !== "picked_up" && (
-                    <Button size="sm" variant="ghost" disabled={busy} onClick={() => confirm(t("common.confirm")) && run(() => api.ops.retrieve(retrieve.id, "cancel", { reason: "observer" }))}>{t("live.cancel_request")}</Button>
+                    <Button size="sm" variant="ghost" disabled={busy} onClick={() => setConfirmCancel(true)}>{t("live.cancel_request")}</Button>
                   )}
                 </div>
               </div>
@@ -555,22 +641,30 @@ function DetailPanel(props: {
                 <Button size="sm" variant="ghost" disabled={busy} onClick={() => run(() => api.ops.completeFlight(eventId, m.user_id))}>{t("live.complete_flight")}</Button>
               )}
             </div>
-            <p className="text-xs text-muted">{t("live.manual_note")}</p>
+            <p className="t-foot">{t("live.manual_note")}</p>
+            {retrieve && (
+              <ConfirmDialog open={confirmCancel} onOpenChange={setConfirmCancel} danger title={t("live.cancel_request")} description={t("common.confirm")}
+                confirmLabel={t("live.cancel_request")} cancelLabel={t("common.cancel")} onConfirm={() => void run(() => api.ops.retrieve(retrieve.id, "cancel", { reason: "observer" }))} />
+            )}
           </div>
         )}
 
         {m.role === "retriever" && (
           <div className="space-y-2">
-            {vehicle && <p className="text-sm text-muted">{vehicle.name}{vehicle.plate ? ` · ${vehicle.plate}` : ""} · {t("live.capacity", { used: stops.length, cap: vehicle.capacity })}</p>}
-            {stops.map((r) => {
-              const p = members.get(r.pilot_id);
-              return (
-                <div key={r.id} className="tile flex items-center justify-between rounded-[18px] px-4 py-2.5 text-sm">
-                  <span>{p ? name(p) : "?"}</span>
-                  <Badge>{t(`retrieve.${r.status}`)}</Badge>
-                </div>
-              );
-            })}
+            {vehicle && <p className="t-sub">{vehicle.name}{vehicle.plate ? ` · ${vehicle.plate}` : ""} · {t("live.capacity", { used: stops.length, cap: vehicle.capacity })}</p>}
+            {stops.length > 0 && (
+              <div className="group">
+                {stops.map((r) => {
+                  const p = members.get(r.pilot_id);
+                  return (
+                    <div key={r.id} className="flex items-center justify-between px-4 py-3 text-[14px]">
+                      <span className="font-medium">{p ? name(p) : "?"}</span>
+                      <Badge>{t(`retrieve.${r.status}`)}</Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
         <ErrorText>{error}</ErrorText>
@@ -579,11 +673,29 @@ function DetailPanel(props: {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function ActionRow({ icon: Ico, label, hint, active, onClick, href }: { icon: Icon; label: string; hint?: string; active?: boolean; onClick?: () => void; href?: string }) {
+  const body = (
+    <>
+      <Ico size={18} strokeWidth={1.9} className={active ? "text-tint" : "text-label-2"} />
+      <span className="min-w-0 flex-1">
+        <span className={cx("block text-[15px]", active && "font-semibold")}>{label}</span>
+        {hint && <span className="num t-foot block">{hint}</span>}
+      </span>
+      {active && <Check size={16} className="text-tint" />}
+    </>
+  );
+  const cls = "press flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-fill-2";
+  return href ? <a href={href} className={cls}>{body}</a> : <button onClick={onClick} className={cls}>{body}</button>;
+}
+
+function Stat({ label, value, unit }: { label: string; value: number | null; unit: string }) {
   return (
-    <div className="tile rounded-[18px] px-4 py-3">
-      <p className="text-[11px] text-muted">{label}</p>
-      <p className="mt-0.5 text-2xl font-light tracking-tight">{value}</p>
+    <div className="tile rounded-[20px] px-4 py-3.5">
+      <p className="t-foot">{label}</p>
+      <p className="num mt-1 flex items-baseline gap-1">
+        <span className="text-[28px] font-semibold leading-none tracking-[-0.03em]">{value ?? "—"}</span>
+        {value != null && <span className="text-[13px] font-medium text-label-2">{unit}</span>}
+      </p>
     </div>
   );
 }
@@ -615,19 +727,20 @@ function Timeline({ eventId, members, lastSeq }: { eventId: string; members: Map
     })();
   }, [eventId, lastSeq]);
   return (
-    <div className="scroll-thin min-h-0 flex-1 overflow-y-auto pb-3">
+    <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-3 pb-4"><div className="group">
       {items.filter((e) => LOG_KEYS[e.t]).map((e) => {
         const s = e.subject ? members.get(e.subject) : undefined;
         return (
-          <div key={e.seq} className="mx-2 flex gap-3 rounded-[16px] px-3 py-2 text-sm hover:bg-white/[0.04]">
-            <span className="num w-12 shrink-0 text-xs text-muted">{formatDate(locale, new Date(e.at).toISOString(), { hour: "2-digit", minute: "2-digit" })}</span>
+          <div key={e.seq} className="flex gap-3 px-4 py-2.5 text-sm">
+            <span className="num w-12 shrink-0 text-xs text-label-2">{formatDate(locale, new Date(e.at).toISOString(), { hour: "2-digit", minute: "2-digit" })}</span>
             <span className="min-w-0">
               <span className="block truncate">{s ? name(s) : ""}</span>
-              <span className={cx("text-xs", e.t.startsWith("sos") ? "text-danger" : "text-muted")}>{t(LOG_KEYS[e.t]!)}</span>
+              <span className={cx("text-xs", e.t.startsWith("sos") ? "text-danger" : "text-label-2")}>{t(LOG_KEYS[e.t]!)}</span>
             </span>
           </div>
-        );
+                );
       })}
+      </div>
     </div>
   );
 }

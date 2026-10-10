@@ -50,7 +50,7 @@ export function EventForm({ ev, onSubmit, busy, children }: {
       <Field label={`${t("dash.applications")} · ${t("form.starts_at")}`}><Input name="applications_open_at" type="datetime-local" defaultValue={localInput(ev?.applications_open_at)} /></Field>
       <Field label={`${t("dash.applications")} · ${t("form.ends_at")}`}><Input name="applications_close_at" type="datetime-local" defaultValue={localInput(ev?.applications_close_at)} /></Field>
       <label className="flex items-center gap-2 text-sm sm:col-span-2">
-        <input type="checkbox" name="applications_closed" defaultChecked={ev?.applications_closed} className="accent-amber" /> {t("events.applications_closed")}
+        <input type="checkbox" name="applications_closed" defaultChecked={ev?.applications_closed} className="accent-[var(--tint-fill)]" /> {t("events.applications_closed")}
       </label>
       <div className="sm:col-span-2"><Field label={t("form.description")}><Textarea name="description" defaultValue={ev?.description ?? ""} /></Field></div>
       <div className="sm:col-span-2"><Field label={t("events.rules")}><Textarea name="rules_md" defaultValue={ev?.rules_md ?? ""} /></Field></div>

@@ -1,9 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { cookies, headers } from "next/headers";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import type { Locale } from "@retfast/core";
 import { I18nProvider } from "@/lib/i18n";
 import { SessionProvider } from "@/lib/session";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { THEME_INIT_SCRIPT, ThemeProvider } from "@/lib/theme";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
 
@@ -16,7 +19,7 @@ export const metadata: Metadata = {
   icons: { icon: "/icon.svg" },
 };
 
-export const viewport: Viewport = { themeColor: "#0a0b0d", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: [{ media: "(prefers-color-scheme: light)", color: "#f2f2f7" }, { media: "(prefers-color-scheme: dark)", color: "#08080a" }], width: "device-width", initialScale: 1 };
 
 async function initialLocale(): Promise<Locale> {
   const c = (await cookies()).get("rf_locale")?.value;
@@ -28,11 +31,14 @@ async function initialLocale(): Promise<Locale> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await initialLocale();
   return (
-    <html lang={locale} className={inter.variable}>
+    <html lang={locale} className={inter.variable} suppressHydrationWarning>
       <body className="min-h-dvh">
-        <I18nProvider initial={locale}>
-          <SessionProvider>{children}</SessionProvider>
-        </I18nProvider>
+        <Script id="theme-init" strategy="beforeInteractive">{THEME_INIT_SCRIPT}</Script>
+        <ThemeProvider>
+          <I18nProvider initial={locale}>
+            <SessionProvider><TooltipProvider>{children}</TooltipProvider></SessionProvider>
+          </I18nProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

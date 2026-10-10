@@ -39,15 +39,15 @@ function LoginForm() {
 
   return (
     <Card className="mx-auto mt-16 max-w-md p-6">
-      <h1 className="text-3xl font-light tracking-tight">{t("auth.login_title")}</h1>
+      <h1 className="text-3xl font-semibold tracking-tight">{t("auth.login_title")}</h1>
       <form onSubmit={submit} className="mt-6 space-y-4">
         <Field label={t("auth.email")}><Input name="email" type="email" autoComplete="email" required /></Field>
         <Field label={t("auth.password")}><Input name="password" type="password" autoComplete="current-password" required /></Field>
         <ErrorText>{error}</ErrorText>
         <Button variant="primary" size="lg" className="w-full" disabled={busy}>{t("nav.login")}</Button>
       </form>
-      <p className="mt-6 text-sm text-muted">
-        {t("auth.no_account")} <Link className="text-amber" href={`/register${next ? `?next=${encodeURIComponent(next)}` : ""}`}>{t("nav.register")}</Link>
+      <p className="mt-6 text-sm text-label-2">
+        {t("auth.no_account")} <Link className="text-tint" href={`/register${next ? `?next=${encodeURIComponent(next)}` : ""}`}>{t("nav.register")}</Link>
       </p>
     </Card>
   );

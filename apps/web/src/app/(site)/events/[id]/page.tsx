@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { EventDetail, Role } from "@retfast/core";
 import { MapView, POINT_COLORS, setEventFeatures } from "@/components/map";
+import { isDarkBase } from "@/lib/basemaps";
 import { Badge, Button, Card, ErrorText, Field, Input, Select, Spinner, Textarea } from "@/components/ui";
 import { api, errorCode } from "@/lib/api";
 import { formatRange, useI18n } from "@/lib/i18n";
@@ -34,8 +35,8 @@ export default function EventPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="kicker">{[ev.city, ev.region, ev.country].filter(Boolean).join(" · ")}</p>
-          <h1 className="mt-2 text-3xl font-light tracking-tight sm:text-5xl">{ev.name}</h1>
-          <p className="num mt-2 text-muted">{formatRange(locale, ev.starts_at, ev.ends_at)} · {t("events.members", { n: ev.member_count })}</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-5xl">{ev.name}</h1>
+          <p className="num mt-2 text-label-2">{formatRange(locale, ev.starts_at, ev.ends_at)} · {t("events.members", { n: ev.member_count })}</p>
         </div>
         <div className="flex gap-2">
           <Badge tone={ev.status === "active" ? "amber" : "default"}>{t(`status.${ev.status}`)}</Badge>
@@ -46,26 +47,26 @@ export default function EventPage() {
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="space-y-6">
           <Card className="h-[420px] overflow-hidden">
-            <MapView center={center} zoom={ev.center_lat ? 10 : 8} onReady={(m) => setEventFeatures(m, ev.points, ev.zones)} />
+            <MapView center={center} zoom={ev.center_lat ? 10 : 8} onReady={(m, base) => setEventFeatures(m, ev.points, ev.zones, isDarkBase(base))} />
           </Card>
           {ev.points.length > 0 && (
             <div className="grid gap-2 sm:grid-cols-2">
               {ev.points.map((p) => (
-                <div key={p.id} className="flex items-start gap-3 rounded-[22px] border border-white/[0.06] bg-surface/90 p-3">
+                <div key={p.id} className="flex items-start gap-3 rounded-[22px] border border-hair bg-surface p-3">
                   <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: POINT_COLORS[p.kind] }} />
                   <div className="min-w-0">
-                    <p className="font-semibold">{p.name} <span className="text-xs font-normal text-muted">· {t(`point.${p.kind}`)}{p.altitude_m ? ` · ${Math.round(p.altitude_m)} m` : ""}</span></p>
-                    {(p.description || p.instructions) && <p className="text-sm text-muted">{p.description} {p.instructions}</p>}
+                    <p className="font-semibold">{p.name} <span className="text-xs font-normal text-label-2">· {t(`point.${p.kind}`)}{p.altitude_m ? ` · ${Math.round(p.altitude_m)} m` : ""}</span></p>
+                    {(p.description || p.instructions) && <p className="text-sm text-label-2">{p.description} {p.instructions}</p>}
                   </div>
                 </div>
               ))}
             </div>
           )}
-          {ev.description && <p className="whitespace-pre-line text-muted">{ev.description}</p>}
+          {ev.description && <p className="whitespace-pre-line text-label-2">{ev.description}</p>}
           {ev.rules_md && (
             <div>
               <p className="kicker">{t("events.rules")}</p>
-              <p className="mt-2 whitespace-pre-line text-sm text-muted">{ev.rules_md}</p>
+              <p className="mt-2 whitespace-pre-line text-sm text-label-2">{ev.rules_md}</p>
             </div>
           )}
         </div>
@@ -94,7 +95,7 @@ export default function EventPage() {
           {Object.keys(ev.contact ?? {}).length > 0 && (
             <Card className="p-5">
               <p className="kicker">{t("events.contact")}</p>
-              {Object.entries(ev.contact).map(([k, v]) => <p key={k} className="mt-2 text-sm"><span className="text-muted">{k}:</span> {v}</p>)}
+              {Object.entries(ev.contact).map(([k, v]) => <p key={k} className="mt-2 text-sm"><span className="text-label-2">{k}:</span> {v}</p>)}
             </Card>
           )}
         </aside>
@@ -112,8 +113,8 @@ function ApplyBox({ ev, onDone }: { ev: EventDetail; onDone: () => void }) {
   if (!user) {
     return <Link href={`/login?next=/events/${ev.id}`}><Button variant="primary" className="w-full">{t("events.login_to_apply")}</Button></Link>;
   }
-  if (ev.application?.status === "pending") return <p className="text-muted">{t("events.applied")}</p>;
-  if (!ev.applications_open) return <p className="text-muted">{t("events.applications_closed")}</p>;
+  if (ev.application?.status === "pending") return <p className="text-label-2">{t("events.applied")}</p>;
+  if (!ev.applications_open) return <p className="text-label-2">{t("events.applications_closed")}</p>;
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -136,7 +137,7 @@ function ApplyBox({ ev, onDone }: { ev: EventDetail; onDone: () => void }) {
 
   return (
     <form onSubmit={submit} className="space-y-3">
-      {ev.application?.status === "rejected" && <p className="text-sm text-muted">{t("events.rejected")}</p>}
+      {ev.application?.status === "rejected" && <p className="text-sm text-label-2">{t("events.rejected")}</p>}
       <Field label={t("events.apply_as")}>
         <Select name="role" defaultValue="pilot">
           <option value="pilot">{t("role.pilot")}</option>

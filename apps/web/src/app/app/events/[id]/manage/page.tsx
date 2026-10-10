@@ -9,6 +9,7 @@ import { api, errorCode } from "@/lib/api";
 import { formatDate, useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import type { Map as MlMap } from "maplibre-gl";
+import { isDarkBase, type BasemapId } from "@/lib/basemaps";
 import { EventForm } from "@/components/events/event-form";
 
 type Tab = "applications" | "members" | "map" | "vehicles" | "settings";
@@ -29,9 +30,9 @@ export default function ManagePage() {
 
   return (
     <div>
-      <Link href={`/events/${ev.id}`} className="text-sm text-muted hover:text-ivory">← {ev.name}</Link>
+      <Link href={`/events/${ev.id}`} className="text-sm text-label-2 hover:text-label">← {ev.name}</Link>
       <div className="mt-2 flex flex-wrap items-center gap-3">
-        <h1 className="text-3xl font-light tracking-tight">{t("manage.title")}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{t("manage.title")}</h1>
         <Badge tone={ev.status === "active" ? "amber" : "default"}>{t(`status.${ev.status}`)}</Badge>
         <Link href={`/app/events/${ev.id}/live`} className="ml-auto"><Button variant="primary">{t("events.open_console")}</Button></Link>
       </div>
@@ -90,8 +91,8 @@ function Applications({ eventId }: { eventId: string }) {
               <div className="flex flex-wrap items-start gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="font-bold">{a.user.first_name} {a.user.last_name}</p>
-                  <p className="text-sm text-muted">{a.user.email}{a.user.phone ? ` · ${a.user.phone}` : ""}{a.user.country ? ` · ${a.user.country}` : ""}</p>
-                  <p className="num text-xs text-muted">{formatDate(locale, a.created_at)}{a.requested_role ? ` · ${t("manage.requested", { role: t(`role.${a.requested_role}`) })}` : ""}</p>
+                  <p className="text-sm text-label-2">{a.user.email}{a.user.phone ? ` · ${a.user.phone}` : ""}{a.user.country ? ` · ${a.user.country}` : ""}</p>
+                  <p className="num text-xs text-label-2">{formatDate(locale, a.created_at)}{a.requested_role ? ` · ${t("manage.requested", { role: t(`role.${a.requested_role}`) })}` : ""}</p>
                   {a.message && <p className="mt-2 text-sm">“{a.message}”</p>}
                 </div>
                 {a.status === "pending" ? (
@@ -130,14 +131,14 @@ function Members({ ev }: { ev: EventDetail }) {
     <div>
       <ErrorText>{error}</ErrorText>
       {list === null ? <Spinner /> : list.length === 0 ? <Empty>{t("dash.none")}</Empty> : (
-        <div className="overflow-x-auto rounded-[28px] border border-white/[0.06]">
+        <div className="overflow-x-auto rounded-[28px] border border-hair">
           <table className="w-full text-sm">
             <tbody>
               {list.map((m) => (
-                <tr key={m.user_id} className="border-b border-line/60 last:border-0">
+                <tr key={m.user_id} className="border-b border-hair/60 last:border-0">
                   <td className="px-4 py-3">
                     <p className="font-medium">{m.first_name} {m.last_name}</p>
-                    <p className="text-xs text-muted">{m.email}{m.phone ? ` · ${m.phone}` : ""}</p>
+                    <p className="text-xs text-label-2">{m.email}{m.phone ? ` · ${m.phone}` : ""}</p>
                   </td>
                   <td className="px-2 py-3">
                     <Input className="h-8 w-20" defaultValue={m.bib ?? ""} placeholder="#" disabled={busy}
@@ -175,11 +176,13 @@ function Members({ ev }: { ev: EventDetail }) {
 function Points({ ev, onChange }: { ev: EventDetail; onChange: () => void }) {
   const { t } = useI18n();
   const [map, setMap] = useState<MlMap | null>(null);
+  const [base, setBase] = useState<BasemapId>("dark");
+  const [rev, setRev] = useState(0);
   const [draft, setDraft] = useState<{ lat: number; lon: number } | null>(null);
   const { error, busy, run } = useAction();
   useEffect(() => {
-    if (map) setEventFeatures(map, [...ev.points, ...(draft ? [{ id: "draft", kind: "meeting", name: "•", ...draft }] : [])], ev.zones);
-  }, [map, ev, draft]);
+    if (map) setEventFeatures(map, [...ev.points, ...(draft ? [{ id: "draft", kind: "meeting", name: "•", ...draft }] : [])], ev.zones, isDarkBase(base));
+  }, [map, ev, draft, base, rev]);
   const center: [number, number] = [ev.center_lon ?? ev.points[0]?.lon ?? 29.3, ev.center_lat ?? ev.points[0]?.lat ?? 37.1];
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -200,13 +203,13 @@ function Points({ ev, onChange }: { ev: EventDetail; onChange: () => void }) {
     <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
       <div>
         <Card className="h-[480px] overflow-hidden">
-          <MapView center={center} zoom={ev.center_lat ? 11 : 8} onReady={setMap} onClick={(p) => setDraft({ lat: +p.lat.toFixed(6), lon: +p.lng.toFixed(6) })} />
+          <MapView center={center} zoom={ev.center_lat ? 11 : 8} onReady={(m, b) => { setMap(m); setBase(b); setRev((r) => r + 1); }} onClick={(p) => setDraft({ lat: +p.lat.toFixed(6), lon: +p.lng.toFixed(6) })} />
         </Card>
         <div className="mt-4 grid gap-2">
           {ev.points.map((p) => (
-            <div key={p.id} className="flex items-center gap-3 rounded-[20px] border border-white/[0.06] bg-surface/90 px-4 py-3 text-sm">
+            <div key={p.id} className="flex items-center gap-3 rounded-[20px] border border-hair bg-surface px-4 py-3 text-sm">
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: POINT_COLORS[p.kind] }} />
-              <span className="flex-1">{p.name} <span className="text-muted">· {t(`point.${p.kind}`)} · {p.lat.toFixed(4)}, {p.lon.toFixed(4)}</span></span>
+              <span className="flex-1">{p.name} <span className="text-label-2">· {t(`point.${p.kind}`)} · {p.lat.toFixed(4)}, {p.lon.toFixed(4)}</span></span>
               <Button size="sm" variant="ghost" disabled={busy} onClick={() => run(() => api.events.deletePoint(ev.id, p.id)).then(onChange)}>{t("common.delete")}</Button>
             </div>
           ))}
@@ -214,7 +217,7 @@ function Points({ ev, onChange }: { ev: EventDetail; onChange: () => void }) {
       </div>
       <Card className="h-fit p-4">
         <p className="font-bold">{t("manage.add_point")}</p>
-        <p className="mt-1 text-xs text-muted">{t("manage.add_point_hint")}</p>
+        <p className="mt-1 text-xs text-label-2">{t("manage.add_point_hint")}</p>
         <form onSubmit={submit} className="mt-4 space-y-3" key={draft ? `${draft.lat},${draft.lon}` : "empty"}>
           <Field label={t("form.kind")}><Select name="kind">{KINDS.map((k) => <option key={k} value={k}>{t(`point.${k}`)}</option>)}</Select></Field>
           <Field label={t("form.name")}><Input name="name" required /></Field>
@@ -251,8 +254,8 @@ function Vehicles({ ev, onChange }: { ev: EventDetail; onChange: () => void }) {
       <div className="grid gap-2">
         {ev.vehicles.length === 0 && <Empty>—</Empty>}
         {ev.vehicles.map((v) => (
-          <div key={v.id} className="flex items-center gap-3 rounded-[20px] border border-white/[0.06] bg-surface/90 px-5 py-3.5">
-            <span className="flex-1 font-medium">{v.name} <span className="text-sm text-muted">{v.plate} · {v.capacity} {t("manage.capacity").toLowerCase()}</span></span>
+          <div key={v.id} className="flex items-center gap-3 rounded-[20px] border border-hair bg-surface px-5 py-3.5">
+            <span className="flex-1 font-medium">{v.name} <span className="text-sm text-label-2">{v.plate} · {v.capacity} {t("manage.capacity").toLowerCase()}</span></span>
             <Button size="sm" variant="ghost" disabled={busy} onClick={() => run(() => api.events.deleteVehicle(ev.id, v.id)).then(onChange)}>{t("common.delete")}</Button>
           </div>
         ))}
@@ -279,7 +282,7 @@ function Settings({ ev, onChange }: { ev: EventDetail; onChange: (e: EventDetail
   const [saved, setSaved] = useState(false);
   return (
     <Card className="p-5">
-      {ev.invite_code && <p className="mb-5 text-sm">{t("manage.invite_code")}: <code className="rounded bg-raised px-2 py-1 font-bold text-amber">{ev.invite_code}</code></p>}
+      {ev.invite_code && <p className="mb-5 text-sm">{t("manage.invite_code")}: <code className="rounded bg-fill-2 px-2 py-1 font-bold text-tint">{ev.invite_code}</code></p>}
       <EventForm ev={ev} busy={busy} onSubmit={(body) => run(async () => {
         onChange(await api.events.update(ev.id, body));
         setSaved(true);

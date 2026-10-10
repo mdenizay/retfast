@@ -42,7 +42,7 @@ function RegisterForm() {
 
   return (
     <Card className="mx-auto mt-16 max-w-md p-6">
-      <h1 className="text-3xl font-light tracking-tight">{t("auth.register_title")}</h1>
+      <h1 className="text-3xl font-semibold tracking-tight">{t("auth.register_title")}</h1>
       <form onSubmit={submit} className="mt-6 space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <Field label={t("auth.first_name")}><Input name="first_name" autoComplete="given-name" required maxLength={80} /></Field>
@@ -55,8 +55,8 @@ function RegisterForm() {
         <ErrorText>{error}</ErrorText>
         <Button variant="primary" size="lg" className="w-full" disabled={busy}>{t("nav.register")}</Button>
       </form>
-      <p className="mt-6 text-sm text-muted">
-        {t("auth.have_account")} <Link className="text-amber" href={`/login${next ? `?next=${encodeURIComponent(next)}` : ""}`}>{t("nav.login")}</Link>
+      <p className="mt-6 text-sm text-label-2">
+        {t("auth.have_account")} <Link className="text-tint" href={`/login${next ? `?next=${encodeURIComponent(next)}` : ""}`}>{t("nav.login")}</Link>
       </p>
     </Card>
   );

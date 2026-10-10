@@ -1,82 +1,261 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-/* Retfast arayüz dili: koyu grafit, harita merkezli; üstte yüzen cam paneller, büyük yuvarlatılmış
-   kartlar, hap biçimli kontroller, ince ve iri rakamlar. Amber marka/birincil eylem; kırmızı ve
-   yeşil yalnızca acil durum ve onaylı başarı için. */
-@theme {
-  --color-ink: #0a0b0d;
-  --color-surface: #16171a;
-  --color-raised: #212226;
-  --color-line: #2b2c31;
-  --color-amber: #f3a712;
-  --color-amber-soft: #f3a7121f;
-  --color-ivory: #ededee;
-  --color-muted: #8b8d94;
-  --color-danger: #ff5a4a;
-  --color-ok: #45d483;
-  --color-sky: #6cc0ff;
-  --color-violet: #b79cff;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+/* shadcn `dark:` varyantı da bizim tema anahtarımıza bağlı (data-theme="dark"). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ───────────────────────── Retfast tasarım dili ─────────────────────────
+   iOS tarzı: semantik renkler (açık/koyu), malzeme (blur + saturate) katmanları, 0,5 px ince kenarlık,
+   squircle köşeler, SF Pro (Apple cihazlarda sistem yazı tipi) + Inter yedeği.
+   Bileşenler yalnızca bu belirteçleri kullanır; ham renk yazma. */
+
+:root {
+  color-scheme: light;
+  --bg: #f2f2f7;
+  --surface: #ffffff;
+  --surface-2: #f7f7fa;
+  --label: #1c1c1e;
+  --label-2: rgb(60 60 67 / 0.62);
+  --label-3: rgb(60 60 67 / 0.32);
+  --hair: rgb(60 60 67 / 0.14);
+  --fill: rgb(120 120 128 / 0.08);
+  --fill-2: rgb(120 120 128 / 0.13);
+  --fill-3: rgb(120 120 128 / 0.2);
+  --material: rgb(255 255 255 / 0.7);
+  --material-solid: #ffffff;
+  --highlight: rgb(255 255 255 / 0.9);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -6px rgb(0 0 0 / 0.14);
+  --tint: #e68a00;
+  --tint-fill: #ffa30a;
+  --tint-ink: #1c1100;
+  --red: #ff3b30;
+  --green: #28a745;
+  --blue: #007aff;
+  --violet: #af52de;
+  --seg-thumb: #ffffff;
 }
 
-html {
+:root[data-theme="dark"] {
   color-scheme: dark;
+  --bg: #08080a;
+  --surface: #1c1c1e;
+  --surface-2: #232326;
+  --label: #f5f5f7;
+  --label-2: rgb(235 235 245 / 0.6);
+  --label-3: rgb(235 235 245 / 0.3);
+  --hair: rgb(255 255 255 / 0.11);
+  --fill: rgb(120 120 128 / 0.16);
+  --fill-2: rgb(120 120 128 / 0.26);
+  --fill-3: rgb(120 120 128 / 0.36);
+  --material: rgb(28 28 30 / 0.62);
+  --material-solid: #1c1c1e;
+  --highlight: rgb(255 255 255 / 0.1);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 40px -8px rgb(0 0 0 / 0.55);
+  --tint: #ffb020;
+  --tint-fill: #ffb020;
+  --tint-ink: #1c1100;
+  --red: #ff453a;
+  --green: #32d74b;
+  --blue: #0a84ff;
+  --violet: #bf5af2;
+  --seg-thumb: #636366;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #08080a;
+    --surface: #1c1c1e;
+    --surface-2: #232326;
+    --label: #f5f5f7;
+    --label-2: rgb(235 235 245 / 0.6);
+    --label-3: rgb(235 235 245 / 0.3);
+    --hair: rgb(255 255 255 / 0.11);
+    --fill: rgb(120 120 128 / 0.16);
+    --fill-2: rgb(120 120 128 / 0.26);
+    --fill-3: rgb(120 120 128 / 0.36);
+    --material: rgb(28 28 30 / 0.62);
+    --material-solid: #1c1c1e;
+    --highlight: rgb(255 255 255 / 0.1);
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 40px -8px rgb(0 0 0 / 0.55);
+    --tint: #ffb020;
+    --tint-fill: #ffb020;
+    --tint-ink: #1c1100;
+    --red: #ff453a;
+    --green: #32d74b;
+    --blue: #0a84ff;
+    --violet: #bf5af2;
+    --seg-thumb: #636366;
+  }
+}
+
+
+/* shadcn/ui değişken adları iOS belirteçlerine bağlanır; bileşenler ham renk içermez. */
+:root {
+  --background: var(--bg);
+  --foreground: var(--label);
+  --card: var(--surface);
+  --card-foreground: var(--label);
+  --popover: var(--material-solid);
+  --popover-foreground: var(--label);
+  --primary: var(--tint-fill);
+  --primary-foreground: var(--tint-ink);
+  --secondary: var(--fill-2);
+  --secondary-foreground: var(--label);
+  --muted: var(--fill);
+  --muted-foreground: var(--label-2);
+  --accent: var(--fill-2);
+  --accent-foreground: var(--label);
+  --destructive: var(--red);
+  --border: var(--hair);
+  --input: var(--fill);
+  --ring: var(--tint);
+  --radius: 1.25rem;
+}
+
+/* Tailwind yardımcıları aynı belirteçlere bağlanır (bg-surface, text-label…). */
+@theme inline {
+  --color-ink: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-label: var(--label);
+  --color-label-2: var(--label-2);
+  --color-label-3: var(--label-3);
+  --color-hair: var(--hair);
+  --color-fill: var(--fill);
+  --color-fill-2: var(--fill-2);
+  --color-fill-3: var(--fill-3);
+  --color-tint: var(--tint);
+  --color-tint-fill: var(--tint-fill);
+  --color-tint-ink: var(--tint-ink);
+  --color-danger: var(--red);
+  --color-ok: var(--green);
+  --color-sky: var(--blue);
+  --color-violet: var(--violet);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", var(--font-inter), "Segoe UI", system-ui, sans-serif;
+}
+
+@layer base {
+  * { border-color: var(--hair); outline-color: color-mix(in srgb, var(--tint) 50%, transparent); }
+  html { font-size: 16px; }
 }
 
 body {
-  background: var(--color-ink);
-  color: var(--color-ivory);
+  background: var(--bg);
+  color: var(--label);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.4;
+  letter-spacing: -0.011em;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv11", "ss03";
+}
+
+/* ── Tipografi (iOS dinamik tip karşılıkları) ── */
+.t-large { font-size: 34px; line-height: 1.12; font-weight: 700; letter-spacing: -0.026em; }
+.t-title { font-size: 26px; line-height: 1.18; font-weight: 650; letter-spacing: -0.022em; }
+.t-headline { font-size: 17px; line-height: 1.3; font-weight: 600; letter-spacing: -0.02em; }
+.t-sub { font-size: 14px; line-height: 1.35; color: var(--label-2); }
+.t-foot { font-size: 12.5px; line-height: 1.3; color: var(--label-2); }
+.t-section { font-size: 13px; font-weight: 600; letter-spacing: -0.005em; color: var(--label-2); }
+.t-metric { font-size: 30px; line-height: 1; font-weight: 600; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.kicker { font-size: 13px; font-weight: 600; letter-spacing: -0.005em; color: var(--label-2); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ── Yüzeyler ── */
+@supports (corner-shape: squircle) {
+  .sq, .glass, .card, .tile, .well { corner-shape: squircle; }
 }
 
 .glass {
-  background: rgb(22 23 26 / 0.74);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  border: 1px solid rgb(255 255 255 / 0.07);
-  box-shadow: 0 12px 40px rgb(0 0 0 / 0.35);
+  background: var(--material);
+  -webkit-backdrop-filter: blur(32px) saturate(185%);
+  backdrop-filter: blur(32px) saturate(185%);
+  box-shadow: 0 0 0 0.5px var(--hair), inset 0 0.5px 0 var(--highlight), var(--shadow);
+}
+
+.card {
+  background: var(--surface);
+  box-shadow: 0 0 0 0.5px var(--hair), var(--shadow);
 }
 
 .tile {
-  background: rgb(255 255 255 / 0.045);
-  border: 1px solid rgb(255 255 255 / 0.05);
+  background: var(--fill);
 }
 
-.kicker {
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  color: var(--color-muted);
+/* iOS "inset grouped" liste: satırlar arasında girintili ince çizgi. */
+.group {
+  background: var(--fill);
+  border-radius: 20px;
+  overflow: hidden;
 }
-
-.num {
-  font-variant-numeric: tabular-nums;
+.group > * + * {
+  background-image: linear-gradient(var(--hair), var(--hair));
+  background-size: calc(100% - 46px) 0.5px;
+  background-position: right top;
+  background-repeat: no-repeat;
 }
 
 .scroll-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgb(255 255 255 / 0.12) transparent;
+  scrollbar-color: var(--fill-3) transparent;
 }
 
+/* ── Harita ── */
 .maplibregl-ctrl-attrib {
-  background: rgb(10 11 13 / 0.6) !important;
-  color: var(--color-muted) !important;
+  background: var(--material) !important;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  color: var(--label-2) !important;
   border-radius: 999px !important;
   font-size: 10px;
+  padding: 0 8px;
 }
-.maplibregl-ctrl-attrib a {
-  color: var(--color-muted) !important;
-}
+.maplibregl-ctrl-attrib a { color: var(--label-2) !important; }
 .maplibregl-ctrl-scale {
-  background: rgb(10 11 13 / 0.6) !important;
-  color: var(--color-muted) !important;
-  border-color: var(--color-muted) !important;
+  background: var(--material) !important;
+  color: var(--label-2) !important;
+  border-color: var(--label-3) !important;
+  border-radius: 4px;
 }
+.maplibregl-ctrl-bottom-right { right: 8px; bottom: 6px; }
+
+/* ── Hareket ── */
+button, a { -webkit-tap-highlight-color: transparent; }
+.press { transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.15s, opacity 0.15s; }
+.press:active { transform: scale(0.97); }
 
 @keyframes sos-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 #ff5a4a66; }
-  50% { box-shadow: 0 0 0 10px #ff5a4a00; }
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--red) 45%, transparent); }
+  50% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--red) 0%, transparent); }
 }
-.sos-pulse {
-  animation: sos-pulse 1.4s ease-in-out infinite;
+.sos-pulse { animation: sos-pulse 1.5s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .press, .sos-pulse { transition: none; animation: none; }
 }

@@ -39,8 +39,6 @@ services:
     build:
       context: ../..
       dockerfile: infra/docker/web.Dockerfile
-      args:
-        NEXT_PUBLIC_MAP_STYLE: ${NEXT_PUBLIC_MAP_STYLE:-}
     environment:
       API_INTERNAL_URL: http://api:3001
       PUBLIC_WEB_URL: ${PUBLIC_WEB_URL}

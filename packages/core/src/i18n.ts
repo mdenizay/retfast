@@ -38,6 +38,10 @@ const en = {
   "auth.no_account": "No account yet?",
   "auth.have_account": "Already have an account?",
   "auth.password_hint": "At least 8 characters",
+  "auth.change_password": "Change password",
+  "auth.current_password": "Current password",
+  "auth.new_password": "New password",
+  "auth.password_changed": "Password changed. Other devices were signed out.",
 
   "events.current": "Happening now",
   "events.upcoming": "Upcoming",
@@ -284,6 +288,10 @@ const tr: Record<MessageKey, string> = {
   "auth.no_account": "Hesabın yok mu?",
   "auth.have_account": "Zaten hesabın var mı?",
   "auth.password_hint": "En az 8 karakter",
+  "auth.change_password": "Şifreyi değiştir",
+  "auth.current_password": "Mevcut şifre",
+  "auth.new_password": "Yeni şifre",
+  "auth.password_changed": "Şifre değişti. Diğer cihazlardaki oturumlar kapatıldı.",
 
   "events.current": "Devam eden",
   "events.upcoming": "Yaklaşan",

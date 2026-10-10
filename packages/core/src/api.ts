@@ -68,6 +68,7 @@ export function createClient(opts: ClientOptions) {
       update: (b: Partial<Pick<User, "first_name" | "last_name" | "phone" | "country" | "locale" | "emergency_contact_name" | "emergency_contact_phone">>) =>
         patch<User>("/me", b),
       consentLocation: () => post<User>("/me/consent/location"),
+      changePassword: (b: { current_password: string; new_password: string }) => post<Ok>("/me/password", b),
       events: () => get<MyEvents>("/me/events"),
       notifications: () => get<{ data: Notification[] }>("/me/notifications"),
       readNotifications: () => post<Ok>("/me/notifications/read"),

@@ -30,7 +30,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <Card className="mx-auto max-w-xl p-6">
+    <div className="mx-auto max-w-xl space-y-6">
+    <Card className="p-6">
       <h1 className="text-2xl font-black tracking-tight">{t("nav.profile")}</h1>
       <p className="text-sm text-muted">{user.email}</p>
       <form onSubmit={submit} className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -48,6 +49,42 @@ export default function ProfilePage() {
           <ErrorText>{error}</ErrorText>
           {saved && <p className="mb-2 text-sm text-ok">{t("manage.saved")}</p>}
           <Button variant="primary">{t("common.save")}</Button>
+        </div>
+      </form>
+    </Card>
+    <PasswordCard />
+    </div>
+  );
+}
+
+function PasswordCard() {
+  const { t, err } = useI18n();
+  const [error, setError] = useState<string>();
+  const [done, setDone] = useState(false);
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const f = new FormData(form);
+    try {
+      await api.me.changePassword({ current_password: String(f.get("current")), new_password: String(f.get("next")) });
+      form.reset();
+      setDone(true);
+      setError(undefined);
+    } catch (x) {
+      setDone(false);
+      setError(err(errorCode(x)));
+    }
+  }
+  return (
+    <Card className="p-6">
+      <h2 className="text-lg font-bold">{t("auth.change_password")}</h2>
+      <form onSubmit={submit} className="mt-4 grid gap-4 sm:grid-cols-2">
+        <Field label={t("auth.current_password")}><Input name="current" type="password" autoComplete="current-password" required /></Field>
+        <Field label={t("auth.new_password")} hint={t("auth.password_hint")}><Input name="next" type="password" autoComplete="new-password" minLength={8} required /></Field>
+        <div className="sm:col-span-2">
+          <ErrorText>{error}</ErrorText>
+          {done && <p className="mb-2 text-sm text-ok">{t("auth.password_changed")}</p>}
+          <Button variant="primary">{t("auth.change_password")}</Button>
         </div>
       </form>
     </Card>

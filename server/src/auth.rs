@@ -79,8 +79,12 @@ pub fn session_cookie(token: String, secure: bool) -> Cookie<'static> {
 }
 
 pub async fn forget_cached(state: &AppState, token: &str) {
+    forget_cached_hash(state, &token_hash(token)).await;
+}
+
+pub async fn forget_cached_hash(state: &AppState, hash: &[u8]) {
     let mut redis = state.redis.clone();
-    let _: Result<(), _> = redis.del(cache_key(&token_hash(token))).await;
+    let _: Result<(), _> = redis.del(cache_key(hash)).await;
 }
 
 pub fn token_from_parts(parts: &Parts) -> Option<String> {

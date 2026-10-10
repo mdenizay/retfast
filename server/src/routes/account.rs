@@ -21,6 +21,7 @@ pub fn router() -> Router<AppState> {
         .route("/auth/login", post(login))
         .route("/auth/logout", post(logout))
         .route("/me", get(me).patch(update_me))
+        .route("/me/password", post(change_password))
         .route("/me/consent/location", post(consent_location))
         .route("/me/events", get(my_events))
         .route("/me/notifications", get(notifications))
@@ -228,6 +229,44 @@ async fn update_me(State(state): State<AppState>, user: AuthUser, Json(b): Json<
     .execute(&state.db)
     .await?;
     Ok(Json(user_json(&state, user.id).await?))
+}
+
+#[derive(Deserialize)]
+struct ChangePassword {
+    current_password: String,
+    new_password: String,
+}
+
+/// Şifre değişince bu oturum dışındaki tüm oturumlar kapanır.
+async fn change_password(State(state): State<AppState>, user: AuthUser, Json(b): Json<ChangePassword>) -> AppResult<Json<Value>> {
+    auth::rate_limit(&state, &format!("password:{}", user.id), 10, 600).await?;
+    if b.new_password.chars().count() < 8 || b.new_password.len() > 200 {
+        return Err(invalid("password must be at least 8 characters"));
+    }
+    let hash: Option<String> =
+        sqlx::query_scalar("select password_hash from users where id = $1").bind(user.id).fetch_one(&state.db).await?;
+    if !auth::verify_password(b.current_password, hash.unwrap_or_default()).await {
+        return Err(AppError::Conflict("INVALID_CREDENTIALS", "current password is incorrect"));
+    }
+    let new_hash = auth::hash_password(b.new_password).await?;
+    let mut tx = state.db.begin().await?;
+    sqlx::query("update users set password_hash = $2, updated_at = now() where id = $1")
+        .bind(user.id)
+        .bind(new_hash)
+        .execute(&mut *tx)
+        .await?;
+    let revoked: Vec<Vec<u8>> = sqlx::query_scalar(
+        "update sessions set revoked_at = now() where user_id = $1 and id <> $2 and revoked_at is null returning token_hash",
+    )
+    .bind(user.id)
+    .bind(user.session_id)
+    .fetch_all(&mut *tx)
+    .await?;
+    tx.commit().await?;
+    for hash in revoked {
+        auth::forget_cached_hash(&state, &hash).await;
+    }
+    Ok(Json(json!({ "ok": true })))
 }
 
 async fn consent_location(State(state): State<AppState>, user: AuthUser) -> AppResult<Json<Value>> {

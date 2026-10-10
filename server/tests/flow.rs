@@ -443,6 +443,18 @@ async fn auth_and_sos() {
     let live = s.ok("GET", &format!("/events/{ev}/live"), &root, Value::Null).await;
     assert!(live["sos"].as_array().unwrap().is_empty());
 
+    // Şifre değişimi: eski şifre doğrulanır, diğer oturumlar kapanır, bu oturum devam eder.
+    let (_, other) = s.call("POST", "/auth/login", None, json!({ "email": "pilot@example.com", "password": "correct horse" })).await;
+    let other = other["token"].as_str().unwrap().to_string();
+    assert_eq!(
+        s.err("POST", "/me/password", &pilot, json!({ "current_password": "nope", "new_password": "new password 1" })).await.1,
+        "INVALID_CREDENTIALS"
+    );
+    s.ok("POST", "/me/password", &pilot, json!({ "current_password": "correct horse", "new_password": "new password 1" })).await;
+    assert_eq!(s.call("GET", "/me", Some(&other), Value::Null).await.0, StatusCode::UNAUTHORIZED);
+    let (status, _) = s.call("POST", "/auth/login", None, json!({ "email": "pilot@example.com", "password": "new password 1" })).await;
+    assert_eq!(status, StatusCode::OK);
+
     // Çıkış yapan oturum hemen geçersizleşir.
     s.ok("POST", "/auth/logout", &pilot, Value::Null).await;
     assert_eq!(s.call("GET", "/me", Some(&pilot.token), Value::Null).await.0, StatusCode::UNAUTHORIZED);

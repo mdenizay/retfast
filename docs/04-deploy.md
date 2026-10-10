@@ -37,7 +37,11 @@ ssh ubuntu@51.83.159.253 "sudo docker exec \$(sudo docker ps -qf name=retfast-v3
 
 ```sh
 ssh ubuntu@51.83.159.253 'sudo docker exec -i $(sudo docker ps -qf name=retfast-v3-.*-api) retfast-server create-users' < infra/test-users.csv
+# herkese aynı şifre (yalnızca test hesapları):
+ssh ubuntu@51.83.159.253 'sudo docker exec -i $(sudo docker ps -qf name=retfast-v3-.*-api) retfast-server create-users --password password' < infra/test-users.csv
 ```
+
+Kullanıcılar şifrelerini Profil → Şifreyi değiştir'den değiştirir.
 
 ## İşletim
 

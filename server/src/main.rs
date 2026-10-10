@@ -36,8 +36,17 @@ async fn main() -> anyhow::Result<()> {
             tracing::info!(%email, "system admin granted");
         }
         // Toplu hesap açma (test/davet). stdin: `email,ad,soyad[,admin]` satırları.
-        // Şifreler rastgele üretilir ve yalnızca bir kez yazdırılır; var olan e-postalar atlanır.
+        // Şifreler rastgele üretilir ve yalnızca bir kez yazdırılır; `--password <şifre>` herkese aynı
+        // şifreyi verir (yalnızca test). Var olan e-postalar atlanır.
         "create-users" => {
+            let shared = match (std::env::args().nth(2).as_deref(), std::env::args().nth(3)) {
+                (Some("--password"), Some(p)) => {
+                    anyhow::ensure!(p.chars().count() >= 8, "password must be at least 8 characters");
+                    Some(p)
+                }
+                (None, _) => None,
+                _ => anyhow::bail!("usage: create-users [--password <password>] < users.csv"),
+            };
             let db = sqlx::PgPool::connect(&config.database_url).await?;
             let mut input = String::new();
             std::io::Read::read_to_string(&mut std::io::stdin(), &mut input)?;
@@ -50,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
                 let email = email.to_lowercase();
                 anyhow::ensure!(email.contains('@') && !first.is_empty() && !last.is_empty(), "bad line: {line}");
                 let admin = rest.first().is_some_and(|v| *v == "admin");
-                let password = retfast_server::auth::new_token()[..14].to_string();
+                let password = shared.clone().unwrap_or_else(|| retfast_server::auth::new_token()[..14].to_string());
                 let hash = retfast_server::auth::hash_password(password.clone()).await?;
                 let created = sqlx::query(
                     "insert into users (id, email, password_hash, first_name, last_name, locale, is_system_admin)

@@ -5,7 +5,7 @@ use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let _ = dotenvy::dotenv();
+    let dotenv = dotenvy::dotenv();
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| "info,tower_http=info,sqlx=warn".into());
     if std::env::var("LOG_FORMAT").as_deref() == Ok("json") {
         tracing_subscriber::fmt().json().with_env_filter(filter).init();
@@ -13,6 +13,11 @@ async fn main() -> anyhow::Result<()> {
         tracing_subscriber::fmt().with_env_filter(filter).init();
     }
 
+    if let Err(e) = &dotenv
+        && !e.not_found()
+    {
+        tracing::warn!(error = %e, ".env could not be parsed; later variables were ignored");
+    }
     let config = Config::from_env()?;
     let command = std::env::args().nth(1).unwrap_or_else(|| "serve".into());
     match command.as_str() {

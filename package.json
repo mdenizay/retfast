@@ -1,0 +1,10 @@
+{
+  "name": "retfast",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev:web": "bun --filter @retfast/web dev",
+    "build:web": "bun --filter @retfast/web build",
+    "typecheck": "bun --filter '*' typecheck"
+  }
+}

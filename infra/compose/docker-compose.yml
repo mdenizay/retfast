@@ -1,5 +1,6 @@
 # Dokploy compose servisi. Postgres ve Redis ayrı Dokploy servisleridir (yedekleme Dokploy'dan yönetilir);
 # bağlantı bilgileri ortam değişkeniyle gelir. Alan adı yönlendirmesi Dokploy → Domains üzerinden yapılır:
+#   <alan adı>/     → web:3000
 #   <alan adı>/api  → api:3001  (Traefik /api önekini siler; WebSocket: wss://<alan adı>/api/v1/events/{id}/ws)
 services:
   migrate:
@@ -31,6 +32,27 @@ services:
       start_period: 10s
     # Açık WebSocket'lerin ve süren isteklerin kapanması için süre tanı.
     stop_grace_period: 20s
+    restart: unless-stopped
+    networks: [dokploy-network]
+
+  web:
+    build:
+      context: ../..
+      dockerfile: infra/docker/web.Dockerfile
+      args:
+        NEXT_PUBLIC_MAP_STYLE: ${NEXT_PUBLIC_MAP_STYLE:-}
+    environment:
+      API_INTERNAL_URL: http://api:3001
+      PUBLIC_WEB_URL: ${PUBLIC_WEB_URL}
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     restart: unless-stopped
     networks: [dokploy-network]
 

@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "retfast-api", "runtimeExecutable": "sh", "runtimeArgs": ["-c", "cd server && BIND=127.0.0.1:3901 cargo run"], "port": 3901, "autoPort": false },
+    { "name": "retfast-web", "runtimeExecutable": "sh", "runtimeArgs": ["-c", "cd apps/web && API_INTERNAL_URL=http://127.0.0.1:3901 NEXT_PUBLIC_WS_URL=ws://localhost:3901/v1 bunx next dev -p 3900"], "port": 3900, "autoPort": false }
+  ]
+}

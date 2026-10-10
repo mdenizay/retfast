@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+/* Retfast operasyon dili: grafit zemin, amber birincil eylem, fildişi metin.
+   Kırmızı ve yeşil yalnızca acil durum / onaylı başarı içindir. */
+@theme {
+  --color-ink: #0d0e10;
+  --color-surface: #1b1b19;
+  --color-raised: #25241f;
+  --color-line: #3a382f;
+  --color-amber: #f3a712;
+  --color-amber-soft: #f3a71226;
+  --color-ivory: #fff4d6;
+  --color-muted: #b8ad92;
+  --color-danger: #ff4d3d;
+  --color-ok: #3fcf7a;
+  --color-sky: #5ab8ff;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-ivory);
+  -webkit-font-smoothing: antialiased;
+}
+
+.kicker {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.maplibregl-popup-content {
+  background: var(--color-surface) !important;
+  color: var(--color-ivory);
+  border: 1px solid var(--color-line);
+  border-radius: 12px !important;
+}
+.maplibregl-popup-tip {
+  display: none;
+}
+
+@keyframes sos-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 #ff4d3d88; }
+  50% { box-shadow: 0 0 0 8px #ff4d3d00; }
+}
+.sos-pulse {
+  animation: sos-pulse 1.4s ease-in-out infinite;
+}

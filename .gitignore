@@ -9,3 +9,5 @@ dist/
 infra/secrets.local.env
 .DS_Store
 *.log
+apps/web/public/maplibre/
+*.tsbuildinfo

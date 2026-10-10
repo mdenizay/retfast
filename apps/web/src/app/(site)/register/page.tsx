@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Button, Card, ErrorText, Field, Input } from "@/components/ui";
 import { api, errorCode } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -9,11 +9,17 @@ import { useSession } from "@/lib/session";
 
 function RegisterForm() {
   const { t, err, locale } = useI18n();
-  const { setUser } = useSession();
+  const { user, loading, setUser } = useSession();
   const router = useRouter();
   const next = useSearchParams().get("next");
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
+
+  // Zaten giriş yapmış kullanıcı formu görmez.
+  useEffect(() => {
+    if (!loading && user) router.replace(next?.startsWith("/") ? next : "/app");
+  }, [loading, user, next, router]);
+  if (loading || user) return null;
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

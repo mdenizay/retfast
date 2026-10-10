@@ -35,6 +35,44 @@ async fn main() -> anyhow::Result<()> {
             anyhow::ensure!(n == 1, "no user with email {email}");
             tracing::info!(%email, "system admin granted");
         }
+        // Toplu hesap açma (test/davet). stdin: `email,ad,soyad[,admin]` satırları.
+        // Şifreler rastgele üretilir ve yalnızca bir kez yazdırılır; var olan e-postalar atlanır.
+        "create-users" => {
+            let db = sqlx::PgPool::connect(&config.database_url).await?;
+            let mut input = String::new();
+            std::io::Read::read_to_string(&mut std::io::stdin(), &mut input)?;
+            println!("{:<34} {:<28} PASSWORD", "EMAIL", "NAME");
+            for line in input.lines().map(str::trim).filter(|l| !l.is_empty() && !l.starts_with('#')) {
+                let cols: Vec<&str> = line.split(',').map(str::trim).collect();
+                let [email, first, last, rest @ ..] = cols.as_slice() else {
+                    anyhow::bail!("bad line (expected email,first,last[,admin]): {line}");
+                };
+                let email = email.to_lowercase();
+                anyhow::ensure!(email.contains('@') && !first.is_empty() && !last.is_empty(), "bad line: {line}");
+                let admin = rest.first().is_some_and(|v| *v == "admin");
+                let password = retfast_server::auth::new_token()[..14].to_string();
+                let hash = retfast_server::auth::hash_password(password.clone()).await?;
+                let created = sqlx::query(
+                    "insert into users (id, email, password_hash, first_name, last_name, locale, is_system_admin)
+                     values ($1, $2, $3, $4, $5, 'tr', $6) on conflict (email) do nothing",
+                )
+                .bind(uuid::Uuid::now_v7())
+                .bind(&email)
+                .bind(hash)
+                .bind(first)
+                .bind(last)
+                .bind(admin)
+                .execute(&db)
+                .await?
+                .rows_affected();
+                let name = format!("{first} {last}{}", if admin { " (admin)" } else { "" });
+                if created == 1 {
+                    println!("{email:<34} {name:<28} {password}");
+                } else {
+                    println!("{email:<34} {name:<28} (already exists, unchanged)");
+                }
+            }
+        }
         "serve" => {
             let bind: SocketAddr = config.bind.parse()?;
             let state = AppState::connect(config).await?;
@@ -47,7 +85,7 @@ async fn main() -> anyhow::Result<()> {
                 })
                 .await?;
         }
-        other => anyhow::bail!("unknown command: {other} (serve | migrate | grant-admin <email>)"),
+        other => anyhow::bail!("unknown command: {other} (serve | migrate | grant-admin <email> | create-users < csv)"),
     }
     Ok(())
 }

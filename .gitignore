@@ -11,3 +11,4 @@ infra/secrets.local.env
 *.log
 apps/web/public/maplibre/
 *.tsbuildinfo
+infra/test-users.csv

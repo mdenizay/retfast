@@ -9,7 +9,7 @@ Dokploy `dp.mdenizay.com`, proje `retfast`, ortam `production`, sunucu `51.83.15
 | `postgres` (Postgres 17, `retfast-pg-*`) | **v3, canlı** | dışarıya kapalı |
 | `redis` (Redis 7, `retfast-redis-*`) | **v3, canlı** | dışarıya kapalı |
 | `v3` (compose, GitHub `v3` branch, otomatik deploy kapalı) | **v3, canlı**: `migrate` → `api` → `web` | `retfast.com/` + `www` → web:3000 · `retfast.com/api` → api:3001 (önek silinir) |
-| `web` (uygulama, eski tanıtım sitesi) | çalışıyor, **alan adı yok** | — (eski alan adı ayarları: `infra/legacy-web-domains.json`) |
+| ~~`web` (eski tanıtım sitesi)~~ | 2026-10-10 silindi | — |
 | `app` (compose, eski panel) | eski, canlı | `panel.retfast.com` — **`main`'e her push'ta otomatik deploy** |
 | `supabase` (compose) | eski, canlı | `supa.retfast.com` |
 
@@ -31,11 +31,13 @@ ssh ubuntu@51.83.159.253 "sudo tail -80 $(infra/scripts/status.sh --log)"   # de
 ssh ubuntu@51.83.159.253 "sudo docker exec \$(sudo docker ps -qf name=retfast-v3-.*-api) retfast-server grant-admin <email>"
 ```
 
-## Geri dönüş: eski tanıtım sitesine
+## Toplu hesap açma
 
-1. Dokploy → `v3` → Domains: `retfast.com` ve `www.retfast.com` (`/`) kayıtlarını sil, `v3`'ü yeniden deploy et.
-2. Dokploy → `web` uygulaması → Domains: `infra/legacy-web-domains.json` içindeki iki kaydı (port 80, https, letsencrypt) geri ekle.
-`retfast.com/api` yeni API'de kalabilir; eski siteyi etkilemez.
+`infra/test-users.csv` (git dışı, `email,ad,soyad[,admin]`) dosyasındaki hesapları açar, rastgele şifreleri bir kez yazdırır:
+
+```sh
+ssh ubuntu@51.83.159.253 'sudo docker exec -i $(sudo docker ps -qf name=retfast-v3-.*-api) retfast-server create-users' < infra/test-users.csv
+```
 
 ## İşletim
 

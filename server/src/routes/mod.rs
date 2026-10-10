@@ -14,6 +14,8 @@ mod admin;
 mod applications;
 mod events;
 mod ops;
+mod outreach;
+mod reports;
 mod tracking;
 mod ws;
 
@@ -24,6 +26,8 @@ pub fn app(state: AppState) -> Router {
         .merge(applications::router())
         .merge(tracking::router())
         .merge(ops::router())
+        .merge(outreach::router())
+        .merge(reports::router())
         .merge(admin::router())
         .layer(TimeoutLayer::with_status_code(StatusCode::GATEWAY_TIMEOUT, Duration::from_secs(20)))
         // Zaman aşımı WS'e uygulanmaz.

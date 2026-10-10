@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import type { Application, EventDetail, Member, PointKind, Role } from "@retfast/core";
+import type { Announcement, Application, EventDetail, EventReport, Member, PointKind, Role } from "@retfast/core";
 import { MapView, POINT_COLORS, setEventFeatures } from "@/components/map";
 import { Badge, Button, Card, Empty, ErrorText, Field, Input, Pills, Select, Spinner, Textarea } from "@/components/ui";
 import { api, errorCode } from "@/lib/api";
@@ -12,7 +12,7 @@ import type { Map as MlMap } from "maplibre-gl";
 import { isDarkBase, type BasemapId } from "@/lib/basemaps";
 import { EventForm } from "@/components/events/event-form";
 
-type Tab = "applications" | "members" | "map" | "vehicles" | "settings";
+type Tab = "applications" | "members" | "map" | "vehicles" | "announcements" | "report" | "settings";
 const ROLES: Role[] = ["pilot", "retriever", "observer"];
 const KINDS: PointKind[] = ["takeoff", "landing", "alt_landing", "emergency_landing", "meeting", "hazard"];
 
@@ -37,12 +37,14 @@ export default function ManagePage() {
         <Link href={`/app/events/${ev.id}/live`} className="ml-auto"><Button variant="primary">{t("events.open_console")}</Button></Link>
       </div>
       <Pills className="mt-6 max-w-full overflow-x-auto" value={tab} onChange={setTab}
-        options={(["applications", "members", "map", "vehicles", "settings"] as Tab[]).map((k) => ({ value: k, label: t(`manage.tab.${k}`) }))} />
+        options={(["applications", "members", "map", "vehicles", "announcements", "report", "settings"] as Tab[]).map((k) => ({ value: k, label: t(`manage.tab.${k}`) }))} />
       <div className="mt-6">
         {tab === "applications" && <Applications eventId={ev.id} />}
         {tab === "members" && <Members ev={ev} />}
         {tab === "map" && <Points ev={ev} onChange={reload} />}
         {tab === "vehicles" && <Vehicles ev={ev} onChange={reload} />}
+        {tab === "announcements" && <Announcements eventId={ev.id} />}
+        {tab === "report" && <Report eventId={ev.id} />}
         {tab === "settings" && <Settings ev={ev} onChange={setEv} />}
       </div>
     </div>
@@ -128,7 +130,8 @@ function Members({ ev }: { ev: EventDetail }) {
   const roles: Role[] = user?.is_system_admin ? ["event_admin", ...ROLES] : ROLES;
 
   return (
-    <div>
+    <div className="space-y-6">
+      <InviteBox eventId={ev.id} />
       <ErrorText>{error}</ErrorText>
       {list === null ? <Spinner /> : list.length === 0 ? <Empty>{t("dash.none")}</Empty> : (
         <div className="overflow-x-auto rounded-[28px] border border-hair">
@@ -292,5 +295,128 @@ function Settings({ ev, onChange }: { ev: EventDetail; onChange: (e: EventDetail
         {saved && <p className="mb-2 text-sm text-ok">{t("manage.saved")}</p>}
       </EventForm>
     </Card>
+  );
+}
+
+function InviteBox({ eventId }: { eventId: string }) {
+  const { t } = useI18n();
+  const { error, busy, run } = useAction();
+  const [msg, setMsg] = useState<string>();
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const f = new FormData(form);
+    const emails = String(f.get("emails") ?? "").split(/[\s,;]+/).filter(Boolean);
+    const ok = await run(async () => {
+      const r = await api.events.invite(eventId, { emails, message: String(f.get("message") ?? "") });
+      setMsg([t("invite.sent", { n: r.sent }), r.skipped.length ? t("invite.skipped", { list: r.skipped.join(", ") }) : ""].filter(Boolean).join(" "));
+    });
+    if (ok) form.reset();
+  }
+  return (
+    <Card className="p-5">
+      <form onSubmit={submit} className="space-y-3">
+        <p className="t-headline">{t("invite.title")}</p>
+        <Field label={t("invite.emails")}><Textarea name="emails" required rows={3} /></Field>
+        <Field label={t("invite.message")}><Input name="message" maxLength={1000} /></Field>
+        <ErrorText>{error}</ErrorText>
+        {msg && <p className="text-sm text-ok">{msg}</p>}
+        <Button variant="primary" disabled={busy}>{t("invite.send")}</Button>
+      </form>
+    </Card>
+  );
+}
+
+function Announcements({ eventId }: { eventId: string }) {
+  const { t, locale } = useI18n();
+  const [list, setList] = useState<Announcement[] | null>(null);
+  const { error, busy, run } = useAction();
+  const load = useCallback(() => api.events.announcements(eventId).then((r) => setList(r.data)), [eventId]);
+  useEffect(() => void load(), [load]);
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const f = new FormData(form);
+    const ok = await run(() => api.events.postAnnouncement(eventId, { title: String(f.get("title")), body: String(f.get("body") ?? "") }));
+    if (ok) {
+      form.reset();
+      void load();
+    }
+  }
+  return (
+    <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+      <div className="space-y-3">
+        {list === null ? <Spinner /> : list.length === 0 ? <Empty>{t("ann.none")}</Empty> : list.map((a) => (
+          <Card key={a.id} className="p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="t-headline">{a.title}</p>
+                <p className="t-foot">{a.author} · {formatDate(locale, a.created_at, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>
+              </div>
+              <Button size="sm" variant="ghost" onClick={() => run(() => api.events.deleteAnnouncement(a.id)).then(load)}>{t("common.delete")}</Button>
+            </div>
+            {a.body && <p className="mt-3 whitespace-pre-line text-[15px]">{a.body}</p>}
+          </Card>
+        ))}
+      </div>
+      <Card className="h-fit p-5">
+        <form onSubmit={submit} className="space-y-3">
+          <Field label={t("ann.title")}><Input name="title" required maxLength={120} /></Field>
+          <Field label={t("ann.body")}><Textarea name="body" rows={5} maxLength={4000} /></Field>
+          <ErrorText>{error}</ErrorText>
+          <Button variant="primary" className="w-full" disabled={busy}>{t("ann.post")}</Button>
+        </form>
+      </Card>
+    </div>
+  );
+}
+
+function Report({ eventId }: { eventId: string }) {
+  const { t } = useI18n();
+  const [r, setR] = useState<EventReport | null>(null);
+  useEffect(() => void api.events.report(eventId).then(setR), [eventId]);
+  if (!r) return <Spinner />;
+  const n = (v: number | null | undefined) => (v == null ? "—" : String(v));
+  const tiles: [string, string][] = [
+    [t("report.members"), String(Object.values(r.members).reduce((a, b) => a + (b ?? 0), 0))],
+    [t("report.flights"), n(r.flights.total)],
+    [t("report.flights_done"), n(r.flights.completed)],
+    [t("report.pilots_flown"), n(r.flights.pilots)],
+    [t("report.airtime"), n(r.flights.avg_airtime_min)],
+    [t("report.retrieves"), n(r.retrieves.total)],
+    [t("report.retrieves_done"), n(r.retrieves.completed)],
+    [t("report.retrieves_cancelled"), n(r.retrieves.cancelled)],
+    [t("report.assign"), n(r.retrieves.avg_assign_min)],
+    [t("report.pickup"), n(r.retrieves.avg_pickup_min)],
+    [t("report.total"), n(r.retrieves.avg_total_min)],
+    [t("report.sos"), `${r.sos.resolved}/${r.sos.total}`],
+    [t("report.tracking"), n(r.tracking.points)],
+  ];
+  const max = Math.max(1, ...r.by_day.map((d) => d.flights));
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {tiles.map(([label, value], i) => (
+          <Card key={`${i}-${label}`} className="p-4">
+            <p className="t-foot">{label}</p>
+            <p className="t-metric mt-2">{value}</p>
+          </Card>
+        ))}
+      </div>
+      {r.by_day.length > 0 && (
+        <Card className="p-5">
+          <p className="t-headline">{t("report.by_day")}</p>
+          <div className="mt-4 flex h-32 items-end gap-2">
+            {r.by_day.map((d) => (
+              <div key={d.day} className="flex flex-1 flex-col items-center gap-1">
+                <span className="num t-foot">{d.flights}</span>
+                <div className="w-full rounded-t-[8px] bg-tint-fill" style={{ height: `${(d.flights / max) * 100}%`, minHeight: 4 }} />
+                <span className="t-foot">{d.day.slice(5)}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+    </div>
   );
 }

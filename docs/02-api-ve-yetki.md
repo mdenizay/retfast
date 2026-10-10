@@ -48,6 +48,10 @@ Hata: `{ "error": { "code", "message" } }` — istemci `code`'u çevirir. Liste:
 | `PUT /events/{id}/availability` | retriever | `{available, vehicle_id?}` |
 | `POST /events/{id}/sos` | her aktif üye | etkinlik durumundan bağımsız; tekrar gönderim aynı kaydı döner |
 | `POST /sos/{id}/ack` · `/resolve` | staff · staff veya sahibi | |
+| `GET/POST /events/{id}/announcements` · `DELETE /announcements/{id}` | member · admin | yayınlayınca tüm aktif üyelere bildirim + `announcement.posted` olayı |
+| `POST /events/{id}/invites` | admin | `{emails[≤50], message}`; Resend ile e-posta, kayıtlı kullanıcıya ayrıca bildirim; özel etkinlikte davet kodu e-postaya eklenir |
+| `GET /events/{id}/report` | staff | katılım, uçuş sayısı/süresi, retrieve atama/teslim süreleri, SOS, takip hacmi, günlük uçuş |
+| `GET /events/{id}/tracks/{user}/export?format=gpx\|igc&from&to` | kendisi, staff | iz dosyası indirir (IGC başlıkları ASCII, basınç irtifası 0) |
 | `GET /admin/users\|events\|stats` | sistem admini | |
 | `GET /health` · `/ready` | herkes | `ready` Postgres + Redis'i yoklar |
 
@@ -61,9 +65,10 @@ Eşzamanlılık kuralı: her durum geçişi `UPDATE … WHERE status = ANY(izinl
 | `{"t":"positions","d":[{u,t,rx,lat,lon,acc,alt,spd,hdg,bat}]}` | ≤ 1/sn, kullanıcı başına son konum. `t` fix zamanı, `rx` sunucuya varış; güncellik `t`'den hesaplanır |
 | `{"t":"<olay>","seq":N,"at":ms,"actor","subject","d":{…}}` | kalıcı operasyon olayı |
 | `{"t":"tracking.started\|stopped","subject"}` | geçici (seq yok) |
+| `{"t":"flight.suggestion","subject","d":{"kind":"takeoff\|landing"}}` | geçici. Sunucu GPS hızından kalkış/iniş **tahmini** üretir (kalkış: uçuş yokken son 5 nokta ≥ 4 m/s ve ≥ 15 sn; iniş: uçuyorken son 8 nokta < 1,5 m/s ve ≥ 40 sn; aynı öneri 10 dk'da bir). Durumu değiştirmez; istemci yalnızca ilgili pilota "kalkış yaptın mı?" diye sorar |
 | `{"t":"resync"}` | istemci geride kaldı; `GET /live` çek |
 
-Olaylar: `event.status`, `member.updated`, `member.removed`, `flight.takeoff`, `flight.landed`, `flight.completed`, `retrieve.requested`, `retrieve.assigned`, `retrieve.released`, `retrieve.arrived`, `retrieve.picked_up`, `retrieve.completed`, `retrieve.cancelled`, `retriever.availability`, `sos.raised`, `sos.acknowledged`, `sos.resolved`.
+Olaylar: `event.status`, `member.updated`, `member.removed`, `flight.takeoff`, `flight.landed`, `flight.completed`, `retrieve.requested`, `retrieve.assigned`, `retrieve.released`, `retrieve.arrived`, `retrieve.picked_up`, `retrieve.completed`, `retrieve.cancelled`, `retriever.availability`, `announcement.posted`, `sos.raised`, `sos.acknowledged`, `sos.resolved`.
 
 İstemci WS üzerinden komut göndermez; tüm yazmalar HTTP'dir (yeniden deneme ve yetki tek yerde). Sunucu 25 sn'de bir ping yollar.
 

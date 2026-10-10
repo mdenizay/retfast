@@ -40,3 +40,21 @@ pub fn application_decided(state: &AppState, to: String, locale: &str, event: &s
     };
     send(state, to, subject, text);
 }
+
+#[allow(clippy::too_many_arguments)]
+pub fn invitation(state: &AppState, to: String, locale: &str, event: &str, inviter: &str, url: &str, code: Option<&str>, message: &str) {
+    let tr = locale == "tr";
+    let subject = if tr { format!("{inviter} seni {event} etkinliğine davet etti") } else { format!("{inviter} invited you to {event}") };
+    let mut text = if tr {
+        format!("{inviter} seni {event} etkinliğine davet etti.\n\nEtkinlik sayfası: {url}\n")
+    } else {
+        format!("{inviter} invited you to {event}.\n\nEvent page: {url}\n")
+    };
+    if let Some(code) = code {
+        text.push_str(&format!("\n{}: {code}\n", if tr { "Davet kodu" } else { "Invite code" }));
+    }
+    if !message.is_empty() {
+        text.push_str(&format!("\n{message}\n"));
+    }
+    send(state, to, subject, text);
+}

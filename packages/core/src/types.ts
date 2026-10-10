@@ -230,3 +230,23 @@ export interface TrackingConfig {
   max_batch: number;
   heartbeat_s: number;
 }
+
+export interface Announcement {
+  id: Uuid;
+  title: string;
+  body: string;
+  created_at: string;
+  author: string;
+}
+
+export interface EventReport {
+  members: Partial<Record<Role, number>>;
+  flights: { total: number; completed: number; pilots: number; avg_airtime_min: number | null };
+  retrieves: {
+    total: number; completed: number; cancelled: number;
+    avg_assign_min: number | null; avg_pickup_min: number | null; avg_total_min: number | null;
+  };
+  sos: { total: number; resolved: number };
+  tracking: { points: number; users: number };
+  by_day: { day: string; flights: number }[];
+}

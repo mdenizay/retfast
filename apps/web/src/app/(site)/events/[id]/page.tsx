@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import type { EventDetail, Role } from "@retfast/core";
+import type { Announcement, EventDetail, Role } from "@retfast/core";
 import { MapView, POINT_COLORS, setEventFeatures } from "@/components/map";
 import { isDarkBase } from "@/lib/basemaps";
 import { Badge, Button, Card, ErrorText, Field, Input, Select, Spinner, Textarea } from "@/components/ui";
@@ -16,11 +16,16 @@ export default function EventPage() {
   const { user, loading } = useSession();
   const [ev, setEv] = useState<EventDetail | null>(null);
   const [error, setError] = useState<string>();
+  const [anns, setAnns] = useState<Announcement[]>([]);
 
   const load = useCallback(() => api.events.get(id).then(setEv).catch((x) => setError(err(errorCode(x)))), [id, err]);
   useEffect(() => {
     if (!loading) void load();
   }, [loading, load, user]);
+
+  useEffect(() => {
+    if (ev?.membership || user?.is_system_admin) void api.events.announcements(id).then((r) => setAnns(r.data)).catch(() => undefined);
+  }, [ev?.membership, user?.is_system_admin, id]);
 
   if (error) return <main className="mx-auto max-w-3xl px-4 py-16"><ErrorText>{error}</ErrorText></main>;
   if (!ev) return <main className="flex justify-center py-24"><Spinner /></main>;
@@ -59,6 +64,18 @@ export default function EventPage() {
                     {(p.description || p.instructions) && <p className="text-sm text-label-2">{p.description} {p.instructions}</p>}
                   </div>
                 </div>
+              ))}
+            </div>
+          )}
+          {anns.length > 0 && (
+            <div className="space-y-3">
+              <p className="t-section">{t("m.announcements")}</p>
+              {anns.slice(0, 5).map((a) => (
+                <Card key={a.id} className="p-4">
+                  <p className="t-headline">{a.title}</p>
+                  {a.body && <p className="mt-1 whitespace-pre-line text-[15px] text-label-2">{a.body}</p>}
+                  <p className="t-foot mt-2">{a.author}</p>
+                </Card>
               ))}
             </div>
           )}

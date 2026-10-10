@@ -1,5 +1,5 @@
 import type {
-  Application, EventDetail, EventSummary, EventPoint, LiveSnapshot, Member, MyEvents, Notification, OpEvent, PointKind,
+  Announcement, Application, EventReport, EventDetail, EventSummary, EventPoint, LiveSnapshot, Member, MyEvents, Notification, OpEvent, PointKind,
   Role, TrackingConfig, User, Uuid, Vehicle, ZoneKind,
 } from "./types";
 
@@ -92,6 +92,12 @@ export function createClient(opts: ClientOptions) {
       apply: (id: Uuid, b: { requested_role?: Role | null; message?: string; invite_code?: string }) =>
         post<{ id: Uuid; status: string }>(`/events/${id}/applications`, b),
       applications: (id: Uuid, status?: string) => get<{ data: Application[] }>(`/events/${id}/applications`, { status }),
+      announcements: (id: Uuid) => get<{ data: Announcement[] }>(`/events/${id}/announcements`),
+      postAnnouncement: (id: Uuid, b: { title: string; body?: string }) => post<{ id: Uuid }>(`/events/${id}/announcements`, b),
+      deleteAnnouncement: (announcementId: Uuid) => del<Ok>(`/announcements/${announcementId}`),
+      invite: (id: Uuid, b: { emails: string[]; message?: string }) => post<{ sent: number; skipped: string[] }>(`/events/${id}/invites`, b),
+      report: (id: Uuid) => get<EventReport>(`/events/${id}/report`),
+      exportPath: (id: Uuid, userId: Uuid, format: "gpx" | "igc") => `/events/${id}/tracks/${userId}/export?format=${format}`,
       live: (id: Uuid) => get<LiveSnapshot>(`/events/${id}/live`),
       log: (id: Uuid, after = 0) => get<{ data: OpEvent[] }>(`/events/${id}/log`, { after }),
       track: (id: Uuid, userId: Uuid, range?: { from?: string; to?: string }) =>

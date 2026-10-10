@@ -10,6 +10,7 @@ import { useLive } from '../lib/live';
 import { useSession } from '../lib/session';
 import { STATE_COLOR, useColors } from '../lib/theme';
 import { useTracker } from '../lib/tracker';
+import { AnnouncementsCard } from './announcements';
 import { EventMap, type MapPerson } from './event-map';
 import { TrackingCard } from './tracking-card';
 import { Badge, Button, Card, ErrorBox, Screen, Segmented, Text } from './ui';
@@ -90,6 +91,7 @@ export function RetrieverView({ ev }: { ev: EventDetail }) {
         <EventMap center={center} height={520} me={fix ?? null} people={people} points={ev.points.map((p) => ({ id: p.id, lon: p.lon, lat: p.lat, name: p.name, color: '#0a84ff' }))} />
       ) : (
         <>
+          <AnnouncementsCard eventId={ev.id} />
           <Card>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <View style={{ flex: 1, paddingRight: 12 }}>

@@ -23,6 +23,8 @@ export interface LiveOptions {
   onState: (s: LiveState) => void;
   onStatus?: (s: ConnectionStatus) => void;
   onEvent?: (e: OpEvent) => void;
+  /** Kalıcı olmayan (seq'siz) olaylar: ör. `flight.suggestion`. */
+  onTransient?: (e: { t: string; subject?: Uuid; d?: Record<string, unknown> }) => void;
 }
 
 export function connectLive(opts: LiveOptions): () => void {
@@ -95,7 +97,8 @@ export function connectLive(opts: LiveOptions): () => void {
         opts.onEvent?.(f as OpEvent);
         scheduleRefetch();
       } else {
-        // seq'siz geçici olay (tracking.started/stopped)
+        // seq'siz geçici olay (tracking.started/stopped, flight.suggestion)
+        opts.onTransient?.(f as { t: string; subject?: Uuid; d?: Record<string, unknown> });
         scheduleRefetch(1000);
       }
     };

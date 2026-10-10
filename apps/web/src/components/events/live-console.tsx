@@ -1,6 +1,6 @@
 "use client";
 import {
-  ArrowLeft, Check, CircleCheck, Clock, Copy, LifeBuoy, ListFilter, LocateFixed, Minus, Navigation, PlaneLanding, Plus, Phone, Route,
+  ArrowLeft, Check, CircleCheck, Clock, Copy, Download, LifeBuoy, ListFilter, LocateFixed, Minus, Navigation, Pause, PlaneLanding, Play, Plus, Phone, Route,
   Scan, Search, Settings2, Siren, Spline, WifiOff, X, Car, CarFront,
 } from "lucide-react";
 import Link from "next/link";
@@ -75,6 +75,7 @@ export function LiveConsole({ eventId }: { eventId: string }) {
   const [track, setTrack] = useState<[number, number][] | null>(null);
   const [error, setError] = useState<string>();
   const [drawer, setDrawer] = useState(false);
+  const [replayFor, setReplayFor] = useState<string | null>(null);
   const map = useRef<MlMap | null>(null);
   // Her stil yüklemesinde artar; harita verisini yeniden yazma tetikleyicisi.
   const [styleRev, setStyleRev] = useState(0);
@@ -205,6 +206,13 @@ export function LiveConsole({ eventId }: { eventId: string }) {
           paint: { "line-color": "#000000", "line-opacity": 0.35, "line-width": 6.5 } });
         m.addLayer({ id: "track", type: "line", source: "track", layout: { "line-cap": "round", "line-join": "round" },
           paint: { "line-color": "#ffb020", "line-width": 3.5 } });
+      }
+      if (!m.getSource("replay")) {
+        m.addSource("replay", { type: "geojson", data: empty });
+        m.addLayer({ id: "replay-line", type: "line", source: "replay", filter: ["==", ["geometry-type"], "LineString"],
+          layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#ffb020", "line-width": 4 } });
+        m.addLayer({ id: "replay-dot", type: "circle", source: "replay", filter: ["==", ["geometry-type"], "Point"],
+          paint: { "circle-radius": 9, "circle-color": "#ffb020", "circle-stroke-color": "#ffffff", "circle-stroke-width": 3 } });
       }
       if (!m.getSource("requests")) {
         m.addSource("requests", { type: "geojson", data: empty });
@@ -437,10 +445,15 @@ export function LiveConsole({ eventId }: { eventId: string }) {
               const r = await api.events.track(eventId, sel.user_id, { from: since });
               setTrack(r.points.map((p) => [p[2], p[1]]));
             }}
+            onReplay={() => setReplayFor(sel.user_id)}
             onClose={() => setSelected(null)}
           />
         )}
       </aside>
+
+      {replayFor && live && (
+        <ReplayBar key={replayFor} eventId={eventId} userId={replayFor} name={members.get(replayFor) ? name(members.get(replayFor)!) : ""} map={map} onClose={() => setReplayFor(null)} />
+      )}
 
       {/* Harita kontrolleri */}
       <div className="absolute bottom-9 left-[420px] z-10 flex items-center gap-2.5 max-md:bottom-4 max-md:left-4">
@@ -508,7 +521,7 @@ function MemberRow({ m, pos, ageMs, stops, selected, sos, onClick }: {
 function DetailPanel(props: {
   eventId: string; m: LiveMember; pos?: Position; ageMs: number; retrieve?: Retrieve; stops: Retrieve[]; sos?: SosAlert;
   members: Map<string, LiveMember>; vehicles: EventDetail["vehicles"]; follow: boolean; onFollow: () => void;
-  trackShown: boolean; onTrack: () => void; onClose: () => void;
+  trackShown: boolean; onTrack: () => void; onReplay: () => void; onClose: () => void;
 }) {
   const { eventId, m, pos, ageMs, retrieve, stops, sos, members } = props;
   const { t, err, locale } = useI18n();
@@ -580,6 +593,9 @@ function DetailPanel(props: {
             <div className="group">
               <ActionRow icon={LocateFixed} label={props.follow ? t("live.unfollow") : t("live.follow")} active={props.follow} onClick={props.onFollow} />
               <ActionRow icon={Spline} label={props.trackShown ? t("live.hide_track") : t("live.track")} active={props.trackShown} onClick={props.onTrack} />
+              <ActionRow icon={Play} label={t("live.replay")} onClick={props.onReplay} />
+              <ActionRow icon={Download} label={t("live.export_gpx")} href={`/api/v1${api.events.exportPath(eventId, m.user_id, "gpx")}`} />
+              <ActionRow icon={Download} label={t("live.export_igc")} href={`/api/v1${api.events.exportPath(eventId, m.user_id, "igc")}`} />
               <ActionRow icon={copied ? Check : Copy} label={copied ? t("live.copied") : t("live.copy_position")} hint={`${pos.lat.toFixed(5)}, ${pos.lon.toFixed(5)}`}
                 onClick={() => {
                   void navigator.clipboard.writeText(`${m.first_name} ${m.last_name}: https://maps.google.com/?q=${pos.lat.toFixed(6)},${pos.lon.toFixed(6)}`);
@@ -741,6 +757,98 @@ function Timeline({ eventId, members, lastSeq }: { eventId: string; members: Map
                 );
       })}
       </div>
+    </div>
+  );
+}
+
+
+type TrackPoint = [number, number, number, number | null, number | null];
+
+/** Uçuşu zaman çizelgesiyle oynatır: kaydırma çubuğu, oynat/duraklat ve hız seçimi. İz haritadaki `replay` kaynağına çizilir. */
+function ReplayBar({ eventId, userId, name: who, map, onClose }: { eventId: string; userId: string; name: string; map: { current: MlMap | null }; onClose: () => void }) {
+  const { t, locale } = useI18n();
+  const [pts, setPts] = useState<TrackPoint[] | null>(null);
+  const [i, setI] = useState(0);
+  const [playing, setPlaying] = useState(true);
+  const [speed, setSpeed] = useState(60);
+  const idx = useRef(0);
+
+  useEffect(() => {
+    void api.events.track(eventId, userId).then((r) => setPts(r.points as TrackPoint[]));
+    return () => {
+      (map.current?.getSource("replay") as GeoJSONSource | undefined)?.setData({ type: "FeatureCollection", features: [] });
+    };
+  }, [eventId, userId, map]);
+
+  // Oynatma: gerçek zaman × hız; sıradaki noktaya ilerler.
+  useEffect(() => {
+    if (!pts || !playing || pts.length < 2) return;
+    let raf = 0;
+    let last = performance.now();
+    let simT = pts[idx.current]![0];
+    const tick = (now: number) => {
+      simT += (now - last) * speed;
+      last = now;
+      let j = idx.current;
+      while (j < pts.length - 1 && pts[j + 1]![0] <= simT) j++;
+      if (j !== idx.current) {
+        idx.current = j;
+        setI(j);
+      }
+      if (j >= pts.length - 1) return setPlaying(false);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [pts, playing, speed]);
+
+  // Çizim: geçilen yol + güncel nokta; kamera noktayı izler.
+  useEffect(() => {
+    const m = map.current;
+    const cur = pts?.[i];
+    if (!m || !pts || !cur) return;
+    const done = pts.slice(0, i + 1).map((p) => [p[2], p[1]]);
+    (m.getSource("replay") as GeoJSONSource | undefined)?.setData({
+      type: "FeatureCollection",
+      features: [
+        ...(done.length > 1 ? [{ type: "Feature" as const, properties: {}, geometry: { type: "LineString" as const, coordinates: done } }] : []),
+        { type: "Feature" as const, properties: {}, geometry: { type: "Point" as const, coordinates: [cur[2], cur[1]] } },
+      ],
+    });
+    m.easeTo({ center: [cur[2], cur[1]], duration: 250, padding: PANEL_PADDING });
+  }, [pts, i, map]);
+
+  const cur = pts?.[i];
+  return (
+    <div className="glass absolute bottom-24 left-1/2 z-30 w-[min(560px,calc(100vw-2rem))] -translate-x-1/2 rounded-[28px] p-4">
+      <div className="flex items-center gap-3">
+        <IconButton label={playing ? "Pause" : "Play"} className="size-10 bg-fill" onClick={() => {
+          if (pts && idx.current >= pts.length - 1) {
+            idx.current = 0;
+            setI(0);
+          }
+          setPlaying((p) => !p);
+        }}>{playing ? <Pause /> : <Play />}</IconButton>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[14px] font-medium">{who}</p>
+          <p className="num t-foot">
+            {cur ? formatDate(locale, new Date(cur[0]).toISOString(), { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : ""}
+            {cur?.[3] != null ? ` · ${Math.round(cur[3])} m` : ""}{cur?.[4] != null ? ` · ${Math.round(cur[4] * 3.6)} km/h` : ""}
+          </p>
+        </div>
+        <Pills value={String(speed)} onChange={(v) => setSpeed(Number(v))} options={[{ value: "15", label: "15×" }, { value: "60", label: "60×" }, { value: "240", label: "240×" }]} />
+        <IconButton label={t("live.replay_close")} className="size-9 bg-fill" onClick={onClose}><X /></IconButton>
+      </div>
+      {pts && pts.length < 2 ? (
+        <p className="t-foot mt-3">{t("live.replay_empty")}</p>
+      ) : (
+        <input type="range" min={0} max={Math.max(0, (pts?.length ?? 1) - 1)} value={i} aria-label="Replay position"
+          onChange={(e) => {
+            idx.current = Number(e.target.value);
+            setI(idx.current);
+          }}
+          className="mt-3 h-2 w-full cursor-pointer accent-[var(--tint-fill)]" />
+      )}
     </div>
   );
 }

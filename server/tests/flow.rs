@@ -479,3 +479,73 @@ async fn late_points_after_user_stop_are_accepted() {
     let (status, code) = s.err("POST", &format!("/events/{ev}/tracking/points"), &pilot, body).await;
     assert_eq!((status, code.as_str()), (StatusCode::CONFLICT, "TRACKING_SESSION_CLOSED"), "removed members cannot push points");
 }
+
+#[tokio::test]
+async fn announcements_report_export_and_suggestions() {
+    let s = spawn().await;
+    let root = s.sysadmin().await;
+    let ev = s.event(&root, "Outreach", "active").await;
+    let (pilot, outsider) = (s.user("pilot").await, s.user("outsider").await);
+    s.join(&root, &ev, &pilot, "pilot").await;
+
+    // Duyuru: yalnızca admin yayınlar; üyeler bildirim ve canlı olay alır; üye olmayan göremez.
+    let mut ws = s.ws(&ev, &pilot).await;
+    assert_eq!(s.err("POST", &format!("/events/{ev}/announcements"), &pilot, json!({ "title": "x" })).await.0, StatusCode::FORBIDDEN);
+    s.ok("POST", &format!("/events/{ev}/announcements"), &root, json!({ "title": "Briefing 08:00", "body": "Meeting point: square" }))
+        .await;
+    assert_eq!(ws.until("announcement.posted").await["d"]["title"], "Briefing 08:00");
+    let notes = s.ok("GET", "/me/notifications", &pilot, Value::Null).await;
+    assert_eq!(notes["data"][0]["kind"], "announcement");
+    let list = s.ok("GET", &format!("/events/{ev}/announcements"), &pilot, Value::Null).await;
+    assert_eq!(list["data"][0]["body"], "Meeting point: square");
+    assert_eq!(s.err("GET", &format!("/events/{ev}/announcements"), &outsider, Value::Null).await.0, StatusCode::FORBIDDEN);
+
+    // Davet: admin gönderir; tekrarlar ve geçersiz adresler ayıklanır.
+    let r = s.ok("POST", &format!("/events/{ev}/invites"), &root, json!({ "emails": ["a@example.com", "A@example.com", "broken"] })).await;
+    assert_eq!((r["sent"].as_i64(), r["skipped"][0].as_str()), (Some(1), Some("broken")));
+    assert_eq!(
+        s.err("POST", &format!("/events/{ev}/invites"), &pilot, json!({ "emails": ["b@example.com"] })).await.0,
+        StatusCode::FORBIDDEN
+    );
+
+    // Konum: hızlı hareket, uçuş yokken kalkış önerisi üretir; durum kendiliğinden değişmez.
+    let session = s.ok("POST", &format!("/events/{ev}/tracking/start"), &pilot, Value::Null).await;
+    let t = now_ms();
+    let points: Vec<Value> = (0..6)
+        .map(|i| json!({ "t": t - 30_000 + i * 6_000, "lat": 37.0 + i as f64 * 0.001, "lon": 29.0, "alt": 1500.0 + i as f64, "spd": 9.0 }))
+        .collect();
+    s.ok("POST", &format!("/events/{ev}/tracking/points"), &pilot, json!({ "session_id": session["session_id"], "points": points })).await;
+    let sug = ws.until("flight.suggestion").await;
+    assert_eq!((sug["subject"].as_str(), sug["d"]["kind"].as_str()), (Some(pilot.id.as_str()), Some("takeoff")));
+    let live = s.ok("GET", &format!("/events/{ev}/live"), &root, Value::Null).await;
+    let state = live["members"].as_array().unwrap().iter().find(|m| m["user_id"] == pilot.id.as_str()).unwrap()["pilot_state"].clone();
+    assert_eq!(state, "preparing", "a suggestion never changes state by itself");
+
+    // Dışa aktarma: GPX ve IGC; başkasının izini yalnızca yetkili indirebilir.
+    let gpx =
+        s.http.get(format!("{}/events/{ev}/tracks/{}/export?format=gpx", s.base, pilot.id)).bearer_auth(&pilot.token).send().await.unwrap();
+    assert_eq!(gpx.status(), StatusCode::OK);
+    assert!(gpx.headers()["content-disposition"].to_str().unwrap().contains(".gpx"));
+    let body = gpx.text().await.unwrap();
+    assert_eq!(body.matches("<trkpt").count(), 6);
+    let igc = s
+        .http
+        .get(format!("{}/events/{ev}/tracks/{}/export?format=igc", s.base, pilot.id))
+        .bearer_auth(&root.token)
+        .send()
+        .await
+        .unwrap()
+        .text()
+        .await
+        .unwrap();
+    assert_eq!(igc.lines().filter(|l| l.starts_with('B')).count(), 6);
+    assert_eq!(s.err("GET", &format!("/events/{ev}/tracks/{}/export", root.id), &pilot, Value::Null).await.0, StatusCode::FORBIDDEN);
+
+    // Rapor: yalnızca yetkililer.
+    s.ok("POST", &format!("/events/{ev}/flights/takeoff"), &pilot, Value::Null).await;
+    let report = s.ok("GET", &format!("/events/{ev}/report"), &root, Value::Null).await;
+    assert_eq!(report["members"]["pilot"], 1);
+    assert_eq!(report["flights"]["total"], 1);
+    assert_eq!(report["tracking"]["points"], 6);
+    assert_eq!(s.err("GET", &format!("/events/{ev}/report"), &pilot, Value::Null).await.0, StatusCode::FORBIDDEN);
+}

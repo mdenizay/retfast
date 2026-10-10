@@ -32,6 +32,11 @@ bunx expo run:ios                                                           # de
 
 Varsayılan API `https://retfast.com/api/v1`. Expo Go kullanılamaz (yerel modül var).
 
+## Önerilen kalkış/iniş
+
+Sunucu GPS hızından tahmin üretir ve `flight.suggestion` olayını WebSocket'ten yollar; pilotun ekranında "Kalkış yapmış gibisin…"
+bandı çıkar. **Pilot onaylamadıkça durum değişmez.** Detay ve eşikler: `docs/02-api-ve-yetki.md`.
+
 ## Bilinen kısıtlar / yapılacaklar
 
 - **UIScene:** iOS 27 SDK ile derlenen uygulamalar UIScene yaşam döngüsünü benimsemek zorunda. Expo şablonu henüz

@@ -244,7 +244,83 @@ async fn ingest(
             Err(e) => tracing::warn!(error = %e, "ingest: live position update failed"),
         }
     }
+    suggest_flight_change(&state, event_id, user.id).await;
     Ok(Json(json!({ "accepted": valid, "stored": stored, "server_time": now_ms })))
+}
+
+/// GPS'ten kalkış/iniş TAHMİNİ. Durumu kendiliğinden değiştirmez; yalnızca pilota "Kalkış yaptın mı?" önerisi gider
+/// (onay pilotundur). Yalnızca pilotlar için; aynı öneri 10 dakikada bir tekrarlanır.
+async fn suggest_flight_change(state: &AppState, event_id: Uuid, user_id: Uuid) {
+    let Ok(Some((is_pilot, flight))) = sqlx::query_as::<_, (bool, Option<String>)>(
+        "select exists(select 1 from event_members where event_id = $1 and user_id = $2 and role = 'pilot' and status = 'active'),
+                (select status from flights where event_id = $1 and pilot_id = $2 and status in ('preparing', 'flying', 'landed') limit 1)",
+    )
+    .bind(event_id)
+    .bind(user_id)
+    .fetch_optional(&state.db)
+    .await
+    else {
+        return;
+    };
+    if !is_pilot {
+        return;
+    }
+    let Ok(recent) = sqlx::query_as::<_, (OffsetDateTime, Option<f32>)>(
+        "select recorded_at, speed_mps from location_points where event_id = $1 and user_id = $2 order by recorded_at desc limit 8",
+    )
+    .bind(event_id)
+    .bind(user_id)
+    .fetch_all(&state.db)
+    .await
+    else {
+        return;
+    };
+    let Some(kind) = classify_motion(flight.as_deref(), &recent) else { return };
+    let mut redis = state.redis.clone();
+    let first: Result<Option<String>, _> =
+        redis::cmd("SET").arg(format!("sug:{event_id}:{user_id}:{kind}")).arg(1).arg("NX").arg("EX").arg(600).query_async(&mut redis).await;
+    if matches!(first, Ok(Some(_))) {
+        state.hub.event(event_id, &json!({ "t": "flight.suggestion", "subject": user_id, "d": { "kind": kind } })).await;
+    }
+}
+
+/// `recent`: en yeni önce. Kalkış: uçuş yokken son 5 noktanın hepsi ≥ 4 m/s ve ≥ 15 sn; iniş: uçuyorken son 8 noktanın
+/// hepsi < 1,5 m/s ve ≥ 40 sn.
+fn classify_motion(flight: Option<&str>, recent: &[(OffsetDateTime, Option<f32>)]) -> Option<&'static str> {
+    let span = |n: usize| recent.get(..n).map(|w| (w[0].0 - w[n - 1].0).whole_seconds());
+    let all = |n: usize, f: &dyn Fn(f32) -> bool| recent.get(..n).is_some_and(|w| w.iter().all(|p| p.1.is_some_and(f)));
+    match flight {
+        None | Some("preparing") if all(5, &|v| v >= 4.0) && span(5)? >= 15 => Some("takeoff"),
+        Some("flying") if all(8, &|v| v < 1.5) && span(8)? >= 40 => Some("landing"),
+        _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn pts(speeds: &[f32], step: i64) -> Vec<(OffsetDateTime, Option<f32>)> {
+        let t0 = OffsetDateTime::from_unix_timestamp(1_791_000_000).unwrap();
+        speeds.iter().enumerate().map(|(i, v)| (t0 - time::Duration::seconds(i as i64 * step), Some(*v))).collect()
+    }
+
+    #[test]
+    fn takeoff_needs_sustained_speed_and_no_open_flight() {
+        assert_eq!(classify_motion(None, &pts(&[9.0; 5], 5)), Some("takeoff"));
+        assert_eq!(classify_motion(Some("preparing"), &pts(&[9.0; 5], 5)), Some("takeoff"));
+        assert_eq!(classify_motion(Some("flying"), &pts(&[9.0; 5], 5)), None, "already flying");
+        assert_eq!(classify_motion(None, &pts(&[9.0, 9.0, 2.0, 9.0, 9.0], 5)), None, "one slow fix breaks it");
+        assert_eq!(classify_motion(None, &pts(&[9.0; 5], 2)), None, "too short in time");
+    }
+
+    #[test]
+    fn landing_needs_long_standstill_while_flying() {
+        assert_eq!(classify_motion(Some("flying"), &pts(&[0.2; 8], 6)), Some("landing"));
+        assert_eq!(classify_motion(Some("flying"), &pts(&[0.2; 8], 3)), None, "too short in time");
+        assert_eq!(classify_motion(None, &pts(&[0.2; 8], 6)), None, "not flying");
+        assert_eq!(classify_motion(Some("flying"), &pts(&[0.2; 7], 6)), None, "not enough fixes");
+    }
 }
 
 /// Canlı ekranın tam durumu. İstemci WS'e bağlanınca ve her yeniden bağlanışta bunu çeker,

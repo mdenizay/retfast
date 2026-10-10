@@ -5,6 +5,7 @@ import { WEB_URL } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { useLive } from '../lib/live';
 import { STATE_COLOR } from '../lib/theme';
+import { AnnouncementsCard } from './announcements';
 import { EventMap } from './event-map';
 import { Button, Card, Screen, Text } from './ui';
 
@@ -27,6 +28,7 @@ export function StaffView({ ev }: { ev: EventDetail }) {
   ];
   return (
     <Screen>
+      <AnnouncementsCard eventId={ev.id} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
         {tiles.map(([label, n]) => (
           <Card key={label} style={{ width: '48%', gap: 6 }}>

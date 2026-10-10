@@ -28,10 +28,17 @@ Her faz sonunda sistem çalışır durumda kalır; faz bitmeden sonrakine geçil
 5. Saha testi: ekran kilitli, düşük güç modu, zayıf bağlantı, 4+ saat; pil tüketimi ölçümü.
 6. TestFlight.
 
-## Faz 4 – Android + operasyon derinliği
-- Kotlin takip modülü (foreground service), FCM.
-- Retriever operasyon paneli, duyurular, davet e-postası, otomatik kalkış/iniş önerisi, etkinlik raporu.
-- Uçuş izinin yeniden oynatılması, IGC/GPX dışa aktarma.
+## Faz 4 – Operasyon derinliği (kısmen ✅)
+Yapıldı ve canlı:
+- Duyurular (yayınla/sil, üyelere bildirim, mobil ve web etkinlik sayfasında), e-posta daveti (Resend anahtarı girilene kadar yalnızca loglanır).
+- Etkinlik raporu (web: Yönet → Rapor).
+- İz dışa aktarma: GPX ve IGC (web konsolu detay paneli); uçuşu zaman çizelgesiyle oynatma (15×/60×/240×).
+- Otomatik kalkış/iniş **önerisi** (sunucu tarafı, mobilde pilota onay sorusu); durum kendiliğinden değişmez.
+
+Yapılmadı:
+- **Android takip modülü** (Kotlin, foreground service): bu makinede Android SDK ve JDK yok, derleyip doğrulayamadığım kodu "bitti" saymıyorum. Eski `legacy/v2-supabase` içindeki `TrackingService/SyncEngine/PointBuffer` taşınacak; iOS modülüyle aynı sözleşme (`docs/06-mobil.md`).
+- **Push bildirimi** (APNs/FCM): Apple Developer anahtarı ve Firebase projesi gerekiyor.
+- Retriever operasyon paneli (web) için ayrı ekran, akıllı atama önerisi, IGC içe aktarma.
 
 ## Faz 5 – Üretim sertleştirme
 - KVKK/GDPR: veri dışa aktarma, hesap silme, saklama süresi temizliği, metinler.

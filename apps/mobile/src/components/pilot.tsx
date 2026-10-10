@@ -8,6 +8,7 @@ import { useLive } from '../lib/live';
 import { useSession } from '../lib/session';
 import { STATE_COLOR, useColors } from '../lib/theme';
 import { useTracker } from '../lib/tracker';
+import { AnnouncementsCard } from './announcements';
 import { EventMap, type MapPerson } from './event-map';
 import { SosButton } from './sos-button';
 import { TrackingCard } from './tracking-card';
@@ -22,7 +23,7 @@ export function PilotView({ ev }: { ev: EventDetail }) {
   const c = useColors();
   const { user } = useSession();
   const tr = useTracker();
-  const { live } = useLive(ev.id, ev.status === 'active');
+  const { live, suggestion, clearSuggestion } = useLive(ev.id, ev.status === 'active', user?.id);
   const [tab, setTab] = useState<'flight' | 'map'>('flight');
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -78,6 +79,24 @@ export function PilotView({ ev }: { ev: EventDetail }) {
         <EventMap center={center} height={520} me={fix ?? null} people={people} points={ev.points.map((p) => ({ id: p.id, lon: p.lon, lat: p.lat, name: p.name, color: '#0a84ff' }))} />
       ) : (
         <>
+          {suggestion && ((suggestion === 'takeoff' && (state === 'preparing' || state === 'completed')) || (suggestion === 'landing' && state === 'flying')) ? (
+            <Card style={{ backgroundColor: c.blue + '1f' }}>
+              <Text v="headline">{t(suggestion === 'takeoff' ? 'm.suggest.takeoff' : 'm.suggest.landing')}</Text>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <Button style={{ flex: 1 }} variant="primary" title={t('m.suggest.yes')} loading={busy}
+                  onPress={() => {
+                    const kind = suggestion;
+                    clearSuggestion();
+                    if (kind === 'takeoff') void run(() => api.ops.takeoff(ev.id));
+                    else { const f = needFix(); if (f) void run(() => api.ops.land(ev.id, { lat: f.lat, lon: f.lon })); }
+                  }} />
+                <Button style={{ flex: 1 }} title={t('m.suggest.no')} onPress={clearSuggestion} />
+              </View>
+            </Card>
+          ) : null}
+
+          <AnnouncementsCard eventId={ev.id} />
+
           <Card style={{ alignItems: 'center', paddingVertical: 24 }}>
             <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: color + '2e', alignItems: 'center', justifyContent: 'center' }}>
               <Ico size={30} color={color} />

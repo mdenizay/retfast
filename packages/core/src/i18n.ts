@@ -158,6 +158,10 @@ const en = {
   "live.stops": "{n} stops",
   "live.capacity": "{used}/{cap} seats",
   "live.timeline": "Timeline",
+  "live.title": "Live map",
+  "live.event": "Event",
+  "live.alerts": "Alerts",
+  "live.fit_all": "Show everyone",
   "live.phone": "Phone",
   "live.since": "since {time}",
 
@@ -408,6 +412,10 @@ const tr: Record<MessageKey, string> = {
   "live.stops": "{n} durak",
   "live.capacity": "{used}/{cap} koltuk",
   "live.timeline": "Zaman çizelgesi",
+  "live.title": "Canlı harita",
+  "live.event": "Etkinlik",
+  "live.alerts": "Uyarılar",
+  "live.fit_all": "Herkesi göster",
   "live.phone": "Telefon",
   "live.since": "{time}'den beri",
 

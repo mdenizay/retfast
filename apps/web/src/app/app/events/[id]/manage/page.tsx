@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { Application, EventDetail, Member, PointKind, Role } from "@retfast/core";
 import { MapView, POINT_COLORS, setEventFeatures } from "@/components/map";
-import { Badge, Button, Card, Empty, ErrorText, Field, Input, Select, Spinner, Textarea, cx } from "@/components/ui";
+import { Badge, Button, Card, Empty, ErrorText, Field, Input, Pills, Select, Spinner, Textarea } from "@/components/ui";
 import { api, errorCode } from "@/lib/api";
 import { formatDate, useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
@@ -31,18 +31,12 @@ export default function ManagePage() {
     <div>
       <Link href={`/events/${ev.id}`} className="text-sm text-muted hover:text-ivory">← {ev.name}</Link>
       <div className="mt-2 flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-black tracking-tight">{t("manage.title")}</h1>
+        <h1 className="text-3xl font-light tracking-tight">{t("manage.title")}</h1>
         <Badge tone={ev.status === "active" ? "amber" : "default"}>{t(`status.${ev.status}`)}</Badge>
         <Link href={`/app/events/${ev.id}/live`} className="ml-auto"><Button variant="primary">{t("events.open_console")}</Button></Link>
       </div>
-      <div className="mt-6 flex gap-1 overflow-x-auto border-b border-line">
-        {(["applications", "members", "map", "vehicles", "settings"] as Tab[]).map((k) => (
-          <button key={k} onClick={() => setTab(k)}
-            className={cx("whitespace-nowrap border-b-2 px-4 py-2 text-sm", tab === k ? "border-amber text-ivory" : "border-transparent text-muted hover:text-ivory")}>
-            {t(`manage.tab.${k}`)}
-          </button>
-        ))}
-      </div>
+      <Pills className="mt-6 max-w-full overflow-x-auto" value={tab} onChange={setTab}
+        options={(["applications", "members", "map", "vehicles", "settings"] as Tab[]).map((k) => ({ value: k, label: t(`manage.tab.${k}`) }))} />
       <div className="mt-6">
         {tab === "applications" && <Applications eventId={ev.id} />}
         {tab === "members" && <Members ev={ev} />}
@@ -136,7 +130,7 @@ function Members({ ev }: { ev: EventDetail }) {
     <div>
       <ErrorText>{error}</ErrorText>
       {list === null ? <Spinner /> : list.length === 0 ? <Empty>{t("dash.none")}</Empty> : (
-        <div className="overflow-x-auto rounded-2xl border border-line">
+        <div className="overflow-x-auto rounded-[28px] border border-white/[0.06]">
           <table className="w-full text-sm">
             <tbody>
               {list.map((m) => (
@@ -210,7 +204,7 @@ function Points({ ev, onChange }: { ev: EventDetail; onChange: () => void }) {
         </Card>
         <div className="mt-4 grid gap-2">
           {ev.points.map((p) => (
-            <div key={p.id} className="flex items-center gap-3 rounded-xl border border-line bg-surface px-3 py-2 text-sm">
+            <div key={p.id} className="flex items-center gap-3 rounded-[20px] border border-white/[0.06] bg-surface/90 px-4 py-3 text-sm">
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: POINT_COLORS[p.kind] }} />
               <span className="flex-1">{p.name} <span className="text-muted">· {t(`point.${p.kind}`)} · {p.lat.toFixed(4)}, {p.lon.toFixed(4)}</span></span>
               <Button size="sm" variant="ghost" disabled={busy} onClick={() => run(() => api.events.deletePoint(ev.id, p.id)).then(onChange)}>{t("common.delete")}</Button>
@@ -257,7 +251,7 @@ function Vehicles({ ev, onChange }: { ev: EventDetail; onChange: () => void }) {
       <div className="grid gap-2">
         {ev.vehicles.length === 0 && <Empty>—</Empty>}
         {ev.vehicles.map((v) => (
-          <div key={v.id} className="flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3">
+          <div key={v.id} className="flex items-center gap-3 rounded-[20px] border border-white/[0.06] bg-surface/90 px-5 py-3.5">
             <span className="flex-1 font-medium">{v.name} <span className="text-sm text-muted">{v.plate} · {v.capacity} {t("manage.capacity").toLowerCase()}</span></span>
             <Button size="sm" variant="ghost" disabled={busy} onClick={() => run(() => api.events.deleteVehicle(ev.id, v.id)).then(onChange)}>{t("common.delete")}</Button>
           </div>

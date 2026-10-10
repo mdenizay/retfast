@@ -1,10 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { cookies, headers } from "next/headers";
+import { Inter } from "next/font/google";
 import type { Locale } from "@retfast/core";
 import { I18nProvider } from "@/lib/i18n";
 import { SessionProvider } from "@/lib/session";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.PUBLIC_WEB_URL ?? "https://retfast.com"),
@@ -13,7 +16,7 @@ export const metadata: Metadata = {
   icons: { icon: "/icon.svg" },
 };
 
-export const viewport: Viewport = { themeColor: "#0d0e10", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#0a0b0d", width: "device-width", initialScale: 1 };
 
 async function initialLocale(): Promise<Locale> {
   const c = (await cookies()).get("rf_locale")?.value;
@@ -25,7 +28,7 @@ async function initialLocale(): Promise<Locale> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await initialLocale();
   return (
-    <html lang={locale}>
+    <html lang={locale} className={inter.variable}>
       <body className="min-h-dvh">
         <I18nProvider initial={locale}>
           <SessionProvider>{children}</SessionProvider>

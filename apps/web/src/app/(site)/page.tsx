@@ -42,11 +42,11 @@ export default async function Landing() {
         <div className="pointer-events-none absolute inset-0 opacity-30 [background:radial-gradient(60rem_30rem_at_80%_-10%,#f3a71240,transparent),radial-gradient(40rem_20rem_at_0%_110%,#5ab8ff22,transparent)]" />
         <div className="relative mx-auto max-w-6xl px-4 py-20 sm:py-28">
           <p className="kicker">{t("landing.kicker")}</p>
-          <h1 className="mt-4 max-w-3xl text-4xl font-black leading-[1.05] tracking-tight sm:text-6xl">{t("landing.title")}</h1>
+          <h1 className="mt-4 max-w-3xl text-4xl font-light leading-[1.05] tracking-tight sm:text-6xl">{t("landing.title")}</h1>
           <p className="mt-6 max-w-2xl text-lg text-muted">{t("landing.lead")}</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/register" className="inline-flex h-12 items-center rounded-xl bg-amber px-6 font-semibold text-ink hover:brightness-110">{t("landing.cta")}</Link>
-            <Link href="#events" className="inline-flex h-12 items-center rounded-xl border border-amber/40 bg-raised px-6 hover:border-amber">{t("landing.cta_events")}</Link>
+            <Link href="/register" className="inline-flex h-12 items-center rounded-full bg-amber px-7 font-semibold text-ink hover:brightness-110">{t("landing.cta")}</Link>
+            <Link href="#events" className="inline-flex h-12 items-center rounded-full bg-white/[0.07] px-7 hover:bg-white/[0.12]">{t("landing.cta_events")}</Link>
           </div>
           <p className="mt-6 text-sm text-muted">{t("landing.apps")}</p>
         </div>
@@ -54,7 +54,7 @@ export default async function Landing() {
 
       <section className="mx-auto grid max-w-6xl gap-4 px-4 py-16 sm:grid-cols-2">
         {features.map(([title, body]) => (
-          <div key={title} className="rounded-2xl border border-line bg-surface p-6">
+          <div key={title} className="rounded-[28px] border border-white/[0.06] bg-surface/90 p-6">
             <h2 className="text-lg font-bold">{t(title)}</h2>
             <p className="mt-2 text-muted">{t(body)}</p>
           </div>
@@ -62,14 +62,14 @@ export default async function Landing() {
       </section>
 
       <section id="events" className="mx-auto max-w-6xl scroll-mt-20 px-4">
-        <h2 className="text-2xl font-black tracking-tight">{t("landing.events")}</h2>
+        <h2 className="text-3xl font-light tracking-tight">{t("landing.events")}</h2>
         {events.length === 0 && <p className="mt-6 text-muted">{t("landing.no_events")}</p>}
         {groups.filter(([, list]) => list.length > 0).map(([label, list]) => (
           <div key={label} className="mt-8">
             <p className="kicker">{t(label)}</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {list.map((e) => (
-                <Link key={e.id} href={`/events/${e.id}`} className="group rounded-2xl border border-line bg-surface p-5 transition hover:border-amber/60">
+                <Link key={e.id} href={`/events/${e.id}`} className="group rounded-[28px] border border-white/[0.06] bg-surface/90 p-5 transition hover:border-amber/60">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs text-muted">{[e.city, e.country].filter(Boolean).join(", ")}</span>
                     {e.status === "active" && <span className="rounded-full bg-amber-soft px-2 py-0.5 text-xs font-semibold text-amber">{t("status.active")}</span>}

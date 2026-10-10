@@ -7,22 +7,22 @@ import {
   type MessageKey, type OpEvent, type PilotState, type Position, type Retrieve, type SosAlert,
 } from "@retfast/core";
 import { MapView, setEventFeatures } from "@/components/map";
-import { Badge, Button, ErrorText, Select, Spinner, cx } from "@/components/ui";
+import { Badge, Button, ErrorText, Pills, Select, Spinner, cx } from "@/components/ui";
 import { api, errorCode, wsBase } from "@/lib/api";
 import { formatDate, useI18n } from "@/lib/i18n";
 
 const STATE_COLOR: Record<PilotState, string> = {
-  preparing: "#8a8473",
-  flying: "#5ab8ff",
-  landed: "#f3a712",
+  preparing: "#7d8088",
+  flying: "#6cc0ff",
+  landed: "#f3c112",
   awaiting_retrieve: "#ff8a3d",
-  retriever_assigned: "#c79bff",
-  picked_up: "#3fcf7a",
-  completed: "#6b675c",
+  retriever_assigned: "#b79cff",
+  picked_up: "#45d483",
+  completed: "#55585f",
 };
-const RETRIEVER_COLOR = "#fff4d6";
+const RETRIEVER_COLOR = "#f4f4f5";
 // Detay paneli haritanın sağını kapatır; odaklanan nokta görünür alanın ortasına gelsin.
-const PANEL_PADDING = { top: 0, bottom: 0, left: 0, right: 380 };
+const PANEL_PADDING = { top: 120, bottom: 40, left: 400, right: 390 };
 
 type Group = "sos" | "waiting" | "assigned" | "flying" | "landed" | "picked_up" | "lost" | "retrievers" | "preparing" | "done";
 const GROUPS: Group[] = ["sos", "waiting", "assigned", "flying", "landed", "picked_up", "lost", "retrievers", "preparing", "done"];
@@ -168,13 +168,13 @@ export function LiveConsole({ eventId }: { eventId: string }) {
       paint: {
         "circle-radius": ["case", ["==", ["get", "selected"], 1], 10, ["==", ["get", "sos"], 1], 10, 7],
         "circle-color": ["get", "color"], "circle-opacity": ["get", "opacity"],
-        "circle-stroke-color": ["case", ["==", ["get", "role"], "retriever"], "#0d0e10", "#ffffff"],
+        "circle-stroke-color": ["case", ["==", ["get", "role"], "retriever"], "#f3a712", "#0a0b0d"],
         "circle-stroke-width": ["case", ["==", ["get", "selected"], 1], 4, ["==", ["get", "role"], "retriever"], 3, 1.5],
         "circle-stroke-opacity": ["get", "opacity"],
       } });
     m.addLayer({ id: "people-label", type: "symbol", source: "people",
-      layout: { "text-field": ["get", "label"], "text-size": 11, "text-font": ["Noto Sans Bold"], "text-offset": [0, 1.4], "text-anchor": "top", "text-allow-overlap": false },
-      paint: { "text-color": "#0d0e10", "text-halo-color": "#fff4d6", "text-halo-width": 1.6, "text-opacity": ["get", "opacity"] } });
+      layout: { "text-field": ["get", "label"], "text-size": 11, "text-font": ["Noto Sans Regular"], "text-offset": [0, 1.4], "text-anchor": "top", "text-allow-overlap": false },
+      paint: { "text-color": "#ffffff", "text-halo-color": "#0a0b0d", "text-halo-width": 1.6, "text-opacity": ["get", "opacity"] } });
     for (const layer of ["people", "requests"]) {
       m.on("click", layer, (e) => {
         const id = e.features?.[0]?.properties?.id as string | undefined;
@@ -197,71 +197,89 @@ export function LiveConsole({ eventId }: { eventId: string }) {
     setFollow(false);
   }, [selected]);
 
+  // İlk konumlar gelince bir kez herkesi kapsayacak şekilde yakınlaş.
+  const fitted = useRef(false);
+  useEffect(() => {
+    const pts = Object.values(live?.positions ?? {});
+    if (fitted.current || !mapReady || !map.current || pts.length === 0) return;
+    fitted.current = true;
+    const lons = pts.map((p) => p.lon), lats = pts.map((p) => p.lat);
+    map.current.fitBounds([[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]],
+      { padding: { top: 140, bottom: 100, left: 420, right: 400 }, maxZoom: 13, duration: 0 });
+  }, [live?.positions, mapReady]);
+
   if (error) return <div className="p-8"><ErrorText>{error}</ErrorText></div>;
   if (!ev) return <div className="flex h-dvh items-center justify-center"><Spinner /></div>;
 
   const center: [number, number] = [ev.center_lon ?? ev.points[0]?.lon ?? 29.3, ev.center_lat ?? ev.points[0]?.lat ?? 37.1];
-  const activeSos = (live?.sos ?? []).filter((s) => s.status === "active");
+  const activeSos = (live?.sos ?? []).filter((s) => s.status !== "resolved");
   const sel = selected ? members.get(selected) : undefined;
+  const count = (g: Group) => grouped.get(g)?.length ?? 0;
+  const waiting = (live?.retrieves ?? []).filter((r) => r.status === "open");
+  const lost = grouped.get("lost") ?? [];
+  const fitAll = () => {
+    const pts = Object.values(live?.positions ?? {});
+    if (!map.current || pts.length === 0) return;
+    const lons = pts.map((p) => p.lon), lats = pts.map((p) => p.lat);
+    map.current.fitBounds([[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]],
+      { padding: { top: 140, bottom: 100, left: 440, right: sel ? 440 : 400 }, maxZoom: 14, duration: 700 });
+  };
+  const focus = (id: string) => {
+    setSelected(id);
+    const p = live?.positions[id];
+    if (p) map.current?.easeTo({ center: [p.lon, p.lat], zoom: Math.max(map.current.getZoom(), 12), padding: PANEL_PADDING });
+  };
 
   return (
-    <div className="flex h-dvh flex-col">
-      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-line bg-surface px-3">
-        <Link href={`/events/${eventId}`} className="text-muted hover:text-ivory" aria-label={t("common.back")}>←</Link>
-        <span className="truncate font-bold">{ev.name}</span>
-        <Badge tone={ev.status === "active" ? "amber" : "default"}>{t(`status.${ev.status}`)}</Badge>
-        <span className="ml-auto flex items-center gap-2 text-xs">
-          <span className={cx("h-2 w-2 rounded-full", status === "live" ? "bg-ok" : status === "offline" ? "bg-danger" : "bg-amber animate-pulse")} />
-          {t(`live.connection.${status}`)}
-        </span>
-      </header>
+    <div className="relative h-dvh overflow-hidden bg-ink">
+      <MapView center={center} zoom={ev.center_lat ? 11 : 8} onReady={onMapReady} controls={false} className="absolute inset-0" />
 
-      {activeSos.map((s) => {
-        const m = members.get(s.user_id);
-        return (
-          <button key={s.id} onClick={() => setSelected(s.user_id)}
-            className="sos-pulse flex shrink-0 items-center gap-3 bg-danger px-4 py-2 text-left font-semibold text-white">
-            <span className="rounded bg-white px-1.5 text-xs font-black text-danger">SOS</span>
-            {t("live.sos_banner", { name: m ? name(m) : "?" })}
-            <span className="num ml-auto text-sm font-normal">{formatDate(locale, s.created_at, { hour: "2-digit", minute: "2-digit" })}</span>
-          </button>
-        );
-      })}
+      {/* Sol sütun: gezinme, özet, liste */}
+      <aside className="pointer-events-none absolute inset-y-4 left-4 z-10 flex w-[372px] flex-col gap-3 max-md:hidden">
+        <nav className="glass pointer-events-auto flex items-center gap-1 rounded-full p-1.5">
+          <Link href={`/events/${eventId}`} aria-label={t("common.back")} className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-white/10 hover:text-ivory">
+            <svg viewBox="0 0 1024 1024" className="h-5 w-5" aria-hidden><path fill="#F3A712" d="M512 164 790 850 512 704 234 850 512 164Zm0 176-125 310 125-66 125 66-125-310Z" /></svg>
+          </Link>
+          <span className="h-9 rounded-full bg-white/[0.12] px-4 text-[13px] leading-9">{t("live.title")}</span>
+          <Link href={`/app/events/${eventId}/manage`} className="h-9 rounded-full px-4 text-[13px] leading-9 text-muted hover:text-ivory">{t("events.manage")}</Link>
+          <Link href={`/events/${eventId}`} className="h-9 rounded-full px-4 text-[13px] leading-9 text-muted hover:text-ivory">{t("live.event")}</Link>
+        </nav>
 
-      <div className="relative flex min-h-0 flex-1">
-        <aside className="flex w-[360px] shrink-0 flex-col border-r border-line bg-surface max-md:hidden">
-          <div className="flex gap-1 border-b border-line p-2">
-            {(["ops", "log"] as const).map((k) => (
-              <button key={k} onClick={() => setTab(k)} className={cx("flex-1 rounded-lg py-1.5 text-sm", tab === k ? "bg-raised text-ivory" : "text-muted")}>
-                {k === "ops" ? t("live.all") : t("live.timeline")}
-              </button>
-            ))}
+        <div className="pointer-events-auto grid grid-cols-2 gap-2">
+          <Stat2 label={t("live.group.flying")} value={count("flying")} dot={STATE_COLOR.flying} />
+          <Stat2 label={t("live.group.waiting")} value={count("waiting")} dot={STATE_COLOR.awaiting_retrieve} />
+          <Stat2 label={t("live.group.picked_up")} value={count("picked_up") + count("assigned")} dot={STATE_COLOR.picked_up} />
+          <Stat2 label={t("live.group.lost")} value={count("lost")} dot="#8b8d94" alert={count("lost") > 0} />
+        </div>
+
+        <section className="glass pointer-events-auto flex min-h-0 flex-1 flex-col rounded-[28px]">
+          <div className="flex items-center gap-2 p-3 pb-2">
+            <Pills value={tab} onChange={setTab} options={[{ value: "ops", label: t("live.all") }, { value: "log", label: t("live.timeline") }]} />
+            <span className="ml-auto flex items-center gap-1.5 pr-1 text-xs text-muted">
+              <span className={cx("h-1.5 w-1.5 rounded-full", status === "live" ? "bg-ok" : status === "offline" ? "bg-danger" : "animate-pulse bg-amber")} />
+              {t(`live.connection.${status}`)}
+            </span>
           </div>
           {tab === "ops" ? (
             <>
-              <div className="p-2">
+              <div className="px-3 pb-2">
                 <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("live.search")}
-                  className="h-9 w-full rounded-lg border border-line bg-ink px-3 text-sm focus:border-amber focus:outline-none" />
+                  className="h-10 w-full rounded-full border border-white/[0.06] bg-white/[0.04] px-4 text-sm placeholder:text-muted/60 focus:border-amber/50 focus:outline-none" />
               </div>
-              <div className="min-h-0 flex-1 overflow-y-auto pb-6">
+              <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-2 pb-3">
                 {!live && <div className="flex justify-center py-8"><Spinner /></div>}
                 {GROUPS.map((g) => {
                   const list = grouped.get(g);
                   if (!list?.length) return null;
                   return (
-                    <section key={g}>
-                      <p className={cx("kicker sticky top-0 z-10 bg-surface px-3 pb-1 pt-3", g === "sos" && "text-danger")}>
-                        {t(`live.group.${g}` as MessageKey)} · {list.length}
-                      </p>
-                      {list.map((m) => (
-                        <MemberRow key={m.user_id} m={m} pos={live?.positions[m.user_id]} ageMs={age(live?.positions[m.user_id])}
-                          stops={stopsByRetriever.get(m.user_id)?.length ?? 0} selected={selected === m.user_id}
-                          onClick={() => {
-                            setSelected(m.user_id);
-                            const p = live?.positions[m.user_id];
-                            if (p) map.current?.easeTo({ center: [p.lon, p.lat], zoom: Math.max(map.current.getZoom(), 12), padding: PANEL_PADDING });
-                          }} />
-                      ))}
+                    <section key={g} className="mt-1">
+                      <p className={cx("kicker px-2 pb-1 pt-3", g === "sos" && "text-danger")}>{t(`live.group.${g}` as MessageKey)} · {list.length}</p>
+                      <div className="space-y-1">
+                        {list.map((m) => (
+                          <MemberRow key={m.user_id} m={m} pos={live?.positions[m.user_id]} ageMs={age(live?.positions[m.user_id])}
+                            stops={stopsByRetriever.get(m.user_id)?.length ?? 0} selected={selected === m.user_id} onClick={() => focus(m.user_id)} />
+                        ))}
+                      </div>
                     </section>
                   );
                 })}
@@ -270,36 +288,112 @@ export function LiveConsole({ eventId }: { eventId: string }) {
           ) : (
             <Timeline eventId={eventId} members={members} lastSeq={live?.last_seq ?? 0} />
           )}
-        </aside>
+        </section>
+      </aside>
 
-        <div className="relative min-w-0 flex-1">
-          <MapView center={center} zoom={ev.center_lat ? 11 : 8} onReady={onMapReady} />
-          {sel && live && (
-            <DetailPanel
-              key={sel.user_id}
-              eventId={eventId}
-              m={sel}
-              pos={live.positions[sel.user_id]}
-              ageMs={age(live.positions[sel.user_id])}
-              retrieve={retrieveByPilot.get(sel.user_id)}
-              stops={stopsByRetriever.get(sel.user_id) ?? []}
-              sos={sosBy.get(sel.user_id)}
-              members={members}
-              vehicles={ev.vehicles}
-              follow={follow}
-              onFollow={() => setFollow((f) => !f)}
-              trackShown={!!track}
-              onTrack={async () => {
-                if (track) return setTrack(null);
-                const since = new Date(Date.now() - 12 * 3600_000).toISOString();
-                const r = await api.events.track(eventId, sel.user_id, { from: since });
-                setTrack(r.points.map((p) => [p[2], p[1]]));
-              }}
-              onClose={() => setSelected(null)}
-            />
-          )}
+      {/* Başlık */}
+      <div className="pointer-events-none absolute left-[408px] top-6 z-10 max-xl:hidden">
+        <h1 className="text-[34px] font-light leading-tight tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">{ev.name}</h1>
+        <div className="mt-2 flex gap-2">
+          <Badge tone={ev.status === "active" ? "amber" : "default"}>{t(`status.${ev.status}`)}</Badge>
+          <Badge>{t("events.members", { n: live?.members.length ?? ev.member_count })}</Badge>
         </div>
       </div>
+
+      {/* Sağ sütun: uyarılar + seçili kişi */}
+      <aside className="pointer-events-none absolute inset-y-4 right-4 z-10 flex w-[360px] max-w-[calc(100vw-2rem)] flex-col gap-3">
+        {(activeSos.length > 0 || (!sel && (waiting.length > 0 || lost.length > 0))) && (
+          <section className="glass pointer-events-auto max-h-[50%] overflow-y-auto rounded-[28px] p-3 scroll-thin">
+            {!sel && <p className="kicker px-2 pb-2">{t("live.alerts")}</p>}
+            <div className="space-y-2">
+              {activeSos.map((s) => {
+                const m = members.get(s.user_id);
+                return (
+                  <button key={s.id} onClick={() => focus(s.user_id)}
+                    className={cx("w-full rounded-[20px] border border-danger/30 bg-danger/15 p-3 text-left", s.status === "active" && "sos-pulse")}>
+                    <span className="flex items-center gap-2 text-sm font-medium text-white">
+                      <span className="rounded-full bg-danger px-2 py-0.5 text-[11px] font-bold">SOS</span>
+                      {m ? name(m) : "?"}
+                    </span>
+                    <span className="num mt-1 block text-xs text-white/70">
+                      {formatDate(locale, s.created_at, { hour: "2-digit", minute: "2-digit" })}{s.status === "acknowledged" ? ` · ${t("live.sos_ack")}` : ""}{s.message ? ` · ${s.message}` : ""}
+                    </span>
+                  </button>
+                );
+              })}
+              {!sel && waiting.map((r) => {
+                const m = members.get(r.pilot_id);
+                return (
+                  <button key={r.id} onClick={() => focus(r.pilot_id)} className="tile w-full rounded-[20px] p-3 text-left hover:bg-white/[0.07]">
+                    <span className="flex items-center gap-2 text-sm">
+                      <span className="h-2 w-2 rounded-full" style={{ background: STATE_COLOR.awaiting_retrieve }} />
+                      {m ? name(m) : "?"}
+                      <span className="num ml-auto text-xs text-muted">{shortAge(locale, now - Date.parse(r.requested_at))}</span>
+                    </span>
+                    <span className="mt-1 block text-xs text-muted">{t("pilot.awaiting_retrieve")}{r.note ? ` · “${r.note}”` : ""}</span>
+                  </button>
+                );
+              })}
+              {!sel && lost.map((m) => (
+                <button key={m.user_id} onClick={() => focus(m.user_id)} className="tile w-full rounded-[20px] p-3 text-left hover:bg-white/[0.07]">
+                  <span className="flex items-center gap-2 text-sm">
+                    <span className="h-2 w-2 rounded-full bg-muted" />{name(m)}
+                    <span className="num ml-auto text-xs text-muted">{shortAge(locale, age(live?.positions[m.user_id]))}</span>
+                  </span>
+                  <span className="mt-1 block text-xs text-muted">{t("live.group.lost")}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+        {sel && live && (
+          <DetailPanel
+            key={sel.user_id}
+            eventId={eventId}
+            m={sel}
+            pos={live.positions[sel.user_id]}
+            ageMs={age(live.positions[sel.user_id])}
+            retrieve={retrieveByPilot.get(sel.user_id)}
+            stops={stopsByRetriever.get(sel.user_id) ?? []}
+            sos={sosBy.get(sel.user_id)}
+            members={members}
+            vehicles={ev.vehicles}
+            follow={follow}
+            onFollow={() => setFollow((f) => !f)}
+            trackShown={!!track}
+            onTrack={async () => {
+              if (track) return setTrack(null);
+              const since = new Date(Date.now() - 12 * 3600_000).toISOString();
+              const r = await api.events.track(eventId, sel.user_id, { from: since });
+              setTrack(r.points.map((p) => [p[2], p[1]]));
+            }}
+            onClose={() => setSelected(null)}
+          />
+        )}
+      </aside>
+
+      {/* Harita kontrolleri */}
+      <div className="absolute bottom-5 left-[408px] z-10 flex gap-2 max-md:left-4">
+        <RoundButton label="+" onClick={() => map.current?.zoomIn()} />
+        <RoundButton label="◎" title={t("live.fit_all")} onClick={fitAll} />
+        <RoundButton label="−" onClick={() => map.current?.zoomOut()} />
+      </div>
+    </div>
+  );
+}
+
+function RoundButton({ label, title, onClick }: { label: string; title?: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} title={title} aria-label={title ?? label}
+      className="glass flex h-11 w-11 items-center justify-center rounded-full text-lg text-ivory hover:bg-white/10">{label}</button>
+  );
+}
+
+function Stat2({ label, value, dot, alert }: { label: string; value: number; dot: string; alert?: boolean }) {
+  return (
+    <div className={cx("glass rounded-[22px] px-4 py-3", alert && "border-danger/30")}>
+      <p className="flex items-center gap-2 text-[12px] text-muted"><span className="h-2 w-2 rounded-full" style={{ background: dot }} />{label}</p>
+      <p className="num mt-1 text-[32px] font-light leading-none tracking-tight">{value}</p>
     </div>
   );
 }
@@ -311,10 +405,10 @@ function MemberRow({ m, pos, ageMs, stops, selected, onClick }: {
   const f = pos ? freshness(ageMs) : null;
   const color = m.role === "retriever" ? RETRIEVER_COLOR : STATE_COLOR[m.pilot_state ?? "preparing"];
   return (
-    <button onClick={onClick} className={cx("flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-raised", selected && "bg-raised")}>
-      <span className="h-3 w-3 shrink-0 rounded-full border border-ink" style={{ background: color, opacity: f === "lost" ? 0.35 : 1 }} />
+    <button onClick={onClick} className={cx("flex w-full items-center gap-3 rounded-[18px] px-3 py-2.5 text-left transition hover:bg-white/[0.06]", selected && "bg-white/[0.09]")}>
+      <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: color, opacity: f === "lost" ? 0.35 : 1, boxShadow: `0 0 0 3px ${color}22` }} />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium">{name(m)}</span>
+        <span className="block truncate text-sm">{name(m)}</span>
         <span className="block truncate text-xs text-muted">
           {m.role === "retriever"
             ? stops ? `${t("live.on_duty")} · ${t("live.stops", { n: stops })}` : m.is_available ? t("live.available") : t("live.busy")
@@ -358,20 +452,20 @@ function DetailPanel(props: {
   const vehicle = props.vehicles.find((v) => v.id === m.vehicle_id);
 
   return (
-    <div className="absolute inset-y-0 right-0 z-20 flex w-[380px] max-w-full flex-col border-l border-line bg-surface/95 backdrop-blur">
-      <div className="flex items-start gap-3 border-b border-line p-4">
+    <div className="glass pointer-events-auto flex min-h-0 flex-1 flex-col rounded-[28px]">
+      <div className="flex items-start gap-3 p-5 pb-3">
         <div className="min-w-0 flex-1">
           <p className="kicker">{t(`role.${m.role}`)}</p>
-          <h2 className="truncate text-xl font-black tracking-tight">{name(m)}</h2>
+          <h2 className="truncate text-2xl font-light tracking-tight">{name(m)}</h2>
           {m.role === "pilot" && <Badge tone="amber">{t(`pilot.${state ?? "preparing"}`)}</Badge>}
           {m.role === "retriever" && <Badge tone={m.is_available ? "ok" : "default"}>{m.is_available ? t("live.available") : t("live.busy")}</Badge>}
         </div>
-        <button onClick={props.onClose} className="text-2xl leading-none text-muted hover:text-ivory" aria-label={t("common.close")}>×</button>
+        <button onClick={props.onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.06] text-lg text-muted hover:text-ivory" aria-label={t("common.close")}>×</button>
       </div>
 
-      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4">
+      <div className="scroll-thin min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pb-5">
         {sos && (
-          <div className="rounded-xl border border-danger bg-danger/10 p-3">
+          <div className="rounded-[20px] border border-danger/40 bg-danger/15 p-4">
             <p className="font-bold text-danger">SOS · {formatDate(locale, sos.created_at, { hour: "2-digit", minute: "2-digit" })}</p>
             {sos.message && <p className="mt-1 text-sm">{sos.message}</p>}
             <p className="mt-2 text-xs text-muted">{t("live.sos_disclaimer")}</p>
@@ -421,7 +515,7 @@ function DetailPanel(props: {
         {m.role === "pilot" && (
           <div className="space-y-3">
             {retrieve && (
-              <div className="rounded-xl border border-line p-3">
+              <div className="tile rounded-[20px] p-4">
                 <p className="kicker">{t(`retrieve.${retrieve.status}`)}</p>
                 <p className="num mt-1 text-sm text-muted">{t("live.since", { time: formatDate(locale, retrieve.requested_at, { hour: "2-digit", minute: "2-digit" }) })}</p>
                 {retrieve.note && <p className="mt-1 text-sm">“{retrieve.note}”</p>}
@@ -471,7 +565,7 @@ function DetailPanel(props: {
             {stops.map((r) => {
               const p = members.get(r.pilot_id);
               return (
-                <div key={r.id} className="flex items-center justify-between rounded-xl border border-line px-3 py-2 text-sm">
+                <div key={r.id} className="tile flex items-center justify-between rounded-[18px] px-4 py-2.5 text-sm">
                   <span>{p ? name(p) : "?"}</span>
                   <Badge>{t(`retrieve.${r.status}`)}</Badge>
                 </div>
@@ -487,9 +581,9 @@ function DetailPanel(props: {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-raised px-3 py-2">
-      <p className="text-[10px] uppercase tracking-wider text-muted">{label}</p>
-      <p className="text-lg font-bold">{value}</p>
+    <div className="tile rounded-[18px] px-4 py-3">
+      <p className="text-[11px] text-muted">{label}</p>
+      <p className="mt-0.5 text-2xl font-light tracking-tight">{value}</p>
     </div>
   );
 }
@@ -521,11 +615,11 @@ function Timeline({ eventId, members, lastSeq }: { eventId: string; members: Map
     })();
   }, [eventId, lastSeq]);
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
+    <div className="scroll-thin min-h-0 flex-1 overflow-y-auto pb-3">
       {items.filter((e) => LOG_KEYS[e.t]).map((e) => {
         const s = e.subject ? members.get(e.subject) : undefined;
         return (
-          <div key={e.seq} className="flex gap-3 border-b border-line/50 px-3 py-2 text-sm">
+          <div key={e.seq} className="mx-2 flex gap-3 rounded-[16px] px-3 py-2 text-sm hover:bg-white/[0.04]">
             <span className="num w-12 shrink-0 text-xs text-muted">{formatDate(locale, new Date(e.at).toISOString(), { hour: "2-digit", minute: "2-digit" })}</span>
             <span className="min-w-0">
               <span className="block truncate">{s ? name(s) : ""}</span>

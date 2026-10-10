@@ -34,7 +34,7 @@ export default function EventPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="kicker">{[ev.city, ev.region, ev.country].filter(Boolean).join(" · ")}</p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">{ev.name}</h1>
+          <h1 className="mt-2 text-3xl font-light tracking-tight sm:text-5xl">{ev.name}</h1>
           <p className="num mt-2 text-muted">{formatRange(locale, ev.starts_at, ev.ends_at)} · {t("events.members", { n: ev.member_count })}</p>
         </div>
         <div className="flex gap-2">
@@ -51,7 +51,7 @@ export default function EventPage() {
           {ev.points.length > 0 && (
             <div className="grid gap-2 sm:grid-cols-2">
               {ev.points.map((p) => (
-                <div key={p.id} className="flex items-start gap-3 rounded-xl border border-line bg-surface p-3">
+                <div key={p.id} className="flex items-start gap-3 rounded-[22px] border border-white/[0.06] bg-surface/90 p-3">
                   <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: POINT_COLORS[p.kind] }} />
                   <div className="min-w-0">
                     <p className="font-semibold">{p.name} <span className="text-xs font-normal text-muted">· {t(`point.${p.kind}`)}{p.altitude_m ? ` · ${Math.round(p.altitude_m)} m` : ""}</span></p>

@@ -21,7 +21,7 @@ export function LocaleSwitch() {
   const { user } = useSession();
   return (
     <button
-      className="h-8 rounded-lg px-2 text-xs font-semibold text-muted hover:text-ivory"
+      className="h-8 rounded-full px-3 text-xs font-medium text-muted hover:bg-white/[0.06] hover:text-ivory"
       onClick={() => {
         const next = locale === "tr" ? "en" : "tr";
         setLocale(next);
@@ -37,13 +37,13 @@ export function Header() {
   const { t } = useI18n();
   const { user, loading, logout } = useSession();
   return (
-    <header className="sticky top-0 z-30 border-b border-line/60 bg-ink/85 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
+    <header className="sticky top-0 z-30 px-4 pt-3">
+      <div className="glass mx-auto flex h-14 max-w-6xl items-center gap-4 rounded-full pl-5 pr-2.5">
         <Logo />
         <nav className="ml-4 hidden items-center gap-1 text-sm sm:flex">
-          <Link className="rounded-lg px-3 py-1.5 text-muted hover:text-ivory" href="/#events">{t("nav.events")}</Link>
-          {user && <Link className="rounded-lg px-3 py-1.5 text-muted hover:text-ivory" href="/app">{t("nav.dashboard")}</Link>}
-          {user?.is_system_admin && <Link className="rounded-lg px-3 py-1.5 text-muted hover:text-ivory" href="/app/admin">{t("nav.admin")}</Link>}
+          <Link className="rounded-full px-4 py-1.5 text-muted hover:bg-white/[0.06] hover:text-ivory" href="/#events">{t("nav.events")}</Link>
+          {user && <Link className="rounded-full px-4 py-1.5 text-muted hover:bg-white/[0.06] hover:text-ivory" href="/app">{t("nav.dashboard")}</Link>}
+          {user?.is_system_admin && <Link className="rounded-full px-4 py-1.5 text-muted hover:bg-white/[0.06] hover:text-ivory" href="/app/admin">{t("nav.admin")}</Link>}
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <LocaleSwitch />

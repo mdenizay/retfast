@@ -39,7 +39,7 @@ function LoginForm() {
 
   return (
     <Card className="mx-auto mt-16 max-w-md p-6">
-      <h1 className="text-2xl font-black tracking-tight">{t("auth.login_title")}</h1>
+      <h1 className="text-3xl font-light tracking-tight">{t("auth.login_title")}</h1>
       <form onSubmit={submit} className="mt-6 space-y-4">
         <Field label={t("auth.email")}><Input name="email" type="email" autoComplete="email" required /></Field>
         <Field label={t("auth.password")}><Input name="password" type="password" autoComplete="current-password" required /></Field>

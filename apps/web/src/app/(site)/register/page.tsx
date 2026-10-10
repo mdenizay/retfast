@@ -42,7 +42,7 @@ function RegisterForm() {
 
   return (
     <Card className="mx-auto mt-16 max-w-md p-6">
-      <h1 className="text-2xl font-black tracking-tight">{t("auth.register_title")}</h1>
+      <h1 className="text-3xl font-light tracking-tight">{t("auth.register_title")}</h1>
       <form onSubmit={submit} className="mt-6 space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <Field label={t("auth.first_name")}><Input name="first_name" autoComplete="given-name" required maxLength={80} /></Field>

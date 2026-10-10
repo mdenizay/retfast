@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { EventSummary } from "@retfast/core";
-import { Badge, Button, Card, ErrorText, Input, Select, Spinner, cx } from "@/components/ui";
+import { Badge, Button, Card, ErrorText, Input, Pills, Select, Spinner } from "@/components/ui";
 import { EventForm } from "@/components/events/event-form";
 import { api, errorCode } from "@/lib/api";
 import { formatRange, useI18n } from "@/lib/i18n";
@@ -19,12 +19,9 @@ export default function AdminPage() {
   if (!user?.is_system_admin) return <ErrorText>{t("error.FORBIDDEN")}</ErrorText>;
   return (
     <div>
-      <h1 className="text-2xl font-black tracking-tight">{t("admin.title")}</h1>
-      <div className="mt-6 flex gap-1 border-b border-line">
-        {(["events", "users", "stats"] as const).map((k) => (
-          <button key={k} onClick={() => setTab(k)} className={cx("border-b-2 px-4 py-2 text-sm", tab === k ? "border-amber" : "border-transparent text-muted")}>{t(`admin.${k}`)}</button>
-        ))}
-      </div>
+      <h1 className="text-3xl font-light tracking-tight">{t("admin.title")}</h1>
+      <Pills className="mt-6" value={tab} onChange={setTab}
+        options={(["events", "users", "stats"] as const).map((k) => ({ value: k, label: t(`admin.${k}`) }))} />
       <div className="mt-6">
         {tab === "events" && <Events />}
         {tab === "users" && <Users />}
@@ -65,7 +62,7 @@ function Events() {
       <div className="mt-6 grid gap-2">
         {list === null && <Spinner />}
         {list?.map((e) => (
-          <Link key={e.id} href={`/app/events/${e.id}/manage`} className="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3 hover:border-amber/60">
+          <Link key={e.id} href={`/app/events/${e.id}/manage`} className="flex flex-wrap items-center gap-3 rounded-[22px] border border-white/[0.06] bg-surface/90 px-5 py-3.5 hover:border-amber/60">
             <span className="flex-1 font-medium">{e.name}</span>
             <span className="num text-sm text-muted">{formatRange(locale, e.starts_at, e.ends_at)}</span>
             <Badge>{e.members}</Badge>
@@ -101,7 +98,7 @@ function Users() {
       {msg && <p className="mt-3 text-sm text-ok">{msg}</p>}
       <div className="mt-4 grid gap-2">
         {list?.map((u) => (
-          <div key={u.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3 text-sm">
+          <div key={u.id} className="flex flex-wrap items-center gap-3 rounded-[22px] border border-white/[0.06] bg-surface/90 px-5 py-3.5 text-sm">
             <span className="min-w-48 flex-1">
               <span className="font-medium">{u.first_name} {u.last_name}</span> {u.is_system_admin && <Badge tone="amber">admin</Badge>}
               <span className="block text-xs text-muted">{u.email}</span>
@@ -139,7 +136,7 @@ function Stats() {
       {Object.entries(s).map(([k, v]) => (
         <Card key={k} className="p-4">
           <p className="kicker">{k.replaceAll("_", " ")}</p>
-          <p className="num mt-1 text-2xl font-black">{typeof v === "object" ? JSON.stringify(v) : String(v)}</p>
+          <p className="num mt-1 text-3xl font-light tracking-tight">{typeof v === "object" ? JSON.stringify(v) : String(v)}</p>
         </Card>
       ))}
     </div>

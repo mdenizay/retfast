@@ -21,7 +21,7 @@ export default function Dashboard() {
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
       <section>
-        <h1 className="text-2xl font-black tracking-tight">{t("dash.title")}</h1>
+        <h1 className="text-3xl font-light tracking-tight">{t("dash.title")}</h1>
         {mine.memberships.length === 0 && <Empty>{t("dash.none")} <Link href="/#events" className="text-amber">{t("landing.cta_events")}</Link></Empty>}
         <div className="mt-4 grid gap-3">
           {mine.memberships.map(({ role, event: e }) => (
@@ -45,7 +45,7 @@ export default function Dashboard() {
             <p className="kicker mt-10">{t("dash.applications")}</p>
             <div className="mt-3 grid gap-2">
               {mine.applications.map((a) => (
-                <Link key={a.id} href={`/events/${a.event.id}`} className="flex items-center justify-between rounded-xl border border-line bg-surface px-4 py-3 hover:border-amber/60">
+                <Link key={a.id} href={`/events/${a.event.id}`} className="flex items-center justify-between rounded-[22px] border border-white/[0.06] bg-surface/90 px-4 py-3 hover:border-amber/60">
                   <span>{a.event.name}</span>
                   <Badge tone={a.status === "rejected" ? "danger" : "default"}>{a.status === "pending" ? t("manage.pending") : t("events.rejected")}</Badge>
                 </Link>
@@ -66,7 +66,7 @@ export default function Dashboard() {
         {notes.length === 0 && <Empty>{t("dash.no_notifications")}</Empty>}
         <div className="mt-3 space-y-2">
           {notes.slice(0, 30).map((n) => (
-            <div key={n.id} className={`rounded-xl border px-3 py-2 text-sm ${n.read_at ? "border-line text-muted" : "border-amber/40"}`}>
+            <div key={n.id} className={`rounded-[20px] border px-4 py-3 text-sm ${n.read_at ? "border-line text-muted" : "border-amber/40"}`}>
               <p>{notificationText(n, t)}</p>
               <p className="num text-xs text-muted">{formatDate(locale, n.created_at, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>
             </div>

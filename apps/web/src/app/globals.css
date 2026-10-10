@@ -1,20 +1,22 @@
 @import "tailwindcss";
 
-/* Retfast operasyon dili: grafit zemin, amber birincil eylem, fildişi metin.
-   Kırmızı ve yeşil yalnızca acil durum / onaylı başarı içindir. */
+/* Retfast arayüz dili: koyu grafit, harita merkezli; üstte yüzen cam paneller, büyük yuvarlatılmış
+   kartlar, hap biçimli kontroller, ince ve iri rakamlar. Amber marka/birincil eylem; kırmızı ve
+   yeşil yalnızca acil durum ve onaylı başarı için. */
 @theme {
-  --color-ink: #0d0e10;
-  --color-surface: #1b1b19;
-  --color-raised: #25241f;
-  --color-line: #3a382f;
+  --color-ink: #0a0b0d;
+  --color-surface: #16171a;
+  --color-raised: #212226;
+  --color-line: #2b2c31;
   --color-amber: #f3a712;
-  --color-amber-soft: #f3a71226;
-  --color-ivory: #fff4d6;
-  --color-muted: #b8ad92;
-  --color-danger: #ff4d3d;
-  --color-ok: #3fcf7a;
-  --color-sky: #5ab8ff;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --color-amber-soft: #f3a7121f;
+  --color-ivory: #ededee;
+  --color-muted: #8b8d94;
+  --color-danger: #ff5a4a;
+  --color-ok: #45d483;
+  --color-sky: #6cc0ff;
+  --color-violet: #b79cff;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 html {
@@ -27,11 +29,23 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.glass {
+  background: rgb(22 23 26 / 0.74);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgb(255 255 255 / 0.07);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.35);
+}
+
+.tile {
+  background: rgb(255 255 255 / 0.045);
+  border: 1px solid rgb(255 255 255 / 0.05);
+}
+
 .kicker {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   color: var(--color-muted);
 }
 
@@ -39,19 +53,29 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.maplibregl-popup-content {
-  background: var(--color-surface) !important;
-  color: var(--color-ivory);
-  border: 1px solid var(--color-line);
-  border-radius: 12px !important;
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 0.12) transparent;
 }
-.maplibregl-popup-tip {
-  display: none;
+
+.maplibregl-ctrl-attrib {
+  background: rgb(10 11 13 / 0.6) !important;
+  color: var(--color-muted) !important;
+  border-radius: 999px !important;
+  font-size: 10px;
+}
+.maplibregl-ctrl-attrib a {
+  color: var(--color-muted) !important;
+}
+.maplibregl-ctrl-scale {
+  background: rgb(10 11 13 / 0.6) !important;
+  color: var(--color-muted) !important;
+  border-color: var(--color-muted) !important;
 }
 
 @keyframes sos-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 #ff4d3d88; }
-  50% { box-shadow: 0 0 0 8px #ff4d3d00; }
+  0%, 100% { box-shadow: 0 0 0 0 #ff5a4a66; }
+  50% { box-shadow: 0 0 0 10px #ff5a4a00; }
 }
 .sos-pulse {
   animation: sos-pulse 1.4s ease-in-out infinite;

@@ -32,7 +32,7 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
     <Card className="p-6">
-      <h1 className="text-2xl font-black tracking-tight">{t("nav.profile")}</h1>
+      <h1 className="text-3xl font-light tracking-tight">{t("nav.profile")}</h1>
       <p className="text-sm text-muted">{user.email}</p>
       <form onSubmit={submit} className="mt-6 grid gap-4 sm:grid-cols-2">
         <Field label={t("auth.first_name")}><Input name="first_name" defaultValue={user.first_name} required /></Field>

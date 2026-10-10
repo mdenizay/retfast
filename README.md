@@ -9,8 +9,8 @@ etkinlik yönetimi, gerçek zamanlı konum takibi, retrieve operasyonu ve SOS �
 
 | Parça | Durum |
 |---|---|
-| `server/` – Rust API (kimlik, etkinlik, başvuru, konum, canlı yayın, retrieve, SOS) | çalışıyor, testli |
-| `apps/web/` – Next.js site + panel | Faz 2 |
+| `server/` – Rust API (kimlik, etkinlik, başvuru, konum, canlı yayın, retrieve, SOS) | canlı: https://retfast.com/api/v1 |
+| `apps/web/` – Next.js site + panel + canlı konsol | canlı: https://retfast.com |
 | `apps/mobile/` – Expo + yerel takip modülü | Faz 3 |
 
 ## Çalıştırma
@@ -25,6 +25,14 @@ cp .env.example .env
 cargo run -- migrate
 cargo run                      # http://127.0.0.1:3001/v1/health
 cargo run -- grant-admin sen@ornek.com   # kayıt olduktan sonra ilk sistem admini
+```
+
+Web (API çalışırken):
+
+```sh
+bun install
+bun run dev:web                # http://localhost:3000 (/api → 127.0.0.1:3001)
+bun scripts/simulate.ts --api http://127.0.0.1:3001/v1 --admin <email> --password <şifre>   # sahte pilotlar
 ```
 
 Test (her test kendi geçici veritabanını açar; Postgres ve Redis çalışıyor olmalı):

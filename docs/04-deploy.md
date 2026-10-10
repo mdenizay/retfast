@@ -1,50 +1,41 @@
 # 04 – Dağıtım (Dokploy)
 
-## Mevcut durum (2026-10-10) — dokunulmadı
+## Mevcut durum (2026-10-10)
 
-Dokploy `dp.mdenizay.com`, proje `retfast`, ortam `production`, sunucu `51.83.159.253`:
+Dokploy `dp.mdenizay.com`, proje `retfast`, ortam `production`, sunucu `51.83.159.253`. Kimlikler ve servis ID'leri git dışı `infra/secrets.local.env` içinde.
 
-| Servis | Alan adı | Kaynak |
+| Servis | Durum | Alan adı |
 |---|---|---|
-| `web` (uygulama) | `retfast.com`, `www` | elle yükleme |
-| `app` (compose) | `panel.retfast.com` | **GitHub `main`, her push'ta otomatik deploy** (`apps/web/docker-compose.yml`) |
-| `supabase` (compose) | `supa.retfast.com` | ham compose |
+| `postgres` (Postgres 17, `retfast-pg-*`) | **v3, canlı** | dışarıya kapalı |
+| `redis` (Redis 7, `retfast-redis-*`) | **v3, canlı** | dışarıya kapalı |
+| `v3` (compose, GitHub `v3` branch, otomatik deploy kapalı) | **v3, canlı**: `migrate` → `api` → `web` | `retfast.com/` + `www` → web:3000 · `retfast.com/api` → api:3001 (önek silinir) |
+| `web` (uygulama, eski tanıtım sitesi) | çalışıyor, **alan adı yok** | — (eski alan adı ayarları: `infra/legacy-web-domains.json`) |
+| `app` (compose, eski panel) | eski, canlı | `panel.retfast.com` — **`main`'e her push'ta otomatik deploy** |
+| `supabase` (compose) | eski, canlı | `supa.retfast.com` |
 
-> **`main`'e push eski paneli yeniden deploy eder.** Yeni kod `v3` branch'inde durur. `main`'e birleştirmeden önce `app` servisinin otomatik deploy'u kapatılmalı (veya servis `legacy/v2-supabase` branch'ine çevrilmeli).
+> **`main`'e push eski paneli yeniden deploy eder.** `v3`'ü `main`'e birleştirmeden önce `app` servisinin otomatik deploy'u kapatılmalı; ardından `v3` compose'u `main`'e çevrilir.
 
-Cloudflare: `retfast.com` bölgesi aktif. `api.retfast.com` A kaydı var ama arkasında servis yok. Resend DNS kayıtları (`send`, `resend._domainkey`) mevcut.
+DNS (Cloudflare): `retfast.com` A → 51.83.159.253, **proxy kapalı** (sertifika Traefik/Let's Encrypt). `www` CNAME → `retfast.com`. WebSocket doğrudan Traefik'e gider.
 
-## Hedef kurulum
+## Deploy
 
-Aynı projede, eskilerin yanında:
+```sh
+infra/scripts/deploy.sh      # deploy tetikler, bitene kadar bekler
+infra/scripts/status.sh      # durum ve son deploy'lar
+ssh ubuntu@51.83.159.253 "sudo tail -80 $(infra/scripts/status.sh --log)"   # deploy logu
+```
 
-| Servis | Tür | Not |
-|---|---|---|
-| `pg` | Dokploy Postgres 17 | dışarıya kapalı; günlük yedek |
-| `redis` | Dokploy Redis 7 | dışarıya kapalı; AOF gerekmez (kalıcı veri yok) |
-| `v3` | compose, GitHub `v3` → sonra `main` | `infra/compose/docker-compose.yml`; `migrate` → `api` (→ `web`, Faz 2) |
+İlk sistem admini (kullanıcı önce https://retfast.com/register ile kayıt olur):
 
-Alan adları (tek origin; cookie ve WS için CORS gerekmez):
+```sh
+ssh ubuntu@51.83.159.253 "sudo docker exec \$(sudo docker ps -qf name=retfast-v3-.*-api) retfast-server grant-admin <email>"
+```
 
-| Yol | Hedef |
-|---|---|
-| `v3.retfast.com/` | web (Faz 2) |
-| `v3.retfast.com/api` | api:3001, Traefik `/api` önekini siler |
+## Geri dönüş: eski tanıtım sitesine
 
-Geçiş günü `v3.retfast.com` → `retfast.com` olur; eski servisler durdurulur, silinmez.
-
-Geliştirme ortamı: aynı compose, ayrı Dokploy ortamı (`staging`), ayrı Postgres/Redis, `dev.retfast.com`.
-
-## Adımlar (henüz çalıştırılmadı — onay bekliyor)
-
-1. Dokploy'da `pg` ve `redis` servislerini oluştur; şifreleri üret.
-2. Compose servisi `v3`: depo `mdenizay/retfast`, branch `v3`, yol `infra/compose/docker-compose.yml`, otomatik deploy kapalı. Ortam değişkenleri: `infra/compose/.env.example`.
-3. Cloudflare: `v3.retfast.com` A → `51.83.159.253`, proxied, SSL Full (strict). WebSocket Cloudflare'de varsayılan açık.
-4. Dokploy → Domains: `v3.retfast.com` + yol `/api` → `api:3001`, "strip path" açık.
-5. Deploy, sonra: `docker exec <api> retfast-server grant-admin <email>`.
-6. Doğrula: `curl https://v3.retfast.com/api/v1/ready`.
-
-Kimlikler git dışı `infra/secrets.local.env` içinde tutulur (`DOKPLOY_TOKEN`, `CLOUDFLARE_API_TOKEN`, …). Şu an çalışan erişim `~/Works/yuut/infra/secrets.local.env` içindeki belirteçlerle doğrulandı (Dokploy proje listesi ve Cloudflare `retfast.com` bölgesi okunabiliyor).
+1. Dokploy → `v3` → Domains: `retfast.com` ve `www.retfast.com` (`/`) kayıtlarını sil, `v3`'ü yeniden deploy et.
+2. Dokploy → `web` uygulaması → Domains: `infra/legacy-web-domains.json` içindeki iki kaydı (port 80, https, letsencrypt) geri ekle.
+`retfast.com/api` yeni API'de kalabilir; eski siteyi etkilemez.
 
 ## İşletim
 

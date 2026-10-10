@@ -11,15 +11,14 @@ Her faz sonunda sistem çalışır durumda kalır; faz bitmeden sonrakine geçil
 - Uçtan uca testler (gerçek Postgres + Redis + WS), CI, Dockerfile, Dokploy compose.
 - Eksik bırakılanlar (bilinçli): davet e-postası, duyurular, push bildirimi, raporlar, veri saklama temizliği.
 
-## Faz 2 – Web paneli (sıradaki)
-1. `apps/web` (Next.js, Tailwind, shadcn/ui, en/tr) + `packages/shared` + `packages/api-client` (WS yeniden bağlanma/resync dahil).
-2. Giriş/kayıt, etkinlik listesi ve detayı, başvuru.
-3. Etkinlik admini: başvurular, üyeler, harita noktaları/bölgeleri, araçlar.
-4. **Observer ekranı**: canlı harita (MapLibre), operasyon listeleri, pilot detay paneli, retrieve atama, SOS alarmı.
-5. Sistem admini: etkinlikler, kullanıcılar, sağlık/istatistik.
-6. Yeni yığının `v3.retfast.com` altında yayına alınması (eski site ve panel dokunulmadan).
-
-Çıkış ölçütü: ilk sürüm akışı tarayıcıdan + betikle üretilen sahte pilotlarla baştan sona izlenebiliyor.
+## Faz 2 – Web paneli ✅ (retfast.com'da canlı)
+- `packages/core`: tipli API istemcisi, canlı bağlantı (WS + snapshot eşitleme, yeniden bağlanma), en/tr sözlükler.
+- `apps/web`: tanıtım sayfası + herkese açık etkinlikler, kayıt/giriş, etkinlik detayı ve başvuru, panelim, profil.
+- Observer canlı konsolu: MapLibre harita (arazi gölgelendirme), gruplu operasyon listesi, arama, pilot detay paneli, takip, iz gösterme, retrieve atama/iptal, pilot adına durum, SOS bandı + sesli uyarı, zaman çizelgesi.
+- Etkinlik admini: başvurular, katılımcı/rol/numara/araç, harita noktaları (haritaya tıklayarak), araçlar, ayarlar.
+- Sistem admini: etkinlik oluşturma, etkinlik admini atama, kullanıcı arama, sistem istatistikleri.
+- `scripts/simulate.ts`: sahte pilot/retriever ile yerel uçtan uca deneme.
+- Eksikler: bölge (polygon) çizimi, duyurular, davet e-postası, raporlar, açık tema, dar ekranda konsol listesi, uçuş izinin oynatılması.
 
 ## Faz 3 – Mobil (iOS)
 1. `apps/mobile` (Expo dev build): giriş, etkinliklerim, rol ekranları, harita.

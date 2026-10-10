@@ -45,3 +45,14 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun --filter '*' typecheck
       - run: cd apps/web && bun run build
+
+  mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bunx tsc --noEmit

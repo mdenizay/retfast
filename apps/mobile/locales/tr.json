@@ -1,0 +1,5 @@
+{
+  "NSLocationWhenInUseUsageDescription": "Retfast konumunu etkinlik haritasında gösterir ve takip açıkken organizasyonla paylaşır.",
+  "NSLocationAlwaysAndWhenInUseUsageDescription": "Retfast, ekran kilitliyken veya uygulama arka plandayken de konumunu organizasyonla paylaşmaya devam eder; böylece pilotlar ve retrieverlar hızlıca bulunur. Paylaşımı istediğin an durdurabilirsin.",
+  "NSLocationAlwaysUsageDescription": "Retfast, uygulama arka plandayken de konumunu organizasyonla paylaşmaya devam eder."
+}

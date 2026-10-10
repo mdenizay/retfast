@@ -1,0 +1,5 @@
+{
+  "NSLocationWhenInUseUsageDescription": "Retfast shows your position on the event map and shares it with the event organizers while you track.",
+  "NSLocationAlwaysAndWhenInUseUsageDescription": "Retfast keeps sharing your position with the organizers while the screen is locked or the app is in the background, so pilots and retrievers can be found quickly. You can stop sharing at any time.",
+  "NSLocationAlwaysUsageDescription": "Retfast keeps sharing your position with the organizers while the app is in the background."
+}

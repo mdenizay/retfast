@@ -159,10 +159,15 @@ async fn ingest(
         return Err(invalid("too many points in one batch"));
     }
     auth::rate_limit(&state, &format!("ingest:{}", user.id), 120, 60).await?;
-    // Oturum kapalıysa (etkinlik bitti, üyelik sonlandı, başka cihaz devraldı) cihaz takibi durdurmalı.
+    // Oturum kapalıysa (etkinlik bitti, üyelik sonlandı, admin kapattı) cihaz takibi durdurmalı. Kullanıcının kendi
+    // kapattığı veya başka cihazın devraldığı oturumun çevrimdışı kalmış kuyruğu 6 saat boyunca kabul edilir.
     let open: bool = sqlx::query_scalar(
         "select exists(select 1 from tracking_sessions s join events e on e.id = s.event_id
-            where s.id = $1 and s.event_id = $2 and s.user_id = $3 and s.ended_at is null and e.status = 'active')",
+            where s.id = $1 and s.event_id = $2 and s.user_id = $3 and e.status = 'active'
+              and exists(select 1 from event_members m where m.event_id = s.event_id and m.user_id = s.user_id
+                         and m.status = 'active' and m.role in ('pilot', 'retriever'))
+              and (s.ended_at is null
+                   or (s.end_reason in ('user', 'superseded') and s.ended_at > now() - interval '6 hours')))",
     )
     .bind(b.session_id)
     .bind(event_id)

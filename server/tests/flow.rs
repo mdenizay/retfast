@@ -459,3 +459,23 @@ async fn auth_and_sos() {
     s.ok("POST", "/auth/logout", &pilot, Value::Null).await;
     assert_eq!(s.call("GET", "/me", Some(&pilot.token), Value::Null).await.0, StatusCode::UNAUTHORIZED);
 }
+
+/// Çevrimdışı kalan kuyruk, kullanıcı takibi durdurduktan sonra da yüklenebilmeli; admin/etkinlik kapanışından sonra değil.
+#[tokio::test]
+async fn late_points_after_user_stop_are_accepted() {
+    let s = spawn().await;
+    let root = s.sysadmin().await;
+    let ev = s.event(&root, "Late", "active").await;
+    let pilot = s.user("late").await;
+    s.join(&root, &ev, &pilot, "pilot").await;
+    let session = s.ok("POST", &format!("/events/{ev}/tracking/start"), &pilot, Value::Null).await;
+    s.ok("POST", &format!("/events/{ev}/tracking/stop"), &pilot, Value::Null).await;
+    let body = json!({ "session_id": session["session_id"], "points": [{ "t": now_ms() - 30_000, "lat": 37.0, "lon": 29.0 }] });
+    let r = s.ok("POST", &format!("/events/{ev}/tracking/points"), &pilot, body.clone()).await;
+    assert_eq!(r["stored"], 1, "tail of a user-closed session is stored");
+
+    // Etkinlik admini oturumu kapatırsa (üyelikten çıkarma) kuyruk artık kabul edilmez.
+    s.ok("DELETE", &format!("/events/{ev}/members/{}", pilot.id), &root, Value::Null).await;
+    let (status, code) = s.err("POST", &format!("/events/{ev}/tracking/points"), &pilot, body).await;
+    assert_eq!((status, code.as_str()), (StatusCode::CONFLICT, "TRACKING_SESSION_CLOSED"), "removed members cannot push points");
+}

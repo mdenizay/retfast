@@ -1,0 +1,39 @@
+# Dokploy compose servisi. Postgres ve Redis ayrı Dokploy servisleridir (yedekleme Dokploy'dan yönetilir);
+# bağlantı bilgileri ortam değişkeniyle gelir. Alan adı yönlendirmesi Dokploy → Domains üzerinden yapılır:
+#   <alan adı>/api  → api:3001  (Traefik /api önekini siler; WebSocket: wss://<alan adı>/api/v1/events/{id}/ws)
+services:
+  migrate:
+    build: &server
+      context: ../..
+      dockerfile: infra/docker/server.Dockerfile
+    command: ["retfast-server", "migrate"]
+    environment: &env
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      PUBLIC_WEB_URL: ${PUBLIC_WEB_URL}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-Retfast <no-reply@retfast.com>}
+    restart: "no"
+    networks: [dokploy-network]
+
+  api:
+    build: *server
+    environment: *env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3001/v1/ready"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    # Açık WebSocket'lerin ve süren isteklerin kapanması için süre tanı.
+    stop_grace_period: 20s
+    restart: unless-stopped
+    networks: [dokploy-network]
+
+networks:
+  dokploy-network:
+    external: true

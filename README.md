@@ -1,48 +1,43 @@
-# RETFAST
+# Retfast
 
-Event-based real-time athlete tracking and retrieval platform for free-flight (paragliding XC) events.
+Yamaç paraşütü yarışmaları ve XC etkinlikleri için pilot, retriever ve observer koordinasyonu:
+etkinlik yönetimi, gerçek zamanlı konum takibi, retrieve operasyonu ve SOS — tek sistemde.
 
-- **Pilots** fly tasks; their positions stream live, buffered offline and synced in batches.
-- **Retrievers** pick pilots up after landing, with capacity tracking and a dispatch workflow.
-- **Observers / Event Admins / System Admins** run operations from the web dashboard.
+> Bu branch (`v3`) sıfırdan yazılan sürümdür. Önceki Supabase + native sürüm: `legacy/v2-supabase` (etiket `v2-final`).
 
-## Repository layout
+## Durum
 
-| Path | Contents |
+| Parça | Durum |
 |---|---|
-| [`/supabase`](supabase/) | Database migrations (schema, RLS, functions), seed scripts, Edge Functions |
-| [`/apps/web`](apps/web/) | React + TypeScript + Vite + Tailwind + shadcn/ui dashboard |
-| [`/apps/ios`](apps/ios/) | Native Swift / SwiftUI app for Pilots and Retrievers (`com.mizibu.retfast`) |
-| [`/apps/android`](apps/android/) | Native Kotlin / Compose app for Pilots and Retrievers |
-| [`/docs`](docs/) | Architecture, schema, RLS model, realtime strategy, iOS tracking & offline sync |
+| `server/` – Rust API (kimlik, etkinlik, başvuru, konum, canlı yayın, retrieve, SOS) | çalışıyor, testli |
+| `apps/web/` – Next.js site + panel | Faz 2 |
+| `apps/mobile/` – Expo + yerel takip modülü | Faz 3 |
 
-## Stack
+## Çalıştırma
 
-- **Backend/BaaS:** self-hosted [Supabase](https://supabase.com/docs/guides/self-hosting) (Postgres + PostGIS, GoTrue Auth, Realtime, Storage, Edge Functions) deployed with Dokploy.
-- **Web:** React 19, TypeScript, Vite, Tailwind CSS, shadcn/ui, MapLibre GL (behind a map-provider abstraction).
-- **iOS:** SwiftUI, `supabase-swift`, CoreLocation background tracking, local SQLite buffer.
-- **Android:** Kotlin, Jetpack Compose, `supabase-kt`, a `location` foreground service, same SQLite buffer contract.
-- **Email:** Resend. **Domain:** `retfast.com`.
+Gerekenler: Rust (stable), PostgreSQL 17, Redis.
 
-## Getting started
+```sh
+psql -d postgres -c "create role retfast login password 'retfast' createdb"
+createdb -O retfast retfast_dev
+cd server
+cp .env.example .env
+cargo run -- migrate
+cargo run                      # http://127.0.0.1:3001/v1/health
+cargo run -- grant-admin sen@ornek.com   # kayıt olduktan sonra ilk sistem admini
+```
 
-1. Copy env templates and fill in the values (never commit secrets):
+Test (her test kendi geçici veritabanını açar; Postgres ve Redis çalışıyor olmalı):
 
-   ```sh
-   cp apps/web/.env.example apps/web/.env
-   cp supabase/seed/.env.example supabase/seed/.env
-   ```
+```sh
+cd server && cargo test
+./scripts/drop-test-dbs.sh     # geçici veritabanlarını temizle
+```
 
-2. Apply migrations to the Supabase Postgres (see [`supabase/README.md`](supabase/README.md)).
-3. Seed the development scenario **Çameli XC-Open 2026**: `cd supabase/seed && npm install && npm run seed`.
-4. Web: `cd apps/web && npm install && npm run dev`.
-5. iOS: `cd apps/ios && xcodegen generate && open Retfast.xcodeproj` (requires [XcodeGen](https://github.com/yonaskolb/XcodeGen)).
-6. Android: see [`apps/android/README.md`](apps/android/README.md).
+## Dokümanlar
 
-## Documentation
-
-- [Architecture overview](docs/architecture.md)
-- [Database schema](docs/database.md)
-- [RLS / authorization model](docs/rls.md)
-- [Realtime strategy](docs/realtime.md)
-- [iOS background tracking & offline sync](docs/ios-tracking.md)
+- [00 – Teknik kararlar](docs/00-kararlar.md): backend dili, mobil yaklaşım, harita, konum veri hattı, monorepo, kimlik
+- [01 – Mimari ve veri modeli](docs/01-mimari.md)
+- [02 – API ve yetki](docs/02-api-ve-yetki.md)
+- [03 – Yol haritası](docs/03-yol-haritasi.md)
+- [04 – Dağıtım](docs/04-deploy.md)

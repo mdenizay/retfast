@@ -1,4 +1,5 @@
 import type { EventDetail, TrackingConfig } from '@retfast/core';
+import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Alert } from 'react-native';
@@ -94,7 +95,7 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
           return;
         }
         // 3) Sunucuda oturum aç (ayarlar sunucudan gelir) ve native takibi başlat.
-        const r = await api.tracking.start(ev.id, { platform: 'ios', app_version: '0.1.0' });
+        const r = await api.tracking.start(ev.id, { platform: 'ios', app_version: Constants.expoConfig?.version ?? 'unknown' });
         const token = getToken();
         if (!token) throw new Error('no token');
         await Tracking.start({ api_base: API_URL, token, event_id: ev.id, session_id: r.session_id, role, config: r.config as TrackingConfig });

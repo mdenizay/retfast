@@ -37,6 +37,25 @@ Varsayılan API `https://retfast.com/api/v1`. Expo Go kullanılamaz (yerel modü
 Sunucu GPS hızından tahmin üretir ve `flight.suggestion` olayını WebSocket'ten yollar; pilotun ekranında "Kalkış yapmış gibisin…"
 bandı çıkar. **Pilot onaylamadıkça durum değişmez.** Detay ve eşikler: `docs/02-api-ve-yetki.md`.
 
+## TestFlight'a yükleme
+
+Takım `JHW499P7S3` (Individual), App Store Connect kaydı **RETFAST** (`com.mizibu.retfast`). Sürüm `app.json` → `version` / `ios.buildNumber`
+(her yüklemede build artmalı; eski native sürümler 2.0.0 build 6'ya kadar çıktı).
+
+```sh
+cd apps/mobile
+bunx expo prebuild --platform ios --no-install && (cd ios && pod install)
+cd ios
+xcodebuild -workspace Retfast.xcworkspace -scheme Retfast -configuration Release -destination 'generic/platform=iOS' \
+  -archivePath build/Retfast.xcarchive DEVELOPMENT_TEAM=JHW499P7S3 CODE_SIGNING_ALLOWED=NO archive
+xcodebuild -exportArchive -archivePath build/Retfast.xcarchive -exportOptionsPlist ../ExportOptions.plist \
+  -exportPath build/export -allowProvisioningUpdates          # imzalar (bulutta yönetilen dağıtım sertifikası) ve yükler
+```
+
+Arşiv bilerek imzasız alınır: bu Mac'te Apple Development sertifikasının özel anahtarı yok ve Xcode eskisini iptal etmek ister.
+Dağıtım imzası dışa aktarmada Xcode hesabıyla yapılır; Xcode'da Apple Kimliği açık olmalı. `EXPO_PUBLIC_API_URL` ayarlı OLMAMALI
+(varsayılan canlı API `https://retfast.com/api/v1`).
+
 ## Bilinen kısıtlar / yapılacaklar
 
 - **UIScene:** iOS 27 SDK ile derlenen uygulamalar UIScene yaşam döngüsünü benimsemek zorunda. Expo şablonu henüz

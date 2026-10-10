@@ -3,7 +3,7 @@
     "name": "Retfast",
     "slug": "retfast",
     "scheme": "retfast",
-    "version": "0.1.0",
+    "version": "3.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -20,7 +20,9 @@
           "location"
         ],
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "buildNumber": "1",
+      "appleTeamId": "JHW499P7S3"
     },
     "plugins": [
       "expo-router",

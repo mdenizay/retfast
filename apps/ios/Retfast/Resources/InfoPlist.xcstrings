@@ -1,0 +1,44 @@
+{
+  "sourceLanguage": "tr",
+  "strings": {
+    "CFBundleDisplayName": {
+      "shouldTranslate": false
+    },
+    "CFBundleName": {
+      "shouldTranslate": false
+    },
+    "NSLocationWhenInUseUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retfast records your position with GPS during a flight and shares it on the live map with the people you allow. Your location is used only while a flight recording or an emergency call is open."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retfast, uçuş kaydı sırasında konumunuzu GPS ile kaydeder ve izin verdiğiniz kişilerle canlı haritada paylaşır. Konumunuz yalnızca uçuş kaydı veya acil durum çağrısı açıkken kullanılır."
+          }
+        }
+      }
+    },
+    "NSLocationAlwaysAndWhenInUseUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needed so the track keeps recording while the screen is locked or the app is in the background during a flight. Retfast records location only after you start a flight and stops when it ends."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uçuş sırasında ekran kilitliyken veya uygulama arka plandayken de iz kaydının kesilmemesi için gereklidir. Retfast konumu yalnızca siz bir uçuş başlattığınızda kaydeder; uçuş bitince durdurur."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

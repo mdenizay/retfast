@@ -1,0 +1,140 @@
+# XcodeGen spec for the Retfast iOS app. `xcodegen generate` (2.46+) in apps/ios.
+# The generated Retfast.xcodeproj is committed so the project opens directly in Xcode.
+name: Retfast
+options:
+  bundleIdPrefix: com.mizibu
+  deploymentTarget:
+    iOS: "17.0"
+  developmentLanguage: tr
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    DEVELOPMENT_TEAM: JHW499P7S3
+    MARKETING_VERSION: 3.0.0
+    CURRENT_PROJECT_VERSION: 1
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    DEAD_CODE_STRIPPING: YES
+
+packages:
+  RetfastCore:
+    path: RetfastCore
+
+fileGroups:
+  - Tools
+  - project.yml
+
+targets:
+  Retfast:
+    type: application
+    platform: iOS
+    sources:
+      - path: Retfast
+      # Generated design tokens (packages/design-tokens/build.mjs). Referenced, never copied or edited.
+      - path: ../../packages/design-tokens/dist/AeroTokens.swift
+        group: Retfast/DesignSystem
+    dependencies:
+      - package: RetfastCore
+        product: RetfastCore
+    info:
+      path: Retfast/Info.plist
+      properties:
+        CFBundleDisplayName: Retfast
+        CFBundleDevelopmentRegion: tr
+        CFBundleLocalizations: [tr, en]
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
+        RetfastAPIBaseURL: $(RETFAST_API_BASE_URL)
+        UIBackgroundModes: [location]
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        NSLocationWhenInUseUsageDescription: "Retfast, uçuş kaydı sırasında konumunuzu GPS ile kaydeder ve izin verdiğiniz kişilerle canlı haritada paylaşır. Konumunuz yalnızca uçuş kaydı veya acil durum çağrısı açıkken kullanılır."
+        NSLocationAlwaysAndWhenInUseUsageDescription: "Uçuş sırasında ekran kilitliyken veya uygulama arka plandayken de iz kaydının kesilmemesi için gereklidir. Retfast konumu yalnızca siz bir uçuş başlattığınızda kaydeder; uçuş bitince durdurur."
+        NSLocationTemporaryUsageDescriptionDictionary:
+          FlightRecording: "Uçuş izinin doğru kaydedilmesi ve acil durumda konumunuzun doğru iletilmesi için hassas konum gerekir."
+        # Debug talks to http://localhost:8080. The exception is removed from
+        # Release builds by the "Strip debug ATS exception" build phase below.
+        NSAppTransportSecurity:
+          NSExceptionDomains:
+            localhost:
+              NSExceptionAllowsInsecureHTTPLoads: true
+    postBuildScripts:
+      - name: Strip debug ATS exception (Release)
+        basedOnDependencyAnalysis: false
+        inputFiles:
+          - $(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)
+        outputFiles:
+          - $(DERIVED_FILE_DIR)/ats-stripped.stamp
+        script: |
+          if [ "${CONFIGURATION}" = "Release" ]; then
+            if /usr/libexec/PlistBuddy -c "Print :NSAppTransportSecurity" "${TARGET_BUILD_DIR}/${INFOPLIST_PATH}" >/dev/null 2>&1; then
+              /usr/libexec/PlistBuddy -c "Delete :NSAppTransportSecurity" "${TARGET_BUILD_DIR}/${INFOPLIST_PATH}"
+            fi
+          fi
+          touch "${DERIVED_FILE_DIR}/ats-stripped.stamp"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mizibu.retfast
+        TARGETED_DEVICE_FAMILY: 1
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_PREVIEWS: YES
+        # The Release-only ATS strip phase edits the built Info.plist in place,
+        # which the user-script sandbox does not allow.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+      configs:
+        Debug:
+          RETFAST_API_BASE_URL: http://localhost:8080
+        Release:
+          RETFAST_API_BASE_URL: https://api.retfast.com
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGN_IDENTITY: "iPhone Distribution"
+          "CODE_SIGN_IDENTITY[sdk=iphoneos*]": "iPhone Distribution"
+          PROVISIONING_PROFILE_SPECIFIER: "RETFAST App Store 1788005612718"
+
+  RetfastUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: RetfastUITests
+    dependencies:
+      - target: Retfast
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mizibu.retfast.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Retfast
+        CODE_SIGN_STYLE: Automatic
+
+schemes:
+  Retfast:
+    build:
+      targets:
+        Retfast: all
+        RetfastUITests: [test]
+    run:
+      config: Debug
+      simulateLocation:
+        allow: true
+        defaultLocation: Tools/cameli-sim-route.gpx
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - package: RetfastCore/RetfastCoreTests
+        - name: RetfastUITests
+    archive:
+      config: Release

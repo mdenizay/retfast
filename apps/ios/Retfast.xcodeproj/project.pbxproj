@@ -1,0 +1,741 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		02D815F5C6361C710E13D419 /* RescueSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EFA07ADC88D376596BC3BFC /* RescueSupport.swift */; };
+		1090B239178063CE541DA6AB /* DiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF1FE6946747CC1E5B6CDC1 /* DiagnosticsView.swift */; };
+		12AE9D83685F0A71D2859B04 /* EventDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B9F750F973CF9A21DC37E88 /* EventDetailView.swift */; };
+		23A62136881612C6C3F4E89D /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE72FE4F6E6DC06454EC71C /* OnboardingView.swift */; };
+		32C405072F828C69CE6432BD /* OneShotLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DB4504830187341C671BD90 /* OneShotLocator.swift */; };
+		360AEF3856E42436A83F341F /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F846D2A44770FD7BA1F0D3A3 /* InfoPlist.xcstrings */; };
+		3A501F1EDE06787BFC2E487E /* FlightComputerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D6AE547A29C99FFE1C04FA /* FlightComputerView.swift */; };
+		41B31244840DB34D7B9512A6 /* OneShotLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DF911BD9000F5A622512C8D /* OneShotLocation.swift */; };
+		49A39356202EAE06F1651BBB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7FE9DFD0037B83FDC899CDF4 /* Assets.xcassets */; };
+		54D3B90ABC20CE28830B8769 /* SOSView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA0F4F598177D6C1DE0A3EEC /* SOSView.swift */; };
+		57ABA55EFCAE26970FE95AFE /* RetfastCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0FB5F8DAF75430D9C3DC7F87 /* RetfastCore */; };
+		5DB2C560238825E4ACF7ABD6 /* EndToEndTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B58FF6F1AD88C9512903EECB /* EndToEndTests.swift */; };
+		7584DAC8FA1427B38AA19457 /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77AC11E685E32218DE393B7E /* ExploreView.swift */; };
+		792520C91CCFE7D67D0AE6A4 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5430D5DDB62234ADA95B3185 /* Components.swift */; };
+		7B65BC701CE7C88980FEB571 /* LiveMapModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADCF3493E5B9B45E8DD3584F /* LiveMapModel.swift */; };
+		88AF3E11D636F8720CBDBB4D /* AuthViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B74AA1AF6065D63780E53F3 /* AuthViews.swift */; };
+		88DC802A15DF8ED8CFBDFD18 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D391D81AF29BE5444EAFF81 /* HomeView.swift */; };
+		89CBEDAD82DB19F1BA5945BE /* FlightLiveMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAF0CB92B964245F9B0EFAE0 /* FlightLiveMapView.swift */; };
+		91C4C0FDC587A4D6C84F803F /* PreFlightCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7689A4FA54374EC5E1462C9 /* PreFlightCheckView.swift */; };
+		99DBDD16A5D6FE7E1A8B5D6D /* FlightsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56579908C80354AA80341DB /* FlightsListView.swift */; };
+		9B83669C15EAA1EBACAA25FB /* RescueDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC3939CBDC7952D0AA8DCF80 /* RescueDashboardView.swift */; };
+		9D9D0A03EBE2082F2E72B53B /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 0E2A525C7369E7BBC655C5D9 /* Localizable.xcstrings */; };
+		A0E606566BE69B82E8D77917 /* RescueMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44EDEF99B4327478FF2A0CAC /* RescueMapView.swift */; };
+		B1996EB405FC275DC495D474 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F50C36AEF65E45400F8A94 /* ProfileView.swift */; };
+		B5CC166B0172F7C95A490193 /* TeamStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B2AD85AB2BF41ADCBF64F7 /* TeamStatusView.swift */; };
+		BB253E559F1A7FDC669F6A89 /* IncidentDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 096020A3156460768D1E1D6B /* IncidentDetailView.swift */; };
+		C2E7FCDFF494B196F757D391 /* LaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E011CE477719D370B0CFA0D /* LaunchTests.swift */; };
+		D8B30C90786BCF20C6B5AC7F /* Formatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 499AC846D7ABC4FE286A8514 /* Formatting.swift */; };
+		E1E7B6F3E56FBF22C9EA1E56 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B01698D6EBED14704060CAA /* AppModel.swift */; };
+		EEE3A3A54D6A5D5DC8DE7FAF /* RetfastApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8290E59886C7C1731705836 /* RetfastApp.swift */; };
+		FB2805A03CA17956AC8FCAE3 /* AeroTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = E519A076B6A33C6F939EF156 /* AeroTokens.swift */; };
+		FFCDD2BA4D7810FD2D3596DE /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0577C73651BBBA854CE9F13E /* RootView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		2F9597BE8C55D5999DFA15DA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AE1A85ED53C37C35DFD8D490 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B6A338735D7AA9D3BD3E60EF;
+			remoteInfo = Retfast;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0577C73651BBBA854CE9F13E /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		096020A3156460768D1E1D6B /* IncidentDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentDetailView.swift; sourceTree = "<group>"; };
+		0B01698D6EBED14704060CAA /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		0E2A525C7369E7BBC655C5D9 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		1471BF7D70D53C1D97FB0C18 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		1D391D81AF29BE5444EAFF81 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		2355DFCDF46485A1518092DD /* cameli-sim-route.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "cameli-sim-route.gpx"; sourceTree = "<group>"; };
+		2862CE3CA636FC431873B75A /* Retfast.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Retfast.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		44EDEF99B4327478FF2A0CAC /* RescueMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RescueMapView.swift; sourceTree = "<group>"; };
+		499AC846D7ABC4FE286A8514 /* Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatting.swift; sourceTree = "<group>"; };
+		4CFA6740F16E2C8B95EE2392 /* RetfastUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RetfastUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5430D5DDB62234ADA95B3185 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		6E011CE477719D370B0CFA0D /* LaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchTests.swift; sourceTree = "<group>"; };
+		77AC11E685E32218DE393B7E /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
+		7B74AA1AF6065D63780E53F3 /* AuthViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViews.swift; sourceTree = "<group>"; };
+		7FE9DFD0037B83FDC899CDF4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		8B9F750F973CF9A21DC37E88 /* EventDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventDetailView.swift; sourceTree = "<group>"; };
+		8DF911BD9000F5A622512C8D /* OneShotLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OneShotLocation.swift; sourceTree = "<group>"; };
+		8EFA07ADC88D376596BC3BFC /* RescueSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RescueSupport.swift; sourceTree = "<group>"; };
+		8F6960A75DDB3AF5238B9587 /* RetfastCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = RetfastCore; path = RetfastCore; sourceTree = SOURCE_ROOT; };
+		9DB4504830187341C671BD90 /* OneShotLocator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OneShotLocator.swift; sourceTree = "<group>"; };
+		A56579908C80354AA80341DB /* FlightsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightsListView.swift; sourceTree = "<group>"; };
+		A6B2AD85AB2BF41ADCBF64F7 /* TeamStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamStatusView.swift; sourceTree = "<group>"; };
+		ADCF3493E5B9B45E8DD3584F /* LiveMapModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveMapModel.swift; sourceTree = "<group>"; };
+		B58FF6F1AD88C9512903EECB /* EndToEndTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndToEndTests.swift; sourceTree = "<group>"; };
+		B7689A4FA54374EC5E1462C9 /* PreFlightCheckView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreFlightCheckView.swift; sourceTree = "<group>"; };
+		C21581FE6852B72B01F750A6 /* project.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = project.yml; sourceTree = "<group>"; };
+		C5D6AE547A29C99FFE1C04FA /* FlightComputerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightComputerView.swift; sourceTree = "<group>"; };
+		CEF1FE6946747CC1E5B6CDC1 /* DiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsView.swift; sourceTree = "<group>"; };
+		DAF0CB92B964245F9B0EFAE0 /* FlightLiveMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightLiveMapView.swift; sourceTree = "<group>"; };
+		DFBF8DB72834E43B00526DA0 /* make-sim-route.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "make-sim-route.py"; sourceTree = "<group>"; };
+		E519A076B6A33C6F939EF156 /* AeroTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AeroTokens.swift; path = "../../../../packages/design-tokens/dist/AeroTokens.swift"; sourceTree = "<group>"; };
+		E8290E59886C7C1731705836 /* RetfastApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetfastApp.swift; sourceTree = "<group>"; };
+		EA0F4F598177D6C1DE0A3EEC /* SOSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSView.swift; sourceTree = "<group>"; };
+		F7F50C36AEF65E45400F8A94 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		F846D2A44770FD7BA1F0D3A3 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
+		FC3939CBDC7952D0AA8DCF80 /* RescueDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RescueDashboardView.swift; sourceTree = "<group>"; };
+		FCE72FE4F6E6DC06454EC71C /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		048EC8DF5FCB1F081DFB834C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				57ABA55EFCAE26970FE95AFE /* RetfastCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		06E200D1D1C680E093D79E9B /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				89371E118F3584BC9D5F26B0 /* Auth */,
+				39A495B806269BE2C7FE0B33 /* Diagnostics */,
+				6B5C55108DDABD806443784A /* Explore */,
+				468071C7EF75C5FF31A49E32 /* Flight */,
+				6EA6DBA1E657D48A220E7C1A /* Flights */,
+				9C8065737A80FE87FD0CA9BF /* Home */,
+				687294198F236AE086612247 /* Onboarding */,
+				CC186F885CCB2BD8FBA346AA /* Profile */,
+				C9FBA6D6EB35CF7177BA132C /* Rescue */,
+				54CC1632C907BC59AAE7CB8B /* SOS */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		0ADF5F738CDAAF0D52DEBA18 = {
+			isa = PBXGroup;
+			children = (
+				A0EC470D9BCEC147C285C04A /* Packages */,
+				F0307EFCF04A28844ADF10C7 /* Retfast */,
+				197393AA15E174E99E82E143 /* RetfastUITests */,
+				87BF86D9C279BD275422ACBE /* Tools */,
+				C21581FE6852B72B01F750A6 /* project.yml */,
+				569D929F3423F8EAFA94A6C7 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		15EC5F0867DFA7DF048A87E9 /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				E519A076B6A33C6F939EF156 /* AeroTokens.swift */,
+				5430D5DDB62234ADA95B3185 /* Components.swift */,
+				499AC846D7ABC4FE286A8514 /* Formatting.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		197393AA15E174E99E82E143 /* RetfastUITests */ = {
+			isa = PBXGroup;
+			children = (
+				B58FF6F1AD88C9512903EECB /* EndToEndTests.swift */,
+				6E011CE477719D370B0CFA0D /* LaunchTests.swift */,
+			);
+			path = RetfastUITests;
+			sourceTree = "<group>";
+		};
+		39A495B806269BE2C7FE0B33 /* Diagnostics */ = {
+			isa = PBXGroup;
+			children = (
+				CEF1FE6946747CC1E5B6CDC1 /* DiagnosticsView.swift */,
+			);
+			path = Diagnostics;
+			sourceTree = "<group>";
+		};
+		468071C7EF75C5FF31A49E32 /* Flight */ = {
+			isa = PBXGroup;
+			children = (
+				C5D6AE547A29C99FFE1C04FA /* FlightComputerView.swift */,
+				DAF0CB92B964245F9B0EFAE0 /* FlightLiveMapView.swift */,
+				9DB4504830187341C671BD90 /* OneShotLocator.swift */,
+				B7689A4FA54374EC5E1462C9 /* PreFlightCheckView.swift */,
+			);
+			path = Flight;
+			sourceTree = "<group>";
+		};
+		54CC1632C907BC59AAE7CB8B /* SOS */ = {
+			isa = PBXGroup;
+			children = (
+				EA0F4F598177D6C1DE0A3EEC /* SOSView.swift */,
+			);
+			path = SOS;
+			sourceTree = "<group>";
+		};
+		569D929F3423F8EAFA94A6C7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2862CE3CA636FC431873B75A /* Retfast.app */,
+				4CFA6740F16E2C8B95EE2392 /* RetfastUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		687294198F236AE086612247 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				FCE72FE4F6E6DC06454EC71C /* OnboardingView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		6B5C55108DDABD806443784A /* Explore */ = {
+			isa = PBXGroup;
+			children = (
+				8B9F750F973CF9A21DC37E88 /* EventDetailView.swift */,
+				77AC11E685E32218DE393B7E /* ExploreView.swift */,
+				ADCF3493E5B9B45E8DD3584F /* LiveMapModel.swift */,
+				8DF911BD9000F5A622512C8D /* OneShotLocation.swift */,
+			);
+			path = Explore;
+			sourceTree = "<group>";
+		};
+		6EA6DBA1E657D48A220E7C1A /* Flights */ = {
+			isa = PBXGroup;
+			children = (
+				A56579908C80354AA80341DB /* FlightsListView.swift */,
+			);
+			path = Flights;
+			sourceTree = "<group>";
+		};
+		87BF86D9C279BD275422ACBE /* Tools */ = {
+			isa = PBXGroup;
+			children = (
+				2355DFCDF46485A1518092DD /* cameli-sim-route.gpx */,
+				DFBF8DB72834E43B00526DA0 /* make-sim-route.py */,
+			);
+			path = Tools;
+			sourceTree = "<group>";
+		};
+		89371E118F3584BC9D5F26B0 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				7B74AA1AF6065D63780E53F3 /* AuthViews.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		92FE216F51B481D6B2BDD1A1 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				7FE9DFD0037B83FDC899CDF4 /* Assets.xcassets */,
+				F846D2A44770FD7BA1F0D3A3 /* InfoPlist.xcstrings */,
+				0E2A525C7369E7BBC655C5D9 /* Localizable.xcstrings */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		9C8065737A80FE87FD0CA9BF /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				1D391D81AF29BE5444EAFF81 /* HomeView.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		A0EC470D9BCEC147C285C04A /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				8F6960A75DDB3AF5238B9587 /* RetfastCore */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		C9FBA6D6EB35CF7177BA132C /* Rescue */ = {
+			isa = PBXGroup;
+			children = (
+				096020A3156460768D1E1D6B /* IncidentDetailView.swift */,
+				FC3939CBDC7952D0AA8DCF80 /* RescueDashboardView.swift */,
+				44EDEF99B4327478FF2A0CAC /* RescueMapView.swift */,
+				8EFA07ADC88D376596BC3BFC /* RescueSupport.swift */,
+				A6B2AD85AB2BF41ADCBF64F7 /* TeamStatusView.swift */,
+			);
+			path = Rescue;
+			sourceTree = "<group>";
+		};
+		CC186F885CCB2BD8FBA346AA /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				F7F50C36AEF65E45400F8A94 /* ProfileView.swift */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		F0307EFCF04A28844ADF10C7 /* Retfast */ = {
+			isa = PBXGroup;
+			children = (
+				F351A2FE59AA4A53497C3421 /* App */,
+				15EC5F0867DFA7DF048A87E9 /* DesignSystem */,
+				06E200D1D1C680E093D79E9B /* Features */,
+				92FE216F51B481D6B2BDD1A1 /* Resources */,
+				1471BF7D70D53C1D97FB0C18 /* Info.plist */,
+			);
+			path = Retfast;
+			sourceTree = "<group>";
+		};
+		F351A2FE59AA4A53497C3421 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				0B01698D6EBED14704060CAA /* AppModel.swift */,
+				E8290E59886C7C1731705836 /* RetfastApp.swift */,
+				0577C73651BBBA854CE9F13E /* RootView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		066FC268702C5B8932A9D832 /* RetfastUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FFD0DFE98EAC5189739C53C9 /* Build configuration list for PBXNativeTarget "RetfastUITests" */;
+			buildPhases = (
+				DACDD4BCDF397C2890BEFC60 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C1553B2E6C836F4C1FBC1924 /* PBXTargetDependency */,
+			);
+			name = RetfastUITests;
+			packageProductDependencies = (
+			);
+			productName = RetfastUITests;
+			productReference = 4CFA6740F16E2C8B95EE2392 /* RetfastUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		B6A338735D7AA9D3BD3E60EF /* Retfast */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5DDFC145480536151F0D7A59 /* Build configuration list for PBXNativeTarget "Retfast" */;
+			buildPhases = (
+				FAC04B15AC57E037D67AFF9E /* Sources */,
+				2A991228AC0231D2980A1AFD /* Resources */,
+				048EC8DF5FCB1F081DFB834C /* Frameworks */,
+				ADB548563D33ACBC3C20F3B7 /* Strip debug ATS exception (Release) */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Retfast;
+			packageProductDependencies = (
+				0FB5F8DAF75430D9C3DC7F87 /* RetfastCore */,
+			);
+			productName = Retfast;
+			productReference = 2862CE3CA636FC431873B75A /* Retfast.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AE1A85ED53C37C35DFD8D490 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					066FC268702C5B8932A9D832 = {
+						DevelopmentTeam = JHW499P7S3;
+						ProvisioningStyle = Automatic;
+						TestTargetID = B6A338735D7AA9D3BD3E60EF;
+					};
+					B6A338735D7AA9D3BD3E60EF = {
+						DevelopmentTeam = JHW499P7S3;
+					};
+				};
+			};
+			buildConfigurationList = 2D35595339A740A4F0D3C797 /* Build configuration list for PBXProject "Retfast" */;
+			developmentRegion = tr;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+				tr,
+			);
+			mainGroup = 0ADF5F738CDAAF0D52DEBA18;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				BCD40CDB24BB0F5FB8843B05 /* XCLocalSwiftPackageReference "RetfastCore" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 569D929F3423F8EAFA94A6C7 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B6A338735D7AA9D3BD3E60EF /* Retfast */,
+				066FC268702C5B8932A9D832 /* RetfastUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2A991228AC0231D2980A1AFD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				49A39356202EAE06F1651BBB /* Assets.xcassets in Resources */,
+				360AEF3856E42436A83F341F /* InfoPlist.xcstrings in Resources */,
+				9D9D0A03EBE2082F2E72B53B /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		ADB548563D33ACBC3C20F3B7 /* Strip debug ATS exception (Release) */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "Strip debug ATS exception (Release)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/ats-stripped.stamp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"${CONFIGURATION}\" = \"Release\" ]; then\n  if /usr/libexec/PlistBuddy -c \"Print :NSAppTransportSecurity\" \"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\" >/dev/null 2>&1; then\n    /usr/libexec/PlistBuddy -c \"Delete :NSAppTransportSecurity\" \"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\n  fi\nfi\ntouch \"${DERIVED_FILE_DIR}/ats-stripped.stamp\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		DACDD4BCDF397C2890BEFC60 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5DB2C560238825E4ACF7ABD6 /* EndToEndTests.swift in Sources */,
+				C2E7FCDFF494B196F757D391 /* LaunchTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FAC04B15AC57E037D67AFF9E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FB2805A03CA17956AC8FCAE3 /* AeroTokens.swift in Sources */,
+				E1E7B6F3E56FBF22C9EA1E56 /* AppModel.swift in Sources */,
+				88AF3E11D636F8720CBDBB4D /* AuthViews.swift in Sources */,
+				792520C91CCFE7D67D0AE6A4 /* Components.swift in Sources */,
+				1090B239178063CE541DA6AB /* DiagnosticsView.swift in Sources */,
+				12AE9D83685F0A71D2859B04 /* EventDetailView.swift in Sources */,
+				7584DAC8FA1427B38AA19457 /* ExploreView.swift in Sources */,
+				3A501F1EDE06787BFC2E487E /* FlightComputerView.swift in Sources */,
+				89CBEDAD82DB19F1BA5945BE /* FlightLiveMapView.swift in Sources */,
+				99DBDD16A5D6FE7E1A8B5D6D /* FlightsListView.swift in Sources */,
+				D8B30C90786BCF20C6B5AC7F /* Formatting.swift in Sources */,
+				88DC802A15DF8ED8CFBDFD18 /* HomeView.swift in Sources */,
+				BB253E559F1A7FDC669F6A89 /* IncidentDetailView.swift in Sources */,
+				7B65BC701CE7C88980FEB571 /* LiveMapModel.swift in Sources */,
+				23A62136881612C6C3F4E89D /* OnboardingView.swift in Sources */,
+				41B31244840DB34D7B9512A6 /* OneShotLocation.swift in Sources */,
+				32C405072F828C69CE6432BD /* OneShotLocator.swift in Sources */,
+				91C4C0FDC587A4D6C84F803F /* PreFlightCheckView.swift in Sources */,
+				B1996EB405FC275DC495D474 /* ProfileView.swift in Sources */,
+				9B83669C15EAA1EBACAA25FB /* RescueDashboardView.swift in Sources */,
+				A0E606566BE69B82E8D77917 /* RescueMapView.swift in Sources */,
+				02D815F5C6361C710E13D419 /* RescueSupport.swift in Sources */,
+				EEE3A3A54D6A5D5DC8DE7FAF /* RetfastApp.swift in Sources */,
+				FFCDD2BA4D7810FD2D3596DE /* RootView.swift in Sources */,
+				54D3B90ABC20CE28830B8769 /* SOSView.swift in Sources */,
+				B5CC166B0172F7C95A490193 /* TeamStatusView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C1553B2E6C836F4C1FBC1924 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B6A338735D7AA9D3BD3E60EF /* Retfast */;
+			targetProxy = 2F9597BE8C55D5999DFA15DA /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		59DF30BE921F6500442852F8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.mizibu.retfast.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Retfast;
+			};
+			name = Release;
+		};
+		77B60647E8829A3E60438147 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				INFOPLIST_FILE = Retfast/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.mizibu.retfast;
+				PROVISIONING_PROFILE_SPECIFIER = "RETFAST App Store 1788005612718";
+				RETFAST_API_BASE_URL = "https://api.retfast.com";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		B45461AE656DA3096C3BB394 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = JHW499P7S3;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 3.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		BF519EA7AFC98B0D164E7B89 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.mizibu.retfast.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Retfast;
+			};
+			name = Debug;
+		};
+		CAF22033EBCDF96FA17B91DD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = JHW499P7S3;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 3.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		E79033E06DDCC32612223472 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				INFOPLIST_FILE = Retfast/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.mizibu.retfast;
+				RETFAST_API_BASE_URL = "http://localhost:8080";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2D35595339A740A4F0D3C797 /* Build configuration list for PBXProject "Retfast" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B45461AE656DA3096C3BB394 /* Debug */,
+				CAF22033EBCDF96FA17B91DD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		5DDFC145480536151F0D7A59 /* Build configuration list for PBXNativeTarget "Retfast" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E79033E06DDCC32612223472 /* Debug */,
+				77B60647E8829A3E60438147 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		FFD0DFE98EAC5189739C53C9 /* Build configuration list for PBXNativeTarget "RetfastUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BF519EA7AFC98B0D164E7B89 /* Debug */,
+				59DF30BE921F6500442852F8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		BCD40CDB24BB0F5FB8843B05 /* XCLocalSwiftPackageReference "RetfastCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = RetfastCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0FB5F8DAF75430D9C3DC7F87 /* RetfastCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = RetfastCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = AE1A85ED53C37C35DFD8D490 /* Project object */;
+}

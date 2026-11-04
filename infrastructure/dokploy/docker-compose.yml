@@ -1,0 +1,102 @@
+# Retfast production/staging compose for Dokploy (compose path: ./infrastructure/dokploy/docker-compose.yml).
+# PostgreSQL (PostGIS) and Redis are separate Dokploy database services, reachable on dokploy-network
+# by their appName; connection strings come from the Dokploy environment of this compose.
+# Domains (configured in Dokploy, Traefik/Let's Encrypt):
+#   retfast.com, www.retfast.com, app.retfast.com -> web:8080
+#   api.retfast.com                               -> api:8080 (REST + WebSocket /api/v1/realtime)
+
+x-api-env: &api-env
+  APP_ENV: ${APP_ENV:-production}
+  DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+  REDIS_URL: ${REDIS_URL:?REDIS_URL is required}
+  JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+  HTTP_ADDR: ":8080"
+  METRICS_ADDR: ":9090"
+  PUBLIC_WEB_URL: ${PUBLIC_WEB_URL:-https://retfast.com}
+  APP_WEB_URL: ${APP_WEB_URL:-https://app.retfast.com}
+  CORS_ORIGINS: ${CORS_ORIGINS:-https://retfast.com,https://www.retfast.com,https://app.retfast.com}
+  RESEND_API_KEY: ${RESEND_API_KEY:-}
+  MAIL_FROM: ${MAIL_FROM:-Retfast <noreply@retfast.com>}
+
+services:
+  migrate:
+    build: &api-build
+      context: ../..
+      dockerfile: infrastructure/docker/api.Dockerfile
+    command: ["retfast-api", "migrate", "up"]
+    environment: *api-env
+    restart: "no"
+    networks: [dokploy-network]
+
+  api:
+    build: *api-build
+    command: ["retfast-api", "serve"]
+    environment: *api-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "retfast-api", "healthcheck"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    stop_grace_period: 25s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits: { cpus: "2.0", memory: 768M }
+    networks: [dokploy-network]
+
+  web:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/web.Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-https://api.retfast.com}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 128M }
+    networks: [dokploy-network]
+
+  # Daily logical backup to a local named volume (14 days). This is an on-host copy only;
+  # see docs/infrastructure/backup-restore.md for the off-site destination requirement.
+  backup:
+    image: postgis/postgis:17-3.5
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -eu
+        while true; do
+          ts=$$(date -u +%Y%m%dT%H%M%SZ)
+          if pg_dump --format=custom --no-owner --dbname="$$DATABASE_URL" --file="/backups/retfast-$$ts.dump.tmp"; then
+            mv "/backups/retfast-$$ts.dump.tmp" "/backups/retfast-$$ts.dump"
+            pg_restore --list "/backups/retfast-$$ts.dump" > /dev/null && echo "backup ok retfast-$$ts.dump $$(du -h /backups/retfast-$$ts.dump | cut -f1)"
+          else
+            echo "backup FAILED $$ts"; rm -f "/backups/retfast-$$ts.dump.tmp"
+          fi
+          find /backups -name 'retfast-*.dump' -mtime +14 -delete
+          sleep 86400
+        done
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+    volumes:
+      - retfast-backups:/backups
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 256M }
+    networks: [dokploy-network]
+
+volumes:
+  retfast-backups:
+
+networks:
+  dokploy-network:
+    external: true

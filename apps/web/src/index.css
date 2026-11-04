@@ -1,0 +1,118 @@
+@import "tailwindcss";
+@import "@tokens/tokens.css";
+@import "@fontsource-variable/inter/index.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Map Retfast Aero tokens (packages/design-tokens) to Tailwind theme. */
+@theme inline {
+  --color-background: rgb(var(--rf-background));
+  --color-surface: rgb(var(--rf-surface));
+  --color-surface-elevated: rgb(var(--rf-surface-elevated));
+  --color-border: rgb(var(--rf-border));
+  --color-fg: rgb(var(--rf-text-primary));
+  --color-fg-secondary: rgb(var(--rf-text-secondary));
+  --color-fg-muted: rgb(var(--rf-text-muted));
+  --color-primary: rgb(var(--rf-primary));
+  --color-on-primary: rgb(var(--rf-on-primary));
+  --color-secondary: rgb(var(--rf-secondary));
+  --color-on-secondary: rgb(var(--rf-on-secondary));
+  --color-success: rgb(var(--rf-success));
+  --color-warning: rgb(var(--rf-warning));
+  --color-error: rgb(var(--rf-error));
+  --color-emergency: rgb(var(--rf-emergency));
+  --color-on-emergency: rgb(var(--rf-on-emergency));
+  --color-emergency-text: rgb(var(--rf-emergency-text));
+  --color-live: rgb(var(--rf-tracking-active));
+  --color-stale: rgb(var(--rf-tracking-stale));
+  --color-offline: rgb(var(--rf-offline));
+  --color-focus: rgb(var(--rf-focus-ring));
+
+  /* shadcn/ui semantic aliases → Aero tokens */
+  --color-foreground: rgb(var(--rf-text-primary));
+  --color-muted-foreground: rgb(var(--rf-text-muted));
+  --color-muted: color-mix(in oklab, rgb(var(--rf-text-primary)) 6%, transparent);
+  --color-popover: rgb(var(--rf-surface-elevated));
+  --color-popover-foreground: rgb(var(--rf-text-primary));
+  --color-card: rgb(var(--rf-surface));
+  --color-accent: color-mix(in oklab, rgb(var(--rf-text-primary)) 7%, transparent);
+  --color-accent-foreground: rgb(var(--rf-text-primary));
+  --color-input: rgb(var(--rf-border));
+  --color-ring: rgb(var(--rf-focus-ring));
+  --color-destructive: rgb(var(--rf-error));
+  --color-primary-foreground: rgb(var(--rf-on-primary));
+  --color-secondary-foreground: rgb(var(--rf-on-secondary));
+
+  --font-sans: "Inter Variable", var(--rf-font-sans);
+  --font-mono: "JetBrains Mono", var(--rf-font-mono);
+
+  --radius-sm: var(--rf-radius-sm);
+  --radius-md: var(--rf-radius-md);
+  --radius-lg: var(--rf-radius-lg);
+  --radius-xl: var(--rf-radius-xl);
+
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
+  --text-footnote: 13px;
+  --text-footnote--line-height: 18px;
+  --text-body: 15px;
+  --text-body--line-height: 22px;
+  --text-callout: 16px;
+  --text-callout--line-height: 22px;
+  --text-headline: 17px;
+  --text-headline--line-height: 24px;
+  --text-title3: 20px;
+  --text-title3--line-height: 26px;
+  --text-title2: 24px;
+  --text-title2--line-height: 30px;
+  --text-title1: 30px;
+  --text-title1--line-height: 36px;
+  --text-display: 40px;
+  --text-display--line-height: 44px;
+  --text-instrument: 56px;
+  --text-instrument--line-height: 60px;
+
+  --spacing-control: var(--rf-control-h);
+  --spacing-control-lg: var(--rf-control-h-lg);
+  --ease-aero: var(--rf-ease);
+}
+
+@layer base {
+  *, ::before, ::after { border-color: var(--color-border); }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--color-background);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 22px;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  ::selection { background: color-mix(in oklab, var(--color-primary) 30%, transparent); }
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@utility tnum { font-variant-numeric: tabular-nums; }
+@utility telemetry {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums slashed-zero;
+  letter-spacing: -0.01em;
+}
+@utility hairline { border-width: 1px; border-color: var(--color-border); }
+
+.maplibregl-ctrl-attrib { font-size: 11px; }
+.maplibregl-ctrl-group { border-radius: var(--rf-radius-sm) !important; }

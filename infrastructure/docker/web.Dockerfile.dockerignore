@@ -1,0 +1,10 @@
+# BuildKit picks this up for web.Dockerfile only (context = repo root).
+**/node_modules
+**/dist
+!packages/design-tokens/dist
+**/.vite
+**/coverage
+.git
+services
+apps/ios
+apps/web/docs/screenshots

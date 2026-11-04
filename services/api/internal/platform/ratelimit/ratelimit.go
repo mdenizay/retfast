@@ -1,4 +1,4 @@
-// Package ratelimit implements fixed-window rate limiting in Redis with an
+// Package ratelimit implements sliding-window rate limiting in Redis with an
 // in-memory fallback so auth endpoints stay protected when Redis is down.
 package ratelimit
 
@@ -6,9 +6,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 
 	"github.com/mdenizay/retfast/services/api/internal/platform/metrics"
 	"github.com/mdenizay/retfast/services/api/internal/platform/redisx"
@@ -49,6 +52,7 @@ type Limiter struct {
 type memEntry struct {
 	window int64
 	count  int
+	prev   int
 }
 
 // New returns a limiter; rdb may be nil (memory only).
@@ -62,25 +66,34 @@ func hashKey(k string) string {
 }
 
 // Allow records one hit for (rule, key) and reports whether it is within the
-// limit and, if not, how many seconds until the window resets.
+// limit and, if not, how many seconds until the caller should retry.
+//
+// It uses a sliding-window counter: the previous window's count is weighted by
+// how much of it still overlaps the sliding window. Unlike a plain fixed
+// window this does not allow a 2x burst across a window boundary.
 func (l *Limiter) Allow(ctx context.Context, rule Rule, key string) (bool, int) {
 	now := l.now()
-	win := now.UnixNano() / int64(rule.Window)
-	reset := time.Unix(0, (win+1)*int64(rule.Window))
-	retry := int(time.Until(reset).Seconds()) + 1
+	w := int64(rule.Window)
+	win := now.UnixNano() / w
+	elapsed := float64(now.UnixNano()-win*w) / float64(w) // 0..1 into the current window
+	retry := int(time.Duration(w-(now.UnixNano()-win*w)).Seconds()) + 1
 	if retry < 1 {
 		retry = 1
 	}
-	k := rule.Name + ":" + hashKey(key) + ":" + strconv.FormatInt(win, 10)
+	base := rule.Name + ":" + hashKey(key)
 	if l.rdb != nil {
+		cur := l.rdb.Key("rl", base+":"+strconv.FormatInt(win, 10))
+		prev := l.rdb.Key("rl", base+":"+strconv.FormatInt(win-1, 10))
 		rctx, cancel := context.WithTimeout(ctx, 300*time.Millisecond)
 		pipe := l.rdb.TxPipeline()
-		incr := pipe.Incr(rctx, l.rdb.Key("rl", k))
-		pipe.Expire(rctx, l.rdb.Key("rl", k), rule.Window+time.Second)
+		incr := pipe.Incr(rctx, cur)
+		pipe.Expire(rctx, cur, 2*rule.Window+time.Second)
+		prevGet := pipe.Get(rctx, prev)
 		_, err := pipe.Exec(rctx)
 		cancel()
-		if err == nil {
-			ok := incr.Val() <= int64(rule.Limit)
+		if err == nil || isNil(err) {
+			pc, _ := prevGet.Int64()
+			ok := estimate(pc, incr.Val(), elapsed) <= float64(rule.Limit)
 			if !ok && l.metrics != nil {
 				l.metrics.RateLimited.WithLabelValues(rule.Name).Inc()
 			}
@@ -90,14 +103,20 @@ func (l *Limiter) Allow(ctx context.Context, rule Rule, key string) (bool, int) 
 			l.metrics.RateLimitFallback.Inc()
 		}
 	}
-	ok := l.memAllow(rule, k, win, now)
+	ok := l.memAllow(rule, base, win, elapsed, now)
 	if !ok && l.metrics != nil {
 		l.metrics.RateLimited.WithLabelValues(rule.Name).Inc()
 	}
 	return ok, retry
 }
 
-func (l *Limiter) memAllow(rule Rule, k string, win int64, now time.Time) bool {
+func estimate(prev, cur int64, elapsed float64) float64 {
+	return float64(prev)*(1-elapsed) + float64(cur)
+}
+
+func isNil(err error) bool { return errors.Is(err, redis.Nil) }
+
+func (l *Limiter) memAllow(rule Rule, k string, win int64, elapsed float64, now time.Time) bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	if now.Sub(l.sweep) > time.Minute || len(l.mem) > 100_000 {
@@ -109,10 +128,14 @@ func (l *Limiter) memAllow(rule Rule, k string, win int64, now time.Time) bool {
 		l.sweep = now
 	}
 	e := l.mem[k]
-	if e.window != win {
+	switch {
+	case e.window == win:
+	case e.window == win-1:
+		e = memEntry{window: win, prev: e.count}
+	default:
 		e = memEntry{window: win}
 	}
 	e.count++
 	l.mem[k] = e
-	return e.count <= rule.Limit
+	return estimate(int64(e.prev), int64(e.count), elapsed) <= float64(rule.Limit)
 }

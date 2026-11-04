@@ -240,8 +240,8 @@ func TestLoginRateLimit(t *testing.T) {
 	if last.Status != 429 || last.Header.Get("Retry-After") == "" || last.ErrCode() != "rate_limited" {
 		t.Fatalf("6th login: %d %s retry=%q", last.Status, last.Body, last.Header.Get("Retry-After"))
 	}
-	// a different IP is not affected
-	e.Must(e.Do("POST", "/auth/login", map[string]any{"email": u.Email, "password": u.Password, "client": "ios"}, Req{}), 200)
+	// a different IP is not affected (use a fresh IP: the default test IP is shared by parallel tests)
+	e.Must(e.Do("POST", "/auth/login", map[string]any{"email": u.Email, "password": u.Password, "client": "ios"}, Req{IP: randomIP()}), 200)
 }
 
 func TestEmailWorkerMarksUnconfiguredFailed(t *testing.T) {

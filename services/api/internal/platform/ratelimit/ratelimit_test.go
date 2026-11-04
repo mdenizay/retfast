@@ -39,8 +39,37 @@ func TestWindowResets(t *testing.T) {
 	if ok, _ := l.Allow(context.Background(), rule, "k"); ok {
 		t.Fatal("second in window")
 	}
+	// the previous window still weighs in right after the boundary
 	now = now.Add(time.Minute)
+	if ok, _ := l.Allow(context.Background(), rule, "k"); ok {
+		t.Fatal("hit right after boundary must still count the previous window")
+	}
+	// two windows later everything has expired
+	now = now.Add(2 * time.Minute)
 	if ok, _ := l.Allow(context.Background(), rule, "k"); !ok {
-		t.Fatal("next window")
+		t.Fatal("after two quiet windows")
+	}
+}
+
+// A fixed window would allow 2x the limit across a boundary; the sliding window must not.
+func TestNoBurstAcrossBoundary(t *testing.T) {
+	l := New(nil, metrics.New())
+	now := time.Unix(1_800_000_000, 0).Add(59 * time.Second) // 1 s before a boundary
+	l.now = func() time.Time { return now }
+	rule := Rule{"b", 5, time.Minute}
+	allowed := 0
+	for i := 0; i < 5; i++ {
+		if ok, _ := l.Allow(context.Background(), rule, "k"); ok {
+			allowed++
+		}
+	}
+	now = now.Add(2 * time.Second) // just past the boundary
+	for i := 0; i < 5; i++ {
+		if ok, _ := l.Allow(context.Background(), rule, "k"); ok {
+			allowed++
+		}
+	}
+	if allowed > 5 {
+		t.Fatalf("allowed %d hits within ~2 s for a limit of 5/min", allowed)
 	}
 }

@@ -1,0 +1,2272 @@
+openapi: 3.1.0
+info:
+  title: Retfast API
+  version: "1.0.0"
+  description: |
+    Machine-readable form of docs/architecture/api-contract.md, describing what
+    services/api implements. Conventions: JSON, UTF-8, snake_case; timestamps are
+    RFC 3339 UTC with milliseconds; IDs are UUIDs; client-generated IDs (flights,
+    samples, incidents, batches) make creation idempotent.
+
+    Every response carries `X-Request-Id`. Errors use the envelope
+    `{"error":{"code","message","details"}}`. Rate-limited responses (429) carry
+    `Retry-After` (seconds).
+
+    While `user.must_change_password` is true, every authenticated endpoint except
+    `GET /me`, `POST /auth/password/change`, `POST /auth/logout` and
+    `POST /auth/refresh` returns `403 password_change_required` (this includes
+    optional-auth endpoints when a token is sent).
+
+    Additions relative to the contract document are marked "Addition:" in the
+    operation descriptions.
+servers:
+  - url: https://api.retfast.com/api/v1
+    description: Production
+  - url: http://localhost:8080/api/v1
+    description: Local development
+
+tags:
+  - name: health
+  - name: auth
+  - name: me
+  - name: pilots
+  - name: events
+  - name: flights
+  - name: telemetry
+  - name: live
+  - name: incidents
+  - name: rescue
+  - name: notifications
+  - name: admin
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: HS256 access token, 15 min. Claims sub, roles, pcr (password change required), sid (session family).
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: rf_refresh
+      description: Web refresh token cookie (HttpOnly; Secure outside development; SameSite=Strict; Path=/api/v1/auth). Cookie use requires an allowed Origin if an Origin header is present.
+
+  headers:
+    X-Request-Id:
+      description: Request correlation id (echoed if the client sent a valid one).
+      schema: { type: string }
+    Retry-After:
+      description: Seconds until the rate-limit window resets.
+      schema: { type: integer }
+
+  parameters:
+    EventIdOrSlug:
+      name: id
+      in: path
+      required: true
+      description: Event UUID or slug (all event routes accept either).
+      schema: { type: string }
+    FlightIdOrPublic:
+      name: id
+      in: path
+      required: true
+      description: Flight UUID or public_id.
+      schema: { type: string }
+    IncidentId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    UserId:
+      name: user_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Limit:
+      name: limit
+      in: query
+      description: Page size (default 50, max 200 unless stated otherwise).
+      schema: { type: integer, minimum: 1 }
+    Cursor:
+      name: cursor
+      in: query
+      description: Opaque cursor from a previous page's next_cursor.
+      schema: { type: string }
+
+  responses:
+    NoContent:
+      description: No content
+      headers:
+        X-Request-Id: { $ref: "#/components/headers/X-Request-Id" }
+    BadRequest:
+      description: Malformed body (code validation_failed)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: Missing/invalid credentials (code unauthorized) or expired access token (code token_expired)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: Not allowed (code forbidden) or password change required (code password_change_required)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Not found or not visible to the caller (code not_found)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Conflict:
+      description: Conflict (code conflict)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Validation:
+      description: Validation failed (code validation_failed, details maps field to reason)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    TooLarge:
+      description: Body too large (code validation_failed)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    RateLimited:
+      description: Too many requests (code rate_limited)
+      headers:
+        Retry-After: { $ref: "#/components/headers/Retry-After" }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    Timestamp:
+      type: string
+      format: date-time
+      examples: ["2026-11-04T12:00:00.123Z"]
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum: [validation_failed, unauthorized, token_expired, password_change_required, forbidden, not_found, conflict, rate_limited, internal, unavailable]
+            message: { type: string }
+            details:
+              type: object
+              additionalProperties: { type: string }
+
+    Accepted:
+      type: object
+      properties:
+        status: { type: string, const: accepted }
+
+    LatLon:
+      type: object
+      required: [lat, lon]
+      properties:
+        lat: { type: number, minimum: -90, maximum: 90 }
+        lon: { type: number, minimum: -180, maximum: 180 }
+
+    LatLonT:
+      type: object
+      required: [lat, lon, t]
+      properties:
+        lat: { type: number }
+        lon: { type: number }
+        t: { $ref: "#/components/schemas/Timestamp" }
+
+    UserRef:
+      type: object
+      properties:
+        user_id: { type: string, format: uuid }
+        full_name: { type: string }
+
+    PilotRef:
+      type: object
+      properties:
+        user_id: { type: string, format: uuid }
+        full_name: { type: string, description: "For guests/non-members this is the pilot's display_name." }
+        public_id: { type: string }
+
+    # ------------------------------------------------------------ health
+    Health:
+      type: object
+      properties:
+        status: { type: string, const: ok }
+        version: { type: string }
+    Ready:
+      type: object
+      properties:
+        status: { type: string, enum: [ok, degraded, draining, unavailable] }
+        checks:
+          type: object
+          properties:
+            postgres: { type: string, enum: [ok, error] }
+            redis: { type: string, enum: [ok, error] }
+    Meta:
+      type: object
+      properties:
+        environment: { type: string, enum: [development, staging, production] }
+        version: { type: string }
+        email_configured: { type: boolean }
+        push_configured: { type: boolean }
+
+    # ------------------------------------------------------------ auth / me
+    Preferences:
+      type: object
+      properties:
+        units: { type: string, enum: [metric, imperial] }
+        default_flight_visibility: { type: string, enum: [private, event, public] }
+        public_profile: { type: boolean }
+    PilotProfile:
+      type: object
+      properties:
+        public_id: { type: string, readOnly: true }
+        display_name: { type: string, maxLength: 200 }
+        bio: { type: string, maxLength: 2000 }
+        wing: { type: string, maxLength: 200 }
+        license_no: { type: string, maxLength: 100 }
+        nationality: { type: string, description: "ISO 3166-1 alpha-2 or empty" }
+        emergency_contact_name: { type: string, maxLength: 200 }
+        emergency_contact_phone: { type: string, maxLength: 50 }
+        blood_type: { type: string, maxLength: 10 }
+    PublicPilot:
+      type: object
+      description: Public profile; never contains contact, emergency or licence fields.
+      properties:
+        public_id: { type: string }
+        display_name: { type: string }
+        bio: { type: string }
+        wing: { type: string }
+        nationality: { type: string }
+    Me:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        email_verified: { type: boolean }
+        full_name: { type: string }
+        roles:
+          type: array
+          items: { type: string, enum: [pilot, observer, event_organizer, rescue_operator, platform_admin] }
+        must_change_password: { type: boolean }
+        created_at: { $ref: "#/components/schemas/Timestamp" }
+        pilot:
+          oneOf:
+            - $ref: "#/components/schemas/PilotProfile"
+            - type: "null"
+        preferences: { $ref: "#/components/schemas/Preferences" }
+    AuthResponse:
+      type: object
+      required: [access_token, access_expires_at, refresh_expires_at, user]
+      properties:
+        access_token: { type: string }
+        access_expires_at: { $ref: "#/components/schemas/Timestamp" }
+        refresh_token:
+          type: string
+          description: Opaque, 30 days, rotated on every refresh. Omitted for client=web (set as rf_refresh cookie instead).
+        refresh_expires_at: { $ref: "#/components/schemas/Timestamp" }
+        user: { $ref: "#/components/schemas/Me" }
+    Device:
+      type: object
+      required: [device_id, platform]
+      properties:
+        device_id: { type: string, maxLength: 200 }
+        platform: { type: string, const: ios }
+        apns_token: { type: [string, "null"], maxLength: 400 }
+        app_version: { type: string, maxLength: 50 }
+        os_version: { type: string, maxLength: 50 }
+    DeletionRequest:
+      type: object
+      properties:
+        status: { type: string, const: pending }
+        requested_at: { $ref: "#/components/schemas/Timestamp" }
+        scheduled_for:
+          $ref: "#/components/schemas/Timestamp"
+    PilotListItem:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        full_name: { type: string }
+        public_id: { type: [string, "null"] }
+        roles: { type: array, items: { type: string } }
+
+    # ------------------------------------------------------------ events
+    EventSettings:
+      type: object
+      properties:
+        registration_open: { type: boolean }
+        live_tracking: { type: boolean }
+        flight_recording: { type: boolean }
+        observers_allowed: { type: boolean }
+        emergency_testing: { type: boolean }
+        public_live_map: { type: boolean }
+    Event:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string, pattern: "^[a-z0-9][a-z0-9-]{1,99}$" }
+        name: { type: string }
+        description: { type: string }
+        kind: { type: string, enum: [paragliding, hang_gliding, speed_flying, other] }
+        status: { type: string, enum: [draft, published, active, completed, archived] }
+        is_demo: { type: boolean }
+        visibility: { type: string, enum: [public, restricted] }
+        location_name: { type: string }
+        center:
+          oneOf:
+            - $ref: "#/components/schemas/LatLon"
+            - type: "null"
+        center_is_approximate: { type: boolean }
+        starts_at: { $ref: "#/components/schemas/Timestamp" }
+        ends_at: { $ref: "#/components/schemas/Timestamp" }
+        cover_image_url: { type: [string, "null"] }
+        settings: { $ref: "#/components/schemas/EventSettings" }
+        organizer:
+          oneOf:
+            - type: object
+              properties:
+                id: { type: string, format: uuid }
+                full_name: { type: string }
+            - type: "null"
+        participant_count: { type: integer, description: Active members with role participant. }
+        my_role: { type: [string, "null"], enum: [organizer, participant, observer, null] }
+        created_at: { $ref: "#/components/schemas/Timestamp" }
+        updated_at: { $ref: "#/components/schemas/Timestamp" }
+    EventInput:
+      type: object
+      description: Create requires name, starts_at, ends_at. PATCH applies only present fields; `center` and `cover_image_url` accept null to clear.
+      properties:
+        slug: { type: string }
+        name: { type: string, maxLength: 200 }
+        description: { type: string, maxLength: 10000 }
+        kind: { type: string, enum: [paragliding, hang_gliding, speed_flying, other] }
+        status: { type: string, enum: [draft, published, active, completed, archived] }
+        visibility: { type: string, enum: [public, restricted] }
+        location_name: { type: string, maxLength: 300 }
+        center:
+          oneOf:
+            - $ref: "#/components/schemas/LatLon"
+            - type: "null"
+        center_is_approximate: { type: boolean }
+        starts_at: { $ref: "#/components/schemas/Timestamp" }
+        ends_at: { $ref: "#/components/schemas/Timestamp" }
+        cover_image_url: { type: [string, "null"], description: https URL }
+        settings: { $ref: "#/components/schemas/EventSettings" }
+    Participant:
+      type: object
+      properties:
+        user_id: { type: string, format: uuid }
+        full_name: { type: string }
+        public_id: { type: [string, "null"] }
+        role: { type: string, enum: [organizer, participant, observer] }
+        status: { type: string, enum: [active, removed] }
+        joined_at: { $ref: "#/components/schemas/Timestamp" }
+    LaunchSite:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        event_id: { type: string, format: uuid }
+        name: { type: string }
+        position:
+          oneOf:
+            - $ref: "#/components/schemas/LatLon"
+            - type: "null"
+        elevation_m: { type: [number, "null"] }
+        notes: { type: string }
+        is_verified: { type: boolean, description: "Cannot be true while position is null." }
+    LaunchSiteInput:
+      type: object
+      properties:
+        name: { type: string, maxLength: 200 }
+        position:
+          oneOf:
+            - $ref: "#/components/schemas/LatLon"
+            - type: "null"
+        elevation_m: { type: [number, "null"], minimum: -500, maximum: 9000 }
+        notes: { type: string, maxLength: 2000 }
+        is_verified: { type: boolean }
+    EventReport:
+      type: object
+      properties:
+        event_id: { type: string, format: uuid }
+        generated_at: { $ref: "#/components/schemas/Timestamp" }
+        participation:
+          type: object
+          properties:
+            participants: { type: integer }
+            observers: { type: integer }
+            organizers: { type: integer }
+            removed: { type: integer }
+            pilots_flown: { type: integer }
+        flights:
+          type: object
+          properties:
+            count: { type: integer }
+            by_status: { type: object, additionalProperties: { type: integer } }
+            total_duration_s: { type: number }
+            avg_duration_s: { type: number }
+        telemetry:
+          type: object
+          properties:
+            samples: { type: integer }
+            expected_samples: { type: integer, description: 1 Hz target between first and last sample }
+            completeness: { type: [number, "null"] }
+            interruptions: { type: integer, description: Sum of gaps > 10 s }
+            note: { type: string }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              flight_id: { type: string, format: uuid }
+              pilot_id: { type: string, format: uuid }
+              pilot_name: { type: string }
+              status: { type: string }
+              is_simulated: { type: boolean }
+              duration_s: { type: number }
+              sample_count: { type: integer }
+              expected_sample_count: { type: integer }
+              telemetry_completeness: { type: [number, "null"] }
+              interruptions: { type: integer }
+              distance_m: { type: number }
+              max_gps_alt_m: { type: [number, "null"] }
+
+    # ------------------------------------------------------------ flights
+    Position:
+      type: object
+      properties:
+        id: { type: string, format: uuid, description: The client sample id }
+        seq: { type: integer }
+        t: { $ref: "#/components/schemas/Timestamp" }
+        received_at: { $ref: "#/components/schemas/Timestamp" }
+        lat: { type: number }
+        lon: { type: number }
+        gps_alt_m: { type: [number, "null"] }
+        h_acc_m: { type: number }
+        v_acc_m: { type: [number, "null"] }
+        speed_ms: { type: [number, "null"] }
+        course_deg: { type: [number, "null"] }
+    FlightStats:
+      type: object
+      description: Distance/altitude/speed/ascent use only samples with h_acc_m <= 50; ascent/descent use a 3 m dead band; gaps are > 10 s between consecutive seqs; expected_sample_count = 1 Hz between first and last sample.
+      properties:
+        duration_s: { type: number }
+        distance_m: { type: number }
+        max_gps_alt_m: { type: [number, "null"] }
+        min_gps_alt_m: { type: [number, "null"] }
+        max_ground_speed_ms: { type: [number, "null"] }
+        total_ascent_m: { type: number }
+        total_descent_m: { type: number }
+        sample_count: { type: integer }
+        expected_sample_count: { type: integer }
+        gap_count: { type: integer }
+    Flight:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        public_id: { type: string }
+        pilot: { $ref: "#/components/schemas/PilotRef" }
+        event_id: { type: [string, "null"], format: uuid }
+        status: { type: string, enum: [recording, ended, abandoned] }
+        visibility: { type: string, enum: [private, event, public] }
+        is_simulated: { type: boolean }
+        started_at: { $ref: "#/components/schemas/Timestamp" }
+        ended_at:
+          oneOf:
+            - $ref: "#/components/schemas/Timestamp"
+            - type: "null"
+        last_position:
+          oneOf:
+            - $ref: "#/components/schemas/Position"
+            - type: "null"
+        last_received_at:
+          oneOf:
+            - $ref: "#/components/schemas/Timestamp"
+            - type: "null"
+        stats: { $ref: "#/components/schemas/FlightStats" }
+        device:
+          type: object
+          properties:
+            platform: { type: string }
+            app_version: { type: string }
+    FlightCreate:
+      type: object
+      required: [id, started_at]
+      properties:
+        id: { type: string, format: uuid }
+        event_id: { type: [string, "null"], format: uuid }
+        started_at: { $ref: "#/components/schemas/Timestamp" }
+        visibility: { type: string, enum: [private, event, public], description: Defaults to preferences.default_flight_visibility }
+        is_simulated: { type: boolean, default: false }
+        device:
+          type: object
+          properties:
+            platform: { type: string, default: ios }
+            app_version: { type: string }
+
+    # ------------------------------------------------------------ telemetry
+    TelemetrySample:
+      type: object
+      required: [id, seq]
+      properties:
+        id: { type: string, format: uuid }
+        seq: { type: integer, minimum: 0, maximum: 2147483647 }
+        t: { $ref: "#/components/schemas/Timestamp" }
+        device_t: { $ref: "#/components/schemas/Timestamp" }
+        lat: { type: number }
+        lon: { type: number }
+        gps_alt_m: { type: [number, "null"] }
+        h_acc_m: { type: number }
+        v_acc_m: { type: [number, "null"], description: "Negative values are stored as null." }
+        speed_ms: { type: [number, "null"], description: "Negative (Core Location sentinel) stored as null; > 150 rejected invalid_speed." }
+        course_deg: { type: [number, "null"], description: "Outside 0..360 stored as null." }
+        meta: { type: object, description: "Free-form, <= 2 KB (dropped if larger)." }
+    TelemetryBatch:
+      type: object
+      required: [batch_id, flight_id, samples]
+      properties:
+        batch_id: { type: string, format: uuid }
+        flight_id: { type: string, format: uuid }
+        samples:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items: { $ref: "#/components/schemas/TelemetrySample" }
+    TelemetryResult:
+      type: object
+      properties:
+        batch_id: { type: string, format: uuid }
+        accepted: { type: array, items: { type: integer } }
+        duplicate: { type: array, items: { type: integer } }
+        rejected:
+          type: array
+          items:
+            type: object
+            properties:
+              seq: { type: integer }
+              reason:
+                type: string
+                enum: [invalid_coordinates, invalid_accuracy, timestamp_out_of_range, flight_ended, invalid_speed, sample_conflict]
+                description: sample_conflict = sample id reused with a different (flight_id, seq), or same seq with a different id (client bug).
+        max_acked_seq: { type: [integer, "null"], description: Highest seq in accepted ∪ duplicate of this batch. }
+        server_time: { $ref: "#/components/schemas/Timestamp" }
+
+    # ------------------------------------------------------------ live
+    LivePilot:
+      type: object
+      properties:
+        flight_id: { type: string, format: uuid }
+        pilot: { $ref: "#/components/schemas/PilotRef" }
+        is_simulated: { type: boolean }
+        status: { type: string, enum: [recording, ended] }
+        visibility: { type: string, enum: [private, event, public], description: "Addition: not in the contract document." }
+        position:
+          oneOf:
+            - $ref: "#/components/schemas/Position"
+            - type: "null"
+        age_s: { type: [number, "null"] }
+        freshness: { type: string, enum: [live, stale, lost], description: "live < 30 s, stale 30 s - 5 min, lost > 5 min since the last received position" }
+        trail:
+          type: array
+          maxItems: 300
+          description: "Last 15 minutes (by now), h_acc_m <= 50, simplified. Each point is [lon, lat, gps_alt_m|null, t_unix_ms]."
+          items:
+            type: array
+            minItems: 4
+            maxItems: 4
+            prefixItems:
+              - { type: number }
+              - { type: number }
+              - { type: [number, "null"] }
+              - { type: integer }
+    LiveSnapshot:
+      type: object
+      properties:
+        event_id: { type: string, format: uuid }
+        server_time: { $ref: "#/components/schemas/Timestamp" }
+        cursor: { type: string, description: "Redis stream id; \"0-0\" if unavailable" }
+        pilots: { type: array, items: { $ref: "#/components/schemas/LivePilot" } }
+
+    # ------------------------------------------------------------ incidents
+    IncidentPilot:
+      type: object
+      description: Contact fields are present only for the pilot themself and authorized responders (access is audited).
+      properties:
+        user_id: { type: string, format: uuid }
+        full_name: { type: string }
+        public_id: { type: string }
+        emergency_contact_name: { type: string }
+        emergency_contact_phone: { type: string }
+        blood_type: { type: string }
+    IncidentPosition:
+      type: object
+      properties:
+        lat: { type: number }
+        lon: { type: number }
+        gps_alt_m: { type: [number, "null"] }
+        h_acc_m: { type: [number, "null"] }
+        t: { $ref: "#/components/schemas/Timestamp" }
+    IncidentUpdate:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string, enum: [created, acknowledged, status_changed, note, assigned, assignment_status, position] }
+        actor:
+          oneOf:
+            - $ref: "#/components/schemas/UserRef"
+            - type: "null"
+        body: { type: string }
+        status: { type: string }
+        created_at: { $ref: "#/components/schemas/Timestamp" }
+    Assignment:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        incident_id: { type: string, format: uuid }
+        responder: { $ref: "#/components/schemas/UserRef" }
+        status: { type: string, enum: [assigned, en_route, on_scene, completed, withdrawn] }
+        assigned_at: { $ref: "#/components/schemas/Timestamp" }
+        updated_at: { $ref: "#/components/schemas/Timestamp" }
+        last_position:
+          oneOf:
+            - $ref: "#/components/schemas/LatLonT"
+            - type: "null"
+    Incident:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string, const: sos }
+        is_test: { type: boolean }
+        status: { type: string, enum: [open, acknowledged, responding, resolved, cancelled] }
+        pilot: { $ref: "#/components/schemas/IncidentPilot" }
+        flight_id: { type: [string, "null"], format: uuid }
+        event_id: { type: [string, "null"], format: uuid, description: Derived from the flight's event. }
+        position:
+          oneOf:
+            - $ref: "#/components/schemas/IncidentPosition"
+            - type: "null"
+        last_known_position:
+          oneOf:
+            - $ref: "#/components/schemas/Position"
+            - type: "null"
+        message: { type: string }
+        created_at_device: { $ref: "#/components/schemas/Timestamp" }
+        received_at: { $ref: "#/components/schemas/Timestamp" }
+        acknowledged_at:
+          oneOf:
+            - $ref: "#/components/schemas/Timestamp"
+            - type: "null"
+        acknowledged_by:
+          oneOf:
+            - $ref: "#/components/schemas/UserRef"
+            - type: "null"
+        resolved_at:
+          oneOf:
+            - $ref: "#/components/schemas/Timestamp"
+            - type: "null"
+        assignments: { type: array, items: { $ref: "#/components/schemas/Assignment" } }
+        updates: { type: array, items: { $ref: "#/components/schemas/IncidentUpdate" } }
+    IncidentCreate:
+      type: object
+      required: [id, created_at_device]
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string, const: sos, default: sos }
+        is_test: { type: boolean, default: false, description: Only allowed when the flight's event has emergency_testing. }
+        flight_id: { type: [string, "null"], format: uuid, description: Must be the caller's flight. }
+        position:
+          type: object
+          required: [lat, lon, t]
+          properties:
+            lat: { type: number }
+            lon: { type: number }
+            gps_alt_m: { type: [number, "null"] }
+            h_acc_m: { type: [number, "null"] }
+            t: { $ref: "#/components/schemas/Timestamp" }
+        message: { type: string, maxLength: 2000 }
+        created_at_device: { $ref: "#/components/schemas/Timestamp" }
+    RescueTeamMember:
+      type: object
+      properties:
+        user_id: { type: string, format: uuid }
+        full_name: { type: string }
+        availability: { type: string, enum: [available, unavailable] }
+        last_position:
+          oneOf:
+            - $ref: "#/components/schemas/LatLonT"
+            - type: "null"
+        active_assignment: { type: [string, "null"], format: uuid }
+
+    # ------------------------------------------------------------ notifications / admin
+    Notification:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string, enum: [event_update, flight, emergency_alert, rescue_ack, system] }
+        title: { type: string }
+        body: { type: string }
+        data: { type: object }
+        read_at:
+          oneOf:
+            - $ref: "#/components/schemas/Timestamp"
+            - type: "null"
+        created_at: { $ref: "#/components/schemas/Timestamp" }
+    AdminUser:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string }
+        full_name: { type: string }
+        public_id: { type: [string, "null"] }
+        roles: { type: array, items: { type: string } }
+        email_verified: { type: boolean }
+        must_change_password: { type: boolean }
+        disabled: { type: boolean }
+        created_at: { $ref: "#/components/schemas/Timestamp" }
+        disabled_at:
+          oneOf:
+            - $ref: "#/components/schemas/Timestamp"
+            - type: "null"
+    AuditEntry:
+      type: object
+      properties:
+        id: { type: string, description: Numeric id as string }
+        actor:
+          oneOf:
+            - $ref: "#/components/schemas/UserRef"
+            - type: "null"
+        action: { type: string, examples: [auth.login, incident.contact_viewed] }
+        target_type: { type: string }
+        target_id: { type: string }
+        event_id: { type: [string, "null"], format: uuid }
+        ip: { type: string }
+        details: { type: object }
+        created_at: { $ref: "#/components/schemas/Timestamp" }
+    AdminStats:
+      type: object
+      properties:
+        generated_at: { $ref: "#/components/schemas/Timestamp" }
+        active_events: { type: integer }
+        tracking_pilots: { type: integer, description: Recording flights with data in the last 30 s }
+        stale_sessions: { type: integer, description: Recording flights silent > 5 min }
+        open_incidents: { type: integer }
+        recent_flights: { type: integer, description: Flights started in the last 24 h }
+        users: { type: integer }
+        system_status:
+          type: object
+          properties:
+            checks:
+              type: object
+              properties:
+                postgres: { type: string }
+                redis: { type: string }
+            outbox_depth: { type: integer }
+            email_pending: { type: integer }
+            email_failed_24h: { type: integer }
+
+    # ------------------------------------------------------------ pages
+    EventPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Event" } }
+        next_cursor: { type: [string, "null"] }
+    FlightPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Flight" } }
+        next_cursor: { type: [string, "null"] }
+    PositionPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Position" } }
+        next_cursor: { type: [string, "null"] }
+    IncidentPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Incident" } }
+        next_cursor: { type: [string, "null"] }
+    NotificationPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Notification" } }
+        next_cursor: { type: [string, "null"] }
+    AdminUserPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AdminUser" } }
+        next_cursor: { type: [string, "null"] }
+    AuditPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AuditEntry" } }
+        next_cursor: { type: [string, "null"] }
+    PilotPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/PilotListItem" } }
+        next_cursor: { type: [string, "null"] }
+
+paths:
+  # ============================================================ health
+  /health/live:
+    get:
+      operationId: getHealthLive
+      tags: [health]
+      security: [{}]
+      summary: Liveness
+      responses:
+        "200":
+          description: Process is up
+          headers:
+            X-Request-Id: { $ref: "#/components/headers/X-Request-Id" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Health" }
+  /health/ready:
+    get:
+      operationId: getHealthReady
+      tags: [health]
+      security: [{}]
+      summary: Readiness
+      description: |
+        200 `ok`; 200 `degraded` when Redis is down (ingestion still works, realtime is delayed — Addition: contract only lists ok/503);
+        503 `unavailable` when PostgreSQL is down, 503 `draining` during shutdown.
+      responses:
+        "200":
+          description: Ready (ok or degraded)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ready" }
+        "503":
+          description: Not ready
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ready" }
+  /meta:
+    get:
+      operationId: getMeta
+      tags: [health]
+      security: [{}]
+      summary: Environment metadata
+      description: "Addition: not in the contract document. Used by the simulator to refuse register mode in production."
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Meta" }
+
+  # ============================================================ auth
+  /auth/register:
+    post:
+      operationId: postAuthRegister
+      tags: [auth]
+      security: [{}]
+      summary: Register a pilot account
+      description: |
+        Creates a user with role `pilot`, a pilot profile and default preferences; queues welcome and verification emails.
+        Addition: optional `client` (web|ios, default web) and `device_name`. Rate limit 5/min per IP.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, full_name]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 10, description: "≥ 10 chars, not the email, not common, not the bootstrap password" }
+                full_name: { type: string, maxLength: 200 }
+                client: { type: string, enum: [web, ios], default: web }
+                device_name: { type: string, maxLength: 100 }
+      responses:
+        "201":
+          description: Created (web also sets the rf_refresh cookie)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Validation" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /auth/login:
+    post:
+      operationId: postAuthLogin
+      tags: [auth]
+      security: [{}]
+      summary: Log in
+      description: |
+        Rate limits: 5/min per IP+email, 20/min per IP. An expired bootstrap password returns 401 with `details.reason = password_expired`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+                client: { type: string, enum: [web, ios], default: web }
+                device_name: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/Validation" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /auth/refresh:
+    post:
+      operationId: postAuthRefresh
+      tags: [auth]
+      security: [{}, {refreshCookie: []}]
+      summary: Rotate the refresh token
+      description: |
+        iOS sends `refresh_token` in the body; web relies on the rf_refresh cookie (an Origin header, if present, must be allowed).
+        Presenting an already-rotated token revokes the whole session family (reuse detection) and returns 401.
+        Rate limit 60/min per IP.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token: { type: string }
+      responses:
+        "200":
+          description: Rotated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /auth/logout:
+    post:
+      operationId: postAuthLogout
+      tags: [auth]
+      security: [{}, {refreshCookie: []}, {bearerAuth: []}]
+      summary: Revoke the session
+      description: Revokes the family of the presented refresh token (body or cookie), else of the access token's sid. Clears the cookie.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token: { type: string }
+      responses:
+        "204": { $ref: "#/components/responses/NoContent" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /auth/password/change:
+    post:
+      operationId: postAuthPasswordChange
+      tags: [auth]
+      summary: Change password
+      description: |
+        Allowed while must_change_password is set. Clears it, revokes all sessions (including the current one) and issues a
+        new session of the same client type. Rate limit 10/min per user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_password, new_password]
+              properties:
+                current_password: { type: string }
+                new_password: { type: string }
+      responses:
+        "200":
+          description: Changed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/Validation" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /auth/password/forgot:
+    post:
+      operationId: postAuthPasswordForgot
+      tags: [auth]
+      security: [{}]
+      summary: Request a password reset email
+      description: Always 202 (no account enumeration). Link `${APP_WEB_URL}/app/reset-password?token=…`, valid 1 h. Rate limit 5/min per IP.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string }
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Accepted" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /auth/password/reset:
+    post:
+      operationId: postAuthPasswordReset
+      tags: [auth]
+      security: [{}]
+      summary: Reset password with a token
+      description: Revokes all sessions and marks the email verified. Invalid/expired/used token → 422 details.token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, new_password]
+              properties:
+                token: { type: string }
+                new_password: { type: string }
+      responses:
+        "204": { $ref: "#/components/responses/NoContent" }
+        "422": { $ref: "#/components/responses/Validation" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /auth/email/verify:
+    post:
+      operationId: postAuthEmailVerify
+      tags: [auth]
+      security: [{}]
+      summary: Verify email
+      description: Link `${APP_WEB_URL}/app/verify-email?token=…`, valid 48 h.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        "204": { $ref: "#/components/responses/NoContent" }
+        "422": { $ref: "#/components/responses/Validation" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /auth/email/verify/resend:
+    post:
+      operationId: postAuthEmailVerifyResend
+      tags: [auth]
+      summary: Resend verification email
+      description: No-op if already verified. Rate limit 3 per 10 min per user.
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Accepted" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  # ============================================================ me
+  /me:
+    get:
+      operationId: getMe
+      tags: [me]
+      summary: Current user
+      description: Allowed while must_change_password is set.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Me" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    patch:
+      operationId: patchMe
+      tags: [me]
+      summary: Update name and preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name: { type: string }
+                preferences: { $ref: "#/components/schemas/Preferences" }
+      responses:
+        "200":
+          description: Updated Me
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Me" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /me/pilot:
+    patch:
+      operationId: patchMePilot
+      tags: [me]
+      summary: Update pilot profile
+      description: Partial PilotProfile; `public_id` and unknown fields are rejected (422). Creates the profile if missing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PilotProfile" }
+      responses:
+        "200":
+          description: Updated Me
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Me" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /me/deletion-request:
+    post:
+      operationId: postMeDeletionRequest
+      tags: [me]
+      summary: Request account deletion
+      description: |
+        The account is anonymised after the grace period (ACCOUNT_DELETION_GRACE, default 14 days) unless cancelled.
+        Addition: response includes `scheduled_for`. Repeating while pending is idempotent.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string, maxLength: 2000 }
+      responses:
+        "202":
+          description: Pending
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeletionRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Validation" }
+    delete:
+      operationId: deleteMeDeletionRequest
+      tags: [me]
+      summary: Cancel account deletion
+      description: "Addition: returns 200 {status: cancelled} (the contract does not specify a body)."
+      responses:
+        "200":
+          description: Cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, const: cancelled }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /me/export:
+    get:
+      operationId: getMeExport
+      tags: [me]
+      summary: Export own data
+      description: Streams JSON {exported_at, me, devices (push tokens omitted, has_push_token flag), flights[] with positions[]}.
+      responses:
+        "200":
+          description: JSON export (Content-Disposition attachment)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exported_at: { $ref: "#/components/schemas/Timestamp" }
+                  me: { $ref: "#/components/schemas/Me" }
+                  devices: { type: array, items: { type: object } }
+                  flights: { type: array, items: { type: object } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /me/devices:
+    post:
+      operationId: postMeDevices
+      tags: [me]
+      summary: Register / update a device (upsert by device_id)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Device" }
+      responses:
+        "204": { $ref: "#/components/responses/NoContent" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Validation" }
+
+  # ============================================================ pilots
+  /pilots:
+    get:
+      operationId: getPilots
+      tags: [pilots]
+      summary: List pilots (organizers/admins)
+      description: Allowed for platform_admin, global event_organizer, or organizers of at least one event.
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PilotPage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /pilots/{public_id}:
+    get:
+      operationId: getPilotsPublicId
+      tags: [pilots]
+      security: [{}, {bearerAuth: []}]
+      summary: Public pilot profile
+      description: 404 unless public_profile is true (owners always see their own).
+      parameters:
+        - { name: public_id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublicPilot" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ============================================================ events
+  /events:
+    get:
+      operationId: getEvents
+      tags: [events]
+      security: [{}, {bearerAuth: []}]
+      summary: List events
+      description: |
+        Guests see public non-draft events; members also see restricted events they belong to; admins see all.
+        Default status filter: published,active,completed (+draft for authenticated callers, still visibility-checked).
+      parameters:
+        - { name: status, in: query, description: Comma list, schema: { type: string } }
+        - { name: q, in: query, schema: { type: string } }
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+        - { name: near, in: query, description: "lat,lon", schema: { type: string } }
+        - { name: radius_km, in: query, description: "Default 50 when near is set", schema: { type: number } }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EventPage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Validation" }
+    post:
+      operationId: postEvents
+      tags: [events]
+      summary: Create an event
+      description: Requires global event_organizer or platform_admin; the creator becomes organizer. Slug generated from name if absent. Defaults status draft, visibility public.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EventInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /events/{id}:
+    parameters:
+      - $ref: "#/components/parameters/EventIdOrSlug"
+    get:
+      operationId: getEventsId
+      tags: [events]
+      security: [{}, {bearerAuth: []}]
+      summary: Get an event
+      description: Restricted/draft events return 404 to non-members.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      operationId: patchEventsId
+      tags: [events]
+      summary: Update an event (organizer/admin)
+      description: Status or schedule changes notify members (in-app + event_update email to verified members).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EventInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /events/{id}/archive:
+    parameters:
+      - $ref: "#/components/parameters/EventIdOrSlug"
+    post:
+      operationId: postEventsIdArchive
+      tags: [events]
+      summary: Archive an event (organizer/admin)
+      responses:
+        "200":
+          description: Archived event
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /events/{id}/participants:
+    parameters:
+      - $ref: "#/components/parameters/EventIdOrSlug"
+    get:
+      operationId: getEventsIdParticipants
+      tags: [events]
+      summary: List participants (members; organizers also see removed)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: { type: array, items: { $ref: "#/components/schemas/Participant" } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      operationId: postEventsIdParticipants
+      tags: [events]
+      summary: Add a member (organizer/admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id]
+              properties:
+                user_id: { type: string, format: uuid }
+                role: { type: string, enum: [organizer, participant, observer], default: participant }
+      responses:
+        "201":
+          description: Added
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Participant" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /events/{id}/participants/{user_id}:
+    parameters:
+      - $ref: "#/components/parameters/EventIdOrSlug"
+      - $ref: "#/components/parameters/UserId"
+    patch:
+      operationId: patchEventsIdParticipantsUserId
+      tags: [events]
+      summary: Change a member's role (organizer/admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role: { type: string, enum: [organizer, participant, observer] }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Participant" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Validation" }
+    delete:
+      operationId: deleteEventsIdParticipantsUserId
+      tags: [events]
+      summary: Remove a member (organizer/admin)
+      description: The last active organizer cannot be removed (409).
+      responses:
+        "204": { $ref: "#/components/responses/NoContent" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /events/{id}/join:
+    parameters:
+      - $ref: "#/components/parameters/EventIdOrSlug"
+    post:
+      operationId: postEventsIdJoin
+      tags: [events]
+      summary: Join an event
+      description: |
+        Public + registration_open events only (restricted requires an organizer add). Idempotent for existing members.
+        Addition: optional body {role: participant|observer} (default participant; participant requires the pilot role,
+        observer requires observers_allowed).
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role: { type: string, enum: [participant, observer], default: participant }
+      responses:
+        "200":
+          description: Event with my_role
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /events/{id}/leave:
+    parameters:
+      - $ref: "#/components/parameters/EventIdOrSlug"
+    post:
+      operationId: postEventsIdLeave
+      tags: [events]
+      summary: Leave an event
+      description: The last organizer cannot leave (409).
+      responses:
+        "204": { $ref: "#/components/responses/NoContent" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /events/{id}/launch-sites:
+    parameters:
+      - $ref: "#/components/parameters/EventIdOrSlug"
+    get:
+      operationId: getEventsIdLaunchSites
+      tags: [events]
+      security: [{}, {bearerAuth: []}]
+      summary: List launch sites (as event visibility)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: { type: array, items: { $ref: "#/components/schemas/LaunchSite" } }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      operationId: postEventsIdLaunchSites
+      tags: [events]
+      summary: Create a launch site (organizer/admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LaunchSiteInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaunchSite" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /events/{id}/launch-sites/{site_id}:
+    parameters:
+      - $ref: "#/components/parameters/EventIdOrSlug"
+      - { name: site_id, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      operationId: patchEventsIdLaunchSitesSiteId
+      tags: [events]
+      summary: Update a launch site (organizer/admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LaunchSiteInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaunchSite" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Validation" }
+    delete:
+      operationId: deleteEventsIdLaunchSitesSiteId
+      tags: [events]
+      summary: Delete a launch site (organizer/admin)
+      responses:
+        "204": { $ref: "#/components/responses/NoContent" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /events/{id}/report:
+    parameters:
+      - $ref: "#/components/parameters/EventIdOrSlug"
+    get:
+      operationId: getEventsIdReport
+      tags: [events]
+      summary: Event report (organizer/admin)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EventReport" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /events/{id}/live:
+    parameters:
+      - $ref: "#/components/parameters/EventIdOrSlug"
+    get:
+      operationId: getEventsIdLive
+      tags: [live]
+      security: [{}, {bearerAuth: []}]
+      summary: Live snapshot
+      description: |
+        Recording flights plus flights ended in the last 2 h, filtered per "Live visibility". Guests/non-members need a
+        public event with public_live_map (guests get 401, signed-in non-members 403 otherwise) and see only public flights,
+        with display names. Admins and rescue operators can view restricted events.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LiveSnapshot" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ============================================================ flights
+  /flights:
+    get:
+      operationId: getFlights
+      tags: [flights]
+      summary: List flights
+      description: |
+        Default: own flights. `?event_id=` (members; admin/rescue see all, others see non-private plus own).
+        `?pilot_id=` (admin/rescue: all; organizers: that pilot's non-private flights in events they organise).
+      parameters:
+        - { name: pilot_id, in: query, schema: { type: string, format: uuid } }
+        - { name: event_id, in: query, schema: { type: string } }
+        - { name: status, in: query, description: "Comma list of recording,ended,abandoned", schema: { type: string } }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FlightPage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Validation" }
+    post:
+      operationId: postFlights
+      tags: [flights]
+      summary: Create a flight (idempotent on id)
+      description: |
+        201 when created, 200 if the id already exists for this pilot, 409 if it belongs to someone else.
+        With event_id the caller must be an active participant/organizer and the event must have live_tracking.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FlightCreate" }
+      responses:
+        "200":
+          description: Existing flight
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Flight" }
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Flight" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /flights/{id}:
+    parameters:
+      - $ref: "#/components/parameters/FlightIdOrPublic"
+    get:
+      operationId: getFlightsId
+      tags: [flights]
+      security: [{}, {bearerAuth: []}]
+      summary: Get a flight
+      description: |
+        Visible to: owner, admin, rescue_operator; everyone for public flights; active members of the flight's event for
+        event flights; organizers for private flights only while an incident is open on them. Otherwise 404.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Flight" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      operationId: patchFlightsId
+      tags: [flights]
+      summary: Change visibility / event link (owner)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                visibility: { type: string, enum: [private, event, public] }
+                event_id: { type: [string, "null"], format: uuid }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Flight" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /flights/{id}/end:
+    parameters:
+      - $ref: "#/components/parameters/FlightIdOrPublic"
+    post:
+      operationId: postFlightsIdEnd
+      tags: [flights]
+      summary: End a flight (owner, idempotent)
+      description: Recomputes final statistics from all stored positions. ended_at defaults to now.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ended_at: { $ref: "#/components/schemas/Timestamp" }
+      responses:
+        "200":
+          description: Ended flight with final stats
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Flight" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /flights/{id}/positions:
+    parameters:
+      - $ref: "#/components/parameters/FlightIdOrPublic"
+    get:
+      operationId: getFlightsIdPositions
+      tags: [flights]
+      security: [{}, {bearerAuth: []}]
+      summary: Flight positions
+      description: |
+        Ordered by seq. Paged with after_seq/limit (default 1000, max 5000) or cursor. With `simplify=true` returns the
+        whole route (h_acc_m <= 50, Douglas–Peucker, ≤ 5000 points) and next_cursor null.
+        Addition: `tolerance_m` (default 5) for simplify.
+      parameters:
+        - { name: after_seq, in: query, schema: { type: integer } }
+        - { name: limit, in: query, schema: { type: integer, maximum: 5000 } }
+        - $ref: "#/components/parameters/Cursor"
+        - { name: simplify, in: query, schema: { type: boolean } }
+        - { name: tolerance_m, in: query, schema: { type: number, exclusiveMinimum: 0, maximum: 1000 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PositionPage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /flights/{id}/track.gpx:
+    parameters:
+      - $ref: "#/components/parameters/FlightIdOrPublic"
+    get:
+      operationId: getFlightsIdTrackGpx
+      tags: [flights]
+      security: [{}, {bearerAuth: []}]
+      summary: GPX 1.1 export (not a certified flight log)
+      responses:
+        "200":
+          description: GPX document
+          content:
+            application/gpx+xml:
+              schema: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ============================================================ telemetry
+  /telemetry/batches:
+    post:
+      operationId: postTelemetryBatches
+      tags: [telemetry]
+      summary: Upload a telemetry batch (flight owner)
+      description: |
+        1–500 samples, body ≤ 512 KB (gzip `Content-Encoding` accepted). A sample is acknowledged if it is in `accepted`
+        or `duplicate`; both are durable in PostgreSQL when the response is sent. Re-sending the same batch_id returns the
+        same classification. Out-of-order and late samples are accepted. Missing/invalid sample `id` or `seq`, or a wrong
+        sample count, fail the whole batch with 422. Rate limit 600 batches/min per user.
+      parameters:
+        - name: Content-Encoding
+          in: header
+          schema: { type: string, enum: [gzip] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TelemetryBatch" }
+      responses:
+        "200":
+          description: Classification
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TelemetryResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413": { $ref: "#/components/responses/TooLarge" }
+        "422": { $ref: "#/components/responses/Validation" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  # ============================================================ realtime
+  /realtime:
+    get:
+      operationId: getRealtime
+      tags: [live]
+      security: [{}]
+      summary: Realtime WebSocket (upgrade)
+      description: |
+        WebSocket upgrade (`wss://api.retfast.com/api/v1/realtime`). Browser Origin must match an allowed CORS origin.
+
+        **Client → server**
+        - `{"type":"auth","access_token":"…"}` — first message within 10 s (guests may instead subscribe to public
+          channels directly). A connection that sends nothing in 10 s is closed with 4001. Invalid/expired token or a
+          password-change-required user → `error` (`unauthorized` | `token_expired` | `password_change_required`) and close 4001
+          if not yet authenticated. May be resent to refresh the token.
+        - `{"type":"subscribe","channel":"event:<uuid>"|"flight:<uuid or public_id>"|"incidents","since":"<cursor>"?}`
+        - `{"type":"unsubscribe","channel":"…"}` → `{"type":"unsubscribed","channel":"…"}`
+        - `{"type":"ping"}` → `{"type":"pong"}`; reply `{"type":"pong"}` to server pings.
+
+        **Server → client**
+        - `{"type":"auth_ok","user_id":"…"}`
+        - `{"type":"subscribed","channel","snapshot","cursor","replayed":N}` — snapshot is always present: LiveSnapshot
+          for event channels, Flight for flight channels, `{"items":[Incident]}` (open incidents in scope) for incidents.
+          If `since` is inside the Redis stream window, the N missed messages follow immediately after `subscribed`.
+          Addition: `replayed` count.
+        - `{"type":"position","channel","cursor","data":{flight_id,pilot,is_simulated,status,position},"server_received_ms"}`
+        - `{"type":"flight","channel","cursor","data":Flight,"server_received_ms"}`; when the subscriber can no longer
+          see the flight (e.g. it became private) `data` is `{"id":"…","visibility":"…","removed":true}` (Addition).
+        - `{"type":"incident","channel":"incidents","cursor","data":Incident,"server_received_ms"}`
+        - `{"type":"error","code":"forbidden"|"unknown_channel"|"unauthorized"|"token_expired"|"password_change_required"|"bad_request"|"internal","channel"?}`
+        - `{"type":"ping"}` every 25 s.
+
+        `server_received_ms` (Addition) is the server receive time of the underlying data in unix ms, for latency measurement.
+        Messages may be delivered more than once (at-least-once relay); dedupe by cursor / position seq.
+
+        **Authorization** is checked at subscribe time and re-applied to every message using the message's current flight
+        facts (visibility, open incident). Guests receive only public flights of public events with public_live_map,
+        with display names. `incidents` requires platform_admin, rescue_operator (all incidents) or organizer of at least
+        one event (incidents of those events).
+
+        **Limits / close codes**: outbound queue 256 messages, overflow closes with 4008 (slow consumer); idle 60 s
+        (no client message) closes with 1008; 4001 unauthorized; 1012 server restart. Reconnect with backoff (1 s → 30 s,
+        jitter) and resubscribe with the last cursor.
+      responses:
+        "101":
+          description: Switching Protocols
+        "503":
+          description: Server draining
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  # ============================================================ incidents
+  /incidents:
+    get:
+      operationId: getIncidents
+      tags: [incidents]
+      summary: List incidents
+      description: |
+        Pilots: own. Admin/rescue_operator: all. Event organizers: incidents of their events plus own.
+        Responder listings are audited (incident.contact_listed). Addition: `?mine=true` restricts to own incidents.
+      parameters:
+        - { name: status, in: query, description: Comma list, schema: { type: string } }
+        - { name: event_id, in: query, schema: { type: string, format: uuid } }
+        - { name: mine, in: query, schema: { type: boolean } }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IncidentPage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Validation" }
+    post:
+      operationId: postIncidents
+      tags: [incidents]
+      summary: Raise an SOS (idempotent on id)
+      description: |
+        201 created, 200 if the id exists for this pilot (a newer position in a re-send updates the incident), 409 if the
+        id belongs to someone else. Notifies admins, rescue operators and organizers of the flight's event. Rate limit
+        30/min per user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IncidentCreate" }
+      responses:
+        "200":
+          description: Existing incident
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Incident" }
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Incident" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Validation" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /incidents/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IncidentId"
+    get:
+      operationId: getIncidentsId
+      tags: [incidents]
+      summary: Get an incident (owner or responder; responder access is audited)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Incident" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /incidents/{id}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/IncidentId"
+    post:
+      operationId: postIncidentsIdCancel
+      tags: [incidents]
+      summary: Cancel (owner)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string, maxLength: 1000 }
+      responses:
+        "200":
+          description: Cancelled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Incident" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /incidents/{id}/acknowledge:
+    parameters:
+      - $ref: "#/components/parameters/IncidentId"
+    post:
+      operationId: postIncidentsIdAcknowledge
+      tags: [incidents]
+      summary: Acknowledge (responder)
+      description: Idempotent when already acknowledged/responding. Notifies the pilot (rescue_ack).
+      responses:
+        "200":
+          description: Acknowledged
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Incident" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /incidents/{id}/status:
+    parameters:
+      - $ref: "#/components/parameters/IncidentId"
+    post:
+      operationId: postIncidentsIdStatus
+      tags: [incidents]
+      summary: Set responding / resolved (responder)
+      description: "State machine: open → acknowledged → responding → resolved; resolved/cancelled are terminal (409)."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [responding, resolved] }
+                note: { type: string, maxLength: 4000 }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Incident" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /incidents/{id}/notes:
+    parameters:
+      - $ref: "#/components/parameters/IncidentId"
+    post:
+      operationId: postIncidentsIdNotes
+      tags: [incidents]
+      summary: Add a note (responder)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string, minLength: 1, maxLength: 4000 }
+      responses:
+        "201":
+          description: Incident with the new update
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Incident" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /incidents/{id}/assignments:
+    parameters:
+      - $ref: "#/components/parameters/IncidentId"
+    post:
+      operationId: postIncidentsIdAssignments
+      tags: [incidents]
+      summary: Assign a responder (responder)
+      description: The assignee must itself be a responder for this incident (admin, rescue_operator or organizer of the event).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [responder_user_id]
+              properties:
+                responder_user_id: { type: string, format: uuid }
+      responses:
+        "201":
+          description: Incident with assignments
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Incident" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Validation" }
+
+  # ============================================================ rescue
+  /rescue/assignments:
+    get:
+      operationId: getRescueAssignments
+      tags: [rescue]
+      summary: Own assignments (rescue_operator/admin)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: { type: array, items: { $ref: "#/components/schemas/Assignment" } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /rescue/assignments/{id}/status:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: postRescueAssignmentsIdStatus
+      tags: [rescue]
+      summary: Update assignment status (assignee)
+      description: Forward only (assigned → en_route → on_scene → completed); withdrawn from any active state.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [en_route, on_scene, completed, withdrawn] }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Assignment" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /rescue/me/status:
+    put:
+      operationId: putRescueMeStatus
+      tags: [rescue]
+      summary: Set availability (rescue_operator/admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [availability]
+              properties:
+                availability: { type: string, enum: [available, unavailable] }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  availability: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /rescue/me/position:
+    post:
+      operationId: postRescueMePosition
+      tags: [rescue]
+      summary: Report own position (rescue_operator/admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lat, lon, h_acc_m, t]
+              properties:
+                lat: { type: number }
+                lon: { type: number }
+                h_acc_m: { type: number }
+                t: { $ref: "#/components/schemas/Timestamp" }
+      responses:
+        "204": { $ref: "#/components/responses/NoContent" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /rescue/team:
+    get:
+      operationId: getRescueTeam
+      tags: [rescue]
+      summary: Rescue team (admin, rescue_operator, or organizer of any event)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: { type: array, items: { $ref: "#/components/schemas/RescueTeamMember" } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  # ============================================================ notifications
+  /notifications:
+    get:
+      operationId: getNotifications
+      tags: [notifications]
+      summary: List own notifications
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotificationPage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /notifications/{id}/read:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: postNotificationsIdRead
+      tags: [notifications]
+      summary: Mark one as read
+      responses:
+        "204": { $ref: "#/components/responses/NoContent" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /notifications/read-all:
+    post:
+      operationId: postNotificationsReadAll
+      tags: [notifications]
+      summary: Mark all as read
+      responses:
+        "204": { $ref: "#/components/responses/NoContent" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  # ============================================================ admin
+  /admin/users:
+    get:
+      operationId: getAdminUsers
+      tags: [admin]
+      summary: Search users (platform_admin)
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminUserPage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /admin/users/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      operationId: patchAdminUsersId
+      tags: [admin]
+      summary: Set roles / disable (platform_admin)
+      description: roles replaces the full set. Admins cannot remove their own platform_admin role or disable themselves. Disabling revokes all sessions.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                roles:
+                  type: array
+                  items: { type: string, enum: [pilot, observer, event_organizer, rescue_operator, platform_admin] }
+                disabled: { type: boolean }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminUser" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /admin/users/{id}/reset-password:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: postAdminUsersIdResetPassword
+      tags: [admin]
+      summary: Send a password reset email (platform_admin)
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Accepted" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /admin/audit:
+    get:
+      operationId: getAdminAudit
+      tags: [admin]
+      summary: Audit log (platform_admin)
+      description: "`action` matches exactly or as a prefix (`incident` matches `incident.*`). limit default 100, max 500."
+      parameters:
+        - { name: actor_id, in: query, schema: { type: string, format: uuid } }
+        - { name: action, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, maximum: 500 } }
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuditPage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Dashboard counters (platform_admin)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminStats" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }

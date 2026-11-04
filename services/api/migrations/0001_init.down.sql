@@ -1,0 +1,25 @@
+-- Reverts 0001_init. Extensions are left installed (they may be shared).
+DROP TABLE IF EXISTS account_deletion_requests;
+DROP TABLE IF EXISTS audit_logs;
+DROP TABLE IF EXISTS email_outbox;
+DROP TABLE IF EXISTS notification_records;
+DROP TABLE IF EXISTS rescue_assignments;
+DROP TABLE IF EXISTS rescue_responders;
+DROP TABLE IF EXISTS emergency_updates;
+DROP TABLE IF EXISTS emergency_incidents;
+DROP TABLE IF EXISTS realtime_outbox;
+DROP TABLE IF EXISTS telemetry_batches;
+DROP TABLE IF EXISTS telemetry_sample_keys;
+DROP TABLE IF EXISTS flight_positions CASCADE;
+DROP TABLE IF EXISTS flight_sessions;
+DROP TABLE IF EXISTS launch_sites;
+DROP TABLE IF EXISTS event_participants;
+DROP TABLE IF EXISTS events;
+DROP TABLE IF EXISTS devices;
+DROP TABLE IF EXISTS user_preferences;
+DROP TABLE IF EXISTS pilot_profiles;
+DROP TABLE IF EXISTS email_verification_tokens;
+DROP TABLE IF EXISTS password_reset_tokens;
+DROP TABLE IF EXISTS user_sessions;
+DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS users;

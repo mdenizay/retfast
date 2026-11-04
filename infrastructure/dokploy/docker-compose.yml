@@ -23,20 +23,20 @@ services:
     build: &api-build
       context: ../..
       dockerfile: infrastructure/docker/api.Dockerfile
-    command: ["retfast-api", "migrate", "up"]
+    command: ["migrate", "up"]
     environment: *api-env
     restart: "no"
     networks: [dokploy-network]
 
   api:
     build: *api-build
-    command: ["retfast-api", "serve"]
+    command: ["serve"]
     environment: *api-env
     depends_on:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "retfast-api", "healthcheck"]
+      test: ["CMD", "/usr/local/bin/retfast-api", "healthcheck"]
       interval: 15s
       timeout: 5s
       retries: 3

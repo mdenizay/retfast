@@ -65,9 +65,9 @@ function LoginForm() {
           <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </Field>
         {invalidCreds ? (
-          <div role="alert" className="rounded-md border border-error/40 bg-error/5 px-3 py-2.5 text-footnote">{t("auth.invalidCredentials")}</div>
+          <div role="alert" className="rounded-xl bg-error/10 px-4 py-3 text-footnote">{t("auth.invalidCredentials")}</div>
         ) : rateLimited ? (
-          <div role="alert" className="rounded-md border border-warning/50 bg-warning/10 px-3 py-2.5 text-footnote">
+          <div role="alert" className="rounded-xl bg-warning/12 px-4 py-3 text-footnote">
             {t("auth.rateLimited", { s: retryIn })}
           </div>
         ) : (
@@ -78,8 +78,8 @@ function LoginForm() {
         </Button>
       </form>
       <div className="mt-6 flex justify-between text-footnote">
-        <Link to="/forgot-password" className="text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("auth.forgot")}</Link>
-        <Link to="/register" className="text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("auth.register")}</Link>
+        <Link to="/forgot-password" className="font-semibold text-brand underline-offset-4 transition-colors hover:underline">{t("auth.forgot")}</Link>
+        <Link to="/register" className="font-semibold text-brand underline-offset-4 transition-colors hover:underline">{t("auth.register")}</Link>
       </div>
     </AuthLayout>
   );

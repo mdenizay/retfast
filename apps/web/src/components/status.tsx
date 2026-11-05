@@ -13,10 +13,10 @@ import { RETRIEVAL_ICON, ROLE_ICON } from "./stateIcons";
 export function FreshnessBadge({ freshness, className }: { freshness: Freshness | "offline"; className?: string }) {
   const { t } = useI18n();
   const map = {
-    live: { Icon: CircleDot, label: t("fresh.live"), cls: "border-live/50 bg-live/10 text-live" },
-    stale: { Icon: Clock3, label: t("fresh.stale"), cls: "border-stale/60 bg-stale/10 text-stale" },
-    lost: { Icon: LocateOff, label: t("fresh.lost"), cls: "border-dashed border-offline/70 bg-transparent text-offline" },
-    offline: { Icon: CloudOff, label: t("fresh.offline"), cls: "border-offline/60 bg-transparent text-offline" },
+    live: { Icon: CircleDot, label: t("fresh.live"), cls: "bg-live/12 text-live" },
+    stale: { Icon: Clock3, label: t("fresh.stale"), cls: "bg-stale/14 text-stale" },
+    lost: { Icon: LocateOff, label: t("fresh.lost"), cls: "border border-dashed border-offline/60 bg-transparent text-offline" },
+    offline: { Icon: CloudOff, label: t("fresh.offline"), cls: "bg-offline/12 text-offline" },
   }[freshness];
   return (
     <Badge className={cn(map.cls, className)} data-freshness={freshness}>

@@ -7,7 +7,7 @@ import { authApi, meApi } from "@/lib/api/endpoints";
 import type { Me, PilotProfile, Preferences } from "@/lib/api/types";
 import { session, useSession } from "@/lib/auth";
 import { isApiError } from "@/lib/api/client";
-import { Field, FormError, PageHeader, Panel } from "@/components/common";
+import { Field, FormError, PageHeader, Panel, NameAvatar } from "@/components/common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,7 +36,15 @@ export default function SettingsPage() {
   if (!user) return null;
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <PageHeader title={t("settings.title")} subtitle={user.email} />
+      <PageHeader title={t("settings.title")} />
+      <div className="flex items-center gap-4 rounded-3xl bg-surface p-5 sm:p-6">
+        <NameAvatar name={user.full_name} accent className="size-16 text-title3" />
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-title3 font-semibold text-fg">{user.full_name}</div>
+          <div className="truncate text-footnote text-fg-muted">{user.email}</div>
+          {user.pilot && <div className="mt-1 text-caption font-semibold text-brand tnum">@{user.pilot.public_id}</div>}
+        </div>
+      </div>
       <ProfileSection user={user} />
       <PilotSection user={user} />
       <PreferencesSection user={user} />
@@ -105,10 +113,10 @@ function PilotSection({ user }: { user: Me }) {
         {p?.public_id && (
           <p className="text-footnote text-fg-secondary">
             {t("settings.publicId")}: <span className="telemetry">@{p.public_id}</span>
-            {user.preferences.public_profile && <> · <Link to={`/pilots/${p.public_id}`} className="text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("settings.viewPublic")}</Link></>}
+            {user.preferences.public_profile && <> · <Link to={`/pilots/${p.public_id}`} className="font-semibold text-brand underline-offset-4 transition-colors hover:underline">{t("settings.viewPublic")}</Link></>}
           </p>
         )}
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {PILOT_FIELDS.map((k) => (
             <Field key={k} id={`pilot-${k}`} label={labels[k]} error={details[k]}>
               <Input id={`pilot-${k}`} value={form[k] ?? ""} onChange={(e) => set(k, e.target.value)} />
@@ -116,16 +124,16 @@ function PilotSection({ user }: { user: Me }) {
           ))}
           <Field id="pilot-bio" label={t("pilot.bio")} className="sm:col-span-2"><Textarea id="pilot-bio" value={form.bio ?? ""} onChange={(e) => set("bio", e.target.value)} rows={3} /></Field>
         </div>
-        <fieldset className="rounded-md border border-border p-4">
-          <legend className="px-1 text-footnote font-semibold">{t("settings.contact")}</legend>
+        <fieldset className="pt-2">
+          <legend className="mb-3 text-headline font-semibold">{t("settings.contact")}</legend>
           <Field id="pilot-phone" label={t("settings.phone")} hint={t("settings.phoneHint")} error={details.phone}>
             <Input id="pilot-phone" type="tel" autoComplete="tel" inputMode="tel" className="telemetry sm:w-72" value={form.phone ?? ""} onChange={(e) => set("phone", e.target.value)} />
           </Field>
           <VisibilityNote>{t("settings.phoneVisibility")}</VisibilityNote>
         </fieldset>
-        <fieldset className="rounded-md border border-border p-4">
-          <legend className="px-1 text-footnote font-semibold">{t("pilot.emergencyContact")}</legend>
-          <div className="grid gap-4 sm:grid-cols-2">
+        <fieldset className="pt-2">
+          <legend className="mb-3 text-headline font-semibold">{t("pilot.emergencyContact")}</legend>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field id="ec-name" label={t("settings.emergencyName")} error={details.emergency_contact_name}><Input id="ec-name" value={form.emergency_contact_name ?? ""} onChange={(e) => set("emergency_contact_name", e.target.value)} /></Field>
             <Field id="ec-phone" label={t("settings.emergencyPhone")} error={details.emergency_contact_phone}><Input id="ec-phone" type="tel" autoComplete="off" inputMode="tel" className="telemetry" value={form.emergency_contact_phone ?? ""} onChange={(e) => set("emergency_contact_phone", e.target.value)} /></Field>
           </div>
@@ -167,7 +175,7 @@ function PreferencesSection({ user }: { user: Me }) {
   const prefs = user.preferences;
   return (
     <Panel title={t("settings.preferences")}>
-      <div className="divide-y divide-border">
+      <div className="divide-y divide-fg/[0.06]">
         <Row label={t("theme.label")} control={<ThemeToggle />} />
         <Row label={t("lang.label")} control={<LangToggle />} />
         <Row id="pref-units" label={t("settings.units")} control={
@@ -200,7 +208,7 @@ function PasswordSection() {
   return (
     <Panel title={t("settings.password")}>
       <form onSubmit={(e) => { e.preventDefault(); if (pw === pw2 && pw.length >= 10) change.mutate(); }} className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field id="s-cur" label={t("auth.currentPassword")} error={details.current_password}><Input id="s-cur" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} /></Field>
           <Field id="s-new" label={t("auth.newPassword")} error={details.new_password}><Input id="s-new" type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} /></Field>
           <Field id="s-new2" label={t("auth.confirmPassword")} error={mismatch ? t("auth.mismatch") : null}><Input id="s-new2" type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} /></Field>
@@ -248,9 +256,9 @@ function DataSection({ user }: { user: Me }) {
           <Button variant="outline" onClick={() => exp.mutate()} disabled={exp.isPending}><Download /> {t("settings.export")}</Button>
         </div>
         <FormError error={exp.error} />
-        <div className="h-px bg-border" />
+        <div className="h-px bg-fg/[0.06]" />
         {deletion ? (
-          <div role="status" className="space-y-3 rounded-md border border-warning/50 bg-warning/10 p-3 text-footnote">
+          <div role="status" className="space-y-3 rounded-xl bg-warning/12 p-4 text-footnote">
             <p>{t("settings.deletionPending")}</p>
             <Button variant="outline" size="sm" onClick={() => cancel.mutate()} disabled={cancel.isPending}>{t("settings.cancelDeletion")}</Button>
             <FormError error={cancel.error} />

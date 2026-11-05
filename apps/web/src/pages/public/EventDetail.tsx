@@ -60,7 +60,7 @@ export default function PublicEventDetailPage() {
           <Panel title={t("eventPage.launchSites")} bodyClassName="p-0">
             {sites.isLoading ? <div className="p-4"><Loading /></div> : sites.error ? <div className="p-4"><ErrorState error={sites.error} /></div> :
               (sites.data?.length ?? 0) === 0 ? <p className="p-4 text-footnote text-fg-muted">{t("eventPage.noSites")}</p> : (
-                <ul className="divide-y divide-border">
+                <ul className="divide-y divide-fg/[0.06]">
                   {sites.data!.map((s) => (
                     <li key={s.id} className="flex items-start gap-3 px-4 py-3">
                       <Mountain className="mt-0.5 size-4 text-fg-muted" aria-hidden />
@@ -181,7 +181,7 @@ function ApplyForm({ event: e }: { event: RfEvent }) {
       </div>
       <div>
         <p className="mb-2 text-footnote font-medium text-fg">{t("apply.rolesInfo")}</p>
-        <ul className="divide-y divide-border overflow-hidden rounded-md border border-border">
+        <ul className="divide-y divide-fg/[0.06] overflow-hidden rounded-3xl bg-surface">
           {MEMBER_ROLES.map((r) => {
             const Icon = icons[r];
             return (
@@ -280,7 +280,7 @@ function MemberPanel({ event: e }: { event: RfEvent }) {
         </div>
       )}
       {access.role === "pilot" && (
-        <div className="space-y-2 rounded-md border border-border p-4">
+        <div className="space-y-2 rounded-2xl bg-muted p-4">
           <p className="flex items-start gap-2 text-body text-fg"><Smartphone className="mt-0.5 size-4 shrink-0" aria-hidden />{t("eventPage.pilotHint")}</p>
           <p className="text-footnote text-fg-secondary">
             {t("eventPage.pilotSharing")}{e.settings.pilots_see_each_other ? ` ${t("eventPage.pilotSharingOthers")}` : ""}

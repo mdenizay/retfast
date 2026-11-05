@@ -50,7 +50,7 @@ export default function ChangePasswordPage() {
     <AuthLayout>
       <h1 className="text-title2 font-semibold tracking-tight">{t("auth.changeTitle")}</h1>
       {forced && (
-        <div role="alert" className="mt-4 flex gap-3 rounded-md border border-warning/50 bg-warning/10 p-3 text-footnote text-fg">
+        <div role="alert" className="mt-4 flex gap-3 rounded-xl bg-warning/12 p-4 text-footnote text-fg">
           <KeyRound className="size-5 shrink-0 text-warning" aria-hidden />
           <span>{t("auth.forcedChange")}</span>
         </div>

@@ -10,14 +10,14 @@ export function PublicLayout() {
   const { t } = useI18n();
   const { status } = useSession();
   const nav = ({ isActive }: { isActive: boolean }) =>
-    cn("rounded-md px-2.5 py-1.5 text-footnote font-medium transition-colors hover:bg-muted hover:text-fg", isActive ? "bg-muted text-fg" : "text-fg-secondary");
+    cn("rounded-full px-4 py-2 text-footnote font-medium transition-colors hover:text-fg", isActive ? "bg-surface text-fg" : "text-fg-muted");
   return (
     <div className="flex min-h-dvh flex-col">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-sm focus:bg-surface focus:px-3 focus:py-2">
         {t("a11y.skip")}
       </a>
-      <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-md backdrop-saturate-150">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
+      <header className="sticky top-0 z-30 bg-background/85 backdrop-blur-xl">
+        <div className="mx-auto flex h-20 max-w-6xl items-center gap-6 px-4 sm:px-6">
           <Link to="/" aria-label="Retfast"><Logo /></Link>
           <nav className="hidden items-center gap-1 sm:flex" aria-label={t("nav.main")}>
             <NavLink to="/events" className={nav}>{t("nav.events")}</NavLink>
@@ -29,7 +29,7 @@ export function PublicLayout() {
             {status === "authenticated" ? (
               <Button asChild size="sm"><Link to="/app">{t("nav.openApp")}</Link></Button>
             ) : (
-              <Button asChild size="sm" variant="outline"><Link to="/login">{t("auth.login")}</Link></Button>
+              <Button asChild size="sm"><Link to="/login">{t("auth.login")}</Link></Button>
             )}
           </div>
         </div>
@@ -37,7 +37,7 @@ export function PublicLayout() {
       <main id="main" className="flex-1">
         <Outlet />
       </main>
-      <footer className="border-t border-border">
+      <footer>
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-caption text-fg-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <span>© {new Date().getFullYear()} Retfast · {t("landing.footerTagline")}</span>
           <nav className="flex gap-4" aria-label={t("nav.footer")}>
@@ -54,27 +54,16 @@ export function PublicLayout() {
 export function AuthLayout({ children }: { children: React.ReactNode }) {
   const { t } = useI18n();
   return (
-    <div className="mx-auto grid min-h-[calc(100dvh-4rem)] max-w-6xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_minmax(0,24rem)] lg:items-center lg:gap-16 lg:py-16">
-      <aside className="relative hidden min-h-[30rem] overflow-hidden rounded-2xl border border-border bg-surface p-10 shadow-xs lg:flex lg:flex-col lg:justify-end" aria-hidden>
-        <div className="pointer-events-none absolute -top-32 -right-32 size-[30rem] rounded-full bg-[radial-gradient(closest-side,rgb(56_189_248/0.22),rgb(34_211_238/0.06)_60%,transparent)] blur-2xl" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgb(9_9_11/0.06)_1px,transparent_1px)] [background-size:18px_18px] [mask-image:linear-gradient(to_bottom,black,transparent_70%)] dark:bg-[radial-gradient(rgb(255_255_255/0.06)_1px,transparent_1px)]" />
-        <svg viewBox="0 0 32 32" className="pointer-events-none absolute top-10 right-10 size-28">
-          <defs>
-            <linearGradient id="rf-auth-sunset" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#22D3EE" />
-              <stop offset="0.55" stopColor="#0EA5E9" />
-              <stop offset="1" stopColor="#0369A1" />
-            </linearGradient>
-          </defs>
-          <path fillRule="evenodd" d="M16 5.1 24.7 26.6 16 22 7.3 26.6Zm0 5.5-3.9 9.7 3.9-2.05 3.9 2.05Z" fill="url(#rf-auth-sunset)" />
-        </svg>
-        <div className="relative max-w-md">
-          <p className="text-caption font-semibold tracking-wide text-brand uppercase">{t("landing.eyebrow")}</p>
-          <p className="mt-3 text-title1 font-semibold tracking-tight text-balance text-fg">{t("landing.title")}</p>
-          <p className="mt-3 text-body text-fg-muted text-pretty">{t("landing.footerTagline")}</p>
-        </div>
-      </aside>
-      <div className="w-full max-w-sm justify-self-center lg:justify-self-stretch">{children}</div>
+    <div className="mx-auto flex min-h-[calc(100dvh-5rem)] w-full max-w-md flex-col justify-center px-4 py-10 sm:py-16">
+      <div className="mb-8 flex flex-col items-center text-center" aria-hidden>
+        <span className="grid size-16 place-items-center rounded-full bg-primary text-on-primary">
+          <svg viewBox="0 0 32 32" className="size-8">
+            <path fillRule="evenodd" d="M16 5.1 24.7 26.6 16 22 7.3 26.6Zm0 5.5-3.9 9.7 3.9-2.05 3.9 2.05Z" fill="currentColor" />
+          </svg>
+        </span>
+        <p className="mt-4 max-w-xs text-footnote text-fg-muted">{t("landing.footerTagline")}</p>
+      </div>
+      <div className="rounded-3xl bg-surface p-6 sm:p-8">{children}</div>
     </div>
   );
 }

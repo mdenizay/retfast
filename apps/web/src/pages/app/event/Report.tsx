@@ -4,7 +4,7 @@ import { useI18n } from "@/lib/i18n";
 import { eventsApi } from "@/lib/api/endpoints";
 import type { EventReport } from "@/lib/api/types";
 import { fmtAge, fmtDateTime, fmtDistance, fmtDuration, fmtNumber, fmtPercent } from "@/lib/format";
-import { EmptyState, ErrorState, Loading, Panel } from "@/components/common";
+import { EmptyState, ErrorState, Loading, Panel, StatTile } from "@/components/common";
 import { SimBadge } from "@/components/status";
 import { useEventContext } from "@/features/events/context";
 
@@ -36,7 +36,7 @@ export default function EventReportPage() {
       ]} />
       <RetrievalSection r={r} />
       <PerFlight r={r} />
-      <details className="rounded-lg border border-border bg-surface">
+      <details className="rounded-3xl bg-surface">
         <summary className="cursor-pointer px-4 py-3 text-footnote font-medium text-fg-secondary">{t("report.raw")}</summary>
         <pre className="telemetry max-h-96 overflow-auto border-t border-border p-4 text-caption">{JSON.stringify(r, null, 2)}</pre>
       </details>
@@ -52,13 +52,10 @@ function Counters({ title, items }: { title: string; items: Item[] }) {
   if (shown.length === 0) return null;
   return (
     <section>
-      <h2 className="mb-2 text-footnote font-semibold tracking-wide text-fg-secondary uppercase">{title}</h2>
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-3 xl:grid-cols-6">
+      <h2 className="mb-2 text-headline font-semibold text-fg">{title}</h2>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         {shown.map(([label, v, f]) => (
-          <div key={label} className="bg-surface p-4">
-            <div className="text-caption text-fg-muted">{label}</div>
-            <div className="telemetry mt-1 text-title3">{f ? f(v as number) : fmtNumber(v, locale)}</div>
-          </div>
+          <StatTile key={label} label={label} value={f ? f(v as number) : fmtNumber(v, locale)} className="bg-surface p-5 [&_.text-title1]:text-title2" />
         ))}
       </div>
     </section>
@@ -114,7 +111,7 @@ function PerFlight({ r }: { r: EventReport }) {
       <Panel title={t("report.perFlight")} bodyClassName="p-0 overflow-x-auto">
         <table className="w-full text-footnote">
           <thead className="text-left text-caption text-fg-muted">
-            <tr className="border-b border-border">
+            <tr className="border-b border-fg/[0.06]">
               <th className="px-4 py-2 font-medium">{t("role.pilot")}</th>
               <th className="px-4 py-2 font-medium">{t("report.duration")}</th>
               <th className="px-4 py-2 font-medium">{t("report.distance")}</th>
@@ -122,7 +119,7 @@ function PerFlight({ r }: { r: EventReport }) {
               <th className="px-4 py-2 font-medium">{t("report.interruptions")}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border tnum">
+          <tbody className="divide-y divide-fg/[0.06] tnum">
             {items.map((f) => (
               <tr key={f.flight_id}>
                 <td className="px-4 py-2"><span className="inline-flex items-center gap-1.5">{f.pilot_name}{f.is_simulated && <SimBadge />}</span></td>

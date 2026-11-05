@@ -48,25 +48,25 @@ export default function AdminSystemPage() {
       ) : counters.length === 0 ? (
         <p className="text-footnote text-fg-muted">{t("system.noCounters")}</p>
       ) : (
-        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-3 xl:grid-cols-6" aria-busy={stats.isLoading}>
+        <dl className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6" aria-busy={stats.isLoading}>
           {counters.map((c) => {
             const v = stats.data?.[c.key];
             return (
-              <div key={c.key} className="bg-surface p-5" data-counter={c.key}>
-                <dt className="text-caption text-fg-muted">{t(c.label)}</dt>
-                <dd className="telemetry mt-1 text-title1 text-fg">{typeof v === "number" ? fmtNumber(v, locale) : "—"}</dd>
+              <div key={c.key} className="flex flex-col-reverse rounded-3xl bg-surface p-5" data-counter={c.key}>
+                <dt className="mt-1 text-footnote text-fg-muted">{t(c.label)}</dt>
+                <dd className="text-title1 font-semibold tracking-tight text-fg tnum">{typeof v === "number" ? fmtNumber(v, locale) : "—"}</dd>
               </div>
             );
           })}
         </dl>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Panel title={t("system.checks")} bodyClassName="p-0">
           {checks.length === 0 && !sys ? (
             <p className="p-4 text-footnote text-fg-muted">{stats.isLoading ? t("common.loading") : t("system.noChecks")}</p>
           ) : (
-            <ul className="divide-y divide-border">
+            <ul className="divide-y divide-fg/[0.06]">
               {checks.map(([name, state]) => {
                 const ok = state === "ok";
                 return (
@@ -92,7 +92,7 @@ export default function AdminSystemPage() {
         </Panel>
 
         <Panel title={t("system.shortcuts")} bodyClassName="p-0">
-          <ul className="divide-y divide-border">
+          <ul className="divide-y divide-fg/[0.06]">
             {([
               ["/app/admin/events", CalendarRange, "system.goEvents", "system.goEventsHint"],
               ["/app/admin/users", Users, "system.goUsers", "system.goUsersHint"],

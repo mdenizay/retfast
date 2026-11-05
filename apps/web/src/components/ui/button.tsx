@@ -3,26 +3,27 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { Slot } from "radix-ui";
 import { cn } from "@/lib/utils";
 
-/** Soft button (shadcn style): 40 px default, 44 px large, neutral primary, subtle shadows. */
+/** Minimal button: accent fill (dark text), accent-tinted, neutral tile, ghost. Icon sizes are round. */
 const buttonVariants = cva(
-  "inline-flex shrink-0 select-none items-center justify-center gap-2 rounded-md font-medium whitespace-nowrap transition-[color,background-color,border-color,box-shadow,transform] duration-150 ease-aero outline-none active:scale-[0.98] focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 select-none items-center justify-center gap-2 rounded-xl font-semibold whitespace-nowrap transition-[color,background-color,box-shadow,transform,opacity] duration-150 ease-aero outline-none active:scale-[0.97] focus-visible:ring-[3px] focus-visible:ring-ring/45 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-45 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[18px]",
   {
     variants: {
       variant: {
-        default: "bg-primary text-on-primary shadow-xs hover:bg-primary/90 active:bg-primary/85",
-        emergency: "bg-emergency text-on-emergency shadow-xs hover:bg-emergency/90",
-        destructive: "border border-error/30 bg-error/5 text-error hover:bg-error/10",
-        outline: "border border-border bg-surface text-fg shadow-xs hover:bg-accent",
-        secondary: "bg-muted text-fg hover:bg-fg/8",
-        ghost: "text-fg-secondary hover:bg-accent hover:text-fg",
-        link: "h-auto px-0 text-fg underline-offset-4 hover:underline",
+        default: "bg-primary text-on-primary hover:brightness-105 active:brightness-95",
+        tinted: "bg-brand/12 text-brand hover:bg-brand/18",
+        emergency: "bg-emergency text-on-emergency hover:bg-emergency/90",
+        destructive: "bg-error/10 text-error hover:bg-error/15",
+        outline: "bg-muted text-fg hover:bg-fg/10",
+        secondary: "bg-muted text-fg hover:bg-fg/10",
+        ghost: "font-medium text-fg-secondary hover:bg-muted hover:text-fg",
+        link: "h-auto px-0 font-medium text-brand underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-10 px-4 text-body",
-        sm: "h-8 rounded-md px-3 text-footnote",
-        lg: "h-11 px-6 text-body",
-        icon: "size-10",
-        "icon-sm": "size-8 rounded-md",
+        default: "h-11 px-5 text-body",
+        sm: "h-9 rounded-full px-4 text-footnote",
+        lg: "h-12 rounded-2xl px-6 text-callout",
+        icon: "size-11 rounded-full",
+        "icon-sm": "size-9 rounded-full",
       },
     },
     defaultVariants: { variant: "default", size: "default" },

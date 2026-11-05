@@ -190,15 +190,15 @@ export function LiveView({ event, mode, canManage = false, backHref }: Props) {
 
   return (
     <div className="flex h-dvh flex-col bg-background">
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-surface px-3 sm:px-4">
+      <header className="flex h-16 shrink-0 items-center gap-3 px-3 sm:px-4">
         <Button asChild variant="ghost" size="icon-sm" aria-label={t("common.back")}>
           <Link to={backHref}><ArrowLeft /></Link>
         </Button>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h1 className="truncate text-headline font-semibold">{event.name}</h1>
-            {event.is_demo && <span className="rounded-[6px] border border-secondary/60 px-1.5 text-caption font-medium text-secondary">DEMO</span>}
-            {ops && <span className="hidden rounded-[6px] border border-border px-1.5 text-caption text-fg-muted sm:inline">{canManage ? t("live.modeOrganizer") : t("live.modeObserver")}</span>}
+            {event.is_demo && <span className="rounded-full bg-secondary/12 px-2 py-0.5 text-caption font-semibold text-secondary">DEMO</span>}
+            {ops && <span className="hidden rounded-full bg-muted px-2 py-0.5 text-caption font-medium text-fg-secondary sm:inline">{canManage ? t("live.modeOrganizer") : t("live.modeObserver")}</span>}
           </div>
           <div className="hidden truncate text-caption text-fg-muted sm:block">{event.location_name} · {t(`event.status.${event.status}`)}</div>
         </div>
@@ -208,7 +208,7 @@ export function LiveView({ event, mode, canManage = false, backHref }: Props) {
           {ops && <Kpi Icon={Car} tone="text-secondary" label={t("kpi.onDuty")} value={counts.onDuty} />}
         </dl>
         {ops && (
-          <div className="flex overflow-hidden rounded-sm border border-border" role="group" aria-label={t("live.viewLabel")}>
+          <div className="flex gap-1 rounded-full bg-muted p-1" role="group" aria-label={t("live.viewLabel")}>
             <ViewBtn active={view === "map"} onClick={() => setView("map")} Icon={MapIcon} label={t("live.viewMap")} />
             <ViewBtn active={view === "board"} onClick={() => setView("board")} Icon={Columns3} label={t("live.viewBoard")} badge={counts.open} />
           </div>
@@ -221,10 +221,10 @@ export function LiveView({ event, mode, canManage = false, backHref }: Props) {
         </div>
       </header>
 
-      <div className="relative flex min-h-0 flex-1">
-        {isLg && view === "map" && <aside className="flex w-80 shrink-0 flex-col border-r border-border bg-surface" aria-label={t("live.pilots")}>{rail}</aside>}
+      <div className="relative flex min-h-0 flex-1 lg:gap-3 lg:px-3 lg:pb-3">
+        {isLg && view === "map" && <aside className="flex w-80 shrink-0 flex-col overflow-hidden rounded-3xl bg-surface" aria-label={t("live.pilots")}>{rail}</aside>}
 
-        <main className="relative min-w-0 flex-1">
+        <main className="relative min-w-0 flex-1 overflow-hidden lg:rounded-3xl">
           {view === "board" ? (
             <RetrievalBoard
               retrievals={retrievals}
@@ -260,7 +260,7 @@ export function LiveView({ event, mode, canManage = false, backHref }: Props) {
           )}
 
           {disconnected && (
-            <div role="status" aria-live="polite" className="absolute top-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-md border border-stale/60 bg-surface px-3 py-2 text-footnote text-fg shadow-[0_2px_8px_rgb(0_0_0/0.12)]">
+            <div role="status" aria-live="polite" className="absolute top-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-surface ring-1 ring-stale/40 px-4 py-2 text-footnote text-fg shadow-[0_2px_8px_rgb(0_0_0/0.12)]">
               <WifiOff className="size-4 text-stale" aria-hidden />
               {t("conn.reconnecting", { n: live.reconnectAttempt })}
             </div>
@@ -272,7 +272,7 @@ export function LiveView({ event, mode, canManage = false, backHref }: Props) {
           )}
           {view === "map" && !live.isLoading && !hasAnything && live.snapshotError == null && (
             <div className="pointer-events-none absolute inset-x-0 top-16 z-10 flex justify-center px-4">
-              <div className="pointer-events-auto max-w-sm rounded-md border border-border bg-surface px-4 py-3 text-center text-footnote text-fg-secondary">
+              <div className="pointer-events-auto max-w-sm rounded-2xl bg-surface px-4 py-3 text-center text-footnote text-fg-secondary">
                 <div className="font-medium text-fg">{t("live.empty.title")}</div>
                 <div>{mode === "public" ? t("live.empty.public") : mode === "pilot" ? t("live.empty.pilot") : t("live.empty.app")}</div>
               </div>
@@ -281,14 +281,14 @@ export function LiveView({ event, mode, canManage = false, backHref }: Props) {
 
           <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2">
             {!sheetOpen && !isLg && (
-              <Button variant="outline" onClick={() => { setMobileTab("list"); setSheetOpen(true); }} className="shadow-[0_2px_8px_rgb(0_0_0/0.12)]">
+              <Button variant="secondary" onClick={() => { setMobileTab("list"); setSheetOpen(true); }} className="bg-surface shadow-[0_6px_20px_rgb(0_0_0/0.25)]">
                 <Users /> {t("live.pilots")} · <span className="tnum">{rows.length}</span>
               </Button>
             )}
           </div>
           {ops && !sheetOpen && !isXl && (
             <div className="absolute right-4 bottom-4 z-10">
-              <Button variant="outline" onClick={() => { setMobileTab(detail ? "detail" : "queue"); setSheetOpen(true); }} className="shadow-[0_2px_8px_rgb(0_0_0/0.12)]">
+              <Button variant="secondary" onClick={() => { setMobileTab(detail ? "detail" : "queue"); setSheetOpen(true); }} className="bg-surface shadow-[0_6px_20px_rgb(0_0_0/0.25)]">
                 <MapPin className="text-retrieval" /> <span className="tnum">{counts.open}</span><span className="sr-only">{t("queue.title")}</span>
               </Button>
             </div>
@@ -296,15 +296,15 @@ export function LiveView({ event, mode, canManage = false, backHref }: Props) {
         </main>
 
         {isXl && (view === "map" || detail) && (
-          <aside className="flex w-[22rem] shrink-0 flex-col overflow-y-auto border-l border-border bg-surface" aria-label={t("live.detail")}>
+          <aside className="flex w-[22rem] shrink-0 flex-col overflow-y-auto rounded-3xl bg-surface" aria-label={t("live.detail")}>
             {sidePanel}
           </aside>
         )}
 
         {sheetOpen && !isXl && (
-          <div className="absolute inset-x-0 bottom-0 z-20 flex max-h-[66dvh] min-h-[40dvh] flex-col rounded-t-xl border-t border-border bg-surface">
-            <div className="flex items-center gap-1 border-b border-border px-2 py-1.5">
-              <div role="tablist" className="flex flex-1 gap-1">
+          <div className="absolute inset-x-0 bottom-0 z-20 flex max-h-[66dvh] min-h-[40dvh] flex-col rounded-t-3xl bg-surface shadow-[0_-8px_30px_rgb(0_0_0/0.25)]">
+            <div className="flex items-center gap-1 px-3 pt-3 pb-1">
+              <div role="tablist" className="flex flex-1 gap-1 rounded-full bg-muted p-1">
                 {!isLg && <SheetTab active={mobileTab === "list"} onClick={() => setMobileTab("list")}>{t("live.pilots")}</SheetTab>}
                 {ops && <SheetTab active={mobileTab === "queue"} onClick={() => setMobileTab("queue")}>{t("queue.title")}</SheetTab>}
                 <SheetTab active={mobileTab === "detail"} onClick={() => setMobileTab("detail")}>{t("live.detail")}</SheetTab>
@@ -340,7 +340,7 @@ function ViewBtn({ active, onClick, Icon, label, badge }: { active: boolean; onC
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={cn("inline-flex h-9 items-center gap-1.5 px-3 text-footnote font-medium", active ? "bg-fg text-background" : "bg-surface text-fg-secondary hover:bg-accent")}
+      className={cn("inline-flex h-9 items-center gap-1.5 px-3 text-footnote font-medium", active ? "rounded-full bg-primary text-on-primary" : "rounded-full text-fg-secondary hover:text-fg")}
     >
       <Icon className="size-4" aria-hidden />
       <span className="hidden sm:inline">{label}</span>
@@ -356,7 +356,7 @@ function SheetTab({ active, onClick, children, className }: { active: boolean; o
       role="tab"
       aria-selected={active}
       onClick={onClick}
-      className={cn("h-10 flex-1 rounded-sm text-footnote font-medium", active ? "bg-accent text-fg" : "text-fg-muted hover:text-fg", className)}
+      className={cn("h-9 flex-1 rounded-full text-footnote font-semibold transition-colors", active ? "bg-surface text-fg dark:bg-fg/12" : "text-fg-muted hover:text-fg", className)}
     >
       {children}
     </button>
@@ -376,7 +376,7 @@ function RetrieverDetail({
   const holding = retrievals.filter((x) => x.retriever?.user_id === r.userId && isOpen(x));
   return (
     <div className="flex flex-col">
-      <div className="flex items-start gap-2 border-b border-border p-4">
+      <div className="flex items-start gap-2 p-4">
         <div className="min-w-0 flex-1">
           <div className="text-caption text-fg-muted">{t("role.retriever")}</div>
           <div className="truncate text-headline font-semibold">{r.fullName}</div>
@@ -387,7 +387,7 @@ function RetrieverDetail({
         </div>
         <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label={t("live.deselect")}><X /></Button>
       </div>
-      <div className="border-b border-border p-4 text-footnote">
+      <div className="mx-4 rounded-2xl bg-muted p-4 text-footnote">
         {r.position ? (
           <>
             <div className="telemetry select-all">{fmtCoord(r.position.lat, r.position.lon)}</div>
@@ -396,11 +396,11 @@ function RetrieverDetail({
         ) : <span className="text-fg-muted">{t("rdetail.noRetrieverPos")}</span>}
       </div>
       <div className="p-4">
-        <h3 className="mb-2 text-caption font-semibold tracking-wide text-fg-secondary uppercase">{t("rdetail.holding", { n: holding.length })}</h3>
+        <h3 className="mb-2 text-footnote font-semibold text-fg">{t("rdetail.holding", { n: holding.length })}</h3>
         <ul className="space-y-1">
           {holding.map((x) => (
             <li key={x.id}>
-              <button type="button" className="text-footnote text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg" onClick={() => onSelectRetrieval(x.id)}>
+              <button type="button" className="text-footnote font-semibold text-brand underline-offset-4 transition-colors hover:underline" onClick={() => onSelectRetrieval(x.id)}>
                 {x.pilot.full_name} · {t(`retrieval.status.${x.status}`)}
               </button>
             </li>

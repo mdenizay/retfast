@@ -42,7 +42,7 @@ export default function ResetPasswordPage() {
       {!token ? (
         <p role="alert" className="mt-6 text-footnote text-error">{t("auth.tokenMissing")}</p>
       ) : done ? (
-        <div role="status" className="mt-6 flex gap-3 rounded-md border border-border bg-surface p-4 text-footnote">
+        <div role="status" className="mt-6 flex gap-3 rounded-2xl bg-muted p-4 text-footnote">
           <CheckCircle2 className="size-5 shrink-0 text-success" aria-hidden />
           <span>{t("auth.resetDone")}</span>
         </div>
@@ -58,7 +58,7 @@ export default function ResetPasswordPage() {
           <Button type="submit" size="lg" disabled={busy || pw.length < 10 || pw !== pw2}>{busy ? t("common.wait") : t("auth.setPassword")}</Button>
         </form>
       )}
-      <div className="mt-6 text-footnote"><Link to="/login" className="text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("auth.backToLogin")}</Link></div>
+      <div className="mt-6 text-footnote"><Link to="/login" className="font-semibold text-brand underline-offset-4 transition-colors hover:underline">{t("auth.backToLogin")}</Link></div>
     </AuthLayout>
   );
 }

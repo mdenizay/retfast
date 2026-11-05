@@ -4,51 +4,51 @@
 @import "@fontsource/jetbrains-mono/400.css";
 @import "@fontsource/jetbrains-mono/500.css";
 
-/* Web palette: soft neutral (shadcn zinc) with the Retfast sky blue as the single brand accent.
+/* Web palette: minimal dark-first neutrals, surface contrast instead of borders, sky blue as the single accent.
    Status colours (success/warning/error/live/retrieval) keep the shared Aero tokens. */
 :root, [data-theme="light"] {
-  --rf-background: 250 250 250;
+  --rf-background: 242 242 244;
   --rf-surface: 255 255 255;
   --rf-surface-elevated: 255 255 255;
   --rf-border: 228 228 231;
   --rf-text-primary: 9 9 11;
   --rf-text-secondary: 82 82 91;
   --rf-text-muted: 113 113 122;
-  --rf-primary: 24 24 27;
-  --rf-on-primary: 250 250 250;
-  --rf-focus-ring: 161 161 170;
+  --rf-primary: 56 189 248;
+  --rf-on-primary: 8 47 73;
+  --rf-focus-ring: 56 189 248;
   --rf-brand: 2 132 199;
-  --rf-muted: 244 244 245;
+  --rf-muted: 242 242 245;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-  --rf-background: 9 9 11;
-  --rf-surface: 18 18 21;
-  --rf-surface-elevated: 27 27 31;
-  --rf-border: 39 39 42;
+  --rf-background: 8 8 9;
+  --rf-surface: 26 26 28;
+  --rf-surface-elevated: 34 34 37;
+  --rf-border: 44 44 48;
   --rf-text-primary: 250 250 250;
-  --rf-text-secondary: 161 161 170;
-  --rf-text-muted: 142 142 152;
-  --rf-primary: 244 244 245;
-  --rf-on-primary: 24 24 27;
-  --rf-focus-ring: 113 113 122;
+  --rf-text-secondary: 168 168 176;
+  --rf-text-muted: 132 132 140;
+  --rf-primary: 56 189 248;
+  --rf-on-primary: 8 47 73;
+  --rf-focus-ring: 56 189 248;
   --rf-brand: 56 189 248;
-  --rf-muted: 32 32 36;
+  --rf-muted: 40 40 44;
   }
 }
 [data-theme="dark"] {
-  --rf-background: 9 9 11;
-  --rf-surface: 18 18 21;
-  --rf-surface-elevated: 27 27 31;
-  --rf-border: 39 39 42;
+  --rf-background: 8 8 9;
+  --rf-surface: 26 26 28;
+  --rf-surface-elevated: 34 34 37;
+  --rf-border: 44 44 48;
   --rf-text-primary: 250 250 250;
-  --rf-text-secondary: 161 161 170;
-  --rf-text-muted: 142 142 152;
-  --rf-primary: 244 244 245;
-  --rf-on-primary: 24 24 27;
-  --rf-focus-ring: 113 113 122;
+  --rf-text-secondary: 168 168 176;
+  --rf-text-muted: 132 132 140;
+  --rf-primary: 56 189 248;
+  --rf-on-primary: 8 47 73;
+  --rf-focus-ring: 56 189 248;
   --rf-brand: 56 189 248;
-  --rf-muted: 32 32 36;
+  --rf-muted: 40 40 44;
 }
 :root {
   --rf-sunset: linear-gradient(135deg, #22D3EE 0%, #0EA5E9 55%, #0369A1 100%);
@@ -100,11 +100,12 @@
   --font-sans: "Geist Variable", "Inter", var(--rf-font-sans);
   --font-mono: "JetBrains Mono", var(--rf-font-mono);
 
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 10px;
-  --radius-xl: 14px;
-  --radius-2xl: 18px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 22px;
+  --radius-3xl: 26px;
 
   --shadow-xs: 0 1px 2px 0 rgb(9 9 11 / 0.04);
   --shadow-sm: 0 1px 3px 0 rgb(9 9 11 / 0.06), 0 1px 2px -1px rgb(9 9 11 / 0.05);
@@ -180,4 +181,4 @@
 @utility hairline { border-width: 1px; border-color: var(--color-border); }
 
 .maplibregl-ctrl-attrib { font-size: 11px; }
-.maplibregl-ctrl-group { border-radius: 8px !important; box-shadow: var(--shadow-sm) !important; }
+.maplibregl-ctrl-group { border-radius: 12px !important; box-shadow: var(--shadow-sm) !important; }

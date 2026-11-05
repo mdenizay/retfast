@@ -12,7 +12,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     { v: "dark", Icon: Moon, label: t("theme.dark") },
   ];
   return (
-    <div role="radiogroup" aria-label={t("theme.label")} className={cn("inline-flex rounded-lg bg-muted p-0.5", className)}>
+    <div role="radiogroup" aria-label={t("theme.label")} className={cn("inline-flex rounded-full bg-muted p-1", className)}>
       {opts.map(({ v, Icon, label }) => (
         <button
           key={v}
@@ -22,7 +22,7 @@ export function ThemeToggle({ className }: { className?: string }) {
           aria-label={label}
           title={label}
           onClick={() => setPref(v)}
-          className={cn("grid size-7 place-items-center rounded-md text-fg-muted transition-colors hover:text-fg", pref === v && "bg-surface text-fg shadow-xs dark:bg-surface-elevated")}
+          className={cn("grid size-8 place-items-center rounded-full text-fg-muted transition-colors hover:text-fg", pref === v && "bg-surface text-fg dark:bg-fg/12")}
         >
           <Icon className="size-4" aria-hidden />
         </button>
@@ -37,7 +37,7 @@ export function LangToggle({ className }: { className?: string }) {
     <button
       type="button"
       onClick={() => setLang(lang === "tr" ? "en" : "tr")}
-      className={cn("inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-caption font-medium text-fg-secondary transition-colors hover:bg-muted hover:text-fg", className)}
+      className={cn("inline-flex h-10 items-center gap-1.5 rounded-full bg-muted px-3.5 text-caption font-semibold text-fg-secondary transition-colors hover:text-fg", className)}
       aria-label={t("lang.switch")}
     >
       <Languages className="size-4" aria-hidden />

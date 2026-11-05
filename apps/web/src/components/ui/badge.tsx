@@ -3,22 +3,22 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { Slot } from "radix-ui";
 import { cn } from "@/lib/utils";
 
-/** Soft badge: tinted fill, faint border. Never carries safety meaning by color alone — pair with icon + text. */
+/** Pill badge: tinted fill, no border. Never carries safety meaning by color alone — pair with icon + text. */
 const badgeVariants = cva(
-  "inline-flex w-fit shrink-0 items-center gap-1 rounded-md border px-2 py-0.5 text-caption font-medium whitespace-nowrap [&>svg]:pointer-events-none [&>svg]:size-3.5",
+  "inline-flex w-fit shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-caption leading-none font-medium whitespace-nowrap [&>svg]:pointer-events-none [&>svg]:size-3.5",
   {
     variants: {
       variant: {
-        default: "border-border bg-surface text-fg-secondary shadow-xs",
-        primary: "border-transparent bg-primary text-on-primary",
-        success: "border-success/20 bg-success/10 text-success",
-        warning: "border-warning/25 bg-warning/10 text-warning",
-        error: "border-error/20 bg-error/10 text-error",
-        emergency: "border-emergency bg-emergency text-on-emergency",
-        muted: "border-transparent bg-muted text-fg-muted",
-        secondary: "border-secondary/20 bg-secondary/10 text-secondary",
-        retrieval: "border-retrieval/20 bg-retrieval/10 text-retrieval",
-        sim: "border-secondary/25 bg-secondary/10 font-mono tracking-wider text-secondary",
+        default: "bg-muted text-fg-secondary",
+        primary: "bg-primary text-on-primary",
+        success: "bg-success/12 text-success",
+        warning: "bg-warning/14 text-warning",
+        error: "bg-error/12 text-error",
+        emergency: "bg-emergency text-on-emergency",
+        muted: "bg-muted text-fg-muted",
+        secondary: "bg-brand/12 text-brand",
+        retrieval: "bg-retrieval/12 text-retrieval",
+        sim: "bg-brand/12 font-mono tracking-wider text-brand",
       },
     },
     defaultVariants: { variant: "default" },

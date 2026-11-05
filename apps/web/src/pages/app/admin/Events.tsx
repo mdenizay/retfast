@@ -35,8 +35,8 @@ export default function AdminEventsPage() {
       />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative sm:w-80">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-fg-muted" aria-hidden />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("admin.searchEvents")} aria-label={t("admin.searchEvents")} className="pl-9" />
+          <Search className="pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2 text-fg-muted" aria-hidden />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("admin.searchEvents")} aria-label={t("admin.searchEvents")} className="rounded-full bg-surface pl-11" />
         </div>
         <div className="flex flex-wrap gap-1.5" role="group" aria-label={t("admin.statusFilter")}>
           {STATUSES.map((s) => (
@@ -46,8 +46,8 @@ export default function AdminEventsPage() {
               aria-pressed={status === s}
               onClick={() => setStatus(s)}
               className={cn(
-                "h-9 rounded-sm border px-3 text-footnote font-medium",
-                status === s ? "border-fg bg-fg text-background" : "border-border text-fg-secondary hover:bg-accent",
+                "h-9 rounded-full px-3 text-footnote font-medium",
+                status === s ? "bg-primary text-on-primary" : "bg-surface text-fg-secondary hover:text-fg",
               )}
             >
               {s ? t(`event.status.${s}`) : t("admin.filterAll")}
@@ -59,7 +59,7 @@ export default function AdminEventsPage() {
       {events.isLoading ? <Loading /> : events.error ? <ErrorState error={events.error} onRetry={() => void events.refetch()} /> : items.length === 0 ? (
         <EmptyState icon={<CalendarRange className="size-6" />} title={t("admin.noEvents")} body={t("admin.noEventsBody")} />
       ) : (
-        <ul className="overflow-hidden rounded-lg border border-border bg-surface" aria-label={t("admin.eventsTitle")}>
+        <ul className="grid grid-cols-1 gap-3" aria-label={t("admin.eventsTitle")}>
           {items.map((e) => <AdminEventRow key={e.id} event={e} />)}
         </ul>
       )}
@@ -72,7 +72,7 @@ function AdminEventRow({ event: e }: { event: RfEvent }) {
   const organizers = e.organizers ?? [];
   const pending = e.counts?.pending_applications ?? 0;
   return (
-    <li className="flex flex-col gap-3 border-b border-border px-4 py-4 last:border-0 lg:flex-row lg:items-center sm:px-5">
+    <li className="flex min-w-0 flex-col gap-3 rounded-3xl bg-surface p-4 lg:flex-row lg:items-center sm:p-5">
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <Link to={`/app/events/${e.id}`} className="truncate text-headline font-medium text-fg hover:underline">{e.name}</Link>

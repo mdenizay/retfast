@@ -20,8 +20,8 @@ export function RoleChooser({
   return (
     <fieldset className="min-w-0" disabled={disabled}>
       <legend className="sr-only">{label}</legend>
-      <div className="inline-flex overflow-hidden rounded-sm border border-border" role="presentation">
-        {MEMBER_ROLES.map((r, i) => {
+      <div className="inline-flex flex-wrap gap-1 rounded-3xl bg-muted p-1" role="presentation">
+        {MEMBER_ROLES.map((r) => {
           const Icon = ROLE_ICON[r];
           const checked = value === r;
           return (
@@ -30,8 +30,7 @@ export function RoleChooser({
               className={cn(
                 "relative flex cursor-pointer items-center gap-1.5 font-medium transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-[-2px] has-[:focus-visible]:outline-focus",
                 size === "sm" ? "h-9 px-2.5 text-footnote" : "h-11 px-3 text-body",
-                i > 0 && "border-l border-border",
-                checked ? "bg-fg text-background" : "bg-surface text-fg-secondary hover:bg-accent",
+                                checked ? "rounded-full bg-primary text-on-primary" : "rounded-full text-fg-secondary hover:text-fg",
               )}
             >
               <input type="radio" className="sr-only" name={name} value={r} checked={checked} required={required} onChange={() => onChange(r)} />

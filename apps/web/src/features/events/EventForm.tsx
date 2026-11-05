@@ -113,7 +113,7 @@ export function EventForm({
   return (
     <form onSubmit={submit} noValidate className="space-y-6">
       <Panel title={t("eventForm.basics")}>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field id="ev-name" label={t("eventForm.name")} error={err("name")} className="md:col-span-2">
             <Input id="ev-name" value={s.name} onChange={(e) => set("name", e.target.value)} aria-invalid={Boolean(err("name")) || undefined} />
           </Field>
@@ -157,7 +157,7 @@ export function EventForm({
       </Panel>
 
       <Panel title={t("eventForm.center")}>
-        <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
           <Field id="ev-lat" label={t("common.lat")} error={err("lat")}>
             <Input id="ev-lat" inputMode="decimal" className="telemetry" placeholder="37.0700" value={s.lat} onChange={(e) => set("lat", e.target.value)} aria-invalid={Boolean(err("lat")) || undefined} />
           </Field>
@@ -180,7 +180,7 @@ export function EventForm({
       </Panel>
 
       <Panel title={t("eventForm.settings")} bodyClassName="p-0">
-        <ul className="divide-y divide-border">
+        <ul className="divide-y divide-fg/[0.06]">
           {SETTING_LABELS.map(({ key, label, hint }) => (
             <li key={key} className="flex items-center gap-4 px-4 py-3.5">
               <div className="min-w-0 flex-1">

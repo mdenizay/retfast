@@ -20,7 +20,7 @@ export default function RetrievalsPage() {
       {events.length === 0 ? (
         <EmptyState icon={<Car className="size-6" />} title={t("retrievalsPage.none")} body={t("retrievalsPage.noneBody")} />
       ) : (
-        <ul className="overflow-hidden rounded-lg border border-border bg-surface">
+        <ul className="grid grid-cols-1 gap-3">
           {events.map((e) => <EventRow key={e.id} event={e} to={`/app/events/${e.id}/retrievals`} />)}
         </ul>
       )}

@@ -3,7 +3,7 @@ import { Car, Crosshair, MessageSquarePlus, Phone, X, XCircle } from "lucide-rea
 import type { Retrieval } from "@/lib/api/types";
 import { useI18n } from "@/lib/i18n";
 import { fmtAccuracy, fmtAge, fmtCoord, fmtDistance, fmtTime } from "@/lib/format";
-import { FormError } from "@/components/common";
+import { FormError, NameAvatar } from "@/components/common";
 import { RetrievalStatusBadge, SimBadge } from "@/components/status";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,8 +50,9 @@ export function RetrievalDetail({
   const conflict = actions.conflict?.id === r.id;
 
   return (
-    <div className="flex flex-col" aria-label={t("rdetail.label", { name: r.pilot.full_name })}>
-      <div className="flex items-start gap-2 border-b border-border p-4">
+    <div className="flex flex-col gap-3 p-4" aria-label={t("rdetail.label", { name: r.pilot.full_name })}>
+      <div className="flex items-start gap-3">
+        <NameAvatar name={r.pilot.full_name} className="size-12 bg-retrieval/15 text-retrieval" />
         <div className="min-w-0 flex-1">
           <div className="text-caption text-fg-muted">{t("rdetail.eyebrow")}</div>
           <div className="truncate text-headline font-semibold">{r.pilot.full_name}</div>
@@ -60,21 +61,21 @@ export function RetrievalDetail({
             {r.is_simulated && <SimBadge />}
           </div>
         </div>
-        <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label={t("live.deselect")}><X /></Button>
+        <Button variant="secondary" size="icon-sm" onClick={onClose} aria-label={t("live.deselect")}><X /></Button>
       </div>
 
-      <div className="border-b border-border p-4">
-        <div className="telemetry text-title3 text-fg">{phrase(r, ctx)}</div>
+      <div className="rounded-2xl bg-muted p-4">
+        <div className="text-title2 font-semibold tracking-[-0.01em] text-fg tnum">{phrase(r, ctx)}</div>
         <div className="mt-0.5 text-caption text-fg-muted tnum">{t("rdetail.requestedAt", { time: fmtTime(r.requested_at, locale) })}</div>
       </div>
 
       {conflict && (
-        <p role="alert" className="border-b border-warning/40 bg-warning/10 px-4 py-2.5 text-footnote text-fg">{t("rdetail.conflict")}</p>
+        <p role="alert" className="rounded-xl bg-warning/12 px-4 py-3 text-footnote text-fg">{t("rdetail.conflict")}</p>
       )}
 
-      <dl className="divide-y divide-border border-b border-border text-footnote">
+      <dl className="divide-y divide-fg/[0.06] overflow-hidden rounded-2xl bg-muted text-footnote">
         <Row label={t("rdetail.pilotPhone")}>
-          {r.pilot.phone ? <a className="telemetry inline-flex items-center gap-1 text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg" href={telHref(r.pilot.phone)}><Phone className="size-3.5" aria-hidden />{r.pilot.phone}</a> : <span className="text-fg-muted">{t("rdetail.phoneHidden")}</span>}
+          {r.pilot.phone ? <a className="telemetry inline-flex items-center gap-1 font-semibold text-brand underline-offset-4 transition-colors hover:underline" href={telHref(r.pilot.phone)}><Phone className="size-3.5" aria-hidden />{r.pilot.phone}</a> : <span className="text-fg-muted">{t("rdetail.phoneHidden")}</span>}
         </Row>
         <Row label={pp.isPickup ? t("rdetail.pickup") : t("rdetail.pilotNow")}>
           <span className="telemetry select-all">{fmtCoord(pp.lat, pp.lon)}</span>
@@ -93,7 +94,7 @@ export function RetrievalDetail({
           {r.retriever ? (
             <>
               <span className="inline-flex items-center gap-1.5 font-medium"><Car className="size-3.5 text-secondary" aria-hidden />{r.retriever.full_name}</span>
-              {r.retriever.phone && <a className="telemetry ml-2 text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg" href={telHref(r.retriever.phone)}>{r.retriever.phone}</a>}
+              {r.retriever.phone && <a className="telemetry ml-2 font-semibold text-brand underline-offset-4 transition-colors hover:underline" href={telHref(r.retriever.phone)}>{r.retriever.phone}</a>}
               <span className="block text-caption text-fg-muted tnum">
                 {dist !== null ? t("retrieval.away", { d: fmtDistance(dist, locale) }) : t("rdetail.noRetrieverPos")}
                 {rpAge !== null ? ` · ${t("rdetail.positionAge", { age: fmtAge(rpAge, lang) })}` : ""}
@@ -107,15 +108,15 @@ export function RetrievalDetail({
         )}
       </dl>
 
-      <div className="space-y-3 p-4">
-        {onCenter && <Button variant="outline" className="w-full" onClick={onCenter}><Crosshair /> {t("live.center")}</Button>}
+      <div className="space-y-3 pt-1">
+        {onCenter && <Button variant="secondary" className="w-full" onClick={onCenter}><Crosshair /> {t("live.center")}</Button>}
         {canManage && open && (
           <>
             <div className="space-y-2">
               <div className="text-caption font-medium text-fg-secondary">{r.retriever ? t("rdetail.reassign") : t("rdetail.assign")}</div>
               <div className="flex gap-2">
                 <Select value={assignee} onValueChange={setAssignee}>
-                  <SelectTrigger className="h-10 min-w-0 flex-1" aria-label={t("rdetail.chooseRetriever")}>
+                  <SelectTrigger size="sm" className="h-11 min-w-0 flex-1" aria-label={t("rdetail.chooseRetriever")}>
                     <SelectValue placeholder={t("rdetail.chooseRetriever")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -142,7 +143,7 @@ export function RetrievalDetail({
             <div className="space-y-2">
               <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("rdetail.notePlaceholder")} aria-label={t("rdetail.addNote")} />
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" disabled={!note.trim() || busy !== null} onClick={() => actions.run({ kind: "note", id: r.id, text: note.trim() }, { onSuccess: () => setNote("") })}>
+                <Button variant="secondary" className="flex-1" disabled={!note.trim() || busy !== null} onClick={() => actions.run({ kind: "note", id: r.id, text: note.trim() }, { onSuccess: () => setNote("") })}>
                   <MessageSquarePlus /> {t("rdetail.addNote")}
                 </Button>
                 <Button variant="destructive" disabled={busy !== null} onClick={() => setCancelOpen(true)}>
@@ -157,8 +158,8 @@ export function RetrievalDetail({
       </div>
 
       {r.updates && r.updates.length > 0 && (
-        <div className="border-t border-border p-4">
-          <h3 className="mb-2 text-caption font-semibold tracking-wide text-fg-secondary uppercase">{t("rdetail.timeline")}</h3>
+        <div className="rounded-2xl bg-muted p-4">
+          <h3 className="mb-3 text-footnote font-semibold text-fg">{t("rdetail.timeline")}</h3>
           <ol className="space-y-2">
             {[...r.updates].reverse().map((u) => (
               <li key={u.id} className="flex gap-3 text-footnote">
@@ -202,7 +203,7 @@ export function RetrievalDetail({
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[7.5rem_1fr] gap-3 px-4 py-2.5">
+    <div className="grid grid-cols-[7rem_1fr] gap-3 px-4 py-3">
       <dt className="text-fg-muted">{label}</dt>
       <dd className="min-w-0 text-fg">{children}</dd>
     </div>

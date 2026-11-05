@@ -123,10 +123,10 @@ export function PilotRail({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="space-y-3 border-b border-border p-3">
+      <div className="space-y-3 p-3">
         <div className="relative">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-fg-muted" aria-hidden />
-          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("live.search")} aria-label={t("live.search")} className="h-10 pl-9" />
+          <Search className="pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2 text-fg-muted" aria-hidden />
+          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("live.search")} aria-label={t("live.search")} className="h-11 rounded-full pl-11" />
         </div>
         <div className="flex flex-wrap gap-1" role="group" aria-label={t("live.filters")}>
           {filters.filter((f) => f.show).map((f) => (
@@ -136,8 +136,8 @@ export function PilotRail({
               aria-pressed={filter === f.id}
               onClick={() => setFilter(f.id)}
               className={cn(
-                "inline-flex h-8 items-center gap-1 rounded-sm border px-2 text-caption font-medium tnum transition-colors",
-                filter === f.id ? "border-fg bg-fg text-background" : "border-border text-fg-secondary hover:bg-accent",
+                "inline-flex h-8 items-center gap-1 rounded-full px-2 text-caption font-medium tnum transition-colors",
+                filter === f.id ? "bg-primary text-on-primary" : "bg-muted text-fg-secondary hover:text-fg",
               )}
             >
               {f.label}
@@ -167,14 +167,14 @@ export function PilotRail({
                 const Icon = PHASE_ICON[it.phase];
                 return (
                   <li key={`h-${it.phase}`} role="presentation" style={{ position: "absolute", top, left: 0, right: 0, height: HEADER_H }}
-                    className="flex items-center gap-1.5 border-b border-border bg-background px-3 text-caption font-semibold tracking-wide text-fg-secondary uppercase">
+                    className="flex items-end gap-1.5 px-4 pb-1.5 text-footnote font-semibold text-fg">
                     <Icon className={cn("size-3.5", PHASE_TONE[it.phase])} aria-hidden />
                     {t(`phase.${it.phase}`)} <span className="tnum text-fg-muted">{it.n}</span>
                   </li>
                 );
               }
               return (
-                <li key={it.row.key} style={{ position: "absolute", top, left: 0, right: 0, height: ROW_H }}>
+                <li key={it.row.key} className="px-2 py-0.5" style={{ position: "absolute", top, left: 0, right: 0, height: ROW_H }}>
                   <RailRow row={it.row} ctx={ctx} selected={it.row.userId === selectedUserId} onSelect={onSelect} />
                 </li>
               );
@@ -216,12 +216,12 @@ function RailRow({ row, ctx, selected, onSelect }: { row: PilotRow; ctx: CardCon
       onClick={() => onSelect(row)}
       aria-current={selected ? "true" : undefined}
       className={cn(
-        "flex h-full w-full items-center gap-3 border-b border-border px-3 text-left transition-colors",
-        selected ? "bg-primary/10" : "hover:bg-accent",
+        "flex h-full w-full items-center gap-3 rounded-2xl px-2.5 text-left transition-colors",
+        selected ? "bg-brand/12" : "hover:bg-muted",
       )}
     >
       {Glyph ? (
-        <span className="grid size-8 shrink-0 place-items-center" aria-hidden><Glyph className={cn("size-5", PHASE_TONE[row.phase])} /></span>
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-muted" aria-hidden><Glyph className={cn("size-5", PHASE_TONE[row.phase])} /></span>
       ) : (
         <FreshGlyph freshness={p!.freshness} heading={p!.position.course_deg} />
       )}
@@ -247,7 +247,7 @@ function RailRow({ row, ctx, selected, onSelect }: { row: PilotRow; ctx: CardCon
 export function FreshGlyph({ freshness, heading }: { freshness: "live" | "stale" | "lost"; heading: number | null }) {
   const cls = freshness === "live" ? "text-live fill-live" : freshness === "stale" ? "text-stale fill-transparent" : "text-offline fill-transparent";
   return (
-    <span className="grid size-8 shrink-0 place-items-center" aria-hidden>
+    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-muted" aria-hidden>
       <Navigation2
         className={cn("size-5", cls, freshness === "lost" && "[stroke-dasharray:3_2]")}
         style={{ transform: `rotate(${heading ?? 0}deg)` }}

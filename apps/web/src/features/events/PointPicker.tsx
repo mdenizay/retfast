@@ -23,7 +23,7 @@ export function PointPicker({
 }) {
   const c = value ?? center;
   return (
-    <div className={className ?? "h-72 overflow-hidden rounded-md border border-border"}>
+    <div className={className ?? "h-72 overflow-hidden rounded-2xl"}>
       <MapCanvas label={label} initialCenter={c ? [c.lon, c.lat] : undefined} initialZoom={c ? 11 : 5}>
         {(ready) => <PickerLayers {...ready} value={value} onChange={onChange} points={points} />}
       </MapCanvas>

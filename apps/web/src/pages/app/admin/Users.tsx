@@ -29,16 +29,16 @@ export default function AdminUsersPage() {
     <div className="space-y-6">
       <PageHeader title={t("admin.usersTitle")} subtitle={t("admin.usersLead")} />
       <div className="relative sm:w-96">
-        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-fg-muted" aria-hidden />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("admin.searchUsers")} aria-label={t("admin.searchUsers")} className="pl-9" />
+        <Search className="pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2 text-fg-muted" aria-hidden />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("admin.searchUsers")} aria-label={t("admin.searchUsers")} className="rounded-full bg-surface pl-11" />
       </div>
       {users.isLoading ? <Loading /> : users.error ? <ErrorState error={users.error} onRetry={() => void users.refetch()} /> : items.length === 0 ? (
         <EmptyState title={t("admin.noUsers")} />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+        <div className="overflow-x-auto rounded-3xl bg-surface">
           <table className="w-full text-footnote">
             <thead className="text-left text-caption text-fg-muted">
-              <tr className="border-b border-border">
+              <tr className="border-b border-fg/[0.06]">
                 <th className="px-4 py-2.5 font-medium">{t("admin.user")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("admin.state")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("admin.platformAdmin")}</th>
@@ -64,7 +64,7 @@ function UserRow({ user: u, onRequest }: { user: AdminUser; onRequest: (p: Pendi
   const admin = isPlatformAdminUser(u);
   const reset = useMutation({ mutationFn: () => adminApi.resetPassword(u.id) });
   return (
-    <tr className="border-b border-border align-middle last:border-0" data-user={u.email}>
+    <tr className="border-b border-fg/[0.06] align-middle last:border-0" data-user={u.email}>
       <td className="px-4 py-3">
         <div className="font-medium">
           {u.full_name}

@@ -46,10 +46,10 @@ export default function EventSettingsPage() {
   return (
     <div className="space-y-6">
       {created && (
-        <div role="status" className="rounded-md border border-success/40 bg-success/10 px-3 py-2 text-footnote text-fg">{t("evsettings.created")}</div>
+        <div role="status" className="rounded-xl bg-success/12 px-4 py-3 text-footnote text-fg">{t("evsettings.created")}</div>
       )}
       <Organizers highlight={created || e.organizers.length === 0} canEdit={access.admin} />
-      {saved && <div role="status" className="rounded-md border border-success/40 bg-success/10 px-3 py-2 text-footnote text-success">{t("common.saved")}</div>}
+      {saved && <div role="status" className="rounded-xl bg-success/12 px-4 py-3 text-footnote text-success">{t("common.saved")}</div>}
       <EventForm key={e.updated_at} event={e} onSubmit={(i) => update.mutate(i)} submitLabel={t("common.save")} busy={update.isPending} error={update.error} />
       <LaunchSites />
       {e.status !== "archived" && (
@@ -99,7 +99,7 @@ function Organizers({ highlight, canEdit }: { highlight: boolean; canEdit: boole
         {e.organizers.length === 0 ? (
           <p className="flex items-center gap-2 px-4 py-3 text-footnote text-warning"><TriangleAlert className="size-4" aria-hidden />{t("evsettings.noOrganizers")}</p>
         ) : (
-          <ul className="divide-y divide-border">
+          <ul className="divide-y divide-fg/[0.06]">
             {e.organizers.map((o) => (
               <li key={o.user_id} className="flex items-center gap-3 px-4 py-2.5">
                 <span className="flex-1 font-medium">{o.full_name}</span>
@@ -115,11 +115,11 @@ function Organizers({ highlight, canEdit }: { highlight: boolean; canEdit: boole
         {canEdit ? (
           <div className="space-y-3 border-t border-border p-4">
             <div className="relative max-w-md">
-              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-fg-muted" aria-hidden />
-              <Input value={q} onChange={(ev) => setQ(ev.target.value)} placeholder={t("evsettings.searchOrganizer")} aria-label={t("evsettings.searchOrganizer")} className="pl-9" />
+              <Search className="pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2 text-fg-muted" aria-hidden />
+              <Input value={q} onChange={(ev) => setQ(ev.target.value)} placeholder={t("evsettings.searchOrganizer")} aria-label={t("evsettings.searchOrganizer")} className="rounded-full pl-11" />
             </div>
             {dq.length >= 2 && (search.isLoading ? <Loading /> : search.error ? <ErrorState error={search.error} /> : (
-              <ul className="max-w-md divide-y divide-border rounded-md border border-border">
+              <ul className="max-w-md divide-y divide-fg/[0.06] overflow-hidden rounded-2xl bg-muted">
                 {(search.data?.items ?? []).slice(0, 8).map((u) => (
                   <li key={u.id} className="flex items-center gap-3 px-3 py-2">
                     <div className="min-w-0 flex-1">
@@ -183,12 +183,12 @@ function LaunchSites() {
   const list = sites.data ?? [];
   return (
     <Panel title={t("event.launchSites")}>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div>
           {sites.isLoading ? <Loading /> : sites.error ? <ErrorState error={sites.error} /> : list.length === 0 ? (
             <p className="text-footnote text-fg-muted">{t("event.noSites")}</p>
           ) : (
-            <ul className="divide-y divide-border rounded-md border border-border">
+            <ul className="divide-y divide-fg/[0.06] overflow-hidden rounded-2xl bg-muted">
               {list.map((s) => (
                 <li key={s.id} className="flex items-start gap-3 px-3 py-3">
                   <Mountain className="mt-0.5 size-4 text-fg-muted" aria-hidden />
@@ -218,7 +218,7 @@ function LaunchSites() {
           </div>
           <div className="text-footnote text-fg-secondary">
             {pos ? <span className="telemetry">{fmtCoord(pos.lat, pos.lon)}</span> : t("site.clickMap")}
-            {pos && <button type="button" className="ml-2 text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg" onClick={() => setPos(null)}>{t("common.clear")}</button>}
+            {pos && <button type="button" className="ml-2 font-semibold text-brand underline-offset-4 transition-colors hover:underline" onClick={() => setPos(null)}>{t("common.clear")}</button>}
           </div>
           <Suspense fallback={<Loading />}>
             <PointPicker

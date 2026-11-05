@@ -17,16 +17,16 @@ export default function AdminAuditPage() {
     <div className="space-y-6">
       <PageHeader title={t("admin.auditTitle")} subtitle={t("admin.auditLead")} />
       <div className="relative sm:w-96">
-        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-fg-muted" aria-hidden />
-        <Input value={action} onChange={(e) => setAction(e.target.value)} placeholder={t("admin.filterAction")} aria-label={t("admin.filterAction")} className="telemetry pl-9" />
+        <Search className="pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2 text-fg-muted" aria-hidden />
+        <Input value={action} onChange={(e) => setAction(e.target.value)} placeholder={t("admin.filterAction")} aria-label={t("admin.filterAction")} className="telemetry rounded-full bg-surface pl-11" />
       </div>
       {q.isLoading ? <Loading /> : q.error ? <ErrorState error={q.error} onRetry={() => void q.refetch()} /> : items.length === 0 ? (
         <EmptyState title={t("admin.noAudit")} />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+        <div className="overflow-x-auto rounded-3xl bg-surface">
           <table className="w-full text-footnote">
             <thead className="text-left text-caption text-fg-muted">
-              <tr className="border-b border-border">
+              <tr className="border-b border-fg/[0.06]">
                 <th className="px-4 py-2.5 font-medium">{t("admin.time")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("admin.actor")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("admin.action")}</th>
@@ -36,7 +36,7 @@ export default function AdminAuditPage() {
             </thead>
             <tbody>
               {items.map((e) => (
-                <tr key={e.id} className="border-b border-border align-top last:border-0">
+                <tr key={e.id} className="border-b border-fg/[0.06] align-top last:border-0">
                   <td className="whitespace-nowrap px-4 py-2.5 tnum">{fmtDateTime(e.created_at, locale)}</td>
                   <td className="px-4 py-2.5">{e.actor?.full_name ?? e.actor_id ?? t("admin.system")}</td>
                   <td className="telemetry px-4 py-2.5">{e.action}</td>

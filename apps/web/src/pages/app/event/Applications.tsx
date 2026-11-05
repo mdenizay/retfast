@@ -7,7 +7,7 @@ import { isApiError } from "@/lib/api/client";
 import type { Application, ApplicationStatus, MemberRole } from "@/lib/api/types";
 import { fmtAge, fmtDateTime } from "@/lib/format";
 import { useNow } from "@/hooks/useNow";
-import { EmptyState, ErrorState, Field, FormError, Loading } from "@/components/common";
+import { EmptyState, ErrorState, Field, FormError, Loading, NameAvatar } from "@/components/common";
 import { ApplicationStatusBadge, RoleBadge } from "@/components/status";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,8 +62,8 @@ export default function ApplicationsPage() {
               aria-pressed={filter === f.id}
               onClick={() => setFilter(f.id)}
               className={cn(
-                "inline-flex h-9 items-center gap-1.5 rounded-sm border px-3 text-footnote font-medium tnum",
-                filter === f.id ? "border-fg bg-fg text-background" : "border-border text-fg-secondary hover:bg-accent",
+                "inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-footnote font-medium tnum",
+                filter === f.id ? "bg-primary text-on-primary" : "bg-surface text-fg-secondary hover:text-fg",
               )}
             >
               {f.label}
@@ -74,7 +74,7 @@ export default function ApplicationsPage() {
       </div>
 
       {notice && (
-        <div role="status" className="flex items-center gap-2 rounded-md border border-success/40 bg-success/10 px-3 py-2 text-footnote text-fg">
+        <div role="status" className="flex items-center gap-2 rounded-xl bg-success/12 px-4 py-3 text-footnote text-fg">
           <Check className="size-4 text-success" aria-hidden />
           <span className="flex-1">{notice}</span>
           <button type="button" className="text-fg-muted hover:text-fg" onClick={() => setNotice(null)} aria-label={t("common.close")}><X className="size-4" /></button>
@@ -89,7 +89,7 @@ export default function ApplicationsPage() {
             body={filter === "pending" && !event.settings.applications_open ? t("apps.closedHint") : undefined}
           />
         ) : (
-          <ul className="overflow-hidden rounded-lg border border-border bg-surface">
+          <ul className="grid grid-cols-1 gap-3">
             {shown.map((a) =>
               a.status === "pending" ? (
                 <PendingRow key={a.id} app={a} onDecided={onDecided} onConflict={() => void apps.refetch()} />
@@ -108,7 +108,9 @@ function Applicant({ app }: { app: Application }) {
   const now = useNow(30_000);
   const age = (now - Date.parse(app.created_at)) / 1000;
   return (
-    <div className="min-w-0 flex-1">
+    <div className="flex min-w-0 flex-1 gap-3">
+      <NameAvatar name={app.user.full_name} className="size-12" />
+      <div className="min-w-0 flex-1">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-headline font-semibold">{app.user.full_name}</span>
       </div>
@@ -117,11 +119,12 @@ function Applicant({ app }: { app: Application }) {
         <span className="telemetry text-fg-muted" title={fmtDateTime(app.created_at, locale)}>{t("apps.ago", { age: fmtAge(age, lang) })}</span>
       </div>
       {app.message && (
-        <p className="mt-2 flex gap-2 border-l-2 border-border pl-3 text-footnote text-fg">
+        <p className="mt-3 flex gap-2 rounded-2xl bg-muted px-4 py-3 text-footnote text-fg">
           <MessageSquareText className="mt-0.5 size-3.5 shrink-0 text-fg-muted" aria-hidden />
           <span className="whitespace-pre-line">{app.message}</span>
         </p>
       )}
+    </div>
     </div>
   );
 }
@@ -153,7 +156,7 @@ function PendingRow({ app, onDecided, onConflict }: { app: Application; onDecide
   const err = approve.error ?? (rejectOpen ? null : reject.error);
 
   return (
-    <li className="border-b border-border p-4 last:border-b-0 sm:p-5" aria-label={app.user.full_name}>
+    <li className="min-w-0 rounded-3xl bg-surface p-4 sm:p-5" aria-label={app.user.full_name}>
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
         <Applicant app={app} />
         <div className="flex shrink-0 flex-col gap-3 xl:w-[26rem]">
@@ -203,7 +206,7 @@ function PendingRow({ app, onDecided, onConflict }: { app: Application; onDecide
 function DecidedRow({ app }: { app: Application }) {
   const { t, locale } = useI18n();
   return (
-    <li className="flex flex-col gap-3 border-b border-border p-4 last:border-b-0 sm:flex-row sm:items-start sm:p-5">
+    <li className="flex flex-col gap-3 border-b border-fg/[0.06] p-4 last:border-b-0 sm:flex-row sm:items-start sm:p-5">
       <Applicant app={app} />
       <div className="shrink-0 space-y-1 text-footnote sm:w-72 sm:text-right">
         <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">

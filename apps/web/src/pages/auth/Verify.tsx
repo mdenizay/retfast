@@ -31,7 +31,7 @@ export default function VerifyEmailPage() {
         ) : state === "pending" ? (
           <Loading label={t("auth.verifying")} />
         ) : state === "ok" ? (
-          <div role="status" className="flex gap-3 rounded-md border border-border bg-surface p-4 text-footnote">
+          <div role="status" className="flex gap-3 rounded-2xl bg-muted p-4 text-footnote">
             <CheckCircle2 className="size-5 shrink-0 text-success" aria-hidden />
             <span>{t("auth.verified")}</span>
           </div>
@@ -39,7 +39,7 @@ export default function VerifyEmailPage() {
           <ErrorState error={state.error} />
         )}
       </div>
-      <div className="mt-6 text-footnote"><Link to="/app" className="text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("nav.openApp")}</Link></div>
+      <div className="mt-6 text-footnote"><Link to="/app" className="font-semibold text-brand underline-offset-4 transition-colors hover:underline">{t("nav.openApp")}</Link></div>
     </AuthLayout>
   );
 }

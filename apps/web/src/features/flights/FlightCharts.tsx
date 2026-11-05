@@ -26,7 +26,7 @@ export function FlightCharts({ positions }: { positions: Position[] }) {
   const hasAlt = rows.some((r) => r.alt !== null);
   const hasSpeed = rows.some((r) => r.speed !== null);
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <Panel title={`${t("flight.chartAlt")} · m`}>
         {hasAlt ? <SeriesChart rows={rows} dataKey="alt" unit="m" /> : <p className="text-footnote text-fg-muted">{t("flight.noAlt")}</p>}
       </Panel>

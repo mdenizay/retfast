@@ -14,14 +14,14 @@ export default function PilotProfilePage() {
       {q.isLoading ? <Loading /> : q.error || !q.data ? <ErrorState error={q.error} /> : (
         <>
           <div className="flex items-center gap-4">
-            <div className="grid size-14 place-items-center rounded-full border border-border bg-surface"><UserRound className="size-6 text-fg-muted" aria-hidden /></div>
+            <div className="grid size-16 place-items-center rounded-full bg-muted"><UserRound className="size-6 text-fg-muted" aria-hidden /></div>
             <div>
               <h1 className="text-title2 font-semibold tracking-tight">{q.data.display_name}</h1>
               <div className="telemetry text-footnote text-fg-muted">@{q.data.public_id}</div>
             </div>
           </div>
           {q.data.bio && <p className="mt-6 whitespace-pre-line text-body text-fg-secondary">{q.data.bio}</p>}
-          <div className="mt-8 rounded-lg border border-border bg-surface p-4">
+          <div className="mt-8 rounded-3xl bg-surface p-4">
             <KeyValue items={[[t("events.pilotProfile.wing"), q.data.wing || "—"], [t("events.pilotProfile.nationality"), q.data.nationality || "—"]]} />
           </div>
           <p className="mt-4 text-caption text-fg-muted">{t("events.pilotProfile.note")}</p>

@@ -56,7 +56,7 @@ export default function MyRetrievalsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 lg:flex-row lg:items-center">
+      <div className="flex flex-col gap-3 rounded-3xl bg-surface p-4 lg:flex-row lg:items-center">
         <div className="min-w-0 flex-1">
           <h2 className="text-headline font-semibold">{t("myret.title")}</h2>
           <p className="text-footnote text-fg-secondary">{t("myret.lead")}</p>
@@ -67,13 +67,13 @@ export default function MyRetrievalsPage() {
       </div>
 
       {lostRace && (
-        <p role="alert" className="rounded-md border border-warning/50 bg-warning/10 px-3 py-2 text-footnote text-fg">{t("myret.lostRace")}</p>
+        <p role="alert" className="rounded-xl bg-warning/12 px-4 py-3 text-footnote text-fg">{t("myret.lostRace")}</p>
       )}
       {actions.error && <FormError error={actions.error} />}
       {live.snapshotError != null && <ErrorState error={live.snapshotError} onRetry={() => void live.refetch()} />}
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_26rem]">
-        <div className="h-[46dvh] min-h-80 overflow-hidden rounded-lg border border-border lg:sticky lg:top-6 lg:h-[calc(100dvh-14rem)]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_26rem]">
+        <div className="h-[46dvh] min-h-80 overflow-hidden rounded-3xl lg:sticky lg:top-6 lg:h-[calc(100dvh-14rem)]">
           <MapCanvas label={t("myret.mapLabel")} initialCenter={event.center ? [event.center.lon, event.center.lat] : undefined} initialZoom={event.center ? 11 : 5}>
             {(ready) => (
               <LiveMapLayers
@@ -99,11 +99,11 @@ export default function MyRetrievalsPage() {
 
         <div className="space-y-6">
           <section aria-labelledby="mine-h">
-            <h3 id="mine-h" className="mb-2 flex items-center gap-2 text-footnote font-semibold tracking-wide text-fg-secondary uppercase">
+            <h3 id="mine-h" className="mb-2 flex items-center gap-2 text-headline font-semibold text-fg">
               <Car className="size-4 text-secondary" aria-hidden />{t("myret.active")} <span className="tnum text-fg-muted">{active.length}</span>
             </h3>
             {active.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-border px-4 py-4 text-footnote text-fg-muted">{t("myret.noActive")}</p>
+              <p className="rounded-2xl bg-surface px-4 py-4 text-footnote text-fg-muted">{t("myret.noActive")}</p>
             ) : (
               <ul className="space-y-3">
                 {active.map((r) => (
@@ -114,7 +114,7 @@ export default function MyRetrievalsPage() {
           </section>
 
           <section aria-labelledby="open-h">
-            <h3 id="open-h" className="mb-2 flex items-center gap-2 text-footnote font-semibold tracking-wide text-fg-secondary uppercase">
+            <h3 id="open-h" className="mb-2 flex items-center gap-2 text-headline font-semibold text-fg">
               <MapPin className="size-4 text-retrieval" aria-hidden />{t("myret.open")} <span className="tnum text-fg-muted">{open.length}</span>
             </h3>
             {live.isLoading ? <Loading /> : open.length === 0 ? (
@@ -126,7 +126,7 @@ export default function MyRetrievalsPage() {
                   const d = distFromMe(r);
                   const busy = actions.pending?.id === r.id;
                   return (
-                    <li key={r.id} data-card={r.id} className={cn("rounded-md border bg-surface p-3", selection?.kind === "retrieval" && selection.id === r.id ? "border-fg" : "border-border")}>
+                    <li key={r.id} data-card={r.id} className={cn("rounded-3xl bg-surface p-4", selection?.kind === "retrieval" && selection.id === r.id && "ring-2 ring-brand")}>
                       <div className="flex items-start gap-3">
                         <button type="button" className="min-w-0 flex-1 text-left" onClick={() => focus(r)}>
                           <div className="flex items-center gap-1.5">
@@ -175,15 +175,15 @@ function ActiveCard({
   const since = secondsSince(statusSince(r), ctx.nowMs, ctx.clockOffsetMs);
   const busy = actions.pending?.id === r.id ? actions.pending.kind : null;
   return (
-    <li data-card={r.id} className={cn("rounded-lg border bg-surface", selected ? "border-fg" : "border-border")}>
-      <button type="button" onClick={onFocus} className="block w-full p-4 text-left">
+    <li data-card={r.id} className={cn("overflow-hidden rounded-3xl bg-surface", selected && "ring-2 ring-brand")}>
+      <button type="button" onClick={onFocus} className="block w-full p-5 text-left">
         <div className="flex items-center gap-2">
           <span className="min-w-0 flex-1 truncate text-headline font-semibold">{r.pilot.full_name}</span>
           {r.is_simulated && <SimBadge />}
           <RetrievalStatusBadge status={r.status} />
         </div>
         <div className="mt-1 text-footnote text-fg-secondary tnum">{t(`retrieval.age.${r.status as "accepted" | "picked_up"}`, { age: fmtAge(since, lang) })}</div>
-        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-footnote">
+        <dl className="mt-3 grid grid-cols-2 gap-2 text-footnote [&>div]:rounded-2xl [&>div]:bg-muted [&>div]:px-3.5 [&>div]:py-2.5">
           <div>
             <dt className="text-caption text-fg-muted">{pp.isPickup ? t("rdetail.pickup") : t("rdetail.pilotNow")}</dt>
             <dd className="telemetry">{fmtCoord(pp.lat, pp.lon)}</dd>
@@ -203,11 +203,11 @@ function ActiveCard({
         </dl>
         {r.note && <p className="mt-2 flex gap-1.5 text-footnote text-fg-secondary"><MessageSquareText className="mt-0.5 size-3.5 shrink-0" aria-hidden />{r.note}</p>}
       </button>
-      <div className="flex flex-wrap gap-2 border-t border-border p-3">
+      <div className="flex flex-wrap gap-2 px-5 pb-5">
         {r.pilot.phone ? (
-          <Button asChild variant="outline"><a href={telHref(r.pilot.phone)}><Phone /> {t("myret.call")} <span className="telemetry text-footnote">{r.pilot.phone}</span></a></Button>
+          <Button asChild variant="tinted"><a href={telHref(r.pilot.phone)}><Phone /> {t("myret.call")} <span className="telemetry text-footnote">{r.pilot.phone}</span></a></Button>
         ) : <span className="self-center text-caption text-fg-muted">{t("rdetail.phoneHidden")}</span>}
-        <a className="self-center text-footnote text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg" href={`https://www.google.com/maps/dir/?api=1&destination=${pp.lat},${pp.lon}`} target="_blank" rel="noreferrer">{t("myret.directions")}</a>
+        <a className="self-center text-footnote font-semibold text-brand underline-offset-4 transition-colors hover:underline" href={`https://www.google.com/maps/dir/?api=1&destination=${pp.lat},${pp.lon}`} target="_blank" rel="noreferrer">{t("myret.directions")}</a>
         <div className="ml-auto flex gap-2">
           {r.status === "accepted" && (
             <>
@@ -267,7 +267,7 @@ function DutyToggle({ eventId }: { eventId: string }) {
   });
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex overflow-hidden rounded-sm border border-border" role="group" aria-label={t("myret.duty")}>
+      <div className="flex gap-1 rounded-full bg-muted p-1" role="group" aria-label={t("myret.duty")}>
         {[true, false].map((on) => (
           <button
             key={String(on)}
@@ -275,7 +275,7 @@ function DutyToggle({ eventId }: { eventId: string }) {
             aria-pressed={state?.on === on}
             disabled={m.isPending}
             onClick={() => m.mutate(on)}
-            className={cn("h-10 px-3 text-footnote font-medium", state?.on === on ? "bg-fg text-background" : "bg-surface text-fg-secondary hover:bg-accent")}
+            className={cn("h-10 px-3 text-footnote font-medium", state?.on === on ? "rounded-full bg-primary text-on-primary" : "rounded-full text-fg-secondary hover:text-fg")}
           >
             {on ? t("myret.onDuty") : t("myret.offDuty")}
           </button>
@@ -325,7 +325,7 @@ function ShareToggle({ share }: { share: ReturnType<typeof useShareLocation> }) 
   const { t, locale } = useI18n();
   return (
     <div className="flex flex-col gap-1">
-      <Button variant={share.on ? "default" : "outline"} aria-pressed={share.on} onClick={() => share.setOn(!share.on)} className="h-10">
+      <Button variant={share.on ? "default" : "secondary"} aria-pressed={share.on} onClick={() => share.setOn(!share.on)}>
         {share.on ? <LocateFixed /> : <LocateOff />} {share.on ? t("myret.sharingOn") : t("myret.sharingOff")}
       </Button>
       <span className="max-w-60 text-caption text-fg-muted">

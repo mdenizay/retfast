@@ -33,8 +33,8 @@ export default function PublicEventsPage() {
       <div className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative sm:w-80">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-fg-muted" aria-hidden />
-            <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("events.search")} aria-label={t("events.search")} className="pl-9" />
+            <Search className="pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2 text-fg-muted" aria-hidden />
+            <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("events.search")} aria-label={t("events.search")} className="rounded-full bg-surface pl-11" />
           </div>
           <div className="flex flex-wrap gap-1.5" role="group" aria-label={t("events.statusFilter")}>
             {STATUS_FILTERS.map((f) => (
@@ -43,7 +43,7 @@ export default function PublicEventsPage() {
                 type="button"
                 aria-pressed={status === f.id}
                 onClick={() => setStatus(f.id)}
-                className={cn("h-9 rounded-sm border px-3 text-footnote font-medium", status === f.id ? "border-fg bg-fg text-background" : "border-border text-fg-secondary hover:bg-accent")}
+                className={cn("h-9 rounded-full px-4 text-footnote font-semibold transition-colors", status === f.id ? "bg-primary text-on-primary" : "bg-surface text-fg-secondary hover:text-fg")}
               >
                 {t(f.key)}
               </button>
@@ -54,7 +54,7 @@ export default function PublicEventsPage() {
           (events.data?.items.length ?? 0) === 0 ? (
             <EmptyState title={t("events.emptyTitle")} body={dq ? t("events.emptySearch") : t("events.emptyPublic")} />
           ) : (
-            <ul className="overflow-hidden rounded-lg border border-border bg-surface [&>li:last-child>a]:border-b-0">
+            <ul className="grid grid-cols-1 gap-3">
               {events.data!.items.map((e) => <EventRow key={e.id} event={e} to={`/events/${e.slug}`} />)}
             </ul>
           )}

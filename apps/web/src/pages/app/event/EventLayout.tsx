@@ -9,7 +9,7 @@ import { eventAccess, myEventRoles } from "@/lib/roles";
 import { ErrorState, Loading } from "@/components/common";
 import { RoleBadge } from "@/components/status";
 import { Button } from "@/components/ui/button";
-import { DemoBadge, EventMeta, EventStatusBadge } from "@/features/events/EventBits";
+import { DateTile, DemoBadge, EventMeta, EventStatusBadge } from "@/features/events/EventBits";
 import { EventContext } from "@/features/events/context";
 import { cn } from "@/lib/utils";
 
@@ -41,17 +41,20 @@ export default function EventLayout() {
   return (
     <EventContext.Provider value={ctx}>
       <div className="space-y-6">
-        <header className="space-y-4 border-b border-border pb-0">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
+        <header className="space-y-4">
+          <div className="flex flex-col gap-5 rounded-3xl bg-surface p-5 sm:p-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex min-w-0 items-start gap-4">
+              <DateTile iso={e.starts_at} active={e.status === "active"} />
+              <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <EventStatusBadge status={e.status} />
                 {e.is_demo && <DemoBadge />}
                 {myEventRoles(e).map((r) => <RoleBadge key={r} role={r} />)}
                 {access.admin && !access.organizer && <span className="text-caption text-fg-muted">{t("event.adminView")}</span>}
               </div>
-              <h1 className="mt-2 text-title2 font-semibold tracking-tight">{e.name}</h1>
-              <div className="mt-1"><EventMeta event={e} /></div>
+              <h1 className="mt-2 text-title2 font-semibold tracking-[-0.02em] text-balance">{e.name}</h1>
+              <div className="mt-1.5"><EventMeta event={e} /></div>
+              </div>
             </div>
             <div className="flex flex-wrap gap-2">
               {liveOk && (
@@ -60,14 +63,14 @@ export default function EventLayout() {
                 </Button>
               )}
               {access.isRetriever && (
-                <Button asChild variant={liveOk ? "outline" : "default"}>
+                <Button asChild variant={liveOk ? "tinted" : "default"}>
                   <Link to={`/app/events/${e.id}/retrievals`}><Car /> {t("eventTab.myRetrievals")}</Link>
                 </Button>
               )}
-              <Button asChild variant="ghost"><Link to={`/events/${e.slug}`}><ExternalLink /> {t("event.publicPage")}</Link></Button>
+              <Button asChild variant="secondary"><Link to={`/events/${e.slug}`}><ExternalLink /> {t("event.publicPage")}</Link></Button>
             </div>
           </div>
-          <nav aria-label={t("eventTab.label")} className="-mb-px flex gap-1 overflow-x-auto">
+          <nav aria-label={t("eventTab.label")} className="flex gap-1 overflow-x-auto rounded-full bg-surface p-1 [scrollbar-width:none] sm:w-fit">
             {tabs.filter((x) => x.show).map((x) => (
               <NavLink
                 key={x.to}
@@ -75,14 +78,14 @@ export default function EventLayout() {
                 end={x.end}
                 className={({ isActive }) =>
                   cn(
-                    "inline-flex h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-body transition-colors",
-                    isActive ? "border-fg font-medium text-fg" : "border-transparent text-fg-secondary hover:text-fg",
+                    "inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-4 text-footnote font-semibold transition-colors",
+                    isActive ? "bg-primary text-on-primary" : "text-fg-secondary hover:bg-muted hover:text-fg",
                   )
                 }
               >
                 {t(x.label)}
                 {x.badge ? (
-                  <span className="rounded-[6px] border border-warning/50 bg-warning/10 px-1.5 text-caption font-semibold text-warning tnum">
+                  <span className="grid min-w-5 place-items-center rounded-full bg-warning px-1.5 text-caption font-bold text-black tnum">
                     {x.badge}
                     <span className="sr-only"> {t("eventTab.pendingSr")}</span>
                   </span>

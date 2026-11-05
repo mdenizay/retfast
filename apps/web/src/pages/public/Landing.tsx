@@ -32,12 +32,12 @@ export default function LandingPage() {
   return (
     <div>
       {/* Hero: statement left, the day's flow as a numbered instrument list right. */}
-      <section className="relative isolate overflow-hidden border-b border-border">
+      <section className="relative isolate overflow-hidden">
         <div className="pointer-events-none absolute -top-40 -left-32 -z-10 size-[36rem] rounded-full bg-[radial-gradient(closest-side,rgb(56_189_248/0.20),rgb(34_211_238/0.06)_65%,transparent)] blur-2xl" aria-hidden />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-px bg-sunset opacity-40" aria-hidden />
         <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:py-24">
           <div>
-            <p className="text-caption font-medium tracking-[0.12em] text-brand uppercase">{t("landing.eyebrow")}</p>
+            <p className="inline-flex w-fit rounded-full bg-brand/12 px-3 py-1 text-footnote font-semibold text-brand">{t("landing.eyebrow")}</p>
             <h1 className="mt-4 text-[34px] leading-[40px] font-semibold tracking-[-0.025em] text-balance text-fg sm:text-display lg:text-[52px] lg:leading-[56px]">{t("landing.title")}</h1>
             <p className="mt-5 max-w-xl text-callout text-fg-secondary">{t("landing.lead")}</p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -52,7 +52,7 @@ export default function LandingPage() {
               <span className="inline-flex items-center gap-2">
                 <Smartphone className="size-4" aria-hidden />
                 {APP_STORE_URL ? (
-                  <a href={APP_STORE_URL} className="text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg" rel="noopener">{t("landing.appStore")}</a>
+                  <a href={APP_STORE_URL} className="font-semibold text-brand underline-offset-4 transition-colors hover:underline" rel="noopener">{t("landing.appStore")}</a>
                 ) : (
                   <span>{t("landing.iosSoon")}</span>
                 )}
@@ -64,11 +64,11 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-border bg-surface">
-            <h2 className="border-b border-border px-5 py-3 text-caption font-medium tracking-wide text-fg-muted uppercase">{t("landing.flowTitle")}</h2>
+          <div className="rounded-3xl bg-surface">
+            <h2 className="border-b border-fg/[0.06] px-5 py-4 text-headline font-semibold text-fg">{t("landing.flowTitle")}</h2>
             <ol>
               {FLOW.map(([title, body], i) => (
-                <li key={title} className="grid grid-cols-[2.5rem_1fr] gap-x-2 border-b border-border px-5 py-4 last:border-b-0">
+                <li key={title} className="grid grid-cols-[2.5rem_1fr] gap-x-2 border-b border-fg/[0.06] px-5 py-4 last:border-b-0">
                   <span className="telemetry pt-0.5 text-footnote text-fg-muted">{String(i + 1).padStart(2, "0")}</span>
                   <div>
                     <h3 className="text-body font-semibold text-fg">{t(title)}</h3>
@@ -82,15 +82,15 @@ export default function LandingPage() {
       </section>
 
       {/* Roles */}
-      <section className="border-b border-border">
+      <section className="border-b border-fg/[0.06]">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
           <div className="max-w-2xl">
             <h2 className="text-title2 font-semibold tracking-tight">{t("landing.rolesTitle")}</h2>
             <p className="mt-3 text-body text-fg-secondary">{t("landing.rolesLead")}</p>
           </div>
-          <ul className="mt-8 grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
+          <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {ROLES.map((r) => (
-              <li key={r} className="bg-surface p-5">
+              <li key={r} className="rounded-3xl bg-surface p-6">
                 <RoleBadge role={r} />
                 <p className="mt-3 text-footnote text-fg-secondary">{t(`landing.role.${r}`)}</p>
               </li>
@@ -100,7 +100,7 @@ export default function LandingPage() {
       </section>
 
       {/* Visual-state legend (explains the screens; not live data) */}
-      <section className="border-b border-border">
+      <section className="border-b border-fg/[0.06]">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
           <h2 className="text-title2 font-semibold tracking-tight">{t("landing.legendTitle")}</h2>
           <div className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -123,13 +123,13 @@ export default function LandingPage() {
       </section>
 
       {/* Honest limitations */}
-      <section className="border-b border-border">
+      <section className="border-b border-fg/[0.06]">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_1.6fr]">
           <div>
             <h2 className="text-title2 font-semibold tracking-tight">{t("landing.limitsTitle")}</h2>
             <p className="mt-3 text-body text-fg-secondary">{t("landing.limitsLead")}</p>
           </div>
-          <ul className="divide-y divide-border rounded-lg border border-border bg-surface">
+          <ul className="divide-y divide-fg/[0.06] rounded-3xl bg-surface">
             {[
               { Icon: ShieldOff, title: t("landing.limit3.title"), body: t("landing.limit3.body"), strong: true },
               { Icon: Satellite, title: t("landing.limit1.title"), body: t("landing.limit1.body") },
@@ -154,12 +154,12 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
           <div className="flex items-end justify-between gap-4">
             <h2 className="text-title2 font-semibold tracking-tight">{t("landing.eventsTitle")}</h2>
-            <Link to="/events" className="text-footnote font-medium text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("common.seeAll")}</Link>
+            <Link to="/events" className="text-footnote font-semibold text-brand underline-offset-4 transition-colors hover:underline">{t("common.seeAll")}</Link>
           </div>
           <div className="mt-6">
             {events.isLoading ? <Loading /> : events.error ? <ErrorState error={events.error} onRetry={() => void events.refetch()} /> :
               (events.data?.items.length ?? 0) === 0 ? <EmptyState title={t("events.emptyTitle")} body={t("events.emptyPublic")} /> : (
-                <ul className="overflow-hidden rounded-lg border border-border bg-surface [&>li:last-child>a]:border-b-0">
+                <ul className="grid grid-cols-1 gap-3">
                   {events.data!.items.map((e) => <EventRow key={e.id} event={e} to={`/events/${e.slug}`} />)}
                 </ul>
               )}
@@ -172,9 +172,9 @@ export default function LandingPage() {
 
 function LegendGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="rounded-lg border border-border bg-surface">
-      <h3 className="border-b border-border px-5 py-3 text-caption font-medium tracking-wide text-fg-muted uppercase">{title}</h3>
-      <ul className="divide-y divide-border">{children}</ul>
+    <div className="rounded-3xl bg-surface">
+      <h3 className="px-5 pt-5 pb-1 text-headline font-semibold text-fg">{title}</h3>
+      <ul className="divide-y divide-fg/[0.06]">{children}</ul>
     </div>
   );
 }

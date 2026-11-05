@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
     <AuthLayout>
       <h1 className="text-title2 font-semibold tracking-tight">{t("auth.forgotTitle")}</h1>
       {sent ? (
-        <div role="status" className="mt-6 flex gap-3 rounded-md border border-border bg-surface p-4 text-footnote">
+        <div role="status" className="mt-6 flex gap-3 rounded-2xl bg-muted p-4 text-footnote">
           <MailCheck className="size-5 shrink-0 text-primary" aria-hidden />
           <span>{t("auth.forgotSent")}</span>
         </div>
@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
           <Button type="submit" size="lg" disabled={busy || !email}>{busy ? t("common.wait") : t("auth.sendLink")}</Button>
         </form>
       )}
-      <div className="mt-6 text-footnote"><Link to="/login" className="text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("auth.backToLogin")}</Link></div>
+      <div className="mt-6 text-footnote"><Link to="/login" className="font-semibold text-brand underline-offset-4 transition-colors hover:underline">{t("auth.backToLogin")}</Link></div>
     </AuthLayout>
   );
 }

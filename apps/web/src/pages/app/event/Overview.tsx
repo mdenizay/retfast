@@ -19,7 +19,7 @@ export default function EventOverviewPage() {
   const sites = useQuery({ queryKey: ["app", "sites", e.id], queryFn: () => eventsApi.launchSites(e.id) });
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr] [&>*]:min-w-0">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr] [&>*]:min-w-0">
       <div className="space-y-6">
         <RolePanel />
         {e.description && (
@@ -28,7 +28,7 @@ export default function EventOverviewPage() {
         <Panel title={t("event.launchSites")} bodyClassName="p-0">
           {sites.isLoading ? <div className="px-4"><Loading /></div> : sites.error ? <div className="p-4"><ErrorState error={sites.error} /></div> :
             (sites.data?.length ?? 0) === 0 ? <p className="p-4 text-footnote text-fg-muted">{t("event.noSites")}</p> : (
-              <ul className="divide-y divide-border">
+              <ul className="divide-y divide-fg/[0.06]">
                 {sites.data!.map((s) => (
                   <li key={s.id} className="flex items-start gap-3 px-4 py-3">
                     <Mountain className="mt-0.5 size-4 text-fg-muted" aria-hidden />
@@ -65,10 +65,10 @@ export default function EventOverviewPage() {
         <WeatherPanel event={e} />
         <Panel
           title={t("eventForm.settings")}
-          actions={access.canManage ? <Link to={`/app/events/${e.id}/settings`} className="text-footnote text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("common.edit")}</Link> : undefined}
+          actions={access.canManage ? <Link to={`/app/events/${e.id}/settings`} className="text-footnote font-semibold text-brand underline-offset-4 transition-colors hover:underline">{t("common.edit")}</Link> : undefined}
           bodyClassName="p-0"
         >
-          <ul className="divide-y divide-border">
+          <ul className="divide-y divide-fg/[0.06]">
             {SETTING_LABELS.map(({ key, label }) => {
               const on = e.settings[key];
               return (
@@ -136,10 +136,10 @@ function RolePanel() {
           {e.settings.pilots_see_each_other ? t("overview.pilot.sharingOthers") : t("overview.pilot.sharing")}
         </p>
         {myFlights.data && myFlights.data.items.length > 0 && (
-          <ul className="w-full divide-y divide-border rounded-md border border-border">
+          <ul className="w-full divide-y divide-fg/[0.06] overflow-hidden rounded-2xl bg-muted">
             {myFlights.data.items.map((f) => (
               <li key={f.id}>
-                <Link to={`/app/flights/${f.id}`} className="flex items-center gap-3 px-3 py-2 text-footnote hover:bg-accent">
+                <Link to={`/app/flights/${f.id}`} className="flex items-center gap-3 px-4 py-3 text-footnote transition-colors hover:bg-fg/5">
                   <span className="flex-1 tnum">{fmtDateTime(f.started_at, locale)}</span>
                   {f.is_simulated && <SimBadge />}
                   <FlightStatusBadge status={f.status} />
@@ -153,14 +153,14 @@ function RolePanel() {
     );
   }
   if (blocks.length === 0) return null;
-  return <div className="space-y-px overflow-hidden rounded-lg border border-border bg-border">{blocks}</div>;
+  return <div className="space-y-3">{blocks}</div>;
 }
 
 function RoleBlock({ Icon, title, body, children }: { Icon: typeof Eye; title: string; body: string; children?: React.ReactNode }) {
   return (
-    <section className="bg-surface p-5">
-      <div className="flex items-start gap-3">
-        <Icon className="mt-0.5 size-5 shrink-0 text-fg-secondary" aria-hidden />
+    <section className="rounded-3xl bg-surface p-5">
+      <div className="flex items-start gap-4">
+        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-brand/12 text-brand" aria-hidden><Icon className="size-5" /></span>
         <div className="min-w-0 flex-1">
           <h2 className="text-headline font-semibold">{title}</h2>
           <p className="mt-1 text-footnote text-fg-secondary">{body}</p>

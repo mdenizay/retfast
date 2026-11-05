@@ -6,7 +6,7 @@ import { eventsApi, usersApi } from "@/lib/api/endpoints";
 import { useSession } from "@/lib/auth";
 import { MEMBER_ROLES, type Member, type MemberRole, type UserSearchItem } from "@/lib/api/types";
 import { fmtDate } from "@/lib/format";
-import { EmptyState, ErrorState, FormError, Loading, Panel } from "@/components/common";
+import { EmptyState, ErrorState, FormError, Loading, NameAvatar, Panel } from "@/components/common";
 import { RoleBadge } from "@/components/status";
 import { ROLE_ICON } from "@/components/stateIcons";
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,7 @@ export default function MembersPage() {
       <FormError error={change.error} />
       {members.isLoading ? <Loading /> : members.error ? <ErrorState error={members.error} onRetry={() => void members.refetch()} /> :
         active.length === 0 ? <EmptyState title={t("members.empty")} body={t("members.emptyBody")} /> : (
-          <div className="grid gap-6 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 2xl:grid-cols-3">
             {groups.map((g) => {
               const Icon = ROLE_ICON[g.role];
               return (
@@ -64,7 +64,7 @@ export default function MembersPage() {
                   bodyClassName="p-0"
                 >
                   {g.items.length === 0 ? <p className="p-4 text-footnote text-fg-muted">{t("members.noneInGroup")}</p> : (
-                    <ul className="divide-y divide-border" aria-label={t(`members.group.${g.role}`)}>
+                    <ul className="divide-y divide-fg/[0.06]" aria-label={t(`members.group.${g.role}`)}>
                       {g.items.map((m) => (
                         <MemberRow key={m.user_id} m={m} busy={change.isPending} onRole={(role) => change.mutate({ userId: m.user_id, role })} onRemove={() => setRemoving(m)} />
                       ))}
@@ -77,7 +77,7 @@ export default function MembersPage() {
         )}
       {organizersOnly.length > 0 && (
         <Panel title={t("members.organizersOnly")} bodyClassName="p-0">
-          <ul className="divide-y divide-border">
+          <ul className="divide-y divide-fg/[0.06]">
             {organizersOnly.map((m) => (
               <MemberRow key={m.user_id} m={m} busy={change.isPending} onRole={(role) => change.mutate({ userId: m.user_id, role })} />
             ))}
@@ -86,9 +86,9 @@ export default function MembersPage() {
         </Panel>
       )}
       {removed.length > 0 && (
-        <details className="rounded-lg border border-border bg-surface">
+        <details className="rounded-3xl bg-surface">
           <summary className="cursor-pointer px-4 py-3 text-footnote font-medium text-fg-secondary">{t("members.removed", { n: removed.length })}</summary>
-          <ul className="divide-y divide-border border-t border-border">
+          <ul className="divide-y divide-fg/[0.06] border-t border-border">
             {removed.map((m) => (
               <li key={m.user_id} className="flex items-center gap-3 px-4 py-2.5 text-footnote text-fg-muted">
                 <span className="flex-1">{m.full_name}</span>
@@ -122,6 +122,7 @@ function MemberRow({ m, busy, onRole, onRemove }: { m: Member; busy: boolean; on
   const self = m.user_id === user?.id;
   return (
     <li className="flex items-center gap-3 px-4 py-3">
+      <NameAvatar name={m.full_name} accent={self} className="size-10" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="truncate font-medium">{m.full_name}</span>
@@ -129,7 +130,7 @@ function MemberRow({ m, busy, onRole, onRemove }: { m: Member; busy: boolean; on
         </div>
         <div className="flex flex-wrap gap-x-3 text-caption text-fg-muted">
           {m.phone ? (
-            <a href={`tel:${m.phone.replace(/\s+/g, "")}`} className="telemetry inline-flex items-center gap-1 text-fg-secondary hover:text-primary">
+            <a href={`tel:${m.phone.replace(/\s+/g, "")}`} className="inline-flex items-center gap-1 whitespace-nowrap text-fg-secondary tnum hover:text-brand">
               <Phone className="size-3" aria-hidden />{m.phone}
             </a>
           ) : (
@@ -139,7 +140,7 @@ function MemberRow({ m, busy, onRole, onRemove }: { m: Member; busy: boolean; on
         </div>
       </div>
       <Select value={m.role ?? ""} onValueChange={(v) => onRole(v as MemberRole)} disabled={busy}>
-        <SelectTrigger className="h-9 w-32" aria-label={t("members.roleFor", { name: m.full_name })}>
+        <SelectTrigger size="sm" className="w-32 rounded-full" aria-label={t("members.roleFor", { name: m.full_name })}>
           <SelectValue placeholder={t("members.giveRole")} />
         </SelectTrigger>
         <SelectContent>
@@ -171,8 +172,8 @@ function AddMember({ existing, onAdded }: { existing: Set<string>; onAdded: () =
     <Panel title={<span className="inline-flex items-center gap-2"><UserPlus className="size-4" aria-hidden />{t("members.addTitle")}</span>}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-fg-muted" aria-hidden />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("members.searchPlaceholder")} aria-label={t("members.searchPlaceholder")} className="pl-9" />
+          <Search className="pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2 text-fg-muted" aria-hidden />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("members.searchPlaceholder")} aria-label={t("members.searchPlaceholder")} className="rounded-full pl-11" />
         </div>
         <RoleChooser name="add-role" value={role} onChange={setRole} label={t("members.addAsRole")} size="sm" />
       </div>
@@ -181,9 +182,9 @@ function AddMember({ existing, onAdded }: { existing: Set<string>; onAdded: () =
           {search.isLoading ? <Loading /> : search.error ? <ErrorState error={search.error} /> : items.length === 0 ? (
             <p className="text-footnote text-fg-muted">{t("members.noResults")}</p>
           ) : (
-            <ul className="divide-y divide-border rounded-md border border-border">
+            <ul className="divide-y divide-fg/[0.06] overflow-hidden rounded-2xl bg-muted">
               {items.slice(0, 10).map((u) => (
-                <li key={u.id} className="flex items-center gap-3 px-3 py-2">
+                <li key={u.id} className="flex items-center gap-3 px-4 py-3">
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-medium">{u.full_name}</div>
                     <div className="truncate text-caption text-fg-muted">{u.email}</div>

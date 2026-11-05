@@ -7,7 +7,7 @@ import { eventsApi, flightsApi } from "@/lib/api/endpoints";
 import type { Flight, Position } from "@/lib/api/types";
 import { useSession } from "@/lib/auth";
 import { fmtAccuracy, fmtAltitude, fmtDateTime, fmtDistance, fmtDuration, fmtNumber, fmtPercent, fmtSpeed, fmtVario } from "@/lib/format";
-import { EmptyState, ErrorState, FormError, Loading, Panel, Stat } from "@/components/common";
+import { EmptyState, ErrorState, FormError, Loading, Panel, Stat, StatTile } from "@/components/common";
 import { FlightStatusBadge, SimBadge } from "@/components/status";
 import { Button } from "@/components/ui/button";
 import { MapCanvas } from "@/components/map/MapCanvas";
@@ -37,7 +37,7 @@ export function FlightView({ idOrPublicId, mode }: { idOrPublicId: string; mode:
   return (
     <div className="space-y-6">
       <FlightHeader flight={f} mode={mode} />
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {[
           [t("flight.duration"), fmtDuration(f.stats.duration_s)],
           [t("flight.distance"), fmtDistance(f.stats.distance_m, locale)],
@@ -46,11 +46,11 @@ export function FlightView({ idOrPublicId, mode }: { idOrPublicId: string; mode:
           [t("flight.ascent"), fmtAltitude(f.stats.total_ascent_m, locale)],
           [t("flight.descent"), fmtAltitude(f.stats.total_descent_m, locale)],
         ].map(([k, v]) => (
-          <div key={k} className="bg-surface p-4"><Stat label={k} value={v} /></div>
+          <StatTile key={k} label={k} value={v} className="bg-surface p-5 [&_.text-title1]:text-title2" />
         ))}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.5fr_1fr]">
         <Panel title={t("flight.route")} bodyClassName="p-0">
           <div className="h-[420px]">
             {positions.isLoading ? <Loading className="p-4" /> : positions.error ? <div className="p-4"><ErrorState error={positions.error} /></div> :
@@ -127,7 +127,7 @@ function FlightHeader({ flight: f, mode }: { flight: Flight; mode: "public" | "a
                 {event.data ? (
                   <span>
                     {t("flight.eventShared", { name: event.data.name })}{" "}
-                    <Link to={`/app/events/${f.event_id}`} className="text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg" aria-label={event.data.name}>→</Link>
+                    <Link to={`/app/events/${f.event_id}`} className="font-semibold text-brand underline-offset-4 transition-colors hover:underline" aria-label={event.data.name}>→</Link>
                   </span>
                 ) : t("flight.eventSharedNoName")}
               </>

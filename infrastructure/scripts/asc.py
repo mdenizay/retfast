@@ -6,6 +6,7 @@ Usage:
   asc.py GET  /v1/apps?filter[bundleId]=com.mizibu.retfast
   asc.py POST /v1/... '{"data": ...}'
   asc.py PATCH /v1/... '{"data": ...}'
+  asc.py distribute <build-number> [--group <betaGroupId>]   # wait for processing, add to internal testers
 Prints the JSON response. Never prints the key or the token.
 """
 import base64, json, os, subprocess, sys, time, urllib.error, urllib.request
@@ -52,7 +53,37 @@ def call(method: str, path: str, data=None):
         return e.code, json.loads(raw) if raw else {}
 
 
+APP_ID = os.environ.get("ASC_APP_ID", "6806568906")
+INTERNAL_GROUP = os.environ.get("ASC_INTERNAL_GROUP", "b12f437c-335b-4418-b12d-28cf5adc1921")
+
+
+def distribute(build_number: str, group: str, timeout_s: int = 3600) -> int:
+    """Wait until the uploaded build is processed, then add it to the beta group."""
+    from urllib.parse import quote
+    q = f"/v1/builds?filter[app]={APP_ID}&filter[version]={quote(build_number)}&limit=1"
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        status, out = call("GET", q)
+        data = out.get("data", []) if status == 200 else []
+        state = data[0]["attributes"]["processingState"] if data else "NOT_FOUND_YET"
+        print(time.strftime("%H:%M:%S"), build_number, state, flush=True)
+        if state == "VALID":
+            bid = data[0]["id"]
+            st, _ = call("POST", f"/v1/betaGroups/{group}/relationships/builds", {"data": [{"type": "builds", "id": bid}]})
+            st2, det = call("GET", f"/v1/builds/{bid}/buildBetaDetail")
+            print("added to group:", st, "internal state:", det.get("data", {}).get("attributes", {}).get("internalBuildState"))
+            return 0 if st in (200, 204) else 1
+        if state in ("FAILED", "INVALID"):
+            return 1
+        time.sleep(60)
+    print("timed out")
+    return 1
+
+
 if __name__ == "__main__":
+    if sys.argv[1] == "distribute":
+        g = sys.argv[sys.argv.index("--group") + 1] if "--group" in sys.argv else INTERNAL_GROUP
+        sys.exit(distribute(sys.argv[2], g))
     m, p = sys.argv[1].upper(), sys.argv[2]
     d = json.loads(sys.argv[3]) if len(sys.argv) > 3 else None
     status, out = call(m, p, d)

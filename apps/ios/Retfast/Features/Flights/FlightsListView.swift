@@ -90,7 +90,7 @@ private struct FlightCardContent<Footer: View>: View {
             .frame(width: 52, height: 56)
             .background {
                 RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous)
-                    .fill(isLive ? AnyShapeStyle(Brand.sunset) : AnyShapeStyle(AeroTokens.primarySoft))
+                    .fill(isLive ? AnyShapeStyle(Brand.gradient) : AnyShapeStyle(AeroTokens.primarySoft))
             }
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 6) {
@@ -224,7 +224,7 @@ struct FlightsListView: View {
         .background {
             RoundedRectangle(cornerRadius: AeroTokens.Radius.xl, style: .continuous).fill(Brand.ink)
                 .overlay(alignment: .topTrailing) {
-                    Circle().fill(Brand.orange.opacity(0.55)).frame(width: 220).blur(radius: 60).offset(x: 60, y: -80)
+                    Circle().fill(Brand.accent.opacity(0.55)).frame(width: 220).blur(radius: 60).offset(x: 60, y: -80)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: AeroTokens.Radius.xl, style: .continuous))
         }
@@ -278,7 +278,7 @@ struct FlightTrackSummary: View {
                             .font(.subheadline.weight(.bold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 16).frame(height: 44)
-                            .background(Brand.sunset, in: Capsule())
+                            .background(Brand.gradient, in: Capsule())
                             .shadow(color: .black.opacity(0.25), radius: 8, y: 3)
                     }
                     .padding(AeroTokens.Space.s3)
@@ -338,8 +338,8 @@ struct FlightTrackSummary: View {
             chartCard(String(localized: "İrtifa"), unit: Units.current == .metric ? "m" : "ft") {
                 Chart(pts.filter { $0.alt != nil }, id: \.t) {
                     AreaMark(x: .value("t", $0.t / 60), y: .value("alt", $0.alt! * altF))
-                        .foregroundStyle(LinearGradient(colors: [Brand.orange.opacity(0.35), Brand.orange.opacity(0.02)], startPoint: .top, endPoint: .bottom))
-                    LineMark(x: .value("t", $0.t / 60), y: .value("alt", $0.alt! * altF)).foregroundStyle(Brand.orange)
+                        .foregroundStyle(LinearGradient(colors: [Brand.accent.opacity(0.35), Brand.accent.opacity(0.02)], startPoint: .top, endPoint: .bottom))
+                    LineMark(x: .value("t", $0.t / 60), y: .value("alt", $0.alt! * altF)).foregroundStyle(Brand.accent)
                 }
                 .chartYScale(domain: .automatic(includesZero: false))
             }
@@ -457,7 +457,7 @@ struct FlightRouteMap: View {
         let coords = points.map(\.coordinate)
         Map(initialPosition: .automatic) {
             MapPolyline(coordinates: coords).stroke(.white.opacity(0.9), lineWidth: 6)
-            MapPolyline(coordinates: coords).stroke(Brand.sunset, style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round))
+            MapPolyline(coordinates: coords).stroke(Brand.gradient, style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round))
             if let first = coords.first {
                 Annotation(String(localized: "Kalkış"), coordinate: first) { pin("arrow.up", AeroTokens.success) }
             }

@@ -95,7 +95,7 @@ struct EventCard: View {
     let style: Style
 
     private var gradient: LinearGradient {
-        let top: Color = event.isMember ? Brand.orange : AeroTokens.retrieval
+        let top: Color = event.isMember ? Brand.accent : AeroTokens.retrieval
         return LinearGradient(colors: [top, top.opacity(0.55), Brand.ink],
                               startPoint: .topTrailing, endPoint: .bottomLeading)
     }

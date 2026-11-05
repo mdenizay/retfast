@@ -147,9 +147,9 @@ export function Logo({ className }: { className?: string }) {
       <svg viewBox="0 0 32 32" className="size-7" aria-hidden>
         <defs>
           <linearGradient id="rf-sunset" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#FB923C" />
-            <stop offset="0.55" stopColor="#F97316" />
-            <stop offset="1" stopColor="#E11D48" />
+            <stop offset="0" stopColor="#22D3EE" />
+            <stop offset="0.55" stopColor="#0EA5E9" />
+            <stop offset="1" stopColor="#0369A1" />
           </linearGradient>
         </defs>
         <rect width="32" height="32" rx="9" fill="#111111" className="dark:stroke-white/15" strokeWidth="1" />

@@ -56,14 +56,14 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto grid min-h-[calc(100dvh-4rem)] max-w-6xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_minmax(0,24rem)] lg:items-center lg:gap-16 lg:py-16">
       <aside className="relative hidden min-h-[30rem] overflow-hidden rounded-2xl border border-border bg-surface p-10 shadow-xs lg:flex lg:flex-col lg:justify-end" aria-hidden>
-        <div className="pointer-events-none absolute -top-32 -right-32 size-[30rem] rounded-full bg-[radial-gradient(closest-side,rgb(251_146_60/0.22),rgb(225_29_72/0.06)_60%,transparent)] blur-2xl" />
+        <div className="pointer-events-none absolute -top-32 -right-32 size-[30rem] rounded-full bg-[radial-gradient(closest-side,rgb(56_189_248/0.22),rgb(34_211_238/0.06)_60%,transparent)] blur-2xl" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgb(9_9_11/0.06)_1px,transparent_1px)] [background-size:18px_18px] [mask-image:linear-gradient(to_bottom,black,transparent_70%)] dark:bg-[radial-gradient(rgb(255_255_255/0.06)_1px,transparent_1px)]" />
         <svg viewBox="0 0 32 32" className="pointer-events-none absolute top-10 right-10 size-28">
           <defs>
             <linearGradient id="rf-auth-sunset" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#FB923C" />
-              <stop offset="0.55" stopColor="#F97316" />
-              <stop offset="1" stopColor="#E11D48" />
+              <stop offset="0" stopColor="#22D3EE" />
+              <stop offset="0.55" stopColor="#0EA5E9" />
+              <stop offset="1" stopColor="#0369A1" />
             </linearGradient>
           </defs>
           <path fillRule="evenodd" d="M16 5.1 24.7 26.6 16 22 7.3 26.6Zm0 5.5-3.9 9.7 3.9-2.05 3.9 2.05Z" fill="url(#rf-auth-sunset)" />

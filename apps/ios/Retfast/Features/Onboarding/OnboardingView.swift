@@ -80,7 +80,7 @@ struct OnboardingView: View {
             Group {
                 if p.icon == "brand" {
                     BrandMark(size: 150, color: .white)
-                        .shadow(color: Brand.orange.opacity(0.6), radius: 30)
+                        .shadow(color: Brand.accent.opacity(0.6), radius: 30)
                 } else {
                     HeroIcon(icon: p.icon)
                 }
@@ -123,7 +123,7 @@ struct OnboardingView: View {
                 .foregroundStyle(.white.opacity(0.85))
         }
         .toggleStyle(.switch)
-        .tint(Brand.orange)
+        .tint(Brand.accent)
         .padding(AeroTokens.Space.s4)
         .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
         .accessibilityIdentifier("onboarding.ack")

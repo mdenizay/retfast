@@ -23,7 +23,7 @@ struct ProfileView: View {
                 }
                 Section {
                     NavigationLink { PilotProfileEditor() } label: {
-                        IconRow(icon: "person.fill", tint: Brand.orange, title: "Pilot bilgileri",
+                        IconRow(icon: "person.fill", tint: Brand.accent, title: "Pilot bilgileri",
                                 subtitle: "Kanat, lisans, telefon ve acil durum kişisi")
                     }
                     .accessibilityIdentifier("profile.pilot")
@@ -130,8 +130,8 @@ struct ProfileView: View {
     private func hero(_ me: Me) -> some View {
         VStack(spacing: AeroTokens.Space.s2) {
             ZStack {
-                Circle().fill(Brand.orange.opacity(0.25)).frame(width: 112, height: 112).blur(radius: 18)
-                Avatar(name: me.pilot?.displayName ?? me.fullName, size: 88, tint: Brand.orange)
+                Circle().fill(Brand.accent.opacity(0.25)).frame(width: 112, height: 112).blur(radius: 18)
+                Avatar(name: me.pilot?.displayName ?? me.fullName, size: 88, tint: Brand.accent)
                     .overlay(Circle().stroke(AeroTokens.surface, lineWidth: 4))
             }
             Text(me.pilot?.displayName ?? me.fullName).font(.title2.bold()).foregroundStyle(AeroTokens.textPrimary)

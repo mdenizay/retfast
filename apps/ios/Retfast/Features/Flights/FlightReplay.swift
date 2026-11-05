@@ -104,7 +104,7 @@ struct FlightReplayView: View {
             MapPolyline(coordinates: mapPoints.map(\.coordinate))
                 .stroke(.white.opacity(0.45), style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round, dash: [4, 4]))
             MapPolyline(coordinates: travelled)
-                .stroke(Brand.sunset, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+                .stroke(Brand.gradient, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
             if let first = mapPoints.first {
                 Annotation(String(localized: "Kalkış"), coordinate: first.coordinate) { endpointDot(AeroTokens.success) }
             }
@@ -112,7 +112,7 @@ struct FlightReplayView: View {
                 Annotation(String(localized: "İniş"), coordinate: last.coordinate) { endpointDot(AeroTokens.error) }
             }
             Annotation("", coordinate: engine.point.coordinate) {
-                HeadingMarker(course: engine.point.course, tint: Brand.orange, isMe: true)
+                HeadingMarker(course: engine.point.course, tint: Brand.accent, isMe: true)
             }
         }
         .mapStyle(.hybrid(elevation: .realistic))
@@ -237,9 +237,9 @@ struct FlightReplayView: View {
         return Chart {
             ForEach(Array(pts.enumerated()), id: \.offset) { _, p in
                 AreaMark(x: .value("t", p.t), yStart: .value("min", lo), yEnd: .value("alt", p.alt! * altFactor))
-                    .foregroundStyle(LinearGradient(colors: [Brand.orange.opacity(0.35), Brand.orange.opacity(0.02)], startPoint: .top, endPoint: .bottom))
+                    .foregroundStyle(LinearGradient(colors: [Brand.accent.opacity(0.35), Brand.accent.opacity(0.02)], startPoint: .top, endPoint: .bottom))
                 LineMark(x: .value("t", p.t), y: .value("alt", p.alt! * altFactor))
-                    .foregroundStyle(Brand.orange)
+                    .foregroundStyle(Brand.accent)
                     .lineStyle(StrokeStyle(lineWidth: 1.5))
             }
             RuleMark(x: .value("now", engine.time))
@@ -291,8 +291,8 @@ struct FlightReplayView: View {
                     .font(.title2.weight(.bold))
                     .foregroundStyle(.white)
                     .frame(width: 64, height: 64)
-                    .background(Brand.sunset, in: Circle())
-                    .shadow(color: Brand.orange.opacity(0.4), radius: 10, y: 4)
+                    .background(Brand.gradient, in: Circle())
+                    .shadow(color: Brand.accent.opacity(0.4), radius: 10, y: 4)
                     .contentTransition(.symbolEffect(.replace))
             }
             .accessibilityLabel(Text(engine.isPlaying ? "Duraklat" : "Oynat"))

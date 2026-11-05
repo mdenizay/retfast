@@ -4,7 +4,7 @@
 @import "@fontsource/jetbrains-mono/400.css";
 @import "@fontsource/jetbrains-mono/500.css";
 
-/* Web palette: soft neutral (shadcn zinc) with the Retfast sunset orange kept as a brand accent.
+/* Web palette: soft neutral (shadcn zinc) with the Retfast sky blue as the single brand accent.
    Status colours (success/warning/error/live/retrieval) keep the shared Aero tokens. */
 :root, [data-theme="light"] {
   --rf-background: 250 250 250;
@@ -17,7 +17,7 @@
   --rf-primary: 24 24 27;
   --rf-on-primary: 250 250 250;
   --rf-focus-ring: 161 161 170;
-  --rf-brand: 194 65 12;
+  --rf-brand: 2 132 199;
   --rf-muted: 244 244 245;
 }
 @media (prefers-color-scheme: dark) {
@@ -32,7 +32,7 @@
   --rf-primary: 244 244 245;
   --rf-on-primary: 24 24 27;
   --rf-focus-ring: 113 113 122;
-  --rf-brand: 251 146 60;
+  --rf-brand: 56 189 248;
   --rf-muted: 32 32 36;
   }
 }
@@ -47,11 +47,11 @@
   --rf-primary: 244 244 245;
   --rf-on-primary: 24 24 27;
   --rf-focus-ring: 113 113 122;
-  --rf-brand: 251 146 60;
+  --rf-brand: 56 189 248;
   --rf-muted: 32 32 36;
 }
 :root {
-  --rf-sunset: linear-gradient(135deg, #FB923C 0%, #F97316 55%, #E11D48 100%);
+  --rf-sunset: linear-gradient(135deg, #22D3EE 0%, #0EA5E9 55%, #0369A1 100%);
 }
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));

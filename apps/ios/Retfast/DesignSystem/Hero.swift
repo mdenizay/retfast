@@ -1,9 +1,9 @@
 import SwiftUI
 
 // Brand hero pieces used by the splash, onboarding and sign-in screens. These
-// screens are always dark (like the launch screen) so the sunset glow reads.
+// screens are always dark (like the launch screen) so the sky glow reads.
 
-/// Dark sky with a sunset glow, faint terrain contours and a climbing
+/// Dark sky with a blue glow, faint terrain contours and a climbing
 /// thermal track that draws itself in a loop.
 struct SkyBackdrop: View {
     var glowCenter: UnitPoint = UnitPoint(x: 0.5, y: 0.38)
@@ -13,7 +13,7 @@ struct SkyBackdrop: View {
     var body: some View {
         ZStack {
             Brand.ink
-            RadialGradient(colors: [Brand.orange.opacity(0.55), Color(red: 0.88, green: 0.11, blue: 0.28).opacity(0.18), .clear],
+            RadialGradient(colors: [Brand.accent.opacity(0.55), Color(red: 0.01, green: 0.41, blue: 0.63).opacity(0.22), .clear],
                            center: glowCenter, startRadius: 0, endRadius: 420)
             if animated && !reduceMotion && !ProcessInfo.processInfo.arguments.contains("-uiTesting") {
                 TimelineView(.animation(minimumInterval: 1 / 30)) { ctx in
@@ -50,12 +50,12 @@ struct SkyBackdrop: View {
             let count = max(2, Int(Double(points.count) * progress))
             var track = Path()
             track.addLines(Array(points.prefix(count)))
-            ctx.stroke(track, with: .linearGradient(Gradient(colors: [Brand.amber.opacity(0.0), Brand.amber.opacity(0.22), Brand.orange.opacity(0.45)]),
+            ctx.stroke(track, with: .linearGradient(Gradient(colors: [Brand.accentLight.opacity(0.0), Brand.accentLight.opacity(0.22), Brand.accent.opacity(0.45)]),
                                                      startPoint: points[0], endPoint: points[count - 1]),
                        style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
             let head = points[count - 1]
-            ctx.fill(Path(ellipseIn: CGRect(x: head.x - 9, y: head.y - 9, width: 18, height: 18)), with: .color(Brand.orange.opacity(0.12)))
-            ctx.fill(Path(ellipseIn: CGRect(x: head.x - 3, y: head.y - 3, width: 6, height: 6)), with: .color(Brand.orange.opacity(0.6)))
+            ctx.fill(Path(ellipseIn: CGRect(x: head.x - 9, y: head.y - 9, width: 18, height: 18)), with: .color(Brand.accent.opacity(0.12)))
+            ctx.fill(Path(ellipseIn: CGRect(x: head.x - 3, y: head.y - 3, width: 6, height: 6)), with: .color(Brand.accent.opacity(0.6)))
         }
     }
 
@@ -79,7 +79,7 @@ struct SplashView: View {
     var body: some View {
         ZStack {
             Brand.ink.ignoresSafeArea()
-            RadialGradient(colors: [Brand.orange.opacity(0.6), .clear], center: .center, startRadius: 0, endRadius: bloom ? 320 : 40)
+            RadialGradient(colors: [Brand.accent.opacity(0.6), .clear], center: .center, startRadius: 0, endRadius: bloom ? 320 : 40)
                 .opacity(bloom ? 1 : 0)
                 .ignoresSafeArea()
             VStack(spacing: AeroTokens.Space.s4) {
@@ -114,11 +114,11 @@ struct WhiteCapsuleButtonStyle: ButtonStyle {
             .font(.headline)
             .foregroundStyle(Color(red: 0.07, green: 0.07, blue: 0.07))
             .frame(maxWidth: .infinity, minHeight: AeroTokens.Control.height)
-            .background(.white, in: Capsule())
+            .background(.white, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous))
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .opacity(isEnabled ? (configuration.isPressed ? 0.85 : 1) : 0.4)
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
-            .contentShape(Capsule())
+            .contentShape(RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous))
     }
 }
 
@@ -130,12 +130,12 @@ struct GlassCapsuleButtonStyle: ButtonStyle {
             .font(.headline)
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity, minHeight: AeroTokens.Control.height)
-            .background(Color.white.opacity(configuration.isPressed ? 0.18 : 0.11), in: Capsule())
-            .overlay(Capsule().strokeBorder(.white.opacity(0.12)))
+            .background(Color.white.opacity(configuration.isPressed ? 0.16 : 0.08), in: RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous).strokeBorder(.white.opacity(0.14)))
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .opacity(isEnabled ? 1 : 0.4)
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
-            .contentShape(Capsule())
+            .contentShape(RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous))
     }
 }
 
@@ -170,7 +170,7 @@ struct AuthField<Content: View>: View {
     var body: some View {
         HStack(spacing: AeroTokens.Space.s3) {
             Image(icon: icon).foregroundStyle(.white.opacity(0.5)).frame(width: 22)
-            content.foregroundStyle(.white).tint(Brand.orange)
+            content.foregroundStyle(.white).tint(Brand.accent)
         }
         .font(.body)
         .padding(.horizontal, AeroTokens.Space.s4)
@@ -186,11 +186,11 @@ struct HeroIcon: View {
     @State private var appear = false
     var body: some View {
         ZStack {
-            Circle().fill(Brand.orange.opacity(0.18)).frame(width: 220, height: 220).blur(radius: 30)
-            Circle().strokeBorder(Brand.sunset, lineWidth: 1.5).frame(width: 170, height: 170).opacity(0.7)
+            Circle().fill(Brand.accent.opacity(0.18)).frame(width: 220, height: 220).blur(radius: 30)
+            Circle().strokeBorder(Brand.gradient, lineWidth: 1.5).frame(width: 170, height: 170).opacity(0.7)
             Circle().strokeBorder(.white.opacity(0.08), lineWidth: 1).frame(width: 230, height: 230)
-            Circle().fill(Brand.sunset).frame(width: 118, height: 118)
-                .shadow(color: Brand.orange.opacity(0.5), radius: 24, y: 8)
+            Circle().fill(Brand.gradient).frame(width: 118, height: 118)
+                .shadow(color: Brand.accent.opacity(0.5), radius: 24, y: 8)
             Image(icon: icon)
                 .font(.system(size: 50, weight: .semibold))
                 .foregroundStyle(.white)

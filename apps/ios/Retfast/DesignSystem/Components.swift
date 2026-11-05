@@ -1,8 +1,8 @@
 import RetfastCore
 import SwiftUI
 
-// Retfast UI kit — Uber-style clarity: one obvious action per screen, big
-// rounded surfaces, capsule buttons, map first with an ink panel below.
+// Retfast UI kit — soft, shadcn-like: neutral zinc surfaces with hairline
+// borders and faint shadows, rounded-rect controls, one sky-blue accent.
 // State is always icon + text, never colour alone.
 
 enum Tone {
@@ -31,6 +31,8 @@ struct AeroCard<Content: View>: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(padding)
             .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous).strokeBorder(AeroTokens.border))
+            .shadow(color: AeroTokens.shadow, radius: 2, y: 1)
     }
 }
 
@@ -61,11 +63,12 @@ struct StatusPill: View {
         } icon: {
             Image(icon: systemImage)
         }
-        .font(.caption.weight(.semibold))
+        .font(.caption.weight(.medium))
         .foregroundStyle(tone.color)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(tone.color.opacity(0.14), in: Capsule())
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(tone.color.opacity(0.10), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(tone.color.opacity(0.22)))
         .accessibilityElement(children: .combine)
     }
 }
@@ -73,10 +76,11 @@ struct StatusPill: View {
 struct SimBadge: View {
     var body: some View {
         Text("SIM")
-            .font(.caption2.weight(.heavy).monospaced())
+            .font(.caption2.weight(.semibold).monospaced())
             .padding(.horizontal, 6).padding(.vertical, 2)
-            .foregroundStyle(AeroTokens.onSecondary)
-            .background(AeroTokens.secondary, in: Capsule())
+            .foregroundStyle(AeroTokens.secondary)
+            .background(AeroTokens.secondary.opacity(0.10), in: RoundedRectangle(cornerRadius: 5, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 5, style: .continuous).strokeBorder(AeroTokens.secondary.opacity(0.25)))
             .accessibilityLabel(Text("Simüle edilmiş veri"))
     }
 }
@@ -131,22 +135,26 @@ struct PrimaryButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(large ? .title3.weight(.bold) : .headline)
+            .font(large ? .headline.weight(.semibold) : .body.weight(.semibold))
             .frame(maxWidth: .infinity, minHeight: large ? AeroTokens.Control.heightLarge : AeroTokens.Control.height)
             .padding(.horizontal, AeroTokens.Space.s4)
             .foregroundStyle(foreground)
-            .background(background, in: Capsule())
+            .background(background, in: shape)
+            .overlay { if kind == .secondary { shape.strokeBorder(AeroTokens.border) } }
+            .shadow(color: kind == .secondary ? .clear : AeroTokens.shadow, radius: 1.5, y: 1)
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
-            .opacity(isEnabled ? (configuration.isPressed ? 0.85 : 1) : 0.4)
-            .contentShape(Capsule())
+            .opacity(isEnabled ? (configuration.isPressed ? 0.88 : 1) : 0.45)
+            .contentShape(shape)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
+
+    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous) }
 
     private var background: Color {
         switch kind {
         case .primary: AeroTokens.primary
         case .ink: AeroTokens.ink
-        case .secondary: AeroTokens.textPrimary.opacity(0.08)
+        case .secondary: AeroTokens.surface
         case .destructive: AeroTokens.error
         }
     }
@@ -180,9 +188,10 @@ struct MapCircleButton: View {
             Image(icon: systemImage)
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(AeroTokens.textPrimary)
-                .frame(width: 48, height: 48)
-                .background(AeroTokens.surface, in: Circle())
-                .shadow(color: .black.opacity(0.18), radius: 8, y: 3)
+                .frame(width: 46, height: 46)
+                .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous).strokeBorder(AeroTokens.border))
+                .shadow(color: .black.opacity(0.10), radius: 6, y: 2)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(Text(label))
@@ -201,8 +210,8 @@ struct RoundIconButton: View {
             Image(icon: systemImage)
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(tint)
-                .frame(width: 46, height: 46)
-                .background(tint.opacity(0.16), in: Circle())
+                .frame(width: 44, height: 44)
+                .background(tint.opacity(0.10), in: RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(Text(label))
@@ -225,16 +234,22 @@ struct CapsuleSegment<Value: Hashable>: View {
                         .font(.subheadline.weight(.semibold))
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
-                        .frame(maxWidth: .infinity, minHeight: 40)
-                        .foregroundStyle(on ? AeroTokens.onPrimary : AeroTokens.textSecondary)
-                        .background(on ? AeroTokens.primary : .clear, in: Capsule())
+                        .frame(maxWidth: .infinity, minHeight: 36)
+                        .foregroundStyle(on ? AeroTokens.textPrimary : AeroTokens.textSecondary)
+                        .background {
+                            if on {
+                                RoundedRectangle(cornerRadius: AeroTokens.Radius.sm, style: .continuous)
+                                    .fill(AeroTokens.surface)
+                                    .shadow(color: .black.opacity(0.08), radius: 2, y: 1)
+                            }
+                        }
                 }
                 .buttonStyle(.plain)
                 .accessibilityAddTraits(on ? .isSelected : [])
             }
         }
-        .padding(4)
-        .background(AeroTokens.textPrimary.opacity(0.07), in: Capsule())
+        .padding(3)
+        .background(AeroTokens.surfaceElevated, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous))
     }
 }
 
@@ -386,6 +401,9 @@ struct InstrumentTile: View {
         .padding(AeroTokens.Space.s3)
         .background(AeroTokens.surfaceElevated, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous))
         .overlay {
+            if !highContrast {
+                RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous).strokeBorder(AeroTokens.border.opacity(0.6))
+            }
             if highContrast {
                 RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous).strokeBorder(AeroTokens.textPrimary, lineWidth: 2)
             }

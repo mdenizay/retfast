@@ -23,7 +23,7 @@ struct AuthWelcomeView: View {
                 Spacer(minLength: AeroTokens.Space.s8)
                 VStack(spacing: AeroTokens.Space.s4) {
                     BrandMark(size: 96, color: .white)
-                        .shadow(color: Brand.orange.opacity(0.55), radius: 26)
+                        .shadow(color: Brand.accent.opacity(0.55), radius: 26)
                     Text("Retfast")
                         .font(.system(size: 40, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
@@ -37,7 +37,7 @@ struct AuthWelcomeView: View {
 
                 VStack(spacing: AeroTokens.Space.s3) {
                     if let message = model.authMessage {
-                        Text(message).font(.footnote).foregroundStyle(Brand.amber)
+                        Text(message).font(.footnote).foregroundStyle(Brand.accentLight)
                             .multilineTextAlignment(.center).padding(.bottom, AeroTokens.Space.s2)
                     }
                     Button { comingSoon = "Apple" } label: {
@@ -92,7 +92,7 @@ struct AuthScaffold<Content: View>: View {
     var body: some View {
         ZStack(alignment: .top) {
             Brand.ink.ignoresSafeArea()
-            RadialGradient(colors: [Brand.orange.opacity(0.28), .clear], center: .top, startRadius: 0, endRadius: 360)
+            RadialGradient(colors: [Brand.accent.opacity(0.28), .clear], center: .top, startRadius: 0, endRadius: 360)
                 .ignoresSafeArea()
                 .accessibilityHidden(true)
             ScrollView {
@@ -196,7 +196,7 @@ struct EmailLoginView: View {
 
             HStack(spacing: 4) {
                 Text("Hesabın yok mu?").foregroundStyle(.white.opacity(0.55))
-                NavigationLink("Hesap oluştur") { RegisterView() }.fontWeight(.semibold).foregroundStyle(Brand.orange)
+                NavigationLink("Hesap oluştur") { RegisterView() }.fontWeight(.semibold).foregroundStyle(Brand.accent)
             }
             .font(.subheadline)
             .frame(maxWidth: .infinity)

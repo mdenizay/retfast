@@ -33,7 +33,7 @@ export default function LandingPage() {
     <div>
       {/* Hero: statement left, the day's flow as a numbered instrument list right. */}
       <section className="relative isolate overflow-hidden border-b border-border">
-        <div className="pointer-events-none absolute -top-40 -left-32 -z-10 size-[36rem] rounded-full bg-[radial-gradient(closest-side,rgb(249_115_22/0.20),rgb(225_29_72/0.06)_65%,transparent)] blur-2xl" aria-hidden />
+        <div className="pointer-events-none absolute -top-40 -left-32 -z-10 size-[36rem] rounded-full bg-[radial-gradient(closest-side,rgb(56_189_248/0.20),rgb(34_211_238/0.06)_65%,transparent)] blur-2xl" aria-hidden />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-px bg-sunset opacity-40" aria-hidden />
         <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:py-24">
           <div>

@@ -105,7 +105,7 @@ function PilotSection({ user }: { user: Me }) {
         {p?.public_id && (
           <p className="text-footnote text-fg-secondary">
             {t("settings.publicId")}: <span className="telemetry">@{p.public_id}</span>
-            {user.preferences.public_profile && <> · <Link to={`/pilots/${p.public_id}`} className="text-primary hover:underline">{t("settings.viewPublic")}</Link></>}
+            {user.preferences.public_profile && <> · <Link to={`/pilots/${p.public_id}`} className="text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("settings.viewPublic")}</Link></>}
           </p>
         )}
         <div className="grid gap-4 sm:grid-cols-2">

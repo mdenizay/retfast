@@ -65,7 +65,7 @@ export default function EventOverviewPage() {
         <WeatherPanel event={e} />
         <Panel
           title={t("eventForm.settings")}
-          actions={access.canManage ? <Link to={`/app/events/${e.id}/settings`} className="text-footnote text-primary hover:underline">{t("common.edit")}</Link> : undefined}
+          actions={access.canManage ? <Link to={`/app/events/${e.id}/settings`} className="text-footnote text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("common.edit")}</Link> : undefined}
           bodyClassName="p-0"
         >
           <ul className="divide-y divide-border">

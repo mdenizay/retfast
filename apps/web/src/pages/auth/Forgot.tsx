@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
           <Button type="submit" size="lg" disabled={busy || !email}>{busy ? t("common.wait") : t("auth.sendLink")}</Button>
         </form>
       )}
-      <div className="mt-6 text-footnote"><Link to="/login" className="text-primary hover:underline">{t("auth.backToLogin")}</Link></div>
+      <div className="mt-6 text-footnote"><Link to="/login" className="text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("auth.backToLogin")}</Link></div>
     </AuthLayout>
   );
 }

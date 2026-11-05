@@ -37,7 +37,7 @@ export default function FlightsPage() {
           <span className="text-fg-secondary">{t("flights.leadFiltered")}</span>
           <button
             type="button"
-            className="ml-auto inline-flex items-center gap-1 font-medium text-primary hover:underline"
+            className="ml-auto inline-flex items-center gap-1 font-medium text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg"
             onClick={() => {
               const p = new URLSearchParams(params);
               p.delete("pilot_id");

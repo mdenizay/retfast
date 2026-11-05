@@ -127,7 +127,7 @@ function FlightHeader({ flight: f, mode }: { flight: Flight; mode: "public" | "a
                 {event.data ? (
                   <span>
                     {t("flight.eventShared", { name: event.data.name })}{" "}
-                    <Link to={`/app/events/${f.event_id}`} className="text-primary hover:underline" aria-label={event.data.name}>→</Link>
+                    <Link to={`/app/events/${f.event_id}`} className="text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg" aria-label={event.data.name}>→</Link>
                   </span>
                 ) : t("flight.eventSharedNoName")}
               </>

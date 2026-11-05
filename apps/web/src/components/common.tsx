@@ -7,11 +7,11 @@ import { Label } from "@/components/ui/label";
 
 export function PageHeader({ title, subtitle, actions, eyebrow }: { title: ReactNode; subtitle?: ReactNode; actions?: ReactNode; eyebrow?: ReactNode }) {
   return (
-    <header className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
+    <header className="flex flex-col gap-4 pb-2 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        {eyebrow && <div className="mb-1 text-caption font-semibold tracking-wide text-primary uppercase">{eyebrow}</div>}
-        <h1 className="text-title2 font-semibold tracking-tight text-fg">{title}</h1>
-        {subtitle && <p className="mt-1 text-body text-fg-secondary">{subtitle}</p>}
+        {eyebrow && <div className="mb-1 text-caption font-semibold tracking-wide text-brand uppercase">{eyebrow}</div>}
+        <h1 className="text-title2 font-semibold tracking-tight text-fg sm:text-title1">{title}</h1>
+        {subtitle && <p className="mt-1.5 max-w-2xl text-body text-fg-muted">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
@@ -20,14 +20,14 @@ export function PageHeader({ title, subtitle, actions, eyebrow }: { title: React
 
 export function Panel({ title, actions, children, className, bodyClassName }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; bodyClassName?: string }) {
   return (
-    <section className={cn("min-w-0 rounded-xl border border-border/70 bg-surface shadow-[0_1px_2px_rgb(28_25_23/0.04),0_8px_24px_-12px_rgb(28_25_23/0.08)]", className)}>
+    <section className={cn("min-w-0 rounded-xl border border-border bg-surface shadow-xs", className)}>
       {(title || actions) && (
-        <div className="flex min-h-12 items-center justify-between gap-3 px-4 pt-3 pb-1">
-          {title && <h2 className="text-headline font-semibold tracking-tight text-fg">{title}</h2>}
+        <div className="flex min-h-12 items-center justify-between gap-3 px-5 pt-4 pb-1">
+          {title && <h2 className="text-callout font-semibold tracking-tight text-fg">{title}</h2>}
           {actions}
         </div>
       )}
-      <div className={cn("p-4", bodyClassName)}>{children}</div>
+      <div className={cn("px-5 pt-3 pb-5", bodyClassName)}>{children}</div>
     </section>
   );
 }
@@ -54,8 +54,8 @@ export function Loading({ label, className }: { label?: string; className?: stri
 
 export function EmptyState({ title, body, action, icon }: { title: ReactNode; body?: ReactNode; action?: ReactNode; icon?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border px-6 py-12 text-center">
-      <div className="text-fg-muted" aria-hidden>{icon ?? <Inbox className="size-6" />}</div>
+    <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface/50 px-6 py-12 text-center">
+      <div className="mb-1 grid size-11 place-items-center rounded-lg border border-border bg-surface text-fg-muted shadow-xs" aria-hidden>{icon ?? <Inbox className="size-5" />}</div>
       <div className="text-headline font-medium text-fg">{title}</div>
       {body && <p className="max-w-md text-footnote text-fg-secondary">{body}</p>}
       {action && <div className="mt-2">{action}</div>}
@@ -94,7 +94,7 @@ export function ErrorState({ error, onRetry, className }: { error: unknown; onRe
         )}
       </div>
       {onRetry && (
-        <button type="button" onClick={onRetry} className="text-footnote font-medium text-primary hover:underline">
+        <button type="button" onClick={onRetry} className="text-footnote font-medium text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">
           {t("common.retry")}
         </button>
       )}

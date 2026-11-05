@@ -1,48 +1,54 @@
 @import "tailwindcss";
 @import "@tokens/tokens.css";
-@import "@fontsource-variable/inter/index.css";
+@import "@fontsource-variable/geist/index.css";
 @import "@fontsource/jetbrains-mono/400.css";
 @import "@fontsource/jetbrains-mono/500.css";
 
-/* Web brand palette: aligned with the iOS app (warm stone neutrals, ink dark, sunset orange).
+/* Web palette: soft neutral (shadcn zinc) with the Retfast sunset orange kept as a brand accent.
    Status colours (success/warning/error/live/retrieval) keep the shared Aero tokens. */
 :root, [data-theme="light"] {
-  --rf-background: 250 250 249;
+  --rf-background: 250 250 250;
   --rf-surface: 255 255 255;
   --rf-surface-elevated: 255 255 255;
-  --rf-border: 231 229 228;
-  --rf-text-primary: 28 25 23;
-  --rf-text-secondary: 87 83 78;
-  --rf-text-muted: 112 106 101;
-  --rf-primary: 194 65 12;
-  --rf-on-primary: 255 255 255;
-  --rf-focus-ring: 234 88 12;
+  --rf-border: 228 228 231;
+  --rf-text-primary: 9 9 11;
+  --rf-text-secondary: 82 82 91;
+  --rf-text-muted: 113 113 122;
+  --rf-primary: 24 24 27;
+  --rf-on-primary: 250 250 250;
+  --rf-focus-ring: 161 161 170;
+  --rf-brand: 194 65 12;
+  --rf-muted: 244 244 245;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-  --rf-background: 17 17 17;
-  --rf-surface: 28 28 30;
-  --rf-surface-elevated: 38 38 40;
-  --rf-border: 52 52 55;
-  --rf-text-primary: 245 245 244;
-  --rf-text-secondary: 168 162 158;
-  --rf-text-muted: 145 140 135;
-  --rf-primary: 251 146 60;
-  --rf-on-primary: 17 17 17;
-  --rf-focus-ring: 251 146 60;
+  --rf-background: 9 9 11;
+  --rf-surface: 18 18 21;
+  --rf-surface-elevated: 27 27 31;
+  --rf-border: 39 39 42;
+  --rf-text-primary: 250 250 250;
+  --rf-text-secondary: 161 161 170;
+  --rf-text-muted: 142 142 152;
+  --rf-primary: 244 244 245;
+  --rf-on-primary: 24 24 27;
+  --rf-focus-ring: 113 113 122;
+  --rf-brand: 251 146 60;
+  --rf-muted: 32 32 36;
   }
 }
 [data-theme="dark"] {
-  --rf-background: 17 17 17;
-  --rf-surface: 28 28 30;
-  --rf-surface-elevated: 38 38 40;
-  --rf-border: 52 52 55;
-  --rf-text-primary: 245 245 244;
-  --rf-text-secondary: 168 162 158;
-  --rf-text-muted: 145 140 135;
-  --rf-primary: 251 146 60;
-  --rf-on-primary: 17 17 17;
-  --rf-focus-ring: 251 146 60;
+  --rf-background: 9 9 11;
+  --rf-surface: 18 18 21;
+  --rf-surface-elevated: 27 27 31;
+  --rf-border: 39 39 42;
+  --rf-text-primary: 250 250 250;
+  --rf-text-secondary: 161 161 170;
+  --rf-text-muted: 142 142 152;
+  --rf-primary: 244 244 245;
+  --rf-on-primary: 24 24 27;
+  --rf-focus-ring: 113 113 122;
+  --rf-brand: 251 146 60;
+  --rf-muted: 32 32 36;
 }
 :root {
   --rf-sunset: linear-gradient(135deg, #FB923C 0%, #F97316 55%, #E11D48 100%);
@@ -78,11 +84,12 @@
   /* shadcn/ui semantic aliases → Aero tokens */
   --color-foreground: rgb(var(--rf-text-primary));
   --color-muted-foreground: rgb(var(--rf-text-muted));
-  --color-muted: color-mix(in oklab, rgb(var(--rf-text-primary)) 6%, transparent);
+  --color-muted: rgb(var(--rf-muted));
+  --color-brand: rgb(var(--rf-brand));
   --color-popover: rgb(var(--rf-surface-elevated));
   --color-popover-foreground: rgb(var(--rf-text-primary));
   --color-card: rgb(var(--rf-surface));
-  --color-accent: color-mix(in oklab, rgb(var(--rf-text-primary)) 7%, transparent);
+  --color-accent: rgb(var(--rf-muted));
   --color-accent-foreground: rgb(var(--rf-text-primary));
   --color-input: rgb(var(--rf-border));
   --color-ring: rgb(var(--rf-focus-ring));
@@ -90,32 +97,37 @@
   --color-primary-foreground: rgb(var(--rf-on-primary));
   --color-secondary-foreground: rgb(var(--rf-on-secondary));
 
-  --font-sans: "Inter Variable", var(--rf-font-sans);
+  --font-sans: "Geist Variable", "Inter", var(--rf-font-sans);
   --font-mono: "JetBrains Mono", var(--rf-font-mono);
 
-  --radius-sm: var(--rf-radius-sm);
-  --radius-md: var(--rf-radius-md);
-  --radius-lg: var(--rf-radius-lg);
-  --radius-xl: var(--rf-radius-xl);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-2xl: 18px;
+
+  --shadow-xs: 0 1px 2px 0 rgb(9 9 11 / 0.04);
+  --shadow-sm: 0 1px 3px 0 rgb(9 9 11 / 0.06), 0 1px 2px -1px rgb(9 9 11 / 0.05);
+  --shadow-soft: 0 1px 2px rgb(9 9 11 / 0.03), 0 12px 32px -16px rgb(9 9 11 / 0.10);
 
   --text-caption: 12px;
   --text-caption--line-height: 16px;
   --text-footnote: 13px;
   --text-footnote--line-height: 18px;
-  --text-body: 15px;
-  --text-body--line-height: 22px;
-  --text-callout: 16px;
+  --text-body: 14px;
+  --text-body--line-height: 20px;
+  --text-callout: 15px;
   --text-callout--line-height: 22px;
-  --text-headline: 17px;
+  --text-headline: 16px;
   --text-headline--line-height: 24px;
   --text-title3: 20px;
   --text-title3--line-height: 26px;
   --text-title2: 24px;
   --text-title2--line-height: 30px;
-  --text-title1: 30px;
-  --text-title1--line-height: 36px;
-  --text-display: 40px;
-  --text-display--line-height: 44px;
+  --text-title1: 28px;
+  --text-title1--line-height: 34px;
+  --text-display: 44px;
+  --text-display--line-height: 48px;
   --text-instrument: 56px;
   --text-instrument--line-height: 60px;
 
@@ -131,15 +143,16 @@
     background: var(--color-background);
     color: var(--color-fg);
     font-family: var(--font-sans);
-    font-size: 15px;
-    line-height: 22px;
-    font-feature-settings: "cv11", "ss01";
+    font-size: 14px;
+    line-height: 20px;
     -webkit-font-smoothing: antialiased;
   }
   :focus-visible {
-    outline: 2px solid var(--color-focus);
+    outline: 2px solid color-mix(in oklab, var(--color-focus) 70%, transparent);
     outline-offset: 2px;
   }
+  h1, h2, h3 { text-wrap: balance; }
+  p { text-wrap: pretty; }
   ::selection { background: color-mix(in oklab, var(--color-primary) 30%, transparent); }
   @media (prefers-reduced-motion: reduce) {
     *, ::before, ::after {
@@ -167,4 +180,4 @@
 @utility hairline { border-width: 1px; border-color: var(--color-border); }
 
 .maplibregl-ctrl-attrib { font-size: 11px; }
-.maplibregl-ctrl-group { border-radius: var(--rf-radius-sm) !important; }
+.maplibregl-ctrl-group { border-radius: 8px !important; box-shadow: var(--shadow-sm) !important; }

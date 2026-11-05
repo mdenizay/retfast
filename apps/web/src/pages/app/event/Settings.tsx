@@ -218,7 +218,7 @@ function LaunchSites() {
           </div>
           <div className="text-footnote text-fg-secondary">
             {pos ? <span className="telemetry">{fmtCoord(pos.lat, pos.lon)}</span> : t("site.clickMap")}
-            {pos && <button type="button" className="ml-2 text-primary hover:underline" onClick={() => setPos(null)}>{t("common.clear")}</button>}
+            {pos && <button type="button" className="ml-2 text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg" onClick={() => setPos(null)}>{t("common.clear")}</button>}
           </div>
           <Suspense fallback={<Loading />}>
             <PointPicker

@@ -74,7 +74,7 @@ export function RetrievalDetail({
 
       <dl className="divide-y divide-border border-b border-border text-footnote">
         <Row label={t("rdetail.pilotPhone")}>
-          {r.pilot.phone ? <a className="telemetry inline-flex items-center gap-1 text-primary hover:underline" href={telHref(r.pilot.phone)}><Phone className="size-3.5" aria-hidden />{r.pilot.phone}</a> : <span className="text-fg-muted">{t("rdetail.phoneHidden")}</span>}
+          {r.pilot.phone ? <a className="telemetry inline-flex items-center gap-1 text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg" href={telHref(r.pilot.phone)}><Phone className="size-3.5" aria-hidden />{r.pilot.phone}</a> : <span className="text-fg-muted">{t("rdetail.phoneHidden")}</span>}
         </Row>
         <Row label={pp.isPickup ? t("rdetail.pickup") : t("rdetail.pilotNow")}>
           <span className="telemetry select-all">{fmtCoord(pp.lat, pp.lon)}</span>
@@ -93,7 +93,7 @@ export function RetrievalDetail({
           {r.retriever ? (
             <>
               <span className="inline-flex items-center gap-1.5 font-medium"><Car className="size-3.5 text-secondary" aria-hidden />{r.retriever.full_name}</span>
-              {r.retriever.phone && <a className="telemetry ml-2 text-primary hover:underline" href={telHref(r.retriever.phone)}>{r.retriever.phone}</a>}
+              {r.retriever.phone && <a className="telemetry ml-2 text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg" href={telHref(r.retriever.phone)}>{r.retriever.phone}</a>}
               <span className="block text-caption text-fg-muted tnum">
                 {dist !== null ? t("retrieval.away", { d: fmtDistance(dist, locale) }) : t("rdetail.noRetrieverPos")}
                 {rpAge !== null ? ` · ${t("rdetail.positionAge", { age: fmtAge(rpAge, lang) })}` : ""}

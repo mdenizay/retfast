@@ -400,7 +400,7 @@ function RetrieverDetail({
         <ul className="space-y-1">
           {holding.map((x) => (
             <li key={x.id}>
-              <button type="button" className="text-footnote text-primary hover:underline" onClick={() => onSelectRetrieval(x.id)}>
+              <button type="button" className="text-footnote text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg" onClick={() => onSelectRetrieval(x.id)}>
                 {x.pilot.full_name} · {t(`retrieval.status.${x.status}`)}
               </button>
             </li>

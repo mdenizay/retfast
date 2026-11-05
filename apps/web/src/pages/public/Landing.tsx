@@ -37,7 +37,7 @@ export default function LandingPage() {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-px bg-sunset opacity-40" aria-hidden />
         <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:py-24">
           <div>
-            <p className="text-caption font-medium tracking-[0.12em] text-primary uppercase">{t("landing.eyebrow")}</p>
+            <p className="text-caption font-medium tracking-[0.12em] text-brand uppercase">{t("landing.eyebrow")}</p>
             <h1 className="mt-4 text-[34px] leading-[40px] font-semibold tracking-[-0.025em] text-balance text-fg sm:text-display lg:text-[52px] lg:leading-[56px]">{t("landing.title")}</h1>
             <p className="mt-5 max-w-xl text-callout text-fg-secondary">{t("landing.lead")}</p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -52,7 +52,7 @@ export default function LandingPage() {
               <span className="inline-flex items-center gap-2">
                 <Smartphone className="size-4" aria-hidden />
                 {APP_STORE_URL ? (
-                  <a href={APP_STORE_URL} className="text-primary hover:underline" rel="noopener">{t("landing.appStore")}</a>
+                  <a href={APP_STORE_URL} className="text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg" rel="noopener">{t("landing.appStore")}</a>
                 ) : (
                   <span>{t("landing.iosSoon")}</span>
                 )}
@@ -154,7 +154,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
           <div className="flex items-end justify-between gap-4">
             <h2 className="text-title2 font-semibold tracking-tight">{t("landing.eventsTitle")}</h2>
-            <Link to="/events" className="text-footnote font-medium text-primary hover:underline">{t("common.seeAll")}</Link>
+            <Link to="/events" className="text-footnote font-medium text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("common.seeAll")}</Link>
           </div>
           <div className="mt-6">
             {events.isLoading ? <Loading /> : events.error ? <ErrorState error={events.error} onRetry={() => void events.refetch()} /> :

@@ -140,7 +140,7 @@ export default function HomePage() {
       <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
         <Panel
           title={t("home.myEvents")}
-          actions={<Link to="/app/events" className="text-footnote text-primary hover:underline">{t("common.seeAll")}</Link>}
+          actions={<Link to="/app/events" className="text-footnote text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("common.seeAll")}</Link>}
           bodyClassName="p-0"
         >
           {mine.isLoading ? <Loading className="px-4" /> : mine.error ? <div className="p-4"><ErrorState error={mine.error} /></div> :
@@ -162,7 +162,7 @@ export default function HomePage() {
             )}
         </Panel>
 
-        <Panel title={t("home.myFlights")} actions={<Link to="/app/flights" className="text-footnote text-primary hover:underline">{t("common.seeAll")}</Link>} bodyClassName="p-0">
+        <Panel title={t("home.myFlights")} actions={<Link to="/app/flights" className="text-footnote text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("common.seeAll")}</Link>} bodyClassName="p-0">
           {flights.isLoading ? <Loading className="px-4" /> : flights.error ? <div className="p-4"><ErrorState error={flights.error} /></div> :
             (flights.data?.items.length ?? 0) === 0 ? (
               <p className="flex items-start gap-2 p-4 text-footnote text-fg-secondary">
@@ -214,7 +214,7 @@ function AdminStrip({ stats, loading, error }: { stats?: AdminStats; loading: bo
           </div>
         ))}
       </div>
-      <Link to="/app/admin" className="mt-2 inline-block text-footnote text-primary hover:underline">{t("home.stat.more")}</Link>
+      <Link to="/app/admin" className="mt-2 inline-block text-footnote text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("home.stat.more")}</Link>
     </div>
   );
 }

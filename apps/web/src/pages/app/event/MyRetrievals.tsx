@@ -207,7 +207,7 @@ function ActiveCard({
         {r.pilot.phone ? (
           <Button asChild variant="outline"><a href={telHref(r.pilot.phone)}><Phone /> {t("myret.call")} <span className="telemetry text-footnote">{r.pilot.phone}</span></a></Button>
         ) : <span className="self-center text-caption text-fg-muted">{t("rdetail.phoneHidden")}</span>}
-        <a className="self-center text-footnote text-primary hover:underline" href={`https://www.google.com/maps/dir/?api=1&destination=${pp.lat},${pp.lon}`} target="_blank" rel="noreferrer">{t("myret.directions")}</a>
+        <a className="self-center text-footnote text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg" href={`https://www.google.com/maps/dir/?api=1&destination=${pp.lat},${pp.lon}`} target="_blank" rel="noreferrer">{t("myret.directions")}</a>
         <div className="ml-auto flex gap-2">
           {r.status === "accepted" && (
             <>

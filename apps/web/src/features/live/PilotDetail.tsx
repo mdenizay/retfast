@@ -45,7 +45,7 @@ export function PilotDetail({
           <div className="flex items-center justify-between gap-2">
             <RetrievalStatusBadge status={row.retrieval.status} />
             {onOpenRetrieval && (
-              <button type="button" className="text-footnote font-medium text-primary hover:underline" onClick={() => onOpenRetrieval(row.retrieval!.id)}>
+              <button type="button" className="text-footnote font-medium text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg" onClick={() => onOpenRetrieval(row.retrieval!.id)}>
                 {t("pdetail.openRetrieval")}
               </button>
             )}

@@ -39,7 +39,7 @@ export default function VerifyEmailPage() {
           <ErrorState error={state.error} />
         )}
       </div>
-      <div className="mt-6 text-footnote"><Link to="/app" className="text-primary hover:underline">{t("nav.openApp")}</Link></div>
+      <div className="mt-6 text-footnote"><Link to="/app" className="text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("nav.openApp")}</Link></div>
     </AuthLayout>
   );
 }

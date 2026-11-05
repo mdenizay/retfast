@@ -39,14 +39,14 @@ interface NavItem {
 
 const linkCls = ({ isActive }: { isActive: boolean }) =>
   cn(
-    "flex h-11 items-center gap-3 rounded-sm px-3 text-body transition-colors",
-    isActive ? "bg-accent font-medium text-fg" : "text-fg-secondary hover:bg-accent hover:text-fg",
+    "flex h-9 items-center gap-2.5 rounded-md px-2.5 text-body transition-colors",
+    isActive ? "bg-surface font-medium text-fg shadow-xs ring-1 ring-border dark:bg-muted" : "text-fg-secondary hover:bg-fg/5 hover:text-fg",
   );
 
 function NavSection({ label, Icon, children }: { label: string; Icon?: typeof Home; children: React.ReactNode }) {
   return (
     <>
-      <div className="mt-5 mb-1 flex items-center gap-1.5 px-3 text-caption font-medium tracking-wide text-fg-muted uppercase">
+      <div className="mt-5 mb-1 flex items-center gap-1.5 px-2.5 text-caption font-medium text-fg-muted">
         {Icon && <Icon className="size-3.5" aria-hidden />} {label}
       </div>
       {children}
@@ -124,7 +124,7 @@ function UserFooter() {
   const { user } = useSession();
   const navigate = useNavigate();
   return (
-    <div className="space-y-3 border-t border-border p-3">
+    <div className="m-2 space-y-3 rounded-xl border border-border bg-surface p-3 shadow-xs dark:bg-muted/40">
       <div className="flex items-center gap-2">
         <ThemeToggle />
         <LangToggle />
@@ -166,7 +166,7 @@ function NotificationsMenu() {
         <Button variant="ghost" size="icon-sm" aria-label={unread ? t("notif.labelUnread", { n: unread }) : t("notif.label")} className="relative">
           <Bell />
           {unread > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-on-primary tnum" aria-hidden>
+            <span className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-brand px-1 text-[10px] leading-none font-semibold text-white tnum" aria-hidden>
               {unread > 9 ? "9+" : unread}
             </span>
           )}
@@ -176,7 +176,7 @@ function NotificationsMenu() {
         <DropdownMenuLabel className="flex items-center justify-between">
           {t("notif.title")}
           {unread > 0 && (
-            <button type="button" className="text-caption font-medium text-primary hover:underline" onClick={() => readAll.mutate()}>
+            <button type="button" className="text-caption font-medium text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg" onClick={() => readAll.mutate()}>
               {t("notif.readAll")}
             </button>
           )}
@@ -190,7 +190,7 @@ function NotificationsMenu() {
           items.slice(0, 12).map((n) => (
             <DropdownMenuItem key={n.id} className="flex flex-col items-start gap-0.5 py-2" onSelect={() => !n.read_at && read.mutate(n.id)}>
               <span className={cn("text-footnote", n.read_at ? "text-fg-secondary" : "font-semibold text-fg")}>
-                {!n.read_at && <span className="mr-1.5 inline-block size-1.5 rounded-full bg-primary align-middle" aria-hidden />}
+                {!n.read_at && <span className="mr-1.5 inline-block size-1.5 rounded-full bg-brand align-middle" aria-hidden />}
                 {n.title}
                 {!n.read_at && <span className="sr-only"> ({t("notif.unread")})</span>}
               </span>
@@ -212,17 +212,17 @@ export function AppLayout() {
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-sm focus:bg-surface focus:px-3 focus:py-2">
         {t("a11y.skip")}
       </a>
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-border bg-surface lg:flex">
+      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col bg-background lg:flex">
         <div className="flex h-16 items-center gap-2 px-4">
           <Link to="/app" aria-label="Retfast"><Logo /></Link>
-          <span className="rounded-[6px] border border-border px-1.5 text-caption text-fg-muted">OPS</span>
+          <span className="rounded-md bg-muted px-1.5 py-0.5 text-caption font-medium text-fg-muted">OPS</span>
           <div className="ml-auto"><NotificationsMenu /></div>
         </div>
         <div className="flex-1 overflow-y-auto px-2 py-2"><NavList /></div>
         <UserFooter />
       </aside>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-surface px-3 lg:hidden">
+      <div className="flex min-w-0 flex-1 flex-col lg:my-2 lg:mr-2 lg:rounded-2xl lg:border lg:border-border lg:bg-surface lg:shadow-xs">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-3 backdrop-blur-md lg:hidden">
           <Button variant="ghost" size="icon-sm" aria-label={t("nav.menu")} onClick={() => setMenuOpen(true)}>
             <Menu />
           </Button>

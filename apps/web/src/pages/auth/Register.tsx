@@ -59,11 +59,11 @@ export default function RegisterPage() {
             {busy ? t("common.wait") : t("auth.createAccount")}
           </Button>
           <p className="text-caption text-fg-muted">
-            {t("auth.registerPrivacy")} <Link to="/privacy" className="text-primary hover:underline">{t("nav.privacy")}</Link>
+            {t("auth.registerPrivacy")} <Link to="/privacy" className="text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("nav.privacy")}</Link>
           </p>
         </form>
         <div className="mt-6 text-footnote">
-          {t("auth.haveAccount")} <Link to="/login" className="text-primary hover:underline">{t("auth.login")}</Link>
+          {t("auth.haveAccount")} <Link to="/login" className="text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("auth.login")}</Link>
         </div>
       </AuthLayout>
     </RedirectIfAuthed>

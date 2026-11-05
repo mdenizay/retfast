@@ -58,7 +58,7 @@ export default function ResetPasswordPage() {
           <Button type="submit" size="lg" disabled={busy || pw.length < 10 || pw !== pw2}>{busy ? t("common.wait") : t("auth.setPassword")}</Button>
         </form>
       )}
-      <div className="mt-6 text-footnote"><Link to="/login" className="text-primary hover:underline">{t("auth.backToLogin")}</Link></div>
+      <div className="mt-6 text-footnote"><Link to="/login" className="text-fg underline decoration-fg/25 underline-offset-4 transition-colors hover:decoration-fg">{t("auth.backToLogin")}</Link></div>
     </AuthLayout>
   );
 }

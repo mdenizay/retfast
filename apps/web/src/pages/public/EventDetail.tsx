@@ -51,7 +51,7 @@ export default function PublicEventDetailPage() {
         </div>
       )}
 
-      <div className="mt-10 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+      <div className="mt-10 grid gap-6 lg:grid-cols-[1.6fr_1fr] [&>*]:min-w-0">
         <div className="space-y-6">
           <Participation event={e} />
           {e.description ? (

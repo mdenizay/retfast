@@ -9,7 +9,7 @@ export function PageHeader({ title, subtitle, actions, eyebrow }: { title: React
   return (
     <header className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        {eyebrow && <div className="mb-1 text-caption font-medium tracking-wide text-fg-muted uppercase">{eyebrow}</div>}
+        {eyebrow && <div className="mb-1 text-caption font-semibold tracking-wide text-primary uppercase">{eyebrow}</div>}
         <h1 className="text-title2 font-semibold tracking-tight text-fg">{title}</h1>
         {subtitle && <p className="mt-1 text-body text-fg-secondary">{subtitle}</p>}
       </div>
@@ -20,10 +20,10 @@ export function PageHeader({ title, subtitle, actions, eyebrow }: { title: React
 
 export function Panel({ title, actions, children, className, bodyClassName }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; bodyClassName?: string }) {
   return (
-    <section className={cn("rounded-lg border border-border bg-surface", className)}>
+    <section className={cn("min-w-0 rounded-xl border border-border/70 bg-surface shadow-[0_1px_2px_rgb(28_25_23/0.04),0_8px_24px_-12px_rgb(28_25_23/0.08)]", className)}>
       {(title || actions) && (
-        <div className="flex min-h-12 items-center justify-between gap-3 border-b border-border px-4 py-2">
-          {title && <h2 className="text-footnote font-semibold tracking-wide text-fg-secondary uppercase">{title}</h2>}
+        <div className="flex min-h-12 items-center justify-between gap-3 px-4 pt-3 pb-1">
+          {title && <h2 className="text-headline font-semibold tracking-tight text-fg">{title}</h2>}
           {actions}
         </div>
       )}
@@ -144,9 +144,16 @@ export function KeyValue({ items, className }: { items: [ReactNode, ReactNode][]
 export function Logo({ className }: { className?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-2 font-semibold tracking-tight text-fg", className)}>
-      <svg viewBox="0 0 32 32" className="size-6" aria-hidden>
-        <rect width="32" height="32" rx="8" className="fill-fg" />
-        <path d="M16 6 25 24 16 19.5 7 24Z" className="fill-primary" />
+      <svg viewBox="0 0 32 32" className="size-7" aria-hidden>
+        <defs>
+          <linearGradient id="rf-sunset" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#FB923C" />
+            <stop offset="0.55" stopColor="#F97316" />
+            <stop offset="1" stopColor="#E11D48" />
+          </linearGradient>
+        </defs>
+        <rect width="32" height="32" rx="9" fill="#111111" className="dark:stroke-white/15" strokeWidth="1" />
+        <path fillRule="evenodd" d="M16 5.1 24.7 26.6 16 22 7.3 26.6Zm0 5.5-3.9 9.7 3.9-2.05 3.9 2.05Z" fill="url(#rf-sunset)" />
       </svg>
       <span>Retfast</span>
     </span>

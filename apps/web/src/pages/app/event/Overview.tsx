@@ -19,7 +19,7 @@ export default function EventOverviewPage() {
   const sites = useQuery({ queryKey: ["app", "sites", e.id], queryFn: () => eventsApi.launchSites(e.id) });
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+    <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr] [&>*]:min-w-0">
       <div className="space-y-6">
         <RolePanel />
         {e.description && (

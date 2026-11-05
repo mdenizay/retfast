@@ -4,6 +4,50 @@
 @import "@fontsource/jetbrains-mono/400.css";
 @import "@fontsource/jetbrains-mono/500.css";
 
+/* Web brand palette: aligned with the iOS app (warm stone neutrals, ink dark, sunset orange).
+   Status colours (success/warning/error/live/retrieval) keep the shared Aero tokens. */
+:root, [data-theme="light"] {
+  --rf-background: 250 250 249;
+  --rf-surface: 255 255 255;
+  --rf-surface-elevated: 255 255 255;
+  --rf-border: 231 229 228;
+  --rf-text-primary: 28 25 23;
+  --rf-text-secondary: 87 83 78;
+  --rf-text-muted: 112 106 101;
+  --rf-primary: 194 65 12;
+  --rf-on-primary: 255 255 255;
+  --rf-focus-ring: 234 88 12;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+  --rf-background: 17 17 17;
+  --rf-surface: 28 28 30;
+  --rf-surface-elevated: 38 38 40;
+  --rf-border: 52 52 55;
+  --rf-text-primary: 245 245 244;
+  --rf-text-secondary: 168 162 158;
+  --rf-text-muted: 145 140 135;
+  --rf-primary: 251 146 60;
+  --rf-on-primary: 17 17 17;
+  --rf-focus-ring: 251 146 60;
+  }
+}
+[data-theme="dark"] {
+  --rf-background: 17 17 17;
+  --rf-surface: 28 28 30;
+  --rf-surface-elevated: 38 38 40;
+  --rf-border: 52 52 55;
+  --rf-text-primary: 245 245 244;
+  --rf-text-secondary: 168 162 158;
+  --rf-text-muted: 145 140 135;
+  --rf-primary: 251 146 60;
+  --rf-on-primary: 17 17 17;
+  --rf-focus-ring: 251 146 60;
+}
+:root {
+  --rf-sunset: linear-gradient(135deg, #FB923C 0%, #F97316 55%, #E11D48 100%);
+}
+
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 /* Map Retfast Aero tokens (packages/design-tokens) to Tailwind theme. */
@@ -112,6 +156,13 @@
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums slashed-zero;
   letter-spacing: -0.01em;
+}
+@utility bg-sunset { background-image: var(--rf-sunset); }
+@utility text-sunset {
+  background-image: var(--rf-sunset);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 @utility hairline { border-width: 1px; border-color: var(--color-border); }
 

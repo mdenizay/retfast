@@ -32,11 +32,13 @@ export default function LandingPage() {
   return (
     <div>
       {/* Hero: statement left, the day's flow as a numbered instrument list right. */}
-      <section className="border-b border-border">
+      <section className="relative isolate overflow-hidden border-b border-border">
+        <div className="pointer-events-none absolute -top-40 -left-32 -z-10 size-[36rem] rounded-full bg-[radial-gradient(closest-side,rgb(249_115_22/0.20),rgb(225_29_72/0.06)_65%,transparent)] blur-2xl" aria-hidden />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-px bg-sunset opacity-40" aria-hidden />
         <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:py-24">
           <div>
             <p className="text-caption font-medium tracking-[0.12em] text-primary uppercase">{t("landing.eyebrow")}</p>
-            <h1 className="mt-4 text-[34px] leading-[40px] font-semibold tracking-tight text-fg sm:text-display">{t("landing.title")}</h1>
+            <h1 className="mt-4 text-[34px] leading-[40px] font-semibold tracking-[-0.025em] text-balance text-fg sm:text-display lg:text-[52px] lg:leading-[56px]">{t("landing.title")}</h1>
             <p className="mt-5 max-w-xl text-callout text-fg-secondary">{t("landing.lead")}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg"><Link to="/events">{t("landing.ctaEvents")} <ArrowRight /></Link></Button>

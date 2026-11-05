@@ -235,8 +235,18 @@ public actor TelemetrySyncEngine {
     private func endCompletedFlights() async throws {
         for flight in try store.flightsNeedingServerEnd() {
             guard try store.pendingCount(flightId: flight.id) == 0, let endedAt = flight.endedAt else { continue }
-            _ = try await api.endFlight(id: flight.id.uuidString.lowercased(), endedAt: endedAt)
-            try store.updateFlight(id: flight.id, { $0.serverEnded = true }, now: clock.now())
+            do {
+                _ = try await api.endFlight(id: flight.id.uuidString.lowercased(), endedAt: endedAt)
+                try store.updateFlight(id: flight.id, { $0.serverEnded = true; $0.lastError = nil }, now: clock.now())
+            } catch let error as APIError where error.status == 404 {
+                // The server no longer has this flight (deleted / DB reset): re-create it next pass.
+                try store.updateFlight(id: flight.id, { $0.serverCreated = false }, now: clock.now())
+            } catch let error as APIError where (error.status == 403 && !error.isPasswordChangeRequired) || error.status == 409 || error.status == 422 || error.status == 400 {
+                // Permanent: retrying can never succeed. Stop retrying and surface it.
+                let message = "\(error.code ?? "error")"
+                try store.updateFlight(id: flight.id, { $0.serverEnded = true; $0.lastError = message }, now: clock.now())
+                publish(status: .serverError(message), error: message)
+            }
         }
     }
 

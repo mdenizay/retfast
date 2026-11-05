@@ -119,14 +119,21 @@ struct BottomSheet<Header: View, Content: View>: View {
     @ViewBuilder var header: Header
     @ViewBuilder var content: Content
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @GestureState private var drag: CGFloat = 0
+    /// Live drag offset. Plain @State (not @GestureState) so the release can be
+    /// animated together with the detent change instead of jumping back first.
+    @State private var drag: CGFloat = 0
+    /// Content is scrolled to the top: dragging it down collapses the sheet.
+    @State private var atTop = true
+
+    private var spring: Animation? { reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.86) }
 
     var body: some View {
         GeometryReader { geo in
-            let full = geo.size.height * 0.9
-            let heights: [SheetDetent: CGFloat] = [.peek: min(170, full), .half: geo.size.height * 0.5, .full: full]
+            let full = geo.size.height * 0.92
+            let heights: [SheetDetent: CGFloat] = [.peek: min(180, full), .half: geo.size.height * 0.52, .full: full]
             let base = heights[detent] ?? 300
-            let height = min(full, max(heights[.peek]!, base - drag))
+            let height = min(full + 24, max(heights[.peek]! - 24, base - drag))
+
             VStack(spacing: 0) {
                 VStack(spacing: AeroTokens.Space.s2) {
                     Capsule().fill(AeroTokens.textMuted.opacity(0.6)).frame(width: 44, height: 5).padding(.top, 10)
@@ -135,17 +142,8 @@ struct BottomSheet<Header: View, Content: View>: View {
                 }
                 .frame(maxWidth: .infinity)
                 .contentShape(Rectangle())
-                .gesture(
-                    DragGesture()
-                        .updating($drag) { v, s, _ in s = v.translation.height }
-                        .onEnded { v in
-                            let target = base - v.translation.height
-                            let next = SheetDetent.allCases.min { abs((heights[$0] ?? 0) - target) < abs((heights[$1] ?? 0) - target) } ?? detent
-                            withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.9)) { detent = next }
-                        }
-                )
                 .onTapGesture {
-                    withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) { detent = detent == .peek ? .half : (detent == .half ? .full : .half) }
+                    withAnimation(spring) { detent = detent == .peek ? .half : (detent == .half ? .full : .half) }
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(.isButton)
@@ -158,17 +156,48 @@ struct BottomSheet<Header: View, Content: View>: View {
                     content
                         .padding(.horizontal, AeroTokens.Space.s4)
                         .padding(.bottom, AeroTokens.Space.s6)
+                        .onGeometryChange(for: Bool.self) { $0.frame(in: .named("sheetScroll")).minY >= -1 } action: { atTop = $0 }
                 }
-                .scrollDisabled(detent == .peek)
+                .coordinateSpace(name: "sheetScroll")
+                // Below full height the whole sheet is a drag surface (like Maps):
+                // swiping the content moves the sheet instead of scrolling it.
+                .scrollDisabled(detent != .full)
             }
-            .frame(height: height)
+            .frame(height: height, alignment: .top)
             .frame(maxWidth: .infinity)
             .background(AeroTokens.background, in: UnevenRoundedRectangle(topLeadingRadius: AeroTokens.Radius.xl, topTrailingRadius: AeroTokens.Radius.xl, style: .continuous))
+            .clipShape(UnevenRoundedRectangle(topLeadingRadius: AeroTokens.Radius.xl, topTrailingRadius: AeroTokens.Radius.xl, style: .continuous))
             .shadow(color: .black.opacity(0.25), radius: 16, y: -2)
+            .simultaneousGesture(dragGesture(heights: heights, base: base), including: detent == .full && !atTop ? .subviews : .all)
             // Ink panel under a light map, like the reference designs.
             .environment(\.colorScheme, .dark)
             .frame(maxHeight: .infinity, alignment: .bottom)
+            .ignoresSafeArea(edges: .bottom)
         }
+    }
+
+    private func dragGesture(heights: [SheetDetent: CGFloat], base: CGFloat) -> some Gesture {
+        DragGesture(minimumDistance: 8)
+            .onChanged { v in
+                // At full height only a downward pull from the top collapses; upward is scrolling.
+                if detent == .full && v.translation.height < 0 { drag = 0; return }
+                drag = v.translation.height
+            }
+            .onEnded { v in
+                let predicted = base - v.predictedEndTranslation.height
+                let order: [SheetDetent] = [.peek, .half, .full]
+                var next = order.min { abs((heights[$0] ?? 0) - predicted) < abs((heights[$1] ?? 0) - predicted) } ?? detent
+                // A clear flick always moves at least one step in its direction.
+                let i = order.firstIndex(of: detent) ?? 1
+                if next == detent, abs(v.predictedEndTranslation.height) > 120 {
+                    next = order[min(order.count - 1, max(0, i + (v.predictedEndTranslation.height < 0 ? 1 : -1)))]
+                }
+                if detent == .full && !atTop && next != .full { next = .full }
+                withAnimation(spring) {
+                    detent = next
+                    drag = 0
+                }
+            }
     }
 }
 

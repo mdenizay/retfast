@@ -21,14 +21,13 @@ final class RetrieveFlowUITests: XCTestCase {
         XCTAssertTrue(row.waitForExistence(timeout: 15), "event list not shown")
         row.tap()
 
-        // Pilot sheet: acknowledge sharing, then start.
-        let ack = app.switches["pilot.shareAck"]
-        app.reveal(ack)
-        let inner = ack.switches.firstMatch
-        (inner.exists ? inner : ack).tap()
+        // Full-screen pre-flight checklist first, then the pilot sheet.
+        let next = app.buttons["preflight.next"]
+        XCTAssertTrue(next.waitForExistence(timeout: 10), "pre-flight screen not shown")
+        next.tap()
         let start = app.buttons["pilot.start"]
         app.reveal(start)
-        XCTAssertTrue(start.isEnabled, "start must be enabled after acknowledging sharing")
+        XCTAssertTrue(start.isEnabled, "start must be enabled")
         start.tap()
 
         // Flight computer: recording with simulated fixes.

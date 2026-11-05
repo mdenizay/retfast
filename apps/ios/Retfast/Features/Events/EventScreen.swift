@@ -14,6 +14,7 @@ struct EventScreen: View {
     @State private var loadError: String?
     @State private var camera: MapCameraPosition = .automatic
     @State private var cameraSet = false
+    @State private var preflightDone = false
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -35,6 +36,12 @@ struct EventScreen: View {
             } else {
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+            if let event, showsPreflight(event) {
+                PreFlightView(event: event, onBack: { dismiss() }) {
+                    withAnimation(.snappy) { preflightDone = true }
+                }
+                .transition(.move(edge: .leading))
+            }
             if event == nil {
                 MapCircleButton(systemImage: "arrow.left", label: "Geri") { dismiss() }
                     .padding(.horizontal, AeroTokens.Space.s4).padding(.top, AeroTokens.Space.s2)
@@ -46,6 +53,12 @@ struct EventScreen: View {
         .task { await load() }
         .onDisappear { live?.stop() }
         .aeroBackground()
+    }
+
+    /// Pilots get the pre-flight checklist first, unless a flight or retrieve is already under way.
+    private func showsPreflight(_ event: Event) -> Bool {
+        guard !preflightDone, case .pilot = EventSheetMode.mode(for: event) else { return false }
+        return !model.session.isActive && model.activeRetrieval(eventId: event.id) == nil
     }
 
     @ViewBuilder private func mapOverlay(_ event: Event) -> some View {

@@ -3,20 +3,18 @@ import SwiftUI
 import UIKit
 import UserNotifications
 
-/// Pilot bottom sheet: readiness → sharing notice → "Uçuşa başla"; during a
+/// Pilot bottom sheet: "Uçuşa başla" (readiness is shown full screen first); during a
 /// flight the live summary; after landing the retrieve status.
 struct PilotSheet: View {
     @Environment(AppModel.self) private var model
     let event: Event
     let live: EventLiveModel?
-    @AppStorage private var sharingAcknowledged: Bool
     @State private var startError: String?
     @State private var confirmEnd = false
 
     init(event: Event, live: EventLiveModel?) {
         self.event = event
         self.live = live
-        _sharingAcknowledged = AppStorage(wrappedValue: false, "sharingAck.\(event.id.lowercased())")
     }
 
     private var flightHere: Bool {
@@ -56,7 +54,6 @@ struct PilotSheet: View {
         if event.settings?.liveTracking == false {
             WarningRow(text: String(localized: "Bu etkinlikte canlı takip kapalı. Kayıt telefonda kalır."))
         }
-        SharingNoticeCard(acknowledged: $sharingAcknowledged, seesEachOther: event.settings?.pilotsSeeEachOther ?? false)
         if let startError { WarningRow(text: startError, tone: .error) }
         Button {
             start()
@@ -66,11 +63,6 @@ struct PilotSheet: View {
         .buttonStyle(.aeroPrimaryLarge)
         .disabled(!canStart)
         .accessibilityIdentifier("pilot.start")
-        if !sharingAcknowledged {
-            Text("Başlamak için paylaşımı onayla.").font(.caption).foregroundStyle(AeroTokens.textSecondary)
-                .frame(maxWidth: .infinity)
-        }
-        ReadinessList(compact: true)
         Button {
             model.retrieveRequest = RetrieveContext(eventId: event.id.lowercased(), eventName: event.name, flightId: nil)
         } label: {
@@ -82,7 +74,7 @@ struct PilotSheet: View {
 
     private var canStart: Bool {
         let auth = model.session.authorization
-        return sharingAcknowledged && auth.servicesEnabled && auth.status != .denied && auth.status != .restricted && !model.session.isActive
+        return auth.servicesEnabled && auth.status != .denied && auth.status != .restricted && !model.session.isActive
     }
 
     private func start() {
@@ -97,26 +89,44 @@ struct PilotSheet: View {
     }
 }
 
-/// Shown before the first flight of an event (ADR-012): taking part shares flights.
-struct SharingNoticeCard: View {
-    @Binding var acknowledged: Bool
-    let seesEachOther: Bool
+/// Full-screen pre-flight checklist shown when a pilot opens an event.
+/// "Devam" goes on to the map with the "Uçuşa başla" button.
+struct PreFlightView: View {
+    let event: Event
+    let onBack: () -> Void
+    let onContinue: () -> Void
 
     var body: some View {
-        Toggle(isOn: $acknowledged) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Uçuşum organizatör ve gözlemcilerle paylaşılır")
-                    .font(.subheadline.weight(.semibold))
-                Text(seesEachOther
-                     ? String(localized: "Diğer pilotlar da seni görür. Retrieve istersen kabul eden retriever konumunu ve telefonunu görür.")
-                     : String(localized: "Retrieve istersen kabul eden retriever konumunu ve telefonunu görür."))
-                    .font(.caption).foregroundStyle(AeroTokens.textSecondary)
+        VStack(spacing: 0) {
+            HStack {
+                MapCircleButton(systemImage: "arrow.left", label: "Geri", action: onBack)
+                    .accessibilityIdentifier("preflight.back")
+                Spacer()
             }
+            .padding(.horizontal, AeroTokens.Space.s4)
+            .padding(.top, AeroTokens.Space.s2)
+            ScrollView {
+                VStack(alignment: .leading, spacing: AeroTokens.Space.s4) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(event.name.uppercased(with: Locale(identifier: "tr_TR")))
+                            .font(.caption.weight(.semibold)).foregroundStyle(AeroTokens.textSecondary)
+                        Text("Uçuş öncesi").font(.system(size: 34, weight: .bold))
+                        Text("Kalkıştan önce telefonun hazır mı kontrol et.")
+                            .font(.title3).foregroundStyle(AeroTokens.textSecondary)
+                    }
+                    ReadinessList()
+                }
+                .padding(AeroTokens.Space.s4)
+            }
+            Button(action: onContinue) {
+                Label("Devam", systemImage: "arrow.right")
+            }
+            .buttonStyle(.aeroPrimaryLarge)
+            .accessibilityIdentifier("preflight.next")
+            .padding(.horizontal, AeroTokens.Space.s4)
+            .padding(.bottom, AeroTokens.Space.s2)
         }
-        .tint(AeroTokens.primary)
-        .padding(AeroTokens.Space.s4)
-        .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
-        .accessibilityIdentifier("pilot.shareAck")
+        .aeroBackground()
     }
 }
 

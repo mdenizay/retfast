@@ -59,10 +59,10 @@ final class EndToEndTests: XCTestCase {
         signIn(app, email: email, password: password, newPassword: env["RETFAST_E2E_NEW_PASSWORD"] ?? "Yamac-Ucus-2026-e2e")
         openDemoEvent(app)
 
-        let ack = app.switches["pilot.shareAck"]
-        app.reveal(ack)
-        let inner = ack.switches.firstMatch
-        (inner.exists ? inner : ack).tap()
+        // Full-screen pre-flight checklist first, then the pilot sheet.
+        let next = app.buttons["preflight.next"]
+        XCTAssertTrue(next.waitForExistence(timeout: 10), "pre-flight screen not shown")
+        next.tap()
         let start = app.buttons["pilot.start"]
         app.reveal(start)
         start.tap()

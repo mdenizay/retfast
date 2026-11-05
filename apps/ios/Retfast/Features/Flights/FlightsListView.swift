@@ -12,12 +12,14 @@ struct FlightSyncPill: View {
         Group {
             if flight.state.isActive {
                 StatusPill(String(localized: "Kayıt sürüyor"), systemImage: "record.circle", tone: .active)
-            } else if let error = flight.lastError, !flight.serverCreated {
+            } else if let error = flight.lastError, !flight.serverCreated || flight.serverEnded {
                 StatusPill(String(localized: "Sunucu kabul etmedi (\(error))"), systemImage: "exclamationmark.icloud", tone: .error)
             } else if counts.pending > 0 {
-                StatusPill(String(localized: "Bekleyen \(counts.pending)"), systemImage: "icloud.and.arrow.up", tone: .warning)
+                StatusPill(String(localized: "Gönderilecek \(counts.pending) nokta"), systemImage: "icloud.and.arrow.up", tone: .warning)
+            } else if !flight.serverCreated {
+                StatusPill(String(localized: "Sunucuya gönderilecek"), systemImage: "icloud.and.arrow.up", tone: .warning)
             } else if !flight.serverEnded && flight.state == .completed {
-                StatusPill(String(localized: "Bitiş bekleniyor"), systemImage: "icloud.and.arrow.up", tone: .warning)
+                StatusPill(String(localized: "Sunucuda kapatılıyor"), systemImage: "icloud.and.arrow.up", tone: .warning)
             } else {
                 StatusPill(String(localized: "Senkronize") + (counts.rejected > 0 ? String(localized: " · \(counts.rejected) reddedildi") : ""),
                            systemImage: "checkmark.icloud", tone: .success)

@@ -41,7 +41,7 @@ Workflow:
 
 | Method | Path | Body | Response |
 |---|---|---|---|
-| POST | `/auth/register` | `{email, password, full_name}` | `201 AuthResponse` (roles `[pilot]`) |
+| POST | `/auth/register` | `{email, password, full_name}` | `201 AuthResponse` (no roles — `roles: []`) |
 | POST | `/auth/login` | `{email, password, client: "web"\|"ios", device_name?}` | `200 AuthResponse` |
 | POST | `/auth/refresh` | `{refresh_token?}` (iOS sends it; web uses the cookie) | `200 AuthResponse` (rotated) |
 | POST | `/auth/logout` | `{refresh_token?}` | `204` (revokes the session) |

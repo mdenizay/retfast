@@ -22,7 +22,7 @@ CREATE INDEX users_created_at_idx ON users (created_at);
 
 CREATE TABLE user_roles (
     user_id    uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    role       text NOT NULL CHECK (role IN ('pilot', 'observer', 'event_organizer', 'rescue_operator', 'platform_admin')),
+    role       text NOT NULL CHECK (role IN ('platform_admin')), -- the only global role (ADR-012)
     granted_at timestamptz NOT NULL DEFAULT now(),
     granted_by uuid REFERENCES users (id) ON DELETE SET NULL,
     PRIMARY KEY (user_id, role)
@@ -81,9 +81,9 @@ CREATE TABLE pilot_profiles (
     wing                    text NOT NULL DEFAULT '' CHECK (length(wing) <= 200),
     license_no              text NOT NULL DEFAULT '' CHECK (length(license_no) <= 100),
     nationality             text NOT NULL DEFAULT '' CHECK (nationality = '' OR nationality ~ '^[A-Z]{2}$'),
+    phone                   text NOT NULL DEFAULT '' CHECK (length(phone) <= 50),
     emergency_contact_name  text NOT NULL DEFAULT '' CHECK (length(emergency_contact_name) <= 200),
     emergency_contact_phone text NOT NULL DEFAULT '' CHECK (length(emergency_contact_phone) <= 50),
-    blood_type              text NOT NULL DEFAULT '' CHECK (length(blood_type) <= 10),
     created_at              timestamptz NOT NULL DEFAULT now(),
     updated_at              timestamptz NOT NULL DEFAULT now()
 );
@@ -91,7 +91,6 @@ CREATE TABLE pilot_profiles (
 CREATE TABLE user_preferences (
     user_id                   uuid PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE,
     units                     text NOT NULL DEFAULT 'metric' CHECK (units IN ('metric', 'imperial')),
-    default_flight_visibility text NOT NULL DEFAULT 'event' CHECK (default_flight_visibility IN ('private', 'event', 'public')),
     public_profile            boolean NOT NULL DEFAULT false,
     updated_at                timestamptz NOT NULL DEFAULT now()
 );
@@ -129,13 +128,13 @@ CREATE TABLE events (
     starts_at             timestamptz NOT NULL,
     ends_at               timestamptz NOT NULL,
     cover_image_url       text,
-    registration_open     boolean NOT NULL DEFAULT true,
+    -- settings
+    applications_open     boolean NOT NULL DEFAULT true,
     live_tracking         boolean NOT NULL DEFAULT true,
-    flight_recording      boolean NOT NULL DEFAULT true,
-    observers_allowed     boolean NOT NULL DEFAULT true,
-    emergency_testing     boolean NOT NULL DEFAULT false,
     public_live_map       boolean NOT NULL DEFAULT false,
-    organizer_id          uuid REFERENCES users (id) ON DELETE SET NULL,
+    pilots_see_each_other boolean NOT NULL DEFAULT true,
+    landing_prompt        boolean NOT NULL DEFAULT true,
+    created_by            uuid REFERENCES users (id) ON DELETE SET NULL,
     created_at            timestamptz NOT NULL DEFAULT now(),
     updated_at            timestamptz NOT NULL DEFAULT now(),
     CHECK (ends_at >= starts_at),
@@ -145,18 +144,49 @@ CREATE INDEX events_starts_at_idx ON events (starts_at);
 CREATE INDEX events_status_idx ON events (status);
 CREATE INDEX events_center_gix ON events USING gist (center);
 
--- Single membership table; role distinguishes organizers, participants and observers.
-CREATE TABLE event_participants (
+-- Organizers are assigned by platform admins; an organizer may also hold a member role.
+CREATE TABLE event_organizers (
+    event_id    uuid NOT NULL REFERENCES events (id) ON DELETE CASCADE,
+    user_id     uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    assigned_by uuid REFERENCES users (id) ON DELETE SET NULL,
+    assigned_at timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (event_id, user_id)
+);
+CREATE INDEX event_organizers_user_idx ON event_organizers (user_id);
+
+-- Exactly one member role per user per event.
+CREATE TABLE event_members (
     event_id   uuid NOT NULL REFERENCES events (id) ON DELETE CASCADE,
     user_id    uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    role       text NOT NULL CHECK (role IN ('organizer', 'participant', 'observer')),
+    role       text NOT NULL CHECK (role IN ('pilot', 'observer', 'retriever')),
     status     text NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'removed')),
     joined_at  timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now(),
     added_by   uuid REFERENCES users (id) ON DELETE SET NULL,
     PRIMARY KEY (event_id, user_id)
 );
-CREATE INDEX event_participants_user_idx ON event_participants (user_id, status);
+CREATE INDEX event_members_user_idx ON event_members (user_id, status);
+CREATE INDEX event_members_role_idx ON event_members (event_id, role, status);
+
+-- Applications carry no role: the organizer chooses it when approving.
+CREATE TABLE event_applications (
+    id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id       uuid NOT NULL REFERENCES events (id) ON DELETE CASCADE,
+    user_id        uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    message        text NOT NULL DEFAULT '' CHECK (length(message) <= 2000),
+    status         text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'withdrawn')),
+    granted_role   text CHECK (granted_role IN ('pilot', 'observer', 'retriever')),
+    decided_by     uuid REFERENCES users (id) ON DELETE SET NULL,
+    decision_note  text NOT NULL DEFAULT '' CHECK (length(decision_note) <= 2000),
+    created_at     timestamptz NOT NULL DEFAULT now(),
+    decided_at     timestamptz,
+    updated_at     timestamptz NOT NULL DEFAULT now(),
+    CHECK ((status = 'approved') = (granted_role IS NOT NULL))
+);
+-- one pending application per user per event
+CREATE UNIQUE INDEX event_applications_pending_uq ON event_applications (event_id, user_id) WHERE status = 'pending';
+CREATE INDEX event_applications_event_idx ON event_applications (event_id, status, created_at);
+CREATE INDEX event_applications_user_idx ON event_applications (user_id, created_at DESC);
 
 CREATE TABLE launch_sites (
     id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -185,7 +215,6 @@ CREATE TABLE flight_sessions (
     pilot_id              uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     event_id              uuid REFERENCES events (id) ON DELETE SET NULL,
     status                text NOT NULL DEFAULT 'recording' CHECK (status IN ('recording', 'ended', 'abandoned')),
-    visibility            text NOT NULL CHECK (visibility IN ('private', 'event', 'public')),
     is_simulated          boolean NOT NULL DEFAULT false,
     started_at            timestamptz NOT NULL,
     ended_at              timestamptz,
@@ -272,7 +301,8 @@ CREATE INDEX telemetry_batches_created_idx ON telemetry_batches (created_at);
 -- ---------------------------------------------------------------- realtime outbox
 CREATE TABLE realtime_outbox (
     id         bigserial PRIMARY KEY,
-    kind       text NOT NULL CHECK (kind IN ('position', 'flight', 'incident')),
+    kind       text NOT NULL CHECK (kind IN ('position', 'flight', 'retrieval', 'retriever_position', 'pilot_position',
+                                       'member_changed', 'event_changed')),
     event_id   uuid,
     flight_id  uuid,
     payload    jsonb NOT NULL,
@@ -280,74 +310,117 @@ CREATE TABLE realtime_outbox (
 );
 CREATE INDEX realtime_outbox_created_idx ON realtime_outbox (created_at);
 
--- ---------------------------------------------------------------- emergencies
-CREATE TABLE emergency_incidents (
-    id                uuid PRIMARY KEY,
-    kind              text NOT NULL DEFAULT 'sos' CHECK (kind IN ('sos')),
-    is_test           boolean NOT NULL DEFAULT false,
-    status            text NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'acknowledged', 'responding', 'resolved', 'cancelled')),
-    pilot_id          uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    flight_id         uuid REFERENCES flight_sessions (id) ON DELETE SET NULL,
-    event_id          uuid REFERENCES events (id) ON DELETE SET NULL,
-    lat               double precision CHECK (lat BETWEEN -90 AND 90),
-    lon               double precision CHECK (lon BETWEEN -180 AND 180),
-    gps_alt_m         double precision,
-    h_acc_m           double precision,
-    position_t        timestamptz,
-    message           text NOT NULL DEFAULT '' CHECK (length(message) <= 2000),
-    created_at_device timestamptz NOT NULL,
-    received_at       timestamptz NOT NULL DEFAULT now(),
-    acknowledged_at   timestamptz,
-    acknowledged_by   uuid REFERENCES users (id) ON DELETE SET NULL,
-    resolved_at       timestamptz,
-    cancelled_at      timestamptz,
-    cancel_reason     text NOT NULL DEFAULT '',
-    updated_at        timestamptz NOT NULL DEFAULT now(),
+-- ---------------------------------------------------------------- retrievals
+-- A pilot's request to be picked up after landing. The id is client-generated
+-- (idempotent creation). State machine: requested -> accepted -> picked_up ->
+-- delivered; cancelled from requested/accepted/picked_up; accepted -> requested
+-- on release. First accept wins via a conditional UPDATE ... WHERE status = 'requested'.
+CREATE TABLE retrievals (
+    id               uuid PRIMARY KEY,
+    event_id         uuid NOT NULL REFERENCES events (id) ON DELETE CASCADE,
+    pilot_id         uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    flight_id        uuid REFERENCES flight_sessions (id) ON DELETE SET NULL,
+    status           text NOT NULL DEFAULT 'requested' CHECK (status IN ('requested', 'accepted', 'picked_up', 'delivered', 'cancelled')),
+    pickup_lat       double precision NOT NULL CHECK (pickup_lat BETWEEN -90 AND 90),
+    pickup_lon       double precision NOT NULL CHECK (pickup_lon BETWEEN -180 AND 180),
+    pickup_gps_alt_m double precision,
+    pickup_h_acc_m   double precision,
+    pickup_t         timestamptz NOT NULL,
+    note             text NOT NULL DEFAULT '' CHECK (length(note) <= 1000),
+    retriever_id     uuid REFERENCES users (id) ON DELETE SET NULL,
+    requested_at     timestamptz NOT NULL DEFAULT now(),
+    accepted_at      timestamptz,
+    picked_up_at     timestamptz,
+    delivered_at     timestamptz,
+    cancelled_at     timestamptz,
+    cancelled_by     uuid REFERENCES users (id) ON DELETE SET NULL,
+    cancel_reason    text NOT NULL DEFAULT '' CHECK (length(cancel_reason) <= 1000),
+    delivery_note    text NOT NULL DEFAULT '' CHECK (length(delivery_note) <= 1000),
+    is_simulated     boolean NOT NULL DEFAULT false,
+    -- latest pilot position shared while the retrieval is open
+    pp_seq           integer NOT NULL DEFAULT 0,
+    pp_sample_id     uuid,
+    pp_t             timestamptz,
+    pp_lat           double precision CHECK (pp_lat BETWEEN -90 AND 90),
+    pp_lon           double precision CHECK (pp_lon BETWEEN -180 AND 180),
+    pp_gps_alt_m     double precision,
+    pp_h_acc_m       double precision,
+    pp_received_at   timestamptz,
+    created_at       timestamptz NOT NULL DEFAULT now(),
+    updated_at       timestamptz NOT NULL DEFAULT now(),
+    CHECK (status <> 'requested' OR retriever_id IS NULL),
+    CHECK (status NOT IN ('accepted', 'picked_up') OR retriever_id IS NOT NULL)
+);
+-- one open retrieval per pilot per event
+CREATE UNIQUE INDEX retrievals_open_pilot_uq ON retrievals (event_id, pilot_id) WHERE status IN ('requested', 'accepted', 'picked_up');
+CREATE INDEX retrievals_event_idx ON retrievals (event_id, status, requested_at DESC);
+CREATE INDEX retrievals_retriever_idx ON retrievals (retriever_id, status) WHERE retriever_id IS NOT NULL;
+CREATE INDEX retrievals_pilot_idx ON retrievals (pilot_id, requested_at DESC);
+
+CREATE TABLE retrieval_updates (
+    id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    retrieval_id uuid NOT NULL REFERENCES retrievals (id) ON DELETE CASCADE,
+    kind         text NOT NULL CHECK (kind IN ('requested', 'accepted', 'released', 'assigned', 'picked_up', 'delivered', 'cancelled', 'note')),
+    actor_id     uuid REFERENCES users (id) ON DELETE SET NULL,
+    body         text NOT NULL DEFAULT '' CHECK (length(body) <= 2000),
+    created_at   timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX retrieval_updates_retrieval_idx ON retrieval_updates (retrieval_id, created_at);
+
+-- Pilot position history while a retrieval is open (pruned after 30 days).
+CREATE TABLE retrieval_positions (
+    id           bigserial PRIMARY KEY,
+    retrieval_id uuid NOT NULL REFERENCES retrievals (id) ON DELETE CASCADE,
+    seq          integer NOT NULL,
+    t            timestamptz NOT NULL,
+    lat          double precision NOT NULL CHECK (lat BETWEEN -90 AND 90),
+    lon          double precision NOT NULL CHECK (lon BETWEEN -180 AND 180),
+    gps_alt_m    double precision,
+    h_acc_m      double precision NOT NULL,
+    received_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX retrieval_positions_retrieval_idx ON retrieval_positions (retrieval_id, seq);
+CREATE INDEX retrieval_positions_received_idx ON retrieval_positions (received_at);
+
+-- Latest state per retriever per event: duty flag and last position.
+CREATE TABLE retriever_states (
+    event_id             uuid NOT NULL REFERENCES events (id) ON DELETE CASCADE,
+    user_id              uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    on_duty              boolean NOT NULL DEFAULT false,
+    lat                  double precision CHECK (lat BETWEEN -90 AND 90),
+    lon                  double precision CHECK (lon BETWEEN -180 AND 180),
+    h_acc_m              double precision,
+    t                    timestamptz,
+    course_deg           double precision,
+    speed_ms             double precision,
+    position_received_at timestamptz,
+    duty_changed_at      timestamptz,
+    updated_at           timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (event_id, user_id),
     CHECK ((lat IS NULL) = (lon IS NULL))
 );
-CREATE INDEX emergency_incidents_status_idx ON emergency_incidents (status, received_at DESC);
-CREATE INDEX emergency_incidents_event_idx ON emergency_incidents (event_id, status);
-CREATE INDEX emergency_incidents_pilot_idx ON emergency_incidents (pilot_id, received_at DESC);
-CREATE INDEX emergency_incidents_flight_open_idx ON emergency_incidents (flight_id) WHERE status IN ('open', 'acknowledged', 'responding');
 
-CREATE TABLE emergency_updates (
-    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    incident_id uuid NOT NULL REFERENCES emergency_incidents (id) ON DELETE CASCADE,
-    kind        text NOT NULL CHECK (kind IN ('created', 'acknowledged', 'status_changed', 'note', 'assigned', 'assignment_status', 'position')),
-    actor_id    uuid REFERENCES users (id) ON DELETE SET NULL,
-    body        text NOT NULL DEFAULT '' CHECK (length(body) <= 4000),
-    status      text NOT NULL DEFAULT '',
-    created_at  timestamptz NOT NULL DEFAULT now()
+-- Retriever position history (pruned after 30 days).
+CREATE TABLE retriever_positions (
+    id          bigserial PRIMARY KEY,
+    event_id    uuid NOT NULL REFERENCES events (id) ON DELETE CASCADE,
+    user_id     uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    t           timestamptz NOT NULL,
+    lat         double precision NOT NULL CHECK (lat BETWEEN -90 AND 90),
+    lon         double precision NOT NULL CHECK (lon BETWEEN -180 AND 180),
+    h_acc_m     double precision NOT NULL,
+    course_deg  double precision,
+    speed_ms    double precision,
+    received_at timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX emergency_updates_incident_idx ON emergency_updates (incident_id, created_at);
-
-CREATE TABLE rescue_responders (
-    user_id      uuid PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE,
-    availability text NOT NULL DEFAULT 'unavailable' CHECK (availability IN ('available', 'unavailable')),
-    last_lat     double precision CHECK (last_lat BETWEEN -90 AND 90),
-    last_lon     double precision CHECK (last_lon BETWEEN -180 AND 180),
-    last_h_acc_m double precision,
-    last_t       timestamptz,
-    updated_at   timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE TABLE rescue_assignments (
-    id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    incident_id  uuid NOT NULL REFERENCES emergency_incidents (id) ON DELETE CASCADE,
-    responder_id uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    status       text NOT NULL DEFAULT 'assigned' CHECK (status IN ('assigned', 'en_route', 'on_scene', 'completed', 'withdrawn')),
-    assigned_by  uuid REFERENCES users (id) ON DELETE SET NULL,
-    assigned_at  timestamptz NOT NULL DEFAULT now(),
-    updated_at   timestamptz NOT NULL DEFAULT now(),
-    UNIQUE (incident_id, responder_id)
-);
-CREATE INDEX rescue_assignments_responder_idx ON rescue_assignments (responder_id, status);
+CREATE INDEX retriever_positions_user_idx ON retriever_positions (event_id, user_id, received_at DESC);
+CREATE INDEX retriever_positions_received_idx ON retriever_positions (received_at);
 
 -- ---------------------------------------------------------------- notifications and email
 CREATE TABLE notification_records (
     id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id           uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    kind              text NOT NULL CHECK (kind IN ('event_update', 'flight', 'emergency_alert', 'rescue_ack', 'system')),
+    kind              text NOT NULL CHECK (kind IN ('event_update', 'application', 'retrieval', 'flight', 'system')),
     title             text NOT NULL,
     body              text NOT NULL DEFAULT '',
     data              jsonb NOT NULL DEFAULT '{}'::jsonb,

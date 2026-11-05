@@ -23,11 +23,11 @@ func TestMeDevicesExportDeletion(t *testing.T) {
 	if me["full_name"] != "Privacy Pilot 2" || me["preferences"].(map[string]any)["units"] != "imperial" {
 		t.Fatalf("patch me: %v", me)
 	}
-	if r := e.Do("PATCH", "/me", map[string]any{"preferences": map[string]any{"default_flight_visibility": "world"}}, Req{Token: u.Token}); r.Status != 422 {
-		t.Fatalf("bad visibility: %d", r.Status)
+	if r := e.Do("PATCH", "/me", map[string]any{"preferences": map[string]any{"units": "furlongs"}}, Req{Token: u.Token}); r.Status != 422 {
+		t.Fatalf("bad units: %d", r.Status)
 	}
-	pilot := e.Must(e.Do("PATCH", "/me/pilot", map[string]any{"wing": "Ozone Rush 6", "license_no": "TR-123", "emergency_contact_phone": "+90 555", "nationality": "tr"}, Req{Token: u.Token}), 200).JSON()["pilot"].(map[string]any)
-	if pilot["wing"] != "Ozone Rush 6" || pilot["nationality"] != "TR" {
+	pilot := e.Must(e.Do("PATCH", "/me/pilot", map[string]any{"wing": "Ozone Rush 6", "license_no": "TR-123", "emergency_contact_phone": "+90 555", "phone": "+90 532 000 0000", "nationality": "tr"}, Req{Token: u.Token}), 200).JSON()["pilot"].(map[string]any)
+	if pilot["wing"] != "Ozone Rush 6" || pilot["nationality"] != "TR" || pilot["phone"] != "+90 532 000 0000" {
 		t.Fatalf("pilot: %v", pilot)
 	}
 	if r := e.Do("PATCH", "/me/pilot", map[string]any{"public_id": "hacker"}, Req{Token: u.Token}); r.Status != 422 {
@@ -52,7 +52,7 @@ func TestMeDevicesExportDeletion(t *testing.T) {
 		t.Fatalf("devices = %d", n)
 	}
 	// export includes flights and positions, never the push token
-	fid := e.CreateFlight(u, nil, "private")
+	fid := e.CreateFlight(u, nil)
 	e.MustBatch(u, fid, uuid.New(), seqs(0, 2, time.Now().Add(-time.Minute)))
 	ex := e.Must(e.Do("GET", "/me/export", nil, Req{Token: u.Token}), 200)
 	var doc struct {
@@ -103,13 +103,12 @@ func TestNotificationsAndAdmin(t *testing.T) {
 	t.Parallel()
 	e := newEnv(t)
 	ctx := context.Background()
-	adm := e.Register("Admin")
-	e.Grant(adm, "platform_admin")
+	adm := e.Admin("Admin")
 	u := e.Register("Plain")
 	org := e.Register("Org")
-	e.Grant(org, "event_organizer")
-	ev := e.CreateEvent(org, nil)
-	e.Must(e.Do("POST", "/events/"+ev["id"].(string)+"/participants", map[string]any{"user_id": u.ID, "role": "participant"}, Req{Token: org.Token}), 201)
+	ev := e.CreateEvent(adm, nil)
+	e.AssignOrganizer(adm, ev["id"], org)
+	e.AddMember(org, ev["id"], u, "pilot")
 	// notification produced by being added
 	ns := e.Must(e.Do("GET", "/notifications", nil, Req{Token: u.Token}), 200).JSON()["items"].([]any)
 	if len(ns) != 1 || ns[0].(map[string]any)["kind"] != "event_update" {
@@ -136,18 +135,19 @@ func TestNotificationsAndAdmin(t *testing.T) {
 	if len(list) != 1 {
 		t.Fatalf("admin users: %v", list)
 	}
-	up := e.Must(e.Do("PATCH", "/admin/users/"+u.ID.String(), map[string]any{"roles": []string{"pilot", "rescue_operator"}}, Req{Token: adm.Token}), 200).JSON()
-	if len(up["roles"].([]any)) != 2 {
+	up := e.Must(e.Do("PATCH", "/admin/users/"+u.ID.String(), map[string]any{"is_platform_admin": true}, Req{Token: adm.Token}), 200).JSON()
+	if up["is_platform_admin"] != true || len(up["roles"].([]any)) != 1 {
 		t.Fatalf("roles: %v", up)
 	}
-	if r := e.Do("PATCH", "/admin/users/"+u.ID.String(), map[string]any{"roles": []string{"god"}}, Req{Token: adm.Token}); r.Status != 422 {
-		t.Fatalf("bad role: %d", r.Status)
-	}
-	if r := e.Do("PATCH", "/admin/users/"+adm.ID.String(), map[string]any{"roles": []string{"pilot"}}, Req{Token: adm.Token}); r.Status != 422 {
+	if r := e.Do("PATCH", "/admin/users/"+adm.ID.String(), map[string]any{"is_platform_admin": false}, Req{Token: adm.Token}); r.Status != 422 {
 		t.Fatalf("self-demotion: %d", r.Status)
 	}
-	// role change takes effect: the user can now use the rescue console
-	e.Must(e.Do("GET", "/rescue/assignments", nil, Req{Token: u.Token}), 200)
+	// role change takes effect: the user can now use admin endpoints
+	e.Must(e.Do("GET", "/admin/stats", nil, Req{Token: u.Token}), 200)
+	e.Must(e.Do("PATCH", "/admin/users/"+u.ID.String(), map[string]any{"is_platform_admin": false}, Req{Token: adm.Token}), 200)
+	if r := e.Do("GET", "/admin/stats", nil, Req{Token: u.Token}); r.Status != 403 {
+		t.Fatalf("demoted admin: %d", r.Status)
+	}
 	e.Must(e.Do("PATCH", "/admin/users/"+u.ID.String(), map[string]any{"disabled": true}, Req{Token: adm.Token}), 200)
 	if r := e.Do("GET", "/me", nil, Req{Token: u.Token}); r.Status != 401 {
 		t.Fatalf("disabled user: %d", r.Status)
@@ -161,14 +161,18 @@ func TestNotificationsAndAdmin(t *testing.T) {
 		t.Fatalf("admin audit entries: %d", len(audit))
 	}
 	stats := e.Must(e.Do("GET", "/admin/stats", nil, Req{Token: adm.Token}), 200).JSON()
-	if stats["active_events"].(float64) != 1 || stats["system_status"] == nil {
+	if stats["active_events"].(float64) != 1 || stats["system_status"] == nil || stats["open_retrievals"] == nil || stats["pending_applications"] == nil {
 		t.Fatalf("stats: %v", stats)
 	}
-	// /pilots for organizers only
-	e.Must(e.Do("GET", "/pilots?q=Org", nil, Req{Token: org.Token}), 200)
+	// /users/search for organizers and admins only
+	found := e.Must(e.Do("GET", "/users/search?q=Org", nil, Req{Token: org.Token}), 200).JSON()["items"].([]any)
+	if len(found) != 1 || found[0].(map[string]any)["email"] != org.Email {
+		t.Fatalf("search: %v", found)
+	}
+	e.Must(e.Do("GET", "/users/search?q=Plain", nil, Req{Token: adm.Token}), 200)
 	plain := e.Register("Plain 2")
-	if r := e.Do("GET", "/pilots", nil, Req{Token: plain.Token}); r.Status != 403 {
-		t.Fatalf("pilot list for pilot: %d", r.Status)
+	if r := e.Do("GET", "/users/search?q=a", nil, Req{Token: plain.Token}); r.Status != 403 {
+		t.Fatalf("user search for a plain user: %d", r.Status)
 	}
 }
 
@@ -177,7 +181,7 @@ func TestPartitionMaintenanceMovesDefaultRows(t *testing.T) {
 	e := newEnv(t)
 	ctx := context.Background()
 	u := e.Register("Partition Pilot")
-	fid := e.CreateFlight(u, nil, "private")
+	fid := e.CreateFlight(u, nil)
 	future := time.Now().UTC().AddDate(0, 6, 0)
 	month := time.Date(future.Year(), future.Month(), 15, 0, 0, 0, 0, time.UTC)
 	// a row that landed in the default partition because its month had no partition yet

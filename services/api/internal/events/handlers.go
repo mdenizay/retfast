@@ -22,7 +22,7 @@ import (
 	"github.com/mdenizay/retfast/services/api/internal/platform/db/dbq"
 	"github.com/mdenizay/retfast/services/api/internal/platform/httpx"
 	"github.com/mdenizay/retfast/services/api/internal/platform/slug"
-	"github.com/mdenizay/retfast/services/api/internal/tracking/stats"
+	"github.com/mdenizay/retfast/services/api/internal/realtime/bus"
 )
 
 // Handler serves /events.
@@ -44,12 +44,19 @@ func (h *Handler) Routes(r chi.Router) {
 	r.Post("/events", httpx.H(h.create))
 	r.Patch("/events/{id}", httpx.H(h.patch))
 	r.Post("/events/{id}/archive", httpx.H(h.archive))
-	r.Get("/events/{id}/participants", httpx.H(h.participants))
-	r.Post("/events/{id}/join", httpx.H(h.join))
+	r.Get("/events/{id}/organizers", httpx.H(h.listOrganizers))
+	r.Post("/events/{id}/organizers", httpx.H(h.addOrganizer))
+	r.Delete("/events/{id}/organizers/{user_id}", httpx.H(h.removeOrganizer))
+	r.Post("/events/{id}/applications", httpx.H(h.apply))
+	r.Get("/events/{id}/applications", httpx.H(h.listApplications))
+	r.Post("/events/{id}/applications/{app_id}/approve", httpx.H(h.approve))
+	r.Post("/events/{id}/applications/{app_id}/reject", httpx.H(h.reject))
+	r.Post("/events/{id}/applications/{app_id}/withdraw", httpx.H(h.withdraw))
+	r.Get("/events/{id}/members", httpx.H(h.members))
+	r.Post("/events/{id}/members", httpx.H(h.addMember))
+	r.Patch("/events/{id}/members/{user_id}", httpx.H(h.patchMember))
+	r.Delete("/events/{id}/members/{user_id}", httpx.H(h.removeMember))
 	r.Post("/events/{id}/leave", httpx.H(h.leave))
-	r.Post("/events/{id}/participants", httpx.H(h.addParticipant))
-	r.Patch("/events/{id}/participants/{user_id}", httpx.H(h.patchParticipant))
-	r.Delete("/events/{id}/participants/{user_id}", httpx.H(h.removeParticipant))
 	r.Post("/events/{id}/launch-sites", httpx.H(h.createSite))
 	r.Patch("/events/{id}/launch-sites/{site_id}", httpx.H(h.patchSite))
 	r.Delete("/events/{id}/launch-sites/{site_id}", httpx.H(h.deleteSite))
@@ -62,24 +69,15 @@ var (
 )
 
 func (h *Handler) writeEvent(w http.ResponseWriter, r *http.Request, status int, id uuid.UUID) error {
-	a := authz.ActorFrom(r.Context())
 	e, err := h.Q.GetEventByID(r.Context(), id)
 	if err != nil {
 		return err
 	}
-	role, err := MemberRole(r.Context(), h.Q, e.ID, a)
+	dtos, err := BuildDTOs(r.Context(), h.Q, authz.ActorFrom(r.Context()), []Row{e})
 	if err != nil {
 		return err
 	}
-	counts, err := ParticipantCounts(r.Context(), h.Q, []uuid.UUID{e.ID})
-	if err != nil {
-		return err
-	}
-	dto, err := ToDTO(r.Context(), h.Q, e, role, counts[e.ID])
-	if err != nil {
-		return err
-	}
-	httpx.WriteJSON(w, status, dto)
+	httpx.WriteJSON(w, status, dtos[0])
 	return nil
 }
 
@@ -91,7 +89,8 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	p := dbq.ListEventsParams{IsAdmin: a.IsAdmin(), Statuses: []string{}, Q: strings.TrimSpace(qs.Get("q")), Lim: int32(lim + 1)}
+	p := dbq.ListEventsParams{IsAdmin: a.IsAdmin(), Statuses: []string{}, Q: strings.TrimSpace(qs.Get("q")), Lim: int32(lim + 1),
+		Mine: qs.Get("mine") == "true"}
 	if a.Authenticated() {
 		id := a.UserID
 		p.ViewerID = &id
@@ -154,6 +153,9 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) error {
 	} else if ok {
 		p.AfterStarts, p.AfterID = &cur.S, &cur.ID
 	}
+	if p.Mine && !a.Authenticated() {
+		return httpx.Unauthorized("Sign in to list your events")
+	}
 	if len(d) > 0 {
 		return httpx.Validation(d)
 	}
@@ -161,35 +163,17 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	ids := make([]uuid.UUID, 0, len(rows))
-	for _, e := range rows {
-		ids = append(ids, e.ID)
-	}
-	counts, err := ParticipantCounts(ctx, h.Q, ids)
-	if err != nil {
-		return err
-	}
-	roles := map[uuid.UUID]string{}
-	if a.Authenticated() {
-		ms, err := h.Q.ListMembershipsForUser(ctx, a.UserID)
-		if err != nil {
-			return err
-		}
-		for _, m := range ms {
-			roles[m.EventID] = m.Role
-		}
-	}
 	out := httpx.Page[Event]{Items: []Event{}}
+	page := make([]Row, 0, len(rows))
 	for i, e := range rows {
 		if i == lim {
 			out.NextCursor = httpx.EncodeCursor(map[string]any{"s": rows[lim-1].StartsAt, "id": rows[lim-1].ID})
 			break
 		}
-		dto, err := ToDTO(ctx, h.Q, Row(e), roles[e.ID], counts[e.ID])
-		if err != nil {
-			return err
-		}
-		out.Items = append(out.Items, dto)
+		page = append(page, Row(e))
+	}
+	if out.Items, err = BuildDTOs(ctx, h.Q, a, page); err != nil {
+		return err
 	}
 	httpx.WriteJSON(w, http.StatusOK, out)
 	return nil
@@ -218,12 +202,11 @@ type eventInput struct {
 	EndsAt              *httpx.Time            `json:"ends_at"`
 	CoverImageURL       httpx.Nullable[string] `json:"cover_image_url"`
 	Settings            *struct {
-		RegistrationOpen *bool `json:"registration_open"`
-		LiveTracking     *bool `json:"live_tracking"`
-		FlightRecording  *bool `json:"flight_recording"`
-		ObserversAllowed *bool `json:"observers_allowed"`
-		EmergencyTesting *bool `json:"emergency_testing"`
-		PublicLiveMap    *bool `json:"public_live_map"`
+		ApplicationsOpen   *bool `json:"applications_open"`
+		LiveTracking       *bool `json:"live_tracking"`
+		PublicLiveMap      *bool `json:"public_live_map"`
+		PilotsSeeEachOther *bool `json:"pilots_see_each_other"`
+		LandingPrompt      *bool `json:"landing_prompt"`
 	} `json:"settings"`
 }
 
@@ -305,12 +288,11 @@ func (in *eventInput) apply(e *Row) map[string]string {
 				*dst = *src
 			}
 		}
-		set(st.RegistrationOpen, &e.RegistrationOpen)
+		set(st.ApplicationsOpen, &e.ApplicationsOpen)
 		set(st.LiveTracking, &e.LiveTracking)
-		set(st.FlightRecording, &e.FlightRecording)
-		set(st.ObserversAllowed, &e.ObserversAllowed)
-		set(st.EmergencyTesting, &e.EmergencyTesting)
 		set(st.PublicLiveMap, &e.PublicLiveMap)
+		set(st.PilotsSeeEachOther, &e.PilotsSeeEachOther)
+		set(st.LandingPrompt, &e.LandingPrompt)
 	}
 	return d
 }
@@ -319,14 +301,17 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 	a := authz.ActorFrom(ctx)
 	if !authz.CanCreateEvent(a) {
-		return httpx.Forbidden("Only event organizers and admins can create events")
+		return httpx.Forbidden("Only platform admins can create events")
 	}
-	var in eventInput
+	var in struct {
+		eventInput
+		Organizers []uuid.UUID `json:"organizers"`
+	}
 	if err := httpx.DecodeJSON(w, r, 64<<10, &in); err != nil {
 		return err
 	}
-	e := Row{Kind: "paragliding", Status: "draft", Visibility: authz.EventPublic, RegistrationOpen: true, LiveTracking: true,
-		FlightRecording: true, ObserversAllowed: true}
+	e := Row{Kind: "paragliding", Status: "draft", Visibility: authz.EventPublic, ApplicationsOpen: true, LiveTracking: true,
+		PublicLiveMap: false, PilotsSeeEachOther: true, LandingPrompt: true}
 	d := map[string]string{}
 	if in.Name == nil {
 		d["name"] = "required"
@@ -358,16 +343,18 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 		id, err = q.CreateEvent(ctx, dbq.CreateEventParams{Slug: e.Slug, Name: e.Name, Description: e.Description, Kind: e.Kind,
 			Status: e.Status, Visibility: e.Visibility, LocationName: e.LocationName, CenterLat: e.CenterLat, CenterLon: e.CenterLon,
 			CenterIsApproximate: e.CenterIsApproximate, StartsAt: e.StartsAt, EndsAt: e.EndsAt, CoverImageUrl: e.CoverImageUrl,
-			RegistrationOpen: e.RegistrationOpen, LiveTracking: e.LiveTracking, FlightRecording: e.FlightRecording,
-			ObserversAllowed: e.ObserversAllowed, EmergencyTesting: e.EmergencyTesting, PublicLiveMap: e.PublicLiveMap, OrganizerID: &uid})
+			ApplicationsOpen: e.ApplicationsOpen, LiveTracking: e.LiveTracking, PublicLiveMap: e.PublicLiveMap,
+			PilotsSeeEachOther: e.PilotsSeeEachOther, LandingPrompt: e.LandingPrompt, CreatedBy: &uid})
 		if db.IsUniqueViolation(err, "") {
 			return httpx.Conflict("Slug already in use")
 		}
 		if err != nil {
 			return err
 		}
-		if err := q.UpsertParticipant(ctx, dbq.UpsertParticipantParams{EventID: id, UserID: uid, Role: authz.MemberOrganizer, AddedBy: &uid}); err != nil {
-			return err
+		for _, oid := range in.Organizers {
+			if err := addOrganizerTx(ctx, q, r, id, oid, uid); err != nil {
+				return err
+			}
 		}
 		return audit.Record(ctx, q, r, audit.Entry{Action: "event.created", TargetType: "event", TargetID: id.String(), EventID: &id})
 	})
@@ -400,11 +387,11 @@ func UniqueSlug(ctx context.Context, q *dbq.Queries, name string) (string, error
 // loadManaged loads an event the caller may manage (404 if invisible, 403 if not organizer).
 func (h *Handler) loadManaged(ctx context.Context, idOrSlug string) (Row, error) {
 	a := authz.ActorFrom(ctx)
-	e, role, err := LoadVisible(ctx, h.Q, idOrSlug, a)
+	e, acc, err := LoadVisible(ctx, h.Q, idOrSlug, a)
 	if err != nil {
 		return Row{}, err
 	}
-	if !authz.CanManageEvent(a, role) {
+	if !authz.CanManageEvent(a, acc) {
 		return Row{}, httpx.Forbidden("Only event organizers can do this")
 	}
 	return e, nil
@@ -429,8 +416,8 @@ func (h *Handler) patch(w http.ResponseWriter, r *http.Request) error {
 		err := q.UpdateEvent(ctx, dbq.UpdateEventParams{ID: e.ID, Slug: e.Slug, Name: e.Name, Description: e.Description, Kind: e.Kind,
 			Status: e.Status, Visibility: e.Visibility, LocationName: e.LocationName, CenterLat: e.CenterLat, CenterLon: e.CenterLon,
 			CenterIsApproximate: e.CenterIsApproximate, StartsAt: e.StartsAt, EndsAt: e.EndsAt, CoverImageUrl: e.CoverImageUrl,
-			RegistrationOpen: e.RegistrationOpen, LiveTracking: e.LiveTracking, FlightRecording: e.FlightRecording,
-			ObserversAllowed: e.ObserversAllowed, EmergencyTesting: e.EmergencyTesting, PublicLiveMap: e.PublicLiveMap})
+			ApplicationsOpen: e.ApplicationsOpen, LiveTracking: e.LiveTracking, PublicLiveMap: e.PublicLiveMap,
+			PilotsSeeEachOther: e.PilotsSeeEachOther, LandingPrompt: e.LandingPrompt})
 		if db.IsUniqueViolation(err, "") {
 			return httpx.Conflict("Slug already in use")
 		}
@@ -440,6 +427,9 @@ func (h *Handler) patch(w http.ResponseWriter, r *http.Request) error {
 		id := e.ID
 		if err := audit.Record(ctx, q, r, audit.Entry{Action: "event.updated", TargetType: "event", TargetID: id.String(), EventID: &id,
 			Details: map[string]any{"status": e.Status}}); err != nil {
+			return err
+		}
+		if err := bus.EventChanged(ctx, q, Facts(e)); err != nil {
 			return err
 		}
 		if before.Status != e.Status || !before.StartsAt.Equal(e.StartsAt) || !before.EndsAt.Equal(e.EndsAt) {
@@ -468,20 +458,26 @@ func eventChangeText(before, after Row) string {
 
 // notifyMembers stores an in-app notification and queues an event_update email for active members.
 func (h *Handler) notifyMembers(ctx context.Context, q *dbq.Queries, e Row, title, body string) error {
-	parts, err := q.ListParticipants(ctx, dbq.ListParticipantsParams{EventID: e.ID})
+	ids, err := q.ListActiveMemberIDs(ctx, e.ID)
 	if err != nil {
 		return err
 	}
-	ids := make([]uuid.UUID, 0, len(parts))
-	for _, p := range parts {
-		ids = append(ids, p.UserID)
+	orgs, err := q.ListOrganizerIDs(ctx, e.ID)
+	if err != nil {
+		return err
 	}
+	ids = append(ids, orgs...)
 	if err := notifications.Notify(ctx, q, ids, notifications.KindEventUpdate, e.Name+": "+title, body,
 		map[string]any{"event_id": e.ID, "slug": e.Slug}); err != nil {
 		return err
 	}
-	for _, p := range parts {
-		u, err := q.GetUserByID(ctx, p.UserID)
+	seen := map[uuid.UUID]bool{}
+	for _, uid := range ids {
+		if seen[uid] {
+			continue
+		}
+		seen[uid] = true
+		u, err := q.GetUserByID(ctx, uid)
 		if err != nil || u.DeletedAt != nil || u.EmailVerifiedAt == nil {
 			continue
 		}
@@ -508,12 +504,15 @@ func (h *Handler) archive(w http.ResponseWriter, r *http.Request) error {
 			if err := q.UpdateEvent(ctx, dbq.UpdateEventParams{ID: e.ID, Slug: e.Slug, Name: e.Name, Description: e.Description, Kind: e.Kind,
 				Status: e.Status, Visibility: e.Visibility, LocationName: e.LocationName, CenterLat: e.CenterLat, CenterLon: e.CenterLon,
 				CenterIsApproximate: e.CenterIsApproximate, StartsAt: e.StartsAt, EndsAt: e.EndsAt, CoverImageUrl: e.CoverImageUrl,
-				RegistrationOpen: e.RegistrationOpen, LiveTracking: e.LiveTracking, FlightRecording: e.FlightRecording,
-				ObserversAllowed: e.ObserversAllowed, EmergencyTesting: e.EmergencyTesting, PublicLiveMap: e.PublicLiveMap}); err != nil {
+				ApplicationsOpen: e.ApplicationsOpen, LiveTracking: e.LiveTracking, PublicLiveMap: e.PublicLiveMap,
+				PilotsSeeEachOther: e.PilotsSeeEachOther, LandingPrompt: e.LandingPrompt}); err != nil {
 				return err
 			}
 			id := e.ID
 			if err := audit.Record(ctx, q, r, audit.Entry{Action: "event.archived", TargetType: "event", TargetID: id.String(), EventID: &id}); err != nil {
+				return err
+			}
+			if err := bus.EventChanged(ctx, q, Facts(e)); err != nil {
 				return err
 			}
 			return h.notifyMembers(ctx, q, e, "Etkinlik arşivlendi", eventChangeText(before, e))
@@ -523,267 +522,6 @@ func (h *Handler) archive(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 	return h.writeEvent(w, r, http.StatusOK, e.ID)
-}
-
-// Participant per the contract.
-type Participant struct {
-	UserID   uuid.UUID  `json:"user_id"`
-	FullName string     `json:"full_name"`
-	PublicID *string    `json:"public_id"`
-	Role     string     `json:"role"`
-	Status   string     `json:"status"`
-	JoinedAt httpx.Time `json:"joined_at"`
-}
-
-func (h *Handler) participants(w http.ResponseWriter, r *http.Request) error {
-	ctx := r.Context()
-	a := authz.ActorFrom(ctx)
-	e, role, err := LoadVisible(ctx, h.Q, chi.URLParam(r, "id"), a)
-	if err != nil {
-		return err
-	}
-	if !authz.CanViewParticipants(a, role) {
-		return httpx.Forbidden("Only event members can see participants")
-	}
-	rows, err := h.Q.ListParticipants(ctx, dbq.ListParticipantsParams{EventID: e.ID, IncludeRemoved: authz.CanManageEvent(a, role)})
-	if err != nil {
-		return err
-	}
-	out := []Participant{}
-	for _, p := range rows {
-		out = append(out, Participant{UserID: p.UserID, FullName: p.FullName, PublicID: p.PublicID, Role: p.Role, Status: p.Status, JoinedAt: httpx.T(p.JoinedAt)})
-	}
-	httpx.WriteJSON(w, http.StatusOK, map[string]any{"items": out})
-	return nil
-}
-
-func (h *Handler) join(w http.ResponseWriter, r *http.Request) error {
-	ctx := r.Context()
-	a := authz.ActorFrom(ctx)
-	var in struct {
-		Role string `json:"role"`
-	}
-	if err := httpx.DecodeOptionalJSON(w, r, 4<<10, &in); err != nil {
-		return err
-	}
-	if in.Role == "" {
-		in.Role = authz.MemberParticipant
-	}
-	e, role, err := LoadVisible(ctx, h.Q, chi.URLParam(r, "id"), a)
-	if err != nil {
-		return err
-	}
-	if role != "" {
-		return h.writeEvent(w, r, http.StatusOK, e.ID) // already a member: idempotent
-	}
-	switch authz.CanJoinEvent(a, Facts(e), in.Role) {
-	case authz.JoinAllowed:
-	case authz.JoinClosed:
-		return httpx.Forbidden("Registration is closed")
-	case authz.JoinNotPilot:
-		return httpx.Forbidden("Only pilots can join as participants")
-	case authz.JoinObserversDisallowed:
-		return httpx.Forbidden("This event does not allow observers")
-	default:
-		return httpx.Forbidden("Joining requires an invitation from an organizer")
-	}
-	err = pgx.BeginFunc(ctx, h.Pool, func(tx pgx.Tx) error {
-		q := dbq.New(tx)
-		uid := a.UserID
-		if err := q.UpsertParticipant(ctx, dbq.UpsertParticipantParams{EventID: e.ID, UserID: uid, Role: in.Role, AddedBy: &uid}); err != nil {
-			return err
-		}
-		id := e.ID
-		return audit.Record(ctx, q, r, audit.Entry{Action: "event.joined", TargetType: "event", TargetID: id.String(), EventID: &id,
-			Details: map[string]any{"role": in.Role}})
-	})
-	if err != nil {
-		return err
-	}
-	return h.writeEvent(w, r, http.StatusOK, e.ID)
-}
-
-func (h *Handler) leave(w http.ResponseWriter, r *http.Request) error {
-	ctx := r.Context()
-	a := authz.ActorFrom(ctx)
-	e, role, err := LoadVisible(ctx, h.Q, chi.URLParam(r, "id"), a)
-	if err != nil {
-		return err
-	}
-	if role == "" {
-		return httpx.NotFound("Not a member of this event")
-	}
-	err = pgx.BeginFunc(ctx, h.Pool, func(tx pgx.Tx) error {
-		q := dbq.New(tx)
-		if role == authz.MemberOrganizer {
-			n, err := q.CountOrganizers(ctx, e.ID)
-			if err != nil {
-				return err
-			}
-			if n <= 1 {
-				return httpx.Conflict("The last organizer cannot leave the event")
-			}
-		}
-		if _, err := q.RemoveParticipant(ctx, dbq.RemoveParticipantParams{EventID: e.ID, UserID: a.UserID}); err != nil {
-			return err
-		}
-		id := e.ID
-		return audit.Record(ctx, q, r, audit.Entry{Action: "event.left", TargetType: "event", TargetID: id.String(), EventID: &id})
-	})
-	if err != nil {
-		return err
-	}
-	w.WriteHeader(http.StatusNoContent)
-	return nil
-}
-
-var memberRoles = map[string]bool{authz.MemberOrganizer: true, authz.MemberParticipant: true, authz.MemberObserver: true}
-
-func (h *Handler) addParticipant(w http.ResponseWriter, r *http.Request) error {
-	ctx := r.Context()
-	e, err := h.loadManaged(ctx, chi.URLParam(r, "id"))
-	if err != nil {
-		return err
-	}
-	var in struct {
-		UserID uuid.UUID `json:"user_id"`
-		Role   string    `json:"role"`
-	}
-	if err := httpx.DecodeJSON(w, r, 4<<10, &in); err != nil {
-		return err
-	}
-	if in.Role == "" {
-		in.Role = authz.MemberParticipant
-	}
-	if !memberRoles[in.Role] {
-		return httpx.Validation(map[string]string{"role": "must be organizer, participant or observer"})
-	}
-	u, err := h.Q.GetUserByID(ctx, in.UserID)
-	if db.NotFound(err) || (err == nil && u.DeletedAt != nil) {
-		return httpx.Validation(map[string]string{"user_id": "unknown user"})
-	}
-	if err != nil {
-		return err
-	}
-	err = pgx.BeginFunc(ctx, h.Pool, func(tx pgx.Tx) error {
-		q := dbq.New(tx)
-		actor := authz.ActorFrom(ctx).UserID
-		if err := q.UpsertParticipant(ctx, dbq.UpsertParticipantParams{EventID: e.ID, UserID: in.UserID, Role: in.Role, AddedBy: &actor}); err != nil {
-			return err
-		}
-		id := e.ID
-		if err := notifications.Notify(ctx, q, []uuid.UUID{in.UserID}, notifications.KindEventUpdate, e.Name,
-			"Etkinliğe eklendiniz ("+in.Role+").", map[string]any{"event_id": e.ID, "slug": e.Slug}); err != nil {
-			return err
-		}
-		return audit.Record(ctx, q, r, audit.Entry{Action: "event.participant_added", TargetType: "user", TargetID: in.UserID.String(),
-			EventID: &id, Details: map[string]any{"role": in.Role}})
-	})
-	if err != nil {
-		return err
-	}
-	return h.writeParticipant(w, r, e.ID, in.UserID, http.StatusCreated)
-}
-
-func (h *Handler) writeParticipant(w http.ResponseWriter, r *http.Request, eventID, userID uuid.UUID, status int) error {
-	rows, err := h.Q.ListParticipants(r.Context(), dbq.ListParticipantsParams{EventID: eventID, IncludeRemoved: true})
-	if err != nil {
-		return err
-	}
-	for _, p := range rows {
-		if p.UserID == userID {
-			httpx.WriteJSON(w, status, Participant{UserID: p.UserID, FullName: p.FullName, PublicID: p.PublicID, Role: p.Role, Status: p.Status, JoinedAt: httpx.T(p.JoinedAt)})
-			return nil
-		}
-	}
-	return httpx.NotFound("")
-}
-
-func (h *Handler) patchParticipant(w http.ResponseWriter, r *http.Request) error {
-	ctx := r.Context()
-	e, err := h.loadManaged(ctx, chi.URLParam(r, "id"))
-	if err != nil {
-		return err
-	}
-	uid, err := uuid.Parse(chi.URLParam(r, "user_id"))
-	if err != nil {
-		return httpx.NotFound("")
-	}
-	var in struct {
-		Role string `json:"role"`
-	}
-	if err := httpx.DecodeJSON(w, r, 4<<10, &in); err != nil {
-		return err
-	}
-	if !memberRoles[in.Role] {
-		return httpx.Validation(map[string]string{"role": "must be organizer, participant or observer"})
-	}
-	err = pgx.BeginFunc(ctx, h.Pool, func(tx pgx.Tx) error {
-		q := dbq.New(tx)
-		cur, err := q.GetMembership(ctx, dbq.GetMembershipParams{EventID: e.ID, UserID: uid})
-		if db.NotFound(err) {
-			return httpx.NotFound("Not a member")
-		}
-		if err != nil {
-			return err
-		}
-		if cur.Role == authz.MemberOrganizer && in.Role != authz.MemberOrganizer && cur.Status == "active" {
-			if n, err := q.CountOrganizers(ctx, e.ID); err != nil {
-				return err
-			} else if n <= 1 {
-				return httpx.Conflict("The event must keep at least one organizer")
-			}
-		}
-		if _, err := q.SetParticipantRole(ctx, dbq.SetParticipantRoleParams{EventID: e.ID, UserID: uid, Role: in.Role}); err != nil {
-			return err
-		}
-		id := e.ID
-		return audit.Record(ctx, q, r, audit.Entry{Action: "event.participant_role_changed", TargetType: "user", TargetID: uid.String(),
-			EventID: &id, Details: map[string]any{"from": cur.Role, "to": in.Role}})
-	})
-	if err != nil {
-		return err
-	}
-	return h.writeParticipant(w, r, e.ID, uid, http.StatusOK)
-}
-
-func (h *Handler) removeParticipant(w http.ResponseWriter, r *http.Request) error {
-	ctx := r.Context()
-	e, err := h.loadManaged(ctx, chi.URLParam(r, "id"))
-	if err != nil {
-		return err
-	}
-	uid, err := uuid.Parse(chi.URLParam(r, "user_id"))
-	if err != nil {
-		return httpx.NotFound("")
-	}
-	err = pgx.BeginFunc(ctx, h.Pool, func(tx pgx.Tx) error {
-		q := dbq.New(tx)
-		cur, err := q.GetMembership(ctx, dbq.GetMembershipParams{EventID: e.ID, UserID: uid})
-		if db.NotFound(err) {
-			return httpx.NotFound("Not a member")
-		}
-		if err != nil {
-			return err
-		}
-		if cur.Role == authz.MemberOrganizer && cur.Status == "active" {
-			if n, err := q.CountOrganizers(ctx, e.ID); err != nil {
-				return err
-			} else if n <= 1 {
-				return httpx.Conflict("The event must keep at least one organizer")
-			}
-		}
-		if _, err := q.RemoveParticipant(ctx, dbq.RemoveParticipantParams{EventID: e.ID, UserID: uid}); err != nil {
-			return err
-		}
-		id := e.ID
-		return audit.Record(ctx, q, r, audit.Entry{Action: "event.participant_removed", TargetType: "user", TargetID: uid.String(), EventID: &id})
-	})
-	if err != nil {
-		return err
-	}
-	w.WriteHeader(http.StatusNoContent)
-	return nil
 }
 
 // LaunchSite per the contract.
@@ -962,93 +700,5 @@ func (h *Handler) deleteSite(w http.ResponseWriter, r *http.Request) error {
 	id := e.ID
 	_ = audit.Record(ctx, h.Q, r, audit.Entry{Action: "event.launch_site_deleted", TargetType: "launch_site", TargetID: sid.String(), EventID: &id})
 	w.WriteHeader(http.StatusNoContent)
-	return nil
-}
-
-func (h *Handler) report(w http.ResponseWriter, r *http.Request) error {
-	ctx := r.Context()
-	e, err := h.loadManaged(ctx, chi.URLParam(r, "id"))
-	if err != nil {
-		return err
-	}
-	part, err := h.Q.EventReportParticipation(ctx, e.ID)
-	if err != nil {
-		return err
-	}
-	fl, err := h.Q.EventReportFlights(ctx, &e.ID)
-	if err != nil {
-		return err
-	}
-	type flightLine struct {
-		FlightID       uuid.UUID `json:"flight_id"`
-		PilotID        uuid.UUID `json:"pilot_id"`
-		PilotName      string    `json:"pilot_name"`
-		Status         string    `json:"status"`
-		IsSimulated    bool      `json:"is_simulated"`
-		DurationS      float64   `json:"duration_s"`
-		SampleCount    int32     `json:"sample_count"`
-		ExpectedCount  int64     `json:"expected_sample_count"`
-		Completeness   *float64  `json:"telemetry_completeness"`
-		Interruptions  int32     `json:"interruptions"`
-		DistanceM      float64   `json:"distance_m"`
-		MaxGPSAltitude *float64  `json:"max_gps_alt_m"`
-	}
-	lines := []flightLine{}
-	pilots := map[uuid.UUID]bool{}
-	var totalDur float64
-	var totalSamples, totalExpected int64
-	var totalGaps int64
-	byStatus := map[string]int{}
-	for _, f := range fl {
-		end := time.Now()
-		if f.EndedAt != nil {
-			end = *f.EndedAt
-		} else if f.LastSampleT != nil {
-			end = *f.LastSampleT
-		}
-		dur := end.Sub(f.StartedAt).Seconds()
-		if dur < 0 {
-			dur = 0
-		}
-		exp := stats.ExpectedSamples(f.FirstSampleT, f.LastSampleT)
-		var comp *float64
-		if exp > 0 {
-			c := float64(f.SampleCount) / float64(exp)
-			if c > 1 {
-				c = 1
-			}
-			comp = &c
-		}
-		lines = append(lines, flightLine{FlightID: f.ID, PilotID: f.PilotID, PilotName: f.FullName, Status: f.Status, IsSimulated: f.IsSimulated,
-			DurationS: dur, SampleCount: f.SampleCount, ExpectedCount: exp, Completeness: comp, Interruptions: f.GapCount,
-			DistanceM: f.DistanceM, MaxGPSAltitude: f.MaxGpsAltM})
-		pilots[f.PilotID] = true
-		totalDur += dur
-		totalSamples += int64(f.SampleCount)
-		totalExpected += exp
-		totalGaps += int64(f.GapCount)
-		byStatus[f.Status]++
-	}
-	var completeness *float64
-	if totalExpected > 0 {
-		c := float64(totalSamples) / float64(totalExpected)
-		if c > 1 {
-			c = 1
-		}
-		completeness = &c
-	}
-	avg := 0.0
-	if len(fl) > 0 {
-		avg = totalDur / float64(len(fl))
-	}
-	httpx.WriteJSON(w, http.StatusOK, map[string]any{
-		"event_id": e.ID, "generated_at": httpx.T(time.Now()),
-		"participation": map[string]any{"participants": part.Participants, "observers": part.Observers, "organizers": part.Organizers,
-			"removed": part.Removed, "pilots_flown": len(pilots)},
-		"flights": map[string]any{"count": len(fl), "by_status": byStatus, "total_duration_s": totalDur, "avg_duration_s": avg},
-		"telemetry": map[string]any{"samples": totalSamples, "expected_samples": totalExpected, "completeness": completeness,
-			"interruptions": totalGaps, "note": "expected samples assume a 1 Hz target between first and last sample"},
-		"items": lines,
-	})
 	return nil
 }

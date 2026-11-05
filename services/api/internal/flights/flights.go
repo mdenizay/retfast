@@ -67,7 +67,6 @@ type Flight struct {
 	Pilot          users.PilotRef `json:"pilot"`
 	EventID        *uuid.UUID     `json:"event_id"`
 	Status         string         `json:"status"`
-	Visibility     string         `json:"visibility"`
 	IsSimulated    bool           `json:"is_simulated"`
 	StartedAt      httpx.Time     `json:"started_at"`
 	EndedAt        *httpx.Time    `json:"ended_at"`
@@ -115,7 +114,7 @@ func DTO(r Row) Flight {
 		dur = 0
 	}
 	return Flight{ID: f.ID, PublicID: f.PublicID, Pilot: users.PilotRef{UserID: f.PilotID, FullName: r.PilotName, PublicID: r.PilotPublicID},
-		EventID: f.EventID, Status: f.Status, Visibility: f.Visibility, IsSimulated: f.IsSimulated, StartedAt: httpx.T(f.StartedAt),
+		EventID: f.EventID, Status: f.Status, IsSimulated: f.IsSimulated, StartedAt: httpx.T(f.StartedAt),
 		EndedAt: httpx.TP(f.EndedAt), LastPosition: LastPosition(f), LastReceivedAt: httpx.TP(f.LastReceivedAt),
 		Stats: Stats{DurationS: dur, DistanceM: f.DistanceM, MaxGPSAltM: f.MaxGpsAltM, MinGPSAltM: f.MinGpsAltM,
 			MaxGroundSpeedMS: f.MaxGroundSpeedMs, TotalAscentM: f.TotalAscentM, TotalDescentM: f.TotalDescentM,
@@ -134,50 +133,66 @@ func Get(ctx context.Context, q *dbq.Queries, idOrPublic string) (Row, error) {
 }
 
 // Facts builds policy facts for a flight.
-func Facts(ctx context.Context, q *dbq.Queries, f dbq.FlightSession) (authz.Flight, error) {
-	open, err := q.FlightHasOpenIncident(ctx, &f.ID)
-	if err != nil {
-		return authz.Flight{}, err
-	}
-	return authz.Flight{OwnerID: f.PilotID, EventID: f.EventID, Visibility: f.Visibility, IncidentOpen: open}, nil
+func Facts(f dbq.FlightSession) authz.Flight {
+	return authz.Flight{OwnerID: f.PilotID, EventID: f.EventID}
 }
 
-// LoadVisible loads a flight the actor may view (404 otherwise).
-func LoadVisible(ctx context.Context, q *dbq.Queries, idOrPublic string, a *authz.Actor) (Row, error) {
+// Policy loads the flight's event facts and the actor's access to it (nil
+// event for flights outside events).
+func Policy(ctx context.Context, q *dbq.Queries, f dbq.FlightSession, a *authz.Actor) (*authz.Event, authz.Access, error) {
+	if f.EventID == nil {
+		return nil, authz.Access{}, nil
+	}
+	e, err := q.GetEventByID(ctx, *f.EventID)
+	if db.NotFound(err) {
+		return nil, authz.Access{}, nil
+	}
+	if err != nil {
+		return nil, authz.Access{}, err
+	}
+	acc, err := events.AccessOf(ctx, q, e.ID, a)
+	if err != nil {
+		return nil, authz.Access{}, err
+	}
+	facts := events.Facts(e)
+	return &facts, acc, nil
+}
+
+// LoadVisible loads a flight the actor may view (404 otherwise). It also
+// reports whether the caller must get the guest (display-name) view.
+func LoadVisible(ctx context.Context, q *dbq.Queries, idOrPublic string, a *authz.Actor) (Row, bool, error) {
 	r, err := Get(ctx, q, idOrPublic)
 	if db.NotFound(err) {
-		return Row{}, httpx.NotFound("Flight not found")
+		return Row{}, false, httpx.NotFound("Flight not found")
 	}
 	if err != nil {
-		return Row{}, err
+		return Row{}, false, err
 	}
-	facts, err := Facts(ctx, q, r.FlightSession)
+	ev, acc, err := Policy(ctx, q, r.FlightSession, a)
 	if err != nil {
-		return Row{}, err
+		return Row{}, false, err
 	}
-	member := ""
-	if r.EventID != nil {
-		if member, err = events.MemberRole(ctx, q, *r.EventID, a); err != nil {
-			return Row{}, err
-		}
+	if !authz.CanViewFlight(a, Facts(r.FlightSession), ev, acc) {
+		return Row{}, false, httpx.NotFound("Flight not found")
 	}
-	if !authz.CanViewFlight(a, facts, member) {
-		return Row{}, httpx.NotFound("Flight not found")
-	}
-	return r, nil
+	guest := !a.Is(r.PilotID) && !a.IsAdmin() && ev != nil && authz.GuestView(a, *ev, acc)
+	return r, guest, nil
 }
 
-// PublishFlight writes a "flight" envelope (started/ended/visibility changed).
+// PublicDTO is the guest view: the pilot's display name instead of the full name.
+func PublicDTO(ctx context.Context, q *dbq.Queries, r Row) Flight {
+	dto := DTO(r)
+	dto.Pilot.FullName = displayName(ctx, q, r)
+	return dto
+}
+
+// PublishFlight writes a "flight" envelope (started/ended/event changed).
 func PublishFlight(ctx context.Context, q *dbq.Queries, flightID uuid.UUID) error {
 	r, err := q.GetFlight(ctx, flightID)
 	if err != nil {
 		return err
 	}
 	row := Row{r.FlightSession, r.PilotName, r.PilotPublicID}
-	open, err := q.FlightHasOpenIncident(ctx, &flightID)
-	if err != nil {
-		return err
-	}
 	dto := DTO(row)
 	data, _ := json.Marshal(dto)
 	pub := dto
@@ -185,7 +200,7 @@ func PublishFlight(ctx context.Context, q *dbq.Queries, flightID uuid.UUID) erro
 	pubData, _ := json.Marshal(pub)
 	owner := row.PilotID
 	return bus.Write(ctx, q, bus.Envelope{Type: bus.TypeFlight, EventID: row.EventID, FlightID: &flightID, OwnerID: &owner,
-		Visibility: row.Visibility, IncidentOpen: open, Data: data, PublicData: pubData, ServerReceivedMS: time.Now().UnixMilli()})
+		Data: data, PublicData: pubData, ServerReceivedMS: time.Now().UnixMilli()})
 }
 
 func displayName(ctx context.Context, q *dbq.Queries, r Row) string {

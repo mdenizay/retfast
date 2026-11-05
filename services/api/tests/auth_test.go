@@ -23,7 +23,7 @@ func TestRegisterLoginRefreshRotationAndReuse(t *testing.T) {
 		t.Fatalf("unexpected me: %v", me)
 	}
 	roles := me["roles"].([]any)
-	if len(roles) != 1 || roles[0] != "pilot" {
+	if len(roles) != 0 {
 		t.Fatalf("roles = %v", roles)
 	}
 	if me["pilot"] == nil {

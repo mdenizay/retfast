@@ -18,9 +18,9 @@ import (
 	"github.com/mdenizay/retfast/services/api/internal/admin"
 	"github.com/mdenizay/retfast/services/api/internal/auth"
 	"github.com/mdenizay/retfast/services/api/internal/email"
-	"github.com/mdenizay/retfast/services/api/internal/emergencies"
 	"github.com/mdenizay/retfast/services/api/internal/events"
 	"github.com/mdenizay/retfast/services/api/internal/flights"
+	"github.com/mdenizay/retfast/services/api/internal/live"
 	"github.com/mdenizay/retfast/services/api/internal/notifications"
 	"github.com/mdenizay/retfast/services/api/internal/platform/config"
 	"github.com/mdenizay/retfast/services/api/internal/platform/db"
@@ -30,6 +30,7 @@ import (
 	"github.com/mdenizay/retfast/services/api/internal/platform/ratelimit"
 	"github.com/mdenizay/retfast/services/api/internal/platform/redisx"
 	"github.com/mdenizay/retfast/services/api/internal/realtime"
+	"github.com/mdenizay/retfast/services/api/internal/retrievals"
 	"github.com/mdenizay/retfast/services/api/internal/tracking"
 	"github.com/mdenizay/retfast/services/api/internal/users"
 )
@@ -72,14 +73,14 @@ func New(ctx context.Context, cfg *config.Config, log *slog.Logger, pool *pgxpoo
 	a := &App{Cfg: cfg, Log: log, Pool: pool, Redis: rdb, Metrics: m}
 	a.Auth = auth.NewService(pool, cfg, lim, m, log)
 	a.Hub = realtime.NewHub(m, log)
-	live := &flights.LiveService{Q: q, Cursor: func(ctx context.Context) string {
+	liveSvc := &live.Service{Q: q, Cursor: func(ctx context.Context) string {
 		id, err := realtime.LatestID(ctx, rdb)
 		if err != nil {
 			return "0-0"
 		}
 		return id
 	}}
-	a.WS = &realtime.Server{Hub: a.Hub, Auth: a.Auth, Q: q, Live: live, Redis: rdb, Incidents: &emergencies.Provider{Q: q},
+	a.WS = &realtime.Server{Hub: a.Hub, Auth: a.Auth, Q: q, Live: liveSvc, Redis: rdb,
 		Metrics: m, Log: log, OriginPatterns: realtime.OriginPatternsFrom(cfg.CORSOrigins)}
 	a.Relay = &realtime.Relay{Pool: pool, Redis: rdb, Metrics: m, Log: log}
 	a.Ingestor = &tracking.Ingestor{Pool: pool, Metrics: m, Log: log}
@@ -97,9 +98,9 @@ func New(ctx context.Context, cfg *config.Config, log *slog.Logger, pool *pgxpoo
 	usersH := &users.Handler{Pool: pool, Q: q, DeletionGrace: cfg.DeletionGraceDur, Hash: auth.HashPassword}
 	eventsH := &events.Handler{Pool: pool, Q: q, AppWebURL: cfg.AppWebURL}
 	flightsH := &flights.Handler{Pool: pool, Q: q}
-	liveH := &flights.LiveHandler{Live: live}
+	liveH := &live.Handler{Live: liveSvc}
 	telemetryH := &tracking.Handler{Ingestor: a.Ingestor, Limiter: lim}
-	incidentsH := &emergencies.Handler{Pool: pool, Q: q, Limiter: lim}
+	retrievalsH := &retrievals.Handler{Pool: pool, Q: q, Limiter: lim, Metrics: m}
 	notifH := &notifications.Handler{Q: q}
 	adminH := &admin.Handler{Pool: pool, Q: q, Redis: rdb, Auth: a.Auth, Status: a.checks}
 
@@ -140,7 +141,7 @@ func New(ctx context.Context, cfg *config.Config, log *slog.Logger, pool *pgxpoo
 				eventsH.Routes(r)
 				flightsH.Routes(r)
 				telemetryH.Routes(r)
-				incidentsH.Routes(r)
+				retrievalsH.Routes(r)
 				notifH.Routes(r)
 				r.Group(adminH.Routes)
 			})

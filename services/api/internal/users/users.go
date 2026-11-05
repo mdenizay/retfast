@@ -24,16 +24,15 @@ type PilotProfile struct {
 	Wing                  string `json:"wing"`
 	LicenseNo             string `json:"license_no"`
 	Nationality           string `json:"nationality"`
+	Phone                 string `json:"phone"`
 	EmergencyContactName  string `json:"emergency_contact_name"`
 	EmergencyContactPhone string `json:"emergency_contact_phone"`
-	BloodType             string `json:"blood_type"`
 }
 
 // Preferences per the contract.
 type Preferences struct {
-	Units                   string `json:"units"`
-	DefaultFlightVisibility string `json:"default_flight_visibility"`
-	PublicProfile           bool   `json:"public_profile"`
+	Units         string `json:"units"`
+	PublicProfile bool   `json:"public_profile"`
 }
 
 // Me per the contract.
@@ -50,13 +49,13 @@ type Me struct {
 }
 
 // DefaultPreferences are applied when no row exists.
-var DefaultPreferences = Preferences{Units: "metric", DefaultFlightVisibility: "event", PublicProfile: false}
+var DefaultPreferences = Preferences{Units: "metric", PublicProfile: false}
 
 // ProfileFromRow converts a DB row.
 func ProfileFromRow(p dbq.PilotProfile) *PilotProfile {
 	return &PilotProfile{PublicID: p.PublicID, DisplayName: p.DisplayName, Bio: p.Bio, Wing: p.Wing, LicenseNo: p.LicenseNo,
-		Nationality: p.Nationality, EmergencyContactName: p.EmergencyContactName,
-		EmergencyContactPhone: p.EmergencyContactPhone, BloodType: p.BloodType}
+		Nationality: p.Nationality, Phone: p.Phone, EmergencyContactName: p.EmergencyContactName,
+		EmergencyContactPhone: p.EmergencyContactPhone}
 }
 
 // LoadPreferences returns stored or default preferences.
@@ -68,7 +67,7 @@ func LoadPreferences(ctx context.Context, q *dbq.Queries, userID uuid.UUID) (Pre
 	if err != nil {
 		return Preferences{}, err
 	}
-	return Preferences{Units: p.Units, DefaultFlightVisibility: p.DefaultFlightVisibility, PublicProfile: p.PublicProfile}, nil
+	return Preferences{Units: p.Units, PublicProfile: p.PublicProfile}, nil
 }
 
 // LoadMe builds the Me document for a user.
@@ -138,7 +137,7 @@ func EnsurePilotProfile(ctx context.Context, q *dbq.Queries, userID uuid.UUID, d
 	return "", fmt.Errorf("could not allocate pilot public id")
 }
 
-// PilotRef is the compact pilot reference used in flights and incidents.
+// PilotRef is the compact pilot reference used in flights and retrievals.
 type PilotRef struct {
 	UserID   uuid.UUID `json:"user_id"`
 	FullName string    `json:"full_name"`

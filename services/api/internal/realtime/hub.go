@@ -77,33 +77,43 @@ func (c *Client) Enqueue(b []byte) bool {
 const (
 	KindEvent = iota
 	KindFlight
-	KindIncidents
+	KindRetrievals
 )
 
 // Subscription is one client's subscription with the authorization facts
-// captured at subscribe time; each message is re-checked against them plus the
-// message's own (current) flight facts.
+// captured at subscribe time. Facts are refreshed on every instance when a
+// member_changed / event_changed envelope arrives, and each message is checked
+// against them plus the message's own facts.
 type Subscription struct {
 	Channel string
 	Kind    int
 	Client  *Client
 	Actor   *authz.Actor
+	EventID uuid.UUID // event of the channel (or of the flight; Nil if none)
 
-	Event     authz.Event
-	Member    string
-	GuestView bool
+	FlightID uuid.UUID
 
-	FlightID      uuid.UUID
-	FlightEventID *uuid.UUID
-	FlightMember  string
-
-	IncidentAll    bool
-	IncidentEvents map[uuid.UUID]bool
+	factsMu sync.RWMutex
+	event   *authz.Event
+	access  authz.Access
 
 	mu      sync.Mutex
 	ready   bool
 	pending []pendingMsg
 	lastID  StreamID
+}
+
+// SetFacts sets the event facts and the actor's access (nil event: none).
+func (s *Subscription) SetFacts(e *authz.Event, acc authz.Access) {
+	s.factsMu.Lock()
+	s.event, s.access = e, acc
+	s.factsMu.Unlock()
+}
+
+func (s *Subscription) facts() (*authz.Event, authz.Access) {
+	s.factsMu.RLock()
+	defer s.factsMu.RUnlock()
+	return s.event, s.access
 }
 
 type pendingMsg struct {
@@ -135,81 +145,158 @@ func (a StreamID) String() string {
 	return strconv.FormatUint(a.MS, 10) + "-" + strconv.FormatUint(a.Seq, 10)
 }
 
-// Delivery variants.
+// Delivery variants. Values >= deliverRedacted carry strip bits for
+// retrieval payloads.
 const (
 	deliverNone = iota
 	deliverData
 	deliverPublic
 	deliverRemoved
+	deliverRedacted = 16
+)
+
+// strip bits for deliverRedacted
+const (
+	stripPilotPhone     = 1
+	stripRetrieverPhone = 2
+	stripPilotPosition  = 4
+	stripPrivate        = 8 // retriever_position and timeline (other retrievers)
 )
 
 // Decide applies the policy to one envelope.
 func (s *Subscription) Decide(env *bus.Envelope) int {
+	ev, acc := s.facts()
+	a := s.Actor
 	switch s.Kind {
-	case KindIncidents:
-		if env.Type != bus.TypeIncident {
+	case KindEvent:
+		if (env.Type != bus.TypePosition && env.Type != bus.TypeFlight) || env.OwnerID == nil || ev == nil {
 			return deliverNone
 		}
-		if s.IncidentAll || (env.EventID != nil && s.IncidentEvents[*env.EventID]) {
-			return deliverData
-		}
-		return deliverNone
-	case KindEvent, KindFlight:
-		if env.Type == bus.TypeIncident || env.OwnerID == nil {
-			return deliverNone
-		}
-		facts := authz.Flight{OwnerID: *env.OwnerID, EventID: env.EventID, Visibility: env.Visibility, IncidentOpen: env.IncidentOpen}
-		var ok, guest bool
-		if s.Kind == KindEvent {
-			if env.EventID == nil || *env.EventID != s.Event.ID {
-				ok = false
-			} else {
-				ok = authz.CanSeeLiveFlight(s.Actor, s.Event, s.Member, facts)
-			}
-			guest = s.GuestView
-		} else {
-			member := s.FlightMember
-			if !sameEvent(env.EventID, s.FlightEventID) {
-				member = "" // flight moved to another event; be conservative
-			}
-			ok = authz.CanViewFlight(s.Actor, facts, member)
-			guest = member == "" && !s.Actor.IsGlobalResponder()
-		}
-		if !ok {
+		if env.EventID == nil || *env.EventID != ev.ID || !authz.CanSeeLiveFlight(a, *ev, acc, *env.OwnerID) {
 			if env.Type == bus.TypeFlight {
 				return deliverRemoved
 			}
 			return deliverNone
 		}
-		if guest && !s.Actor.Is(*env.OwnerID) {
-			if len(env.PublicData) == 0 {
+		return guestOr(a, *env.OwnerID, env, authz.GuestView(a, *ev, acc))
+	case KindFlight:
+		if (env.Type != bus.TypePosition && env.Type != bus.TypeFlight) || env.OwnerID == nil {
+			return deliverNone
+		}
+		var fe *authz.Event
+		if ev != nil && env.EventID != nil && *env.EventID == ev.ID {
+			fe = ev // the flight may have moved to another event: be conservative
+		}
+		if !authz.CanViewFlight(a, authz.Flight{OwnerID: *env.OwnerID, EventID: env.EventID}, fe, acc) {
+			if env.Type == bus.TypeFlight {
+				return deliverRemoved
+			}
+			return deliverNone
+		}
+		guest := fe != nil && !a.IsAdmin() && authz.GuestView(a, *fe, acc)
+		return guestOr(a, *env.OwnerID, env, guest)
+	case KindRetrievals:
+		if env.EventID == nil || *env.EventID != s.EventID {
+			return deliverNone
+		}
+		switch env.Type {
+		case bus.TypeRetrieval:
+			if env.PilotID == nil {
 				return deliverNone
 			}
-			return deliverPublic
+			f := authz.Retrieval{EventID: *env.EventID, PilotID: *env.PilotID, RetrieverID: env.RetrieverID, Status: env.Status}
+			if !authz.CanViewRetrieval(a, acc, f) {
+				// retrievers (and a retriever who just lost it) learn it left their list
+				if acc.Role == authz.MemberRetriever || a.IsPtr(env.PrevRetrieverID) {
+					return deliverRemoved
+				}
+				return deliverNone
+			}
+			bits := 0
+			if !authz.CanSeePilotPhone(a, acc, f) {
+				bits |= stripPilotPhone
+			}
+			if !authz.CanSeeRetrieverPhone(a, acc, f) {
+				bits |= stripRetrieverPhone
+			}
+			if !authz.CanSeeRetrievalPilotPosition(a, acc, f) {
+				bits |= stripPilotPosition
+			}
+			if !authz.SeesAllRetrievals(a, acc) && !a.Is(f.PilotID) && !a.IsPtr(f.RetrieverID) {
+				bits |= stripPrivate
+			}
+			if bits == 0 {
+				return deliverData
+			}
+			return deliverRedacted + bits
+		case bus.TypePilotPosition:
+			if env.PilotID == nil {
+				return deliverNone
+			}
+			f := authz.Retrieval{EventID: *env.EventID, PilotID: *env.PilotID, RetrieverID: env.RetrieverID, Status: env.Status}
+			if authz.CanSeePilotPositionMessage(a, acc, f) {
+				return deliverData
+			}
+		case bus.TypeRetrieverPosition:
+			if env.UserID != nil && authz.CanSeeRetriever(a, acc, *env.UserID, env.PilotIDs) {
+				return deliverData
+			}
 		}
-		return deliverData
 	}
 	return deliverNone
 }
 
-func sameEvent(a, b *uuid.UUID) bool {
-	if a == nil || b == nil {
-		return a == nil && b == nil
+func guestOr(a *authz.Actor, owner uuid.UUID, env *bus.Envelope, guest bool) int {
+	if guest && !a.Is(owner) {
+		if len(env.PublicData) == 0 {
+			return deliverNone
+		}
+		return deliverPublic
 	}
-	return *a == *b
+	return deliverData
+}
+
+// redact removes fields from a retrieval payload according to bits.
+func redact(raw json.RawMessage, bits int) json.RawMessage {
+	var m map[string]any
+	if json.Unmarshal(raw, &m) != nil {
+		return nil
+	}
+	if p, ok := m["pilot"].(map[string]any); ok && bits&stripPilotPhone != 0 {
+		p["phone"] = ""
+	}
+	if r, ok := m["retriever"].(map[string]any); ok && bits&stripRetrieverPhone != 0 {
+		r["phone"] = ""
+	}
+	if bits&stripPilotPosition != 0 {
+		m["pilot_position"] = nil
+	}
+	if bits&stripPrivate != 0 {
+		m["retriever_position"] = nil
+		m["updates"] = []any{}
+	}
+	b, _ := json.Marshal(m)
+	return b
 }
 
 // Render builds the wire message for a variant.
 func Render(env *bus.Envelope, channel, cursor string, variant int) []byte {
 	var data json.RawMessage
-	switch variant {
-	case deliverData:
+	switch {
+	case variant == deliverData:
 		data = env.Data
-	case deliverPublic:
+	case variant == deliverPublic:
 		data = env.PublicData
-	case deliverRemoved:
-		data, _ = json.Marshal(map[string]any{"id": env.FlightID, "visibility": env.Visibility, "removed": true})
+	case variant == deliverRemoved && env.Type == bus.TypeRetrieval:
+		data, _ = json.Marshal(map[string]any{"id": env.RetrievalID, "event_id": env.EventID, "status": env.Status, "removed": true})
+	case variant == deliverRemoved:
+		data, _ = json.Marshal(map[string]any{"id": env.FlightID, "event_id": env.EventID, "removed": true})
+	case variant >= deliverRedacted:
+		data = redact(env.Data, variant-deliverRedacted)
 	default:
+		return nil
+	}
+	if data == nil {
 		return nil
 	}
 	b, _ := json.Marshal(struct {
@@ -331,9 +418,12 @@ func (h *Hub) SlowConsumer(c *Client) {
 // ChannelsFor lists the channels an envelope is published on.
 func ChannelsFor(env *bus.Envelope) []string {
 	switch env.Type {
-	case bus.TypeIncident:
-		return []string{"incidents"}
-	default:
+	case bus.TypeRetrieval, bus.TypePilotPosition, bus.TypeRetrieverPosition:
+		if env.EventID == nil {
+			return nil
+		}
+		return []string{"retrievals:" + env.EventID.String()}
+	case bus.TypePosition, bus.TypeFlight:
 		var out []string
 		if env.EventID != nil {
 			out = append(out, "event:"+env.EventID.String())
@@ -343,12 +433,48 @@ func ChannelsFor(env *bus.Envelope) []string {
 		}
 		return out
 	}
+	return nil
+}
+
+// applyFactChange updates subscriptions after a membership or event change.
+func (h *Hub) applyFactChange(env *bus.Envelope) {
+	if env.EventID == nil {
+		return
+	}
+	h.mu.RLock()
+	var subs []*Subscription
+	for _, m := range h.subs {
+		for _, s := range m {
+			if s.EventID == *env.EventID {
+				subs = append(subs, s)
+			}
+		}
+	}
+	h.mu.RUnlock()
+	for _, s := range subs {
+		ev, acc := s.facts()
+		switch env.Type {
+		case bus.TypeMemberChanged:
+			if env.UserID != nil && env.Access != nil && s.Actor.Is(*env.UserID) {
+				s.SetFacts(ev, *env.Access)
+			}
+		case bus.TypeEventChanged:
+			if env.Event != nil {
+				e := *env.Event
+				s.SetFacts(&e, acc)
+			}
+		}
+	}
 }
 
 // Dispatch fans one stream entry out to local subscribers.
 func (h *Hub) Dispatch(streamID string, env *bus.Envelope) {
 	id, ok := ParseStreamID(streamID)
 	if !ok {
+		return
+	}
+	if env.Type == bus.TypeMemberChanged || env.Type == bus.TypeEventChanged {
+		h.applyFactChange(env)
 		return
 	}
 	for _, ch := range ChannelsFor(env) {
@@ -362,16 +488,21 @@ func (h *Hub) Dispatch(streamID string, env *bus.Envelope) {
 		if len(subs) == 0 {
 			continue
 		}
-		var cache [4][]byte
+		cache := map[int][]byte{}
 		for _, s := range subs {
 			v := s.Decide(env)
 			if v == deliverNone {
 				continue
 			}
-			if cache[v] == nil {
-				cache[v] = Render(env, ch, streamID, v)
+			b, ok := cache[v]
+			if !ok {
+				b = Render(env, ch, streamID, v)
+				cache[v] = b
 			}
-			s.deliver(id, cache[v], h.SlowConsumer)
+			if b == nil {
+				continue
+			}
+			s.deliver(id, b, h.SlowConsumer)
 			h.Metrics.WSMessages.Inc()
 		}
 	}

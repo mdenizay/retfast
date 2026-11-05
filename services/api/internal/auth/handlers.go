@@ -92,9 +92,6 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) error {
 		if err != nil {
 			return err
 		}
-		if err := q.AddUserRole(ctx, dbq.AddUserRoleParams{UserID: u.ID, Role: authz.RolePilot}); err != nil {
-			return err
-		}
 		if _, err := users.EnsurePilotProfile(ctx, q, u.ID, name, ""); err != nil {
 			return err
 		}

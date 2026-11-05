@@ -350,10 +350,6 @@ func (ing *Ingestor) Ingest(ctx context.Context, userID uuid.UUID, b *BatchIn) (
 			}
 			// 5. realtime outbox (same transaction)
 			if newLatest {
-				open, err := q.FlightHasOpenIncident(ctx, &f.ID)
-				if err != nil {
-					return err
-				}
 				pos := flights.Position{ID: latest.id, Seq: latest.seq, T: httpx.T(latest.in.T.Time), ReceivedAt: httpx.T(now),
 					Lat: *latest.in.Lat, Lon: *latest.in.Lon, GPSAltM: latest.in.GPSAltM, HAccM: *latest.in.HAccM, VAccM: latest.in.VAccM,
 					SpeedMS: latest.in.SpeedMS, CourseDeg: latest.in.CourseDeg}
@@ -370,7 +366,7 @@ func (ing *Ingestor) Ingest(ctx context.Context, userID uuid.UUID, b *BatchIn) (
 				pub, _ := json.Marshal(posData{f.ID, pilot, f.IsSimulated, "recording", pos})
 				fid, owner := f.ID, f.PilotID
 				if err := bus.Write(ctx, q, bus.Envelope{Type: bus.TypePosition, EventID: f.EventID, FlightID: &fid, OwnerID: &owner,
-					Visibility: f.Visibility, IncidentOpen: open, Data: data, PublicData: pub, ServerReceivedMS: now.UnixMilli()}); err != nil {
+					Data: data, PublicData: pub, ServerReceivedMS: now.UnixMilli()}); err != nil {
 					return err
 				}
 			}

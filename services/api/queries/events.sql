@@ -1,23 +1,23 @@
 -- name: CreateEvent :one
 INSERT INTO events (slug, name, description, kind, status, is_demo, visibility, location_name, center_lat, center_lon,
-    center_is_approximate, starts_at, ends_at, cover_image_url, registration_open, live_tracking, flight_recording,
-    observers_allowed, emergency_testing, public_live_map, organizer_id)
+    center_is_approximate, starts_at, ends_at, cover_image_url, applications_open, live_tracking, public_live_map,
+    pilots_see_each_other, landing_prompt, created_by)
 VALUES (@slug, @name, @description, @kind, @status, @is_demo, @visibility, @location_name, sqlc.narg('center_lat'),
     sqlc.narg('center_lon'), @center_is_approximate, @starts_at, @ends_at, sqlc.narg('cover_image_url'),
-    @registration_open, @live_tracking, @flight_recording, @observers_allowed, @emergency_testing, @public_live_map,
-    sqlc.narg('organizer_id'))
+    @applications_open, @live_tracking, @public_live_map, @pilots_see_each_other, @landing_prompt,
+    sqlc.narg('created_by'))
 RETURNING id;
 
 -- name: GetEventByID :one
 SELECT id, slug, name, description, kind, status, is_demo, visibility, location_name, center_lat, center_lon,
-    center_is_approximate, starts_at, ends_at, cover_image_url, registration_open, live_tracking, flight_recording,
-    observers_allowed, emergency_testing, public_live_map, organizer_id, created_at, updated_at
+    center_is_approximate, starts_at, ends_at, cover_image_url, applications_open, live_tracking, public_live_map,
+    pilots_see_each_other, landing_prompt, created_by, created_at, updated_at
 FROM events WHERE id = $1;
 
 -- name: GetEventBySlug :one
 SELECT id, slug, name, description, kind, status, is_demo, visibility, location_name, center_lat, center_lon,
-    center_is_approximate, starts_at, ends_at, cover_image_url, registration_open, live_tracking, flight_recording,
-    observers_allowed, emergency_testing, public_live_map, organizer_id, created_at, updated_at
+    center_is_approximate, starts_at, ends_at, cover_image_url, applications_open, live_tracking, public_live_map,
+    pilots_see_each_other, landing_prompt, created_by, created_at, updated_at
 FROM events WHERE slug = @slug::text;
 
 -- name: EventSlugExists :one
@@ -27,9 +27,9 @@ SELECT EXISTS (SELECT 1 FROM events WHERE slug = @slug::text);
 UPDATE events SET slug = @slug, name = @name, description = @description, kind = @kind, status = @status,
     visibility = @visibility, location_name = @location_name, center_lat = sqlc.narg('center_lat'),
     center_lon = sqlc.narg('center_lon'), center_is_approximate = @center_is_approximate, starts_at = @starts_at,
-    ends_at = @ends_at, cover_image_url = sqlc.narg('cover_image_url'), registration_open = @registration_open,
-    live_tracking = @live_tracking, flight_recording = @flight_recording, observers_allowed = @observers_allowed,
-    emergency_testing = @emergency_testing, public_live_map = @public_live_map, updated_at = now()
+    ends_at = @ends_at, cover_image_url = sqlc.narg('cover_image_url'), applications_open = @applications_open,
+    live_tracking = @live_tracking, public_live_map = @public_live_map,
+    pilots_see_each_other = @pilots_see_each_other, landing_prompt = @landing_prompt, updated_at = now()
 WHERE id = @id;
 
 -- name: UpdateEventSchedule :exec
@@ -37,13 +37,15 @@ UPDATE events SET starts_at = @starts_at, ends_at = @ends_at, updated_at = now()
 
 -- name: ListEvents :many
 SELECT e.id, e.slug, e.name, e.description, e.kind, e.status, e.is_demo, e.visibility, e.location_name, e.center_lat,
-    e.center_lon, e.center_is_approximate, e.starts_at, e.ends_at, e.cover_image_url, e.registration_open,
-    e.live_tracking, e.flight_recording, e.observers_allowed, e.emergency_testing, e.public_live_map, e.organizer_id,
+    e.center_lon, e.center_is_approximate, e.starts_at, e.ends_at, e.cover_image_url, e.applications_open,
+    e.live_tracking, e.public_live_map, e.pilots_see_each_other, e.landing_prompt, e.created_by,
     e.created_at, e.updated_at
 FROM events e
-LEFT JOIN event_participants m ON m.event_id = e.id AND m.user_id = sqlc.narg('viewer_id')::uuid AND m.status = 'active'
-WHERE (@is_admin::bool OR (e.visibility = 'public' AND e.status <> 'draft') OR m.user_id IS NOT NULL)
-  AND (@is_admin::bool OR e.status <> 'draft' OR m.role = 'organizer')
+LEFT JOIN event_members m ON m.event_id = e.id AND m.user_id = sqlc.narg('viewer_id')::uuid AND m.status = 'active'
+LEFT JOIN event_organizers o ON o.event_id = e.id AND o.user_id = sqlc.narg('viewer_id')::uuid
+WHERE (@is_admin::bool OR (e.visibility = 'public' AND e.status <> 'draft') OR m.user_id IS NOT NULL OR o.user_id IS NOT NULL)
+  AND (@is_admin::bool OR e.status <> 'draft' OR o.user_id IS NOT NULL)
+  AND (NOT @mine::bool OR m.user_id IS NOT NULL OR o.user_id IS NOT NULL)
   AND (cardinality(@statuses::text[]) = 0 OR e.status = ANY (@statuses::text[]))
   AND (@q::text = '' OR e.name ILIKE '%' || @q::text || '%' OR e.location_name ILIKE '%' || @q::text || '%')
   AND (sqlc.narg('from_t')::timestamptz IS NULL OR e.ends_at >= sqlc.narg('from_t')::timestamptz)
@@ -56,50 +58,121 @@ WHERE (@is_admin::bool OR (e.visibility = 'public' AND e.status <> 'draft') OR m
 ORDER BY e.starts_at DESC, e.id DESC
 LIMIT @lim;
 
--- name: CountActiveParticipants :many
-SELECT event_id, count(*)::int AS n FROM event_participants
-WHERE event_id = ANY (@event_ids::uuid[]) AND status = 'active' AND role = 'participant'
-GROUP BY event_id;
+-- name: EventCounts :many
+SELECT e.id AS event_id,
+    (SELECT count(*) FROM event_members m WHERE m.event_id = e.id AND m.status = 'active' AND m.role = 'pilot')::int AS pilots,
+    (SELECT count(*) FROM event_members m WHERE m.event_id = e.id AND m.status = 'active' AND m.role = 'observer')::int AS observers,
+    (SELECT count(*) FROM event_members m WHERE m.event_id = e.id AND m.status = 'active' AND m.role = 'retriever')::int AS retrievers,
+    (SELECT count(*) FROM event_applications a WHERE a.event_id = e.id AND a.status = 'pending')::int AS pending_applications
+FROM events e WHERE e.id = ANY (@event_ids::uuid[]);
 
--- name: GetMembership :one
-SELECT * FROM event_participants WHERE event_id = @event_id AND user_id = @user_id;
+-- name: ListOrganizersForEvents :many
+SELECT o.event_id, o.user_id, u.full_name, o.assigned_at
+FROM event_organizers o JOIN users u ON u.id = o.user_id
+WHERE o.event_id = ANY (@event_ids::uuid[])
+ORDER BY o.assigned_at, u.full_name;
 
--- name: ListMembershipsForUser :many
-SELECT event_id, role FROM event_participants WHERE user_id = $1 AND status = 'active';
+-- name: GetEventAccess :one
+SELECT EXISTS (SELECT 1 FROM event_organizers o WHERE o.event_id = @event_id AND o.user_id = @user_id)::bool AS is_organizer,
+    COALESCE((SELECT m.role FROM event_members m WHERE m.event_id = @event_id AND m.user_id = @user_id AND m.status = 'active'), '')::text AS role;
 
--- name: UpsertParticipant :exec
-INSERT INTO event_participants (event_id, user_id, role, status, added_by)
+-- name: ListAccessForUser :many
+SELECT e.id AS event_id,
+    EXISTS (SELECT 1 FROM event_organizers o WHERE o.event_id = e.id AND o.user_id = @user_id)::bool AS is_organizer,
+    COALESCE((SELECT m.role FROM event_members m WHERE m.event_id = e.id AND m.user_id = @user_id AND m.status = 'active'), '')::text AS role
+FROM events e WHERE e.id = ANY (@event_ids::uuid[]);
+
+-- name: UserOrganizesAny :one
+SELECT EXISTS (SELECT 1 FROM event_organizers WHERE user_id = $1)::bool;
+
+-- name: AddOrganizer :execrows
+INSERT INTO event_organizers (event_id, user_id, assigned_by) VALUES (@event_id, @user_id, sqlc.narg('assigned_by'))
+ON CONFLICT DO NOTHING;
+
+-- name: RemoveOrganizer :execrows
+DELETE FROM event_organizers WHERE event_id = @event_id AND user_id = @user_id;
+
+-- name: GetMember :one
+SELECT * FROM event_members WHERE event_id = @event_id AND user_id = @user_id;
+
+-- name: UpsertMember :exec
+INSERT INTO event_members (event_id, user_id, role, status, added_by)
 VALUES (@event_id, @user_id, @role, 'active', sqlc.narg('added_by'))
-ON CONFLICT (event_id, user_id) DO UPDATE SET role = EXCLUDED.role, status = 'active', updated_at = now();
+ON CONFLICT (event_id, user_id) DO UPDATE SET role = EXCLUDED.role, status = 'active', updated_at = now(),
+    joined_at = CASE WHEN event_members.status = 'removed' THEN now() ELSE event_members.joined_at END;
 
--- name: EnsureParticipant :exec
-INSERT INTO event_participants (event_id, user_id, role, status, added_by)
+-- name: EnsureMember :execrows
+INSERT INTO event_members (event_id, user_id, role, status, added_by)
 VALUES (@event_id, @user_id, @role, 'active', sqlc.narg('added_by'))
 ON CONFLICT (event_id, user_id) DO NOTHING;
 
--- name: SetParticipantRole :execrows
-UPDATE event_participants SET role = @role, updated_at = now() WHERE event_id = @event_id AND user_id = @user_id;
-
--- name: RemoveParticipant :execrows
-UPDATE event_participants SET status = 'removed', updated_at = now()
+-- name: RemoveMember :execrows
+UPDATE event_members SET status = 'removed', updated_at = now()
 WHERE event_id = @event_id AND user_id = @user_id AND status = 'active';
 
--- name: CountOrganizers :one
-SELECT count(*) FROM event_participants WHERE event_id = $1 AND role = 'organizer' AND status = 'active';
+-- name: ListMembers :many
+-- Union of organizers and members; role is NULL for organizers without a member role.
+SELECT u.id AS user_id, u.full_name, p.public_id, COALESCE(p.phone, '')::text AS phone,
+    m.role AS role, COALESCE(m.status, 'active')::text AS status,
+    (o.user_id IS NOT NULL)::bool AS is_organizer,
+    COALESCE(m.joined_at, o.assigned_at)::timestamptz AS joined_at
+FROM users u
+LEFT JOIN event_members m ON m.event_id = @event_id AND m.user_id = u.id
+LEFT JOIN event_organizers o ON o.event_id = @event_id AND o.user_id = u.id
+LEFT JOIN pilot_profiles p ON p.user_id = u.id
+WHERE (m.user_id IS NOT NULL OR o.user_id IS NOT NULL)
+  AND (@include_removed::bool OR o.user_id IS NOT NULL OR m.status = 'active')
+  AND (@role::text = '' OR m.role = @role::text)
+ORDER BY (o.user_id IS NULL), CASE m.role WHEN 'pilot' THEN 0 WHEN 'retriever' THEN 1 ELSE 2 END, u.full_name;
 
--- name: ListParticipants :many
-SELECT m.user_id, u.full_name, p.public_id, m.role, m.status, m.joined_at
-FROM event_participants m
-JOIN users u ON u.id = m.user_id
-LEFT JOIN pilot_profiles p ON p.user_id = m.user_id
-WHERE m.event_id = @event_id AND (@include_removed::bool OR m.status = 'active')
-ORDER BY CASE m.role WHEN 'organizer' THEN 0 WHEN 'participant' THEN 1 ELSE 2 END, u.full_name;
+-- name: ListActiveMemberIDs :many
+SELECT user_id FROM event_members WHERE event_id = $1 AND status = 'active';
 
--- name: ListEventOrganizerIDs :many
-SELECT user_id FROM event_participants WHERE event_id = $1 AND role = 'organizer' AND status = 'active';
+-- name: ListMemberIDsByRole :many
+SELECT user_id FROM event_members WHERE event_id = @event_id AND status = 'active' AND role = @role;
+
+-- name: ListOrganizerIDs :many
+SELECT user_id FROM event_organizers WHERE event_id = $1;
 
 -- name: GetUserName :one
 SELECT id, full_name FROM users WHERE id = $1;
+
+-- name: CreateApplication :one
+INSERT INTO event_applications (event_id, user_id, message)
+VALUES (@event_id, @user_id, @message)
+RETURNING id;
+
+-- name: GetApplication :one
+SELECT * FROM event_applications WHERE id = @id AND event_id = @event_id;
+
+-- name: LockApplication :one
+SELECT * FROM event_applications WHERE id = @id AND event_id = @event_id FOR UPDATE;
+
+-- name: DecideApplication :execrows
+UPDATE event_applications SET status = @status, granted_role = sqlc.narg('granted_role'),
+    decided_by = sqlc.narg('decided_by'), decision_note = @decision_note, decided_at = now(), updated_at = now()
+WHERE id = @id AND status = 'pending';
+
+-- name: ApprovePendingApplicationsForUser :execrows
+UPDATE event_applications SET status = 'approved', granted_role = @granted_role, decided_by = sqlc.narg('decided_by'),
+    decision_note = 'added directly', decided_at = now(), updated_at = now()
+WHERE event_id = @event_id AND user_id = @user_id AND status = 'pending';
+
+-- name: ListApplications :many
+SELECT a.*, u.full_name, u.email, p.public_id, COALESCE(d.full_name, '')::text AS decided_by_name
+FROM event_applications a
+JOIN users u ON u.id = a.user_id
+LEFT JOIN pilot_profiles p ON p.user_id = a.user_id
+LEFT JOIN users d ON d.id = a.decided_by
+WHERE a.event_id = @event_id AND (cardinality(@statuses::text[]) = 0 OR a.status = ANY (@statuses::text[]))
+  AND (sqlc.narg('only_id')::uuid IS NULL OR a.id = sqlc.narg('only_id')::uuid)
+ORDER BY a.created_at, a.id;
+
+-- name: LatestApplicationsForUser :many
+SELECT DISTINCT ON (event_id) id, event_id, status
+FROM event_applications
+WHERE user_id = @user_id AND event_id = ANY (@event_ids::uuid[])
+ORDER BY event_id, created_at DESC, id DESC;
 
 -- name: CreateLaunchSite :one
 INSERT INTO launch_sites (event_id, name, lat, lon, elevation_m, notes, is_verified)
@@ -126,13 +199,19 @@ WHERE id = @id AND event_id = @event_id;
 -- name: DeleteLaunchSite :execrows
 DELETE FROM launch_sites WHERE id = @id AND event_id = @event_id;
 
--- name: EventReportParticipation :one
+-- name: EventReportMembers :one
 SELECT
-    count(*) FILTER (WHERE role = 'participant' AND status = 'active')::int AS participants,
-    count(*) FILTER (WHERE role = 'observer' AND status = 'active')::int AS observers,
-    count(*) FILTER (WHERE role = 'organizer' AND status = 'active')::int AS organizers,
-    count(*) FILTER (WHERE status = 'removed')::int AS removed
-FROM event_participants WHERE event_id = $1;
+    count(*) FILTER (WHERE m.role = 'pilot' AND m.status = 'active')::int AS pilots,
+    count(*) FILTER (WHERE m.role = 'observer' AND m.status = 'active')::int AS observers,
+    count(*) FILTER (WHERE m.role = 'retriever' AND m.status = 'active')::int AS retrievers,
+    count(*) FILTER (WHERE m.status = 'removed')::int AS removed
+FROM event_members m WHERE m.event_id = $1;
+
+-- name: CountOrganizers :one
+SELECT count(*)::int FROM event_organizers o WHERE o.event_id = $1;
+
+-- name: CountPendingApplications :one
+SELECT count(*)::int FROM event_applications a WHERE a.event_id = $1 AND a.status = 'pending';
 
 -- name: EventReportFlights :many
 SELECT f.id, f.pilot_id, u.full_name, f.status, f.is_simulated, f.started_at, f.ended_at, f.sample_count,
@@ -140,3 +219,20 @@ SELECT f.id, f.pilot_id, u.full_name, f.status, f.is_simulated, f.started_at, f.
 FROM flight_sessions f JOIN users u ON u.id = f.pilot_id
 WHERE f.event_id = $1
 ORDER BY f.started_at;
+
+-- name: EventReportRetrievals :one
+SELECT
+    count(*)::int AS total,
+    count(*) FILTER (WHERE status = 'requested')::int AS requested,
+    count(*) FILTER (WHERE status = 'accepted')::int AS accepted,
+    count(*) FILTER (WHERE status = 'picked_up')::int AS picked_up,
+    count(*) FILTER (WHERE status = 'delivered')::int AS delivered,
+    count(*) FILTER (WHERE status = 'cancelled')::int AS cancelled,
+    count(*) FILTER (WHERE is_simulated)::int AS simulated,
+    COALESCE((percentile_cont(0.5) WITHIN GROUP (ORDER BY extract(epoch FROM accepted_at - requested_at))
+        FILTER (WHERE accepted_at IS NOT NULL)), -1)::float8 AS median_request_to_accept_s,
+    COALESCE((percentile_cont(0.5) WITHIN GROUP (ORDER BY extract(epoch FROM picked_up_at - accepted_at))
+        FILTER (WHERE picked_up_at IS NOT NULL AND accepted_at IS NOT NULL)), -1)::float8 AS median_accept_to_pickup_s,
+    COALESCE((percentile_cont(0.5) WITHIN GROUP (ORDER BY extract(epoch FROM delivered_at - picked_up_at))
+        FILTER (WHERE delivered_at IS NOT NULL AND picked_up_at IS NOT NULL)), -1)::float8 AS median_pickup_to_delivery_s
+FROM retrievals WHERE event_id = $1;

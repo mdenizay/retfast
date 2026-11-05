@@ -28,7 +28,7 @@ func TestTelemetryIdempotencyAndDedup(t *testing.T) {
 	e := newEnv(t)
 	ctx := context.Background()
 	u := e.Register("Telemetry Pilot")
-	fid := e.CreateFlight(u, nil, "private")
+	fid := e.CreateFlight(u, nil)
 	t0 := time.Now().Add(-5 * time.Minute)
 
 	// same batch twice → identical classification
@@ -119,7 +119,7 @@ func TestTelemetryValidationAndEndedFlight(t *testing.T) {
 	t.Parallel()
 	e := newEnv(t)
 	u := e.Register("Validation Pilot")
-	fid := e.CreateFlight(u, nil, "event")
+	fid := e.CreateFlight(u, nil)
 	now := time.Now()
 	bad := func(mod func(m map[string]any)) map[string]any {
 		s := Sample(0, now.Add(-time.Minute), 37.07, 29.34, 2000)
@@ -208,41 +208,50 @@ func TestFlightCreateIdempotencyAndVisibility(t *testing.T) {
 	u := e.Register("Owner")
 	other := e.Register("Other")
 	id := uuid.New()
-	body := map[string]any{"id": id, "started_at": time.Now().UTC().Format(time.RFC3339), "visibility": "private"}
+	body := map[string]any{"id": id, "started_at": time.Now().UTC().Format(time.RFC3339)}
 	first := e.Must(e.Do("POST", "/flights", body, Req{Token: u.Token}), 201).JSON()
 	second := e.Must(e.Do("POST", "/flights", body, Req{Token: u.Token}), 200).JSON()
 	if first["public_id"] != second["public_id"] {
 		t.Fatal("idempotent create returned a different flight")
 	}
+	if _, has := first["visibility"]; has {
+		t.Fatal("flights no longer carry a visibility")
+	}
 	if r := e.Do("POST", "/flights", body, Req{Token: other.Token}); r.Status != 409 {
 		t.Fatalf("foreign id: %d", r.Status)
 	}
-	// private flight invisible to others and guests (404), visible to owner
+	// a flight outside events is private to its pilot (404 for others and guests)
 	if r := e.Do("GET", "/flights/"+id.String(), nil, Req{Token: other.Token}); r.Status != 404 {
 		t.Fatalf("private flight for other: %d", r.Status)
 	}
 	if r := e.Do("GET", "/flights/"+first["public_id"].(string), nil, Req{}); r.Status != 404 {
 		t.Fatalf("private flight for guest: %d", r.Status)
 	}
-	e.Must(e.Do("PATCH", "/flights/"+id.String(), map[string]any{"visibility": "public"}, Req{Token: u.Token}), 200)
-	e.Must(e.Do("GET", "/flights/"+first["public_id"].(string), nil, Req{}), 200)
-	if r := e.Do("PATCH", "/flights/"+id.String(), map[string]any{"visibility": "private"}, Req{Token: other.Token}); r.Status != 403 {
+	if r := e.Do("PATCH", "/flights/"+id.String(), map[string]any{"event_id": nil}, Req{Token: other.Token}); r.Status != 404 && r.Status != 403 {
 		t.Fatalf("non-owner patch: %d", r.Status)
 	}
-	// event linking requires membership
-	org := e.Register("Org")
-	e.Grant(org, "event_organizer")
-	ev := e.CreateEvent(org, nil)
+	// event linking requires the pilot role in the event
+	adm := e.Admin("Admin")
+	ev := e.CreateEvent(adm, nil)
 	if r := e.Do("PATCH", "/flights/"+id.String(), map[string]any{"event_id": ev["id"]}, Req{Token: u.Token}); r.Status != 403 {
 		t.Fatalf("link without membership: %d", r.Status)
 	}
-	e.Must(e.Do("POST", "/events/"+ev["id"].(string)+"/join", nil, Req{Token: u.Token}), 200)
+	e.AddMember(adm, ev["id"], u, "observer")
+	if r := e.Do("PATCH", "/flights/"+id.String(), map[string]any{"event_id": ev["id"]}, Req{Token: u.Token}); r.Status != 403 {
+		t.Fatalf("observers cannot record flights: %d", r.Status)
+	}
+	e.Must(e.Do("PATCH", "/events/"+ev["id"].(string)+"/members/"+u.ID.String(), map[string]any{"role": "pilot"}, Req{Token: adm.Token}), 200)
 	e.Must(e.Do("PATCH", "/flights/"+id.String(), map[string]any{"event_id": ev["id"]}, Req{Token: u.Token}), 200)
-	list := e.Must(e.Do("GET", "/flights?event_id="+ev["id"].(string), nil, Req{Token: org.Token}), 200).JSON()["items"].([]any)
+	list := e.Must(e.Do("GET", "/flights?event_id="+ev["id"].(string), nil, Req{Token: adm.Token}), 200).JSON()["items"].([]any)
 	if len(list) != 1 {
-		t.Fatalf("organizer event flight list = %d", len(list))
+		t.Fatalf("admin event flight list = %d", len(list))
 	}
 	if r := e.Do("GET", "/flights?event_id="+ev["id"].(string), nil, Req{Token: other.Token}); r.Status != http.StatusForbidden {
 		t.Fatalf("outsider event flights: %d", r.Status)
+	}
+	// ending the flight freezes its event
+	e.Must(e.Do("POST", "/flights/"+id.String()+"/end", map[string]any{}, Req{Token: u.Token}), 200)
+	if r := e.Do("PATCH", "/flights/"+id.String(), map[string]any{"event_id": nil}, Req{Token: u.Token}); r.Status != 409 {
+		t.Fatalf("event change after end: %d", r.Status)
 	}
 }

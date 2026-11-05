@@ -30,7 +30,7 @@ func (q *Queries) AddUserRole(ctx context.Context, arg AddUserRoleParams) error 
 
 const anonymizePilotProfile = `-- name: AnonymizePilotProfile :exec
 UPDATE pilot_profiles SET display_name = 'Silinmiş pilot', bio = '', wing = '', license_no = '', nationality = '',
-    emergency_contact_name = '', emergency_contact_phone = '', blood_type = '', updated_at = now()
+    phone = '', emergency_contact_name = '', emergency_contact_phone = '', updated_at = now()
 WHERE user_id = $1
 `
 
@@ -215,20 +215,6 @@ func (q *Queries) DeleteUserRoles(ctx context.Context, userID uuid.UUID) error {
 	return err
 }
 
-const deleteUserRolesNotIn = `-- name: DeleteUserRolesNotIn :exec
-DELETE FROM user_roles WHERE user_id = $1 AND NOT (role = ANY ($2::text[]))
-`
-
-type DeleteUserRolesNotInParams struct {
-	UserID uuid.UUID
-	Roles  []string
-}
-
-func (q *Queries) DeleteUserRolesNotIn(ctx context.Context, arg DeleteUserRolesNotInParams) error {
-	_, err := q.db.Exec(ctx, deleteUserRolesNotIn, arg.UserID, arg.Roles)
-	return err
-}
-
 const ensurePreferences = `-- name: EnsurePreferences :exec
 INSERT INTO user_preferences (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING
 `
@@ -259,7 +245,7 @@ func (q *Queries) GetPendingDeletion(ctx context.Context, userID uuid.UUID) (Acc
 }
 
 const getPilotProfile = `-- name: GetPilotProfile :one
-SELECT user_id, public_id, display_name, bio, wing, license_no, nationality, emergency_contact_name, emergency_contact_phone, blood_type, created_at, updated_at FROM pilot_profiles WHERE user_id = $1
+SELECT user_id, public_id, display_name, bio, wing, license_no, nationality, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at FROM pilot_profiles WHERE user_id = $1
 `
 
 func (q *Queries) GetPilotProfile(ctx context.Context, userID uuid.UUID) (PilotProfile, error) {
@@ -273,9 +259,9 @@ func (q *Queries) GetPilotProfile(ctx context.Context, userID uuid.UUID) (PilotP
 		&i.Wing,
 		&i.LicenseNo,
 		&i.Nationality,
+		&i.Phone,
 		&i.EmergencyContactName,
 		&i.EmergencyContactPhone,
-		&i.BloodType,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -283,7 +269,7 @@ func (q *Queries) GetPilotProfile(ctx context.Context, userID uuid.UUID) (PilotP
 }
 
 const getPilotProfileByPublicID = `-- name: GetPilotProfileByPublicID :one
-SELECT p.user_id, p.public_id, p.display_name, p.bio, p.wing, p.license_no, p.nationality, p.emergency_contact_name, p.emergency_contact_phone, p.blood_type, p.created_at, p.updated_at, u.full_name, pr.public_profile, u.disabled_at, u.deleted_at
+SELECT p.user_id, p.public_id, p.display_name, p.bio, p.wing, p.license_no, p.nationality, p.phone, p.emergency_contact_name, p.emergency_contact_phone, p.created_at, p.updated_at, u.full_name, pr.public_profile, u.disabled_at, u.deleted_at
 FROM pilot_profiles p
 JOIN users u ON u.id = p.user_id
 LEFT JOIN user_preferences pr ON pr.user_id = p.user_id
@@ -298,9 +284,9 @@ type GetPilotProfileByPublicIDRow struct {
 	Wing                  string
 	LicenseNo             string
 	Nationality           string
+	Phone                 string
 	EmergencyContactName  string
 	EmergencyContactPhone string
-	BloodType             string
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
 	FullName              string
@@ -320,9 +306,9 @@ func (q *Queries) GetPilotProfileByPublicID(ctx context.Context, publicID string
 		&i.Wing,
 		&i.LicenseNo,
 		&i.Nationality,
+		&i.Phone,
 		&i.EmergencyContactName,
 		&i.EmergencyContactPhone,
-		&i.BloodType,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.FullName,
@@ -334,7 +320,7 @@ func (q *Queries) GetPilotProfileByPublicID(ctx context.Context, publicID string
 }
 
 const getPreferences = `-- name: GetPreferences :one
-SELECT user_id, units, default_flight_visibility, public_profile, updated_at FROM user_preferences WHERE user_id = $1
+SELECT user_id, units, public_profile, updated_at FROM user_preferences WHERE user_id = $1
 `
 
 func (q *Queries) GetPreferences(ctx context.Context, userID uuid.UUID) (UserPreference, error) {
@@ -343,7 +329,6 @@ func (q *Queries) GetPreferences(ctx context.Context, userID uuid.UUID) (UserPre
 	err := row.Scan(
 		&i.UserID,
 		&i.Units,
-		&i.DefaultFlightVisibility,
 		&i.PublicProfile,
 		&i.UpdatedAt,
 	)
@@ -533,11 +518,34 @@ func (q *Queries) PilotPublicIDExists(ctx context.Context, publicID string) (boo
 }
 
 const removeUserMemberships = `-- name: RemoveUserMemberships :exec
-UPDATE event_participants SET status = 'removed', updated_at = now() WHERE user_id = $1
+UPDATE event_members SET status = 'removed', updated_at = now() WHERE user_id = $1
 `
 
 func (q *Queries) RemoveUserMemberships(ctx context.Context, userID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, removeUserMemberships, userID)
+	return err
+}
+
+const removeUserOrganizerships = `-- name: RemoveUserOrganizerships :exec
+DELETE FROM event_organizers WHERE user_id = $1
+`
+
+func (q *Queries) RemoveUserOrganizerships(ctx context.Context, userID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, removeUserOrganizerships, userID)
+	return err
+}
+
+const removeUserRole = `-- name: RemoveUserRole :exec
+DELETE FROM user_roles WHERE user_id = $1 AND role = $2
+`
+
+type RemoveUserRoleParams struct {
+	UserID uuid.UUID
+	Role   string
+}
+
+func (q *Queries) RemoveUserRole(ctx context.Context, arg RemoveUserRoleParams) error {
+	_, err := q.db.Exec(ctx, removeUserRole, arg.UserID, arg.Role)
 	return err
 }
 
@@ -609,6 +617,53 @@ func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]Sea
 	return items, nil
 }
 
+const searchUsersBasic = `-- name: SearchUsersBasic :many
+SELECT u.id, u.full_name, u.email, p.public_id
+FROM users u LEFT JOIN pilot_profiles p ON p.user_id = u.id
+WHERE u.deleted_at IS NULL AND u.disabled_at IS NULL
+  AND ($1::text = '' OR u.full_name ILIKE '%' || $1::text || '%' OR u.email::text ILIKE '%' || $1::text || '%'
+       OR p.public_id ILIKE '%' || $1::text || '%')
+ORDER BY u.full_name, u.id
+LIMIT $2
+`
+
+type SearchUsersBasicParams struct {
+	Q   string
+	Lim int32
+}
+
+type SearchUsersBasicRow struct {
+	ID       uuid.UUID
+	FullName string
+	Email    string
+	PublicID *string
+}
+
+func (q *Queries) SearchUsersBasic(ctx context.Context, arg SearchUsersBasicParams) ([]SearchUsersBasicRow, error) {
+	rows, err := q.db.Query(ctx, searchUsersBasic, arg.Q, arg.Lim)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SearchUsersBasicRow{}
+	for rows.Next() {
+		var i SearchUsersBasicRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.FullName,
+			&i.Email,
+			&i.PublicID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const setEmailVerified = `-- name: SetEmailVerified :exec
 UPDATE users SET email_verified_at = COALESCE(email_verified_at, now()), updated_at = now() WHERE id = $1
 `
@@ -645,8 +700,8 @@ func (q *Queries) SetUserDisabled(ctx context.Context, arg SetUserDisabledParams
 
 const updatePilotProfile = `-- name: UpdatePilotProfile :exec
 UPDATE pilot_profiles SET display_name = $1, bio = $2, wing = $3, license_no = $4,
-    nationality = $5, emergency_contact_name = $6,
-    emergency_contact_phone = $7, blood_type = $8, updated_at = now()
+    nationality = $5, phone = $6, emergency_contact_name = $7,
+    emergency_contact_phone = $8, updated_at = now()
 WHERE user_id = $9
 `
 
@@ -656,9 +711,9 @@ type UpdatePilotProfileParams struct {
 	Wing                  string
 	LicenseNo             string
 	Nationality           string
+	Phone                 string
 	EmergencyContactName  string
 	EmergencyContactPhone string
-	BloodType             string
 	UserID                uuid.UUID
 }
 
@@ -669,9 +724,9 @@ func (q *Queries) UpdatePilotProfile(ctx context.Context, arg UpdatePilotProfile
 		arg.Wing,
 		arg.LicenseNo,
 		arg.Nationality,
+		arg.Phone,
 		arg.EmergencyContactName,
 		arg.EmergencyContactPhone,
-		arg.BloodType,
 		arg.UserID,
 	)
 	return err
@@ -747,26 +802,28 @@ func (q *Queries) UpsertDevice(ctx context.Context, arg UpsertDeviceParams) erro
 }
 
 const upsertPreferences = `-- name: UpsertPreferences :exec
-INSERT INTO user_preferences (user_id, units, default_flight_visibility, public_profile)
-VALUES ($1, $2, $3, $4)
+INSERT INTO user_preferences (user_id, units, public_profile)
+VALUES ($1, $2, $3)
 ON CONFLICT (user_id) DO UPDATE SET units = EXCLUDED.units,
-    default_flight_visibility = EXCLUDED.default_flight_visibility,
     public_profile = EXCLUDED.public_profile, updated_at = now()
 `
 
 type UpsertPreferencesParams struct {
-	UserID                  uuid.UUID
-	Units                   string
-	DefaultFlightVisibility string
-	PublicProfile           bool
+	UserID        uuid.UUID
+	Units         string
+	PublicProfile bool
 }
 
 func (q *Queries) UpsertPreferences(ctx context.Context, arg UpsertPreferencesParams) error {
-	_, err := q.db.Exec(ctx, upsertPreferences,
-		arg.UserID,
-		arg.Units,
-		arg.DefaultFlightVisibility,
-		arg.PublicProfile,
-	)
+	_, err := q.db.Exec(ctx, upsertPreferences, arg.UserID, arg.Units, arg.PublicProfile)
+	return err
+}
+
+const withdrawUserApplications = `-- name: WithdrawUserApplications :exec
+UPDATE event_applications SET status = 'withdrawn', updated_at = now() WHERE user_id = $1 AND status = 'pending'
+`
+
+func (q *Queries) WithdrawUserApplications(ctx context.Context, userID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, withdrawUserApplications, userID)
 	return err
 }

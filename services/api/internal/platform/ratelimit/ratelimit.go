@@ -35,7 +35,8 @@ var (
 	VerifyResend = Rule{"verify_resend_user", 3, 10 * time.Minute}
 	PasswordChg  = Rule{"password_change_user", 10, time.Minute}
 	Telemetry    = Rule{"telemetry_user", 600, time.Minute}
-	Incident     = Rule{"incident_user", 30, time.Minute}
+	Retrieval    = Rule{"retrieval_user", 60, time.Minute} // state changes, notes, creation
+	Position     = Rule{"position_user", 240, time.Minute} // retrieval pilot positions + retriever positions
 )
 
 // Limiter checks rules.

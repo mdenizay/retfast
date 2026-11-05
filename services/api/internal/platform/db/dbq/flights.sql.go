@@ -70,17 +70,6 @@ func (q *Queries) EndFlight(ctx context.Context, arg EndFlightParams) error {
 	return err
 }
 
-const flightHasOpenIncident = `-- name: FlightHasOpenIncident :one
-SELECT EXISTS (SELECT 1 FROM emergency_incidents WHERE flight_id = $1 AND status IN ('open', 'acknowledged', 'responding'))
-`
-
-func (q *Queries) FlightHasOpenIncident(ctx context.Context, flightID *uuid.UUID) (bool, error) {
-	row := q.db.QueryRow(ctx, flightHasOpenIncident, flightID)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
-}
-
 const flightPublicIDExists = `-- name: FlightPublicIDExists :one
 SELECT EXISTS (SELECT 1 FROM flight_sessions WHERE public_id = $1)
 `
@@ -93,7 +82,7 @@ func (q *Queries) FlightPublicIDExists(ctx context.Context, publicID string) (bo
 }
 
 const getFlight = `-- name: GetFlight :one
-SELECT f.id, f.public_id, f.pilot_id, f.event_id, f.status, f.visibility, f.is_simulated, f.started_at, f.ended_at, f.device_platform, f.device_app_version, f.created_at, f.updated_at, f.last_sample_id, f.last_seq, f.last_t, f.last_lat, f.last_lon, f.last_gps_alt_m, f.last_h_acc_m, f.last_v_acc_m, f.last_speed_ms, f.last_course_deg, f.last_position_received_at, f.last_received_at, f.sample_count, f.distance_m, f.max_gps_alt_m, f.min_gps_alt_m, f.max_ground_speed_ms, f.total_ascent_m, f.total_descent_m, f.gap_count, f.first_sample_t, f.last_sample_t, f.stats_state, f.stats_dirty, u.full_name AS pilot_name, COALESCE(p.public_id, '') AS pilot_public_id
+SELECT f.id, f.public_id, f.pilot_id, f.event_id, f.status, f.is_simulated, f.started_at, f.ended_at, f.device_platform, f.device_app_version, f.created_at, f.updated_at, f.last_sample_id, f.last_seq, f.last_t, f.last_lat, f.last_lon, f.last_gps_alt_m, f.last_h_acc_m, f.last_v_acc_m, f.last_speed_ms, f.last_course_deg, f.last_position_received_at, f.last_received_at, f.sample_count, f.distance_m, f.max_gps_alt_m, f.min_gps_alt_m, f.max_ground_speed_ms, f.total_ascent_m, f.total_descent_m, f.gap_count, f.first_sample_t, f.last_sample_t, f.stats_state, f.stats_dirty, u.full_name AS pilot_name, COALESCE(p.public_id, '') AS pilot_public_id
 FROM flight_sessions f
 JOIN users u ON u.id = f.pilot_id
 LEFT JOIN pilot_profiles p ON p.user_id = f.pilot_id
@@ -115,7 +104,6 @@ func (q *Queries) GetFlight(ctx context.Context, id uuid.UUID) (GetFlightRow, er
 		&i.FlightSession.PilotID,
 		&i.FlightSession.EventID,
 		&i.FlightSession.Status,
-		&i.FlightSession.Visibility,
 		&i.FlightSession.IsSimulated,
 		&i.FlightSession.StartedAt,
 		&i.FlightSession.EndedAt,
@@ -154,7 +142,7 @@ func (q *Queries) GetFlight(ctx context.Context, id uuid.UUID) (GetFlightRow, er
 }
 
 const getFlightByPublicID = `-- name: GetFlightByPublicID :one
-SELECT f.id, f.public_id, f.pilot_id, f.event_id, f.status, f.visibility, f.is_simulated, f.started_at, f.ended_at, f.device_platform, f.device_app_version, f.created_at, f.updated_at, f.last_sample_id, f.last_seq, f.last_t, f.last_lat, f.last_lon, f.last_gps_alt_m, f.last_h_acc_m, f.last_v_acc_m, f.last_speed_ms, f.last_course_deg, f.last_position_received_at, f.last_received_at, f.sample_count, f.distance_m, f.max_gps_alt_m, f.min_gps_alt_m, f.max_ground_speed_ms, f.total_ascent_m, f.total_descent_m, f.gap_count, f.first_sample_t, f.last_sample_t, f.stats_state, f.stats_dirty, u.full_name AS pilot_name, COALESCE(p.public_id, '') AS pilot_public_id
+SELECT f.id, f.public_id, f.pilot_id, f.event_id, f.status, f.is_simulated, f.started_at, f.ended_at, f.device_platform, f.device_app_version, f.created_at, f.updated_at, f.last_sample_id, f.last_seq, f.last_t, f.last_lat, f.last_lon, f.last_gps_alt_m, f.last_h_acc_m, f.last_v_acc_m, f.last_speed_ms, f.last_course_deg, f.last_position_received_at, f.last_received_at, f.sample_count, f.distance_m, f.max_gps_alt_m, f.min_gps_alt_m, f.max_ground_speed_ms, f.total_ascent_m, f.total_descent_m, f.gap_count, f.first_sample_t, f.last_sample_t, f.stats_state, f.stats_dirty, u.full_name AS pilot_name, COALESCE(p.public_id, '') AS pilot_public_id
 FROM flight_sessions f
 JOIN users u ON u.id = f.pilot_id
 LEFT JOIN pilot_profiles p ON p.user_id = f.pilot_id
@@ -176,7 +164,6 @@ func (q *Queries) GetFlightByPublicID(ctx context.Context, publicID string) (Get
 		&i.FlightSession.PilotID,
 		&i.FlightSession.EventID,
 		&i.FlightSession.Status,
-		&i.FlightSession.Visibility,
 		&i.FlightSession.IsSimulated,
 		&i.FlightSession.StartedAt,
 		&i.FlightSession.EndedAt,
@@ -215,10 +202,10 @@ func (q *Queries) GetFlightByPublicID(ctx context.Context, publicID string) (Get
 }
 
 const insertFlight = `-- name: InsertFlight :one
-INSERT INTO flight_sessions (id, public_id, pilot_id, event_id, visibility, is_simulated, started_at,
+INSERT INTO flight_sessions (id, public_id, pilot_id, event_id, is_simulated, started_at,
     device_platform, device_app_version)
-VALUES ($1, $2, $3, $4, $5, $6, $7,
-    $8, $9)
+VALUES ($1, $2, $3, $4, $5, $6,
+    $7, $8)
 ON CONFLICT (id) DO NOTHING
 RETURNING id
 `
@@ -228,7 +215,6 @@ type InsertFlightParams struct {
 	PublicID         string
 	PilotID          uuid.UUID
 	EventID          *uuid.UUID
-	Visibility       string
 	IsSimulated      bool
 	StartedAt        time.Time
 	DevicePlatform   string
@@ -241,7 +227,6 @@ func (q *Queries) InsertFlight(ctx context.Context, arg InsertFlightParams) (uui
 		arg.PublicID,
 		arg.PilotID,
 		arg.EventID,
-		arg.Visibility,
 		arg.IsSimulated,
 		arg.StartedAt,
 		arg.DevicePlatform,
@@ -334,7 +319,7 @@ func (q *Queries) ListDirtyFlights(ctx context.Context, lim int32) ([]uuid.UUID,
 }
 
 const listFlights = `-- name: ListFlights :many
-SELECT f.id, f.public_id, f.pilot_id, f.event_id, f.status, f.visibility, f.is_simulated, f.started_at, f.ended_at, f.device_platform, f.device_app_version, f.created_at, f.updated_at, f.last_sample_id, f.last_seq, f.last_t, f.last_lat, f.last_lon, f.last_gps_alt_m, f.last_h_acc_m, f.last_v_acc_m, f.last_speed_ms, f.last_course_deg, f.last_position_received_at, f.last_received_at, f.sample_count, f.distance_m, f.max_gps_alt_m, f.min_gps_alt_m, f.max_ground_speed_ms, f.total_ascent_m, f.total_descent_m, f.gap_count, f.first_sample_t, f.last_sample_t, f.stats_state, f.stats_dirty, u.full_name AS pilot_name, COALESCE(p.public_id, '') AS pilot_public_id
+SELECT f.id, f.public_id, f.pilot_id, f.event_id, f.status, f.is_simulated, f.started_at, f.ended_at, f.device_platform, f.device_app_version, f.created_at, f.updated_at, f.last_sample_id, f.last_seq, f.last_t, f.last_lat, f.last_lon, f.last_gps_alt_m, f.last_h_acc_m, f.last_v_acc_m, f.last_speed_ms, f.last_course_deg, f.last_position_received_at, f.last_received_at, f.sample_count, f.distance_m, f.max_gps_alt_m, f.min_gps_alt_m, f.max_ground_speed_ms, f.total_ascent_m, f.total_descent_m, f.gap_count, f.first_sample_t, f.last_sample_t, f.stats_state, f.stats_dirty, u.full_name AS pilot_name, COALESCE(p.public_id, '') AS pilot_public_id
 FROM flight_sessions f
 JOIN users u ON u.id = f.pilot_id
 LEFT JOIN pilot_profiles p ON p.user_id = f.pilot_id
@@ -344,10 +329,11 @@ WHERE ($1::uuid IS NULL OR f.pilot_id = $1::uuid)
   AND (
       f.pilot_id = $4
       OR $5::bool
-      OR (f.visibility <> 'private' AND f.event_id IN (
-            SELECT m.event_id FROM event_participants m
+      OR f.event_id IN (SELECT o.event_id FROM event_organizers o WHERE o.user_id = $4)
+      OR (NOT $6::bool AND f.event_id IN (
+            SELECT m.event_id FROM event_members m JOIN events e ON e.id = m.event_id
             WHERE m.user_id = $4 AND m.status = 'active'
-              AND (m.role = 'organizer' OR NOT $6::bool)))
+              AND (m.role = 'observer' OR (m.role = 'pilot' AND e.pilots_see_each_other))))
   )
   AND ($7::timestamptz IS NULL
        OR (f.started_at, f.id) < ($7::timestamptz, $8::uuid))
@@ -398,7 +384,6 @@ func (q *Queries) ListFlights(ctx context.Context, arg ListFlightsParams) ([]Lis
 			&i.FlightSession.PilotID,
 			&i.FlightSession.EventID,
 			&i.FlightSession.Status,
-			&i.FlightSession.Visibility,
 			&i.FlightSession.IsSimulated,
 			&i.FlightSession.StartedAt,
 			&i.FlightSession.EndedAt,
@@ -508,10 +493,8 @@ func (q *Queries) ListPositions(ctx context.Context, arg ListPositionsParams) ([
 }
 
 const liveFlightsForEvent = `-- name: LiveFlightsForEvent :many
-SELECT f.id, f.public_id, f.pilot_id, f.event_id, f.status, f.visibility, f.is_simulated, f.started_at, f.ended_at, f.device_platform, f.device_app_version, f.created_at, f.updated_at, f.last_sample_id, f.last_seq, f.last_t, f.last_lat, f.last_lon, f.last_gps_alt_m, f.last_h_acc_m, f.last_v_acc_m, f.last_speed_ms, f.last_course_deg, f.last_position_received_at, f.last_received_at, f.sample_count, f.distance_m, f.max_gps_alt_m, f.min_gps_alt_m, f.max_ground_speed_ms, f.total_ascent_m, f.total_descent_m, f.gap_count, f.first_sample_t, f.last_sample_t, f.stats_state, f.stats_dirty, u.full_name AS pilot_name, COALESCE(p.public_id, '') AS pilot_public_id,
-       COALESCE(p.display_name, u.full_name) AS pilot_display_name,
-       EXISTS (SELECT 1 FROM emergency_incidents i WHERE i.flight_id = f.id
-               AND i.status IN ('open', 'acknowledged', 'responding'))::bool AS incident_open
+SELECT f.id, f.public_id, f.pilot_id, f.event_id, f.status, f.is_simulated, f.started_at, f.ended_at, f.device_platform, f.device_app_version, f.created_at, f.updated_at, f.last_sample_id, f.last_seq, f.last_t, f.last_lat, f.last_lon, f.last_gps_alt_m, f.last_h_acc_m, f.last_v_acc_m, f.last_speed_ms, f.last_course_deg, f.last_position_received_at, f.last_received_at, f.sample_count, f.distance_m, f.max_gps_alt_m, f.min_gps_alt_m, f.max_ground_speed_ms, f.total_ascent_m, f.total_descent_m, f.gap_count, f.first_sample_t, f.last_sample_t, f.stats_state, f.stats_dirty, u.full_name AS pilot_name, COALESCE(p.public_id, '') AS pilot_public_id,
+       COALESCE(p.display_name, u.full_name) AS pilot_display_name
 FROM flight_sessions f
 JOIN users u ON u.id = f.pilot_id
 LEFT JOIN pilot_profiles p ON p.user_id = f.pilot_id
@@ -526,7 +509,6 @@ type LiveFlightsForEventRow struct {
 	PilotName        string
 	PilotPublicID    string
 	PilotDisplayName string
-	IncidentOpen     bool
 }
 
 func (q *Queries) LiveFlightsForEvent(ctx context.Context, eventID *uuid.UUID) ([]LiveFlightsForEventRow, error) {
@@ -544,7 +526,6 @@ func (q *Queries) LiveFlightsForEvent(ctx context.Context, eventID *uuid.UUID) (
 			&i.FlightSession.PilotID,
 			&i.FlightSession.EventID,
 			&i.FlightSession.Status,
-			&i.FlightSession.Visibility,
 			&i.FlightSession.IsSimulated,
 			&i.FlightSession.StartedAt,
 			&i.FlightSession.EndedAt,
@@ -579,7 +560,6 @@ func (q *Queries) LiveFlightsForEvent(ctx context.Context, eventID *uuid.UUID) (
 			&i.PilotName,
 			&i.PilotPublicID,
 			&i.PilotDisplayName,
-			&i.IncidentOpen,
 		); err != nil {
 			return nil, err
 		}
@@ -592,7 +572,7 @@ func (q *Queries) LiveFlightsForEvent(ctx context.Context, eventID *uuid.UUID) (
 }
 
 const lockFlight = `-- name: LockFlight :one
-SELECT id, public_id, pilot_id, event_id, status, visibility, is_simulated, started_at, ended_at, device_platform, device_app_version, created_at, updated_at, last_sample_id, last_seq, last_t, last_lat, last_lon, last_gps_alt_m, last_h_acc_m, last_v_acc_m, last_speed_ms, last_course_deg, last_position_received_at, last_received_at, sample_count, distance_m, max_gps_alt_m, min_gps_alt_m, max_ground_speed_ms, total_ascent_m, total_descent_m, gap_count, first_sample_t, last_sample_t, stats_state, stats_dirty FROM flight_sessions WHERE id = $1 FOR UPDATE
+SELECT id, public_id, pilot_id, event_id, status, is_simulated, started_at, ended_at, device_platform, device_app_version, created_at, updated_at, last_sample_id, last_seq, last_t, last_lat, last_lon, last_gps_alt_m, last_h_acc_m, last_v_acc_m, last_speed_ms, last_course_deg, last_position_received_at, last_received_at, sample_count, distance_m, max_gps_alt_m, min_gps_alt_m, max_ground_speed_ms, total_ascent_m, total_descent_m, gap_count, first_sample_t, last_sample_t, stats_state, stats_dirty FROM flight_sessions WHERE id = $1 FOR UPDATE
 `
 
 func (q *Queries) LockFlight(ctx context.Context, id uuid.UUID) (FlightSession, error) {
@@ -604,7 +584,6 @@ func (q *Queries) LockFlight(ctx context.Context, id uuid.UUID) (FlightSession, 
 		&i.PilotID,
 		&i.EventID,
 		&i.Status,
-		&i.Visibility,
 		&i.IsSimulated,
 		&i.StartedAt,
 		&i.EndedAt,
@@ -691,19 +670,18 @@ func (q *Queries) RecentPositionsForFlights(ctx context.Context, arg RecentPosit
 	return items, nil
 }
 
-const updateFlightSharing = `-- name: UpdateFlightSharing :exec
-UPDATE flight_sessions SET visibility = $1, event_id = $2, updated_at = now()
-WHERE id = $3
+const updateFlightEvent = `-- name: UpdateFlightEvent :exec
+UPDATE flight_sessions SET event_id = $1, updated_at = now()
+WHERE id = $2
 `
 
-type UpdateFlightSharingParams struct {
-	Visibility string
-	EventID    *uuid.UUID
-	ID         uuid.UUID
+type UpdateFlightEventParams struct {
+	EventID *uuid.UUID
+	ID      uuid.UUID
 }
 
-func (q *Queries) UpdateFlightSharing(ctx context.Context, arg UpdateFlightSharingParams) error {
-	_, err := q.db.Exec(ctx, updateFlightSharing, arg.Visibility, arg.EventID, arg.ID)
+func (q *Queries) UpdateFlightEvent(ctx context.Context, arg UpdateFlightEventParams) error {
+	_, err := q.db.Exec(ctx, updateFlightEvent, arg.EventID, arg.ID)
 	return err
 }
 

@@ -21,20 +21,22 @@ import (
 	"github.com/mdenizay/retfast/services/api/internal/users"
 )
 
-// User is one bootstrap account.
+// User is one bootstrap account with its demo-event roles.
 type User struct {
-	FullName string
-	Email    string
-	Roles    []string
+	FullName  string
+	Email     string
+	Admin     bool   // platform_admin
+	Organizer bool   // organizer of the demo event
+	Member    string // member role in the demo event
 }
 
-// Users are the bootstrap accounts.
+// Users are the bootstrap accounts (ADR-012).
 var Users = []User{
-	{"Mehmet Deniz Aydın", "deniz@retfast.com", []string{authz.RolePlatformAdmin, authz.RolePilot}},
-	{"Altay Alp", "altay@retfast.com", []string{authz.RolePlatformAdmin, authz.RolePilot}},
-	{"Tecelli Aydın Görgülü", "tecelli@retfast.com", []string{authz.RolePilot}},
-	{"Kübra Özlem Ertilav Aydın", "kubra@retfast.com", []string{authz.RolePilot}},
-	{"Emre Kutan Nural", "emre@retfast.com", []string{authz.RolePilot}},
+	{"Mehmet Deniz Aydın", "deniz@retfast.com", true, true, authz.MemberPilot},
+	{"Altay Alp", "altay@retfast.com", true, true, authz.MemberObserver},
+	{"Tecelli Aydın Görgülü", "tecelli@retfast.com", false, false, authz.MemberPilot},
+	{"Kübra Özlem Ertilav Aydın", "kubra@retfast.com", false, false, authz.MemberRetriever},
+	{"Emre Kutan Nural", "emre@retfast.com", false, false, authz.MemberPilot},
 }
 
 // Demo event constants.
@@ -48,8 +50,6 @@ const (
 	SiteName        = "Yaylacık (Çameli)"
 	SiteNotes       = "Coordinates not verified; configure before use."
 )
-
-var organizers = map[string]bool{"deniz@retfast.com": true, "altay@retfast.com": true}
 
 // BootstrapTTL is how long the initial password stays valid.
 const BootstrapTTL = 7 * 24 * time.Hour
@@ -71,7 +71,8 @@ type Result struct {
 	Users, UsersCreated, UsersRenewed      int
 	Events, EventsCreated, ScheduleUpdated int
 	Sites, SitesCreated                    int
-	Memberships                            int
+	Organizers, OrganizersCreated          int
+	Memberships, MembershipsCreated        int
 }
 
 // Print writes counts only.
@@ -79,7 +80,8 @@ func (r Result) Print(w io.Writer) {
 	fmt.Fprintf(w, "users: %d (created %d, bootstrap renewed %d)\n", r.Users, r.UsersCreated, r.UsersRenewed)
 	fmt.Fprintf(w, "events: %d (created %d, schedule updated %d)\n", r.Events, r.EventsCreated, r.ScheduleUpdated)
 	fmt.Fprintf(w, "launch_sites: %d (created %d)\n", r.Sites, r.SitesCreated)
-	fmt.Fprintf(w, "memberships: %d\n", r.Memberships)
+	fmt.Fprintf(w, "organizers: %d (created %d)\n", r.Organizers, r.OrganizersCreated)
+	fmt.Fprintf(w, "memberships: %d (created %d)\n", r.Memberships, r.MembershipsCreated)
 }
 
 // Run seeds inside one transaction.
@@ -123,8 +125,8 @@ func Run(ctx context.Context, pool *pgxpool.Pool, o Options) (Result, error) {
 					res.UsersRenewed++
 				}
 			}
-			for _, role := range su.Roles {
-				if err := q.AddUserRole(ctx, dbq.AddUserRoleParams{UserID: u.ID, Role: role}); err != nil {
+			if su.Admin {
+				if err := q.AddUserRole(ctx, dbq.AddUserRoleParams{UserID: u.ID, Role: authz.RolePlatformAdmin}); err != nil {
 					return err
 				}
 			}
@@ -155,8 +157,8 @@ func Run(ctx context.Context, pool *pgxpool.Pool, o Options) (Result, error) {
 			eventID, err = q.CreateEvent(ctx, dbq.CreateEventParams{Slug: DemoSlug, Name: DemoName, Description: DemoDescription,
 				Kind: "paragliding", Status: "active", IsDemo: true, Visibility: authz.EventPublic, LocationName: DemoLocation,
 				CenterLat: &lat, CenterLon: &lon, CenterIsApproximate: true, StartsAt: start, EndsAt: start.AddDate(0, 0, days),
-				RegistrationOpen: true, LiveTracking: true, FlightRecording: true, ObserversAllowed: true, EmergencyTesting: true,
-				PublicLiveMap: true, OrganizerID: &deniz})
+				ApplicationsOpen: true, LiveTracking: true, PublicLiveMap: false, PilotsSeeEachOther: true, LandingPrompt: true,
+				CreatedBy: &deniz})
 			if err != nil {
 				return err
 			}
@@ -181,15 +183,25 @@ func Run(ctx context.Context, pool *pgxpool.Pool, o Options) (Result, error) {
 		}
 		res.Events = 1
 
+		// Existing assignments are never overwritten, so changes made in the app survive re-seeding.
 		for _, su := range Users {
-			role := authz.MemberParticipant
-			if organizers[su.Email] {
-				role = authz.MemberOrganizer
+			uid := ids[su.Email].ID
+			if su.Organizer {
+				n, err := q.AddOrganizer(ctx, dbq.AddOrganizerParams{EventID: eventID, UserID: uid, AssignedBy: &deniz})
+				if err != nil {
+					return err
+				}
+				res.Organizers++
+				res.OrganizersCreated += int(n)
 			}
-			if err := q.EnsureParticipant(ctx, dbq.EnsureParticipantParams{EventID: eventID, UserID: ids[su.Email].ID, Role: role, AddedBy: &deniz}); err != nil {
-				return err
+			if su.Member != "" {
+				n, err := q.EnsureMember(ctx, dbq.EnsureMemberParams{EventID: eventID, UserID: uid, Role: su.Member, AddedBy: &deniz})
+				if err != nil {
+					return err
+				}
+				res.Memberships++
+				res.MembershipsCreated += int(n)
 			}
-			res.Memberships++
 		}
 
 		if _, err := q.GetLaunchSiteByName(ctx, dbq.GetLaunchSiteByNameParams{EventID: eventID, Name: SiteName}); db.NotFound(err) {

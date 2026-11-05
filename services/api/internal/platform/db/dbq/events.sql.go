@@ -12,56 +12,100 @@ import (
 	"github.com/google/uuid"
 )
 
-const countActiveParticipants = `-- name: CountActiveParticipants :many
-SELECT event_id, count(*)::int AS n FROM event_participants
-WHERE event_id = ANY ($1::uuid[]) AND status = 'active' AND role = 'participant'
-GROUP BY event_id
+const addOrganizer = `-- name: AddOrganizer :execrows
+INSERT INTO event_organizers (event_id, user_id, assigned_by) VALUES ($1, $2, $3)
+ON CONFLICT DO NOTHING
 `
 
-type CountActiveParticipantsRow struct {
-	EventID uuid.UUID
-	N       int32
+type AddOrganizerParams struct {
+	EventID    uuid.UUID
+	UserID     uuid.UUID
+	AssignedBy *uuid.UUID
 }
 
-func (q *Queries) CountActiveParticipants(ctx context.Context, eventIds []uuid.UUID) ([]CountActiveParticipantsRow, error) {
-	rows, err := q.db.Query(ctx, countActiveParticipants, eventIds)
+func (q *Queries) AddOrganizer(ctx context.Context, arg AddOrganizerParams) (int64, error) {
+	result, err := q.db.Exec(ctx, addOrganizer, arg.EventID, arg.UserID, arg.AssignedBy)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	defer rows.Close()
-	items := []CountActiveParticipantsRow{}
-	for rows.Next() {
-		var i CountActiveParticipantsRow
-		if err := rows.Scan(&i.EventID, &i.N); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
+	return result.RowsAffected(), nil
+}
+
+const approvePendingApplicationsForUser = `-- name: ApprovePendingApplicationsForUser :execrows
+UPDATE event_applications SET status = 'approved', granted_role = $1, decided_by = $2,
+    decision_note = 'added directly', decided_at = now(), updated_at = now()
+WHERE event_id = $3 AND user_id = $4 AND status = 'pending'
+`
+
+type ApprovePendingApplicationsForUserParams struct {
+	GrantedRole *string
+	DecidedBy   *uuid.UUID
+	EventID     uuid.UUID
+	UserID      uuid.UUID
+}
+
+func (q *Queries) ApprovePendingApplicationsForUser(ctx context.Context, arg ApprovePendingApplicationsForUserParams) (int64, error) {
+	result, err := q.db.Exec(ctx, approvePendingApplicationsForUser,
+		arg.GrantedRole,
+		arg.DecidedBy,
+		arg.EventID,
+		arg.UserID,
+	)
+	if err != nil {
+		return 0, err
 	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+	return result.RowsAffected(), nil
 }
 
 const countOrganizers = `-- name: CountOrganizers :one
-SELECT count(*) FROM event_participants WHERE event_id = $1 AND role = 'organizer' AND status = 'active'
+SELECT count(*)::int FROM event_organizers o WHERE o.event_id = $1
 `
 
-func (q *Queries) CountOrganizers(ctx context.Context, eventID uuid.UUID) (int64, error) {
+func (q *Queries) CountOrganizers(ctx context.Context, eventID uuid.UUID) (int32, error) {
 	row := q.db.QueryRow(ctx, countOrganizers, eventID)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const countPendingApplications = `-- name: CountPendingApplications :one
+SELECT count(*)::int FROM event_applications a WHERE a.event_id = $1 AND a.status = 'pending'
+`
+
+func (q *Queries) CountPendingApplications(ctx context.Context, eventID uuid.UUID) (int32, error) {
+	row := q.db.QueryRow(ctx, countPendingApplications, eventID)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const createApplication = `-- name: CreateApplication :one
+INSERT INTO event_applications (event_id, user_id, message)
+VALUES ($1, $2, $3)
+RETURNING id
+`
+
+type CreateApplicationParams struct {
+	EventID uuid.UUID
+	UserID  uuid.UUID
+	Message string
+}
+
+func (q *Queries) CreateApplication(ctx context.Context, arg CreateApplicationParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, createApplication, arg.EventID, arg.UserID, arg.Message)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }
 
 const createEvent = `-- name: CreateEvent :one
 INSERT INTO events (slug, name, description, kind, status, is_demo, visibility, location_name, center_lat, center_lon,
-    center_is_approximate, starts_at, ends_at, cover_image_url, registration_open, live_tracking, flight_recording,
-    observers_allowed, emergency_testing, public_live_map, organizer_id)
+    center_is_approximate, starts_at, ends_at, cover_image_url, applications_open, live_tracking, public_live_map,
+    pilots_see_each_other, landing_prompt, created_by)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
     $10, $11, $12, $13, $14,
-    $15, $16, $17, $18, $19, $20,
-    $21)
+    $15, $16, $17, $18, $19,
+    $20)
 RETURNING id
 `
 
@@ -80,13 +124,12 @@ type CreateEventParams struct {
 	StartsAt            time.Time
 	EndsAt              time.Time
 	CoverImageUrl       *string
-	RegistrationOpen    bool
+	ApplicationsOpen    bool
 	LiveTracking        bool
-	FlightRecording     bool
-	ObserversAllowed    bool
-	EmergencyTesting    bool
 	PublicLiveMap       bool
-	OrganizerID         *uuid.UUID
+	PilotsSeeEachOther  bool
+	LandingPrompt       bool
+	CreatedBy           *uuid.UUID
 }
 
 func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (uuid.UUID, error) {
@@ -105,13 +148,12 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (uuid.
 		arg.StartsAt,
 		arg.EndsAt,
 		arg.CoverImageUrl,
-		arg.RegistrationOpen,
+		arg.ApplicationsOpen,
 		arg.LiveTracking,
-		arg.FlightRecording,
-		arg.ObserversAllowed,
-		arg.EmergencyTesting,
 		arg.PublicLiveMap,
-		arg.OrganizerID,
+		arg.PilotsSeeEachOther,
+		arg.LandingPrompt,
+		arg.CreatedBy,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)
@@ -173,6 +215,34 @@ func (q *Queries) CreateLaunchSite(ctx context.Context, arg CreateLaunchSitePara
 	return i, err
 }
 
+const decideApplication = `-- name: DecideApplication :execrows
+UPDATE event_applications SET status = $1, granted_role = $2,
+    decided_by = $3, decision_note = $4, decided_at = now(), updated_at = now()
+WHERE id = $5 AND status = 'pending'
+`
+
+type DecideApplicationParams struct {
+	Status       string
+	GrantedRole  *string
+	DecidedBy    *uuid.UUID
+	DecisionNote string
+	ID           uuid.UUID
+}
+
+func (q *Queries) DecideApplication(ctx context.Context, arg DecideApplicationParams) (int64, error) {
+	result, err := q.db.Exec(ctx, decideApplication,
+		arg.Status,
+		arg.GrantedRole,
+		arg.DecidedBy,
+		arg.DecisionNote,
+		arg.ID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const deleteLaunchSite = `-- name: DeleteLaunchSite :execrows
 DELETE FROM launch_sites WHERE id = $1 AND event_id = $2
 `
@@ -190,27 +260,73 @@ func (q *Queries) DeleteLaunchSite(ctx context.Context, arg DeleteLaunchSitePara
 	return result.RowsAffected(), nil
 }
 
-const ensureParticipant = `-- name: EnsureParticipant :exec
-INSERT INTO event_participants (event_id, user_id, role, status, added_by)
+const ensureMember = `-- name: EnsureMember :execrows
+INSERT INTO event_members (event_id, user_id, role, status, added_by)
 VALUES ($1, $2, $3, 'active', $4)
 ON CONFLICT (event_id, user_id) DO NOTHING
 `
 
-type EnsureParticipantParams struct {
+type EnsureMemberParams struct {
 	EventID uuid.UUID
 	UserID  uuid.UUID
 	Role    string
 	AddedBy *uuid.UUID
 }
 
-func (q *Queries) EnsureParticipant(ctx context.Context, arg EnsureParticipantParams) error {
-	_, err := q.db.Exec(ctx, ensureParticipant,
+func (q *Queries) EnsureMember(ctx context.Context, arg EnsureMemberParams) (int64, error) {
+	result, err := q.db.Exec(ctx, ensureMember,
 		arg.EventID,
 		arg.UserID,
 		arg.Role,
 		arg.AddedBy,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const eventCounts = `-- name: EventCounts :many
+SELECT e.id AS event_id,
+    (SELECT count(*) FROM event_members m WHERE m.event_id = e.id AND m.status = 'active' AND m.role = 'pilot')::int AS pilots,
+    (SELECT count(*) FROM event_members m WHERE m.event_id = e.id AND m.status = 'active' AND m.role = 'observer')::int AS observers,
+    (SELECT count(*) FROM event_members m WHERE m.event_id = e.id AND m.status = 'active' AND m.role = 'retriever')::int AS retrievers,
+    (SELECT count(*) FROM event_applications a WHERE a.event_id = e.id AND a.status = 'pending')::int AS pending_applications
+FROM events e WHERE e.id = ANY ($1::uuid[])
+`
+
+type EventCountsRow struct {
+	EventID             uuid.UUID
+	Pilots              int32
+	Observers           int32
+	Retrievers          int32
+	PendingApplications int32
+}
+
+func (q *Queries) EventCounts(ctx context.Context, eventIds []uuid.UUID) ([]EventCountsRow, error) {
+	rows, err := q.db.Query(ctx, eventCounts, eventIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []EventCountsRow{}
+	for rows.Next() {
+		var i EventCountsRow
+		if err := rows.Scan(
+			&i.EventID,
+			&i.Pilots,
+			&i.Observers,
+			&i.Retrievers,
+			&i.PendingApplications,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const eventReportFlights = `-- name: EventReportFlights :many
@@ -273,30 +389,79 @@ func (q *Queries) EventReportFlights(ctx context.Context, eventID *uuid.UUID) ([
 	return items, nil
 }
 
-const eventReportParticipation = `-- name: EventReportParticipation :one
+const eventReportMembers = `-- name: EventReportMembers :one
 SELECT
-    count(*) FILTER (WHERE role = 'participant' AND status = 'active')::int AS participants,
-    count(*) FILTER (WHERE role = 'observer' AND status = 'active')::int AS observers,
-    count(*) FILTER (WHERE role = 'organizer' AND status = 'active')::int AS organizers,
-    count(*) FILTER (WHERE status = 'removed')::int AS removed
-FROM event_participants WHERE event_id = $1
+    count(*) FILTER (WHERE m.role = 'pilot' AND m.status = 'active')::int AS pilots,
+    count(*) FILTER (WHERE m.role = 'observer' AND m.status = 'active')::int AS observers,
+    count(*) FILTER (WHERE m.role = 'retriever' AND m.status = 'active')::int AS retrievers,
+    count(*) FILTER (WHERE m.status = 'removed')::int AS removed
+FROM event_members m WHERE m.event_id = $1
 `
 
-type EventReportParticipationRow struct {
-	Participants int32
-	Observers    int32
-	Organizers   int32
-	Removed      int32
+type EventReportMembersRow struct {
+	Pilots     int32
+	Observers  int32
+	Retrievers int32
+	Removed    int32
 }
 
-func (q *Queries) EventReportParticipation(ctx context.Context, eventID uuid.UUID) (EventReportParticipationRow, error) {
-	row := q.db.QueryRow(ctx, eventReportParticipation, eventID)
-	var i EventReportParticipationRow
+func (q *Queries) EventReportMembers(ctx context.Context, eventID uuid.UUID) (EventReportMembersRow, error) {
+	row := q.db.QueryRow(ctx, eventReportMembers, eventID)
+	var i EventReportMembersRow
 	err := row.Scan(
-		&i.Participants,
+		&i.Pilots,
 		&i.Observers,
-		&i.Organizers,
+		&i.Retrievers,
 		&i.Removed,
+	)
+	return i, err
+}
+
+const eventReportRetrievals = `-- name: EventReportRetrievals :one
+SELECT
+    count(*)::int AS total,
+    count(*) FILTER (WHERE status = 'requested')::int AS requested,
+    count(*) FILTER (WHERE status = 'accepted')::int AS accepted,
+    count(*) FILTER (WHERE status = 'picked_up')::int AS picked_up,
+    count(*) FILTER (WHERE status = 'delivered')::int AS delivered,
+    count(*) FILTER (WHERE status = 'cancelled')::int AS cancelled,
+    count(*) FILTER (WHERE is_simulated)::int AS simulated,
+    COALESCE((percentile_cont(0.5) WITHIN GROUP (ORDER BY extract(epoch FROM accepted_at - requested_at))
+        FILTER (WHERE accepted_at IS NOT NULL)), -1)::float8 AS median_request_to_accept_s,
+    COALESCE((percentile_cont(0.5) WITHIN GROUP (ORDER BY extract(epoch FROM picked_up_at - accepted_at))
+        FILTER (WHERE picked_up_at IS NOT NULL AND accepted_at IS NOT NULL)), -1)::float8 AS median_accept_to_pickup_s,
+    COALESCE((percentile_cont(0.5) WITHIN GROUP (ORDER BY extract(epoch FROM delivered_at - picked_up_at))
+        FILTER (WHERE delivered_at IS NOT NULL AND picked_up_at IS NOT NULL)), -1)::float8 AS median_pickup_to_delivery_s
+FROM retrievals WHERE event_id = $1
+`
+
+type EventReportRetrievalsRow struct {
+	Total                   int32
+	Requested               int32
+	Accepted                int32
+	PickedUp                int32
+	Delivered               int32
+	Cancelled               int32
+	Simulated               int32
+	MedianRequestToAcceptS  float64
+	MedianAcceptToPickupS   float64
+	MedianPickupToDeliveryS float64
+}
+
+func (q *Queries) EventReportRetrievals(ctx context.Context, eventID uuid.UUID) (EventReportRetrievalsRow, error) {
+	row := q.db.QueryRow(ctx, eventReportRetrievals, eventID)
+	var i EventReportRetrievalsRow
+	err := row.Scan(
+		&i.Total,
+		&i.Requested,
+		&i.Accepted,
+		&i.PickedUp,
+		&i.Delivered,
+		&i.Cancelled,
+		&i.Simulated,
+		&i.MedianRequestToAcceptS,
+		&i.MedianAcceptToPickupS,
+		&i.MedianPickupToDeliveryS,
 	)
 	return i, err
 }
@@ -312,10 +477,60 @@ func (q *Queries) EventSlugExists(ctx context.Context, slug string) (bool, error
 	return exists, err
 }
 
+const getApplication = `-- name: GetApplication :one
+SELECT id, event_id, user_id, message, status, granted_role, decided_by, decision_note, created_at, decided_at, updated_at FROM event_applications WHERE id = $1 AND event_id = $2
+`
+
+type GetApplicationParams struct {
+	ID      uuid.UUID
+	EventID uuid.UUID
+}
+
+func (q *Queries) GetApplication(ctx context.Context, arg GetApplicationParams) (EventApplication, error) {
+	row := q.db.QueryRow(ctx, getApplication, arg.ID, arg.EventID)
+	var i EventApplication
+	err := row.Scan(
+		&i.ID,
+		&i.EventID,
+		&i.UserID,
+		&i.Message,
+		&i.Status,
+		&i.GrantedRole,
+		&i.DecidedBy,
+		&i.DecisionNote,
+		&i.CreatedAt,
+		&i.DecidedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getEventAccess = `-- name: GetEventAccess :one
+SELECT EXISTS (SELECT 1 FROM event_organizers o WHERE o.event_id = $1 AND o.user_id = $2)::bool AS is_organizer,
+    COALESCE((SELECT m.role FROM event_members m WHERE m.event_id = $1 AND m.user_id = $2 AND m.status = 'active'), '')::text AS role
+`
+
+type GetEventAccessParams struct {
+	EventID uuid.UUID
+	UserID  uuid.UUID
+}
+
+type GetEventAccessRow struct {
+	IsOrganizer bool
+	Role        string
+}
+
+func (q *Queries) GetEventAccess(ctx context.Context, arg GetEventAccessParams) (GetEventAccessRow, error) {
+	row := q.db.QueryRow(ctx, getEventAccess, arg.EventID, arg.UserID)
+	var i GetEventAccessRow
+	err := row.Scan(&i.IsOrganizer, &i.Role)
+	return i, err
+}
+
 const getEventByID = `-- name: GetEventByID :one
 SELECT id, slug, name, description, kind, status, is_demo, visibility, location_name, center_lat, center_lon,
-    center_is_approximate, starts_at, ends_at, cover_image_url, registration_open, live_tracking, flight_recording,
-    observers_allowed, emergency_testing, public_live_map, organizer_id, created_at, updated_at
+    center_is_approximate, starts_at, ends_at, cover_image_url, applications_open, live_tracking, public_live_map,
+    pilots_see_each_other, landing_prompt, created_by, created_at, updated_at
 FROM events WHERE id = $1
 `
 
@@ -335,13 +550,12 @@ type GetEventByIDRow struct {
 	StartsAt            time.Time
 	EndsAt              time.Time
 	CoverImageUrl       *string
-	RegistrationOpen    bool
+	ApplicationsOpen    bool
 	LiveTracking        bool
-	FlightRecording     bool
-	ObserversAllowed    bool
-	EmergencyTesting    bool
 	PublicLiveMap       bool
-	OrganizerID         *uuid.UUID
+	PilotsSeeEachOther  bool
+	LandingPrompt       bool
+	CreatedBy           *uuid.UUID
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 }
@@ -365,13 +579,12 @@ func (q *Queries) GetEventByID(ctx context.Context, id uuid.UUID) (GetEventByIDR
 		&i.StartsAt,
 		&i.EndsAt,
 		&i.CoverImageUrl,
-		&i.RegistrationOpen,
+		&i.ApplicationsOpen,
 		&i.LiveTracking,
-		&i.FlightRecording,
-		&i.ObserversAllowed,
-		&i.EmergencyTesting,
 		&i.PublicLiveMap,
-		&i.OrganizerID,
+		&i.PilotsSeeEachOther,
+		&i.LandingPrompt,
+		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -380,8 +593,8 @@ func (q *Queries) GetEventByID(ctx context.Context, id uuid.UUID) (GetEventByIDR
 
 const getEventBySlug = `-- name: GetEventBySlug :one
 SELECT id, slug, name, description, kind, status, is_demo, visibility, location_name, center_lat, center_lon,
-    center_is_approximate, starts_at, ends_at, cover_image_url, registration_open, live_tracking, flight_recording,
-    observers_allowed, emergency_testing, public_live_map, organizer_id, created_at, updated_at
+    center_is_approximate, starts_at, ends_at, cover_image_url, applications_open, live_tracking, public_live_map,
+    pilots_see_each_other, landing_prompt, created_by, created_at, updated_at
 FROM events WHERE slug = $1::text
 `
 
@@ -401,13 +614,12 @@ type GetEventBySlugRow struct {
 	StartsAt            time.Time
 	EndsAt              time.Time
 	CoverImageUrl       *string
-	RegistrationOpen    bool
+	ApplicationsOpen    bool
 	LiveTracking        bool
-	FlightRecording     bool
-	ObserversAllowed    bool
-	EmergencyTesting    bool
 	PublicLiveMap       bool
-	OrganizerID         *uuid.UUID
+	PilotsSeeEachOther  bool
+	LandingPrompt       bool
+	CreatedBy           *uuid.UUID
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 }
@@ -431,13 +643,12 @@ func (q *Queries) GetEventBySlug(ctx context.Context, slug string) (GetEventBySl
 		&i.StartsAt,
 		&i.EndsAt,
 		&i.CoverImageUrl,
-		&i.RegistrationOpen,
+		&i.ApplicationsOpen,
 		&i.LiveTracking,
-		&i.FlightRecording,
-		&i.ObserversAllowed,
-		&i.EmergencyTesting,
 		&i.PublicLiveMap,
-		&i.OrganizerID,
+		&i.PilotsSeeEachOther,
+		&i.LandingPrompt,
+		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -526,18 +737,18 @@ func (q *Queries) GetLaunchSiteByName(ctx context.Context, arg GetLaunchSiteByNa
 	return i, err
 }
 
-const getMembership = `-- name: GetMembership :one
-SELECT event_id, user_id, role, status, joined_at, updated_at, added_by FROM event_participants WHERE event_id = $1 AND user_id = $2
+const getMember = `-- name: GetMember :one
+SELECT event_id, user_id, role, status, joined_at, updated_at, added_by FROM event_members WHERE event_id = $1 AND user_id = $2
 `
 
-type GetMembershipParams struct {
+type GetMemberParams struct {
 	EventID uuid.UUID
 	UserID  uuid.UUID
 }
 
-func (q *Queries) GetMembership(ctx context.Context, arg GetMembershipParams) (EventParticipant, error) {
-	row := q.db.QueryRow(ctx, getMembership, arg.EventID, arg.UserID)
-	var i EventParticipant
+func (q *Queries) GetMember(ctx context.Context, arg GetMemberParams) (EventMember, error) {
+	row := q.db.QueryRow(ctx, getMember, arg.EventID, arg.UserID)
+	var i EventMember
 	err := row.Scan(
 		&i.EventID,
 		&i.UserID,
@@ -566,12 +777,88 @@ func (q *Queries) GetUserName(ctx context.Context, id uuid.UUID) (GetUserNameRow
 	return i, err
 }
 
-const listEventOrganizerIDs = `-- name: ListEventOrganizerIDs :many
-SELECT user_id FROM event_participants WHERE event_id = $1 AND role = 'organizer' AND status = 'active'
+const latestApplicationsForUser = `-- name: LatestApplicationsForUser :many
+SELECT DISTINCT ON (event_id) id, event_id, status
+FROM event_applications
+WHERE user_id = $1 AND event_id = ANY ($2::uuid[])
+ORDER BY event_id, created_at DESC, id DESC
 `
 
-func (q *Queries) ListEventOrganizerIDs(ctx context.Context, eventID uuid.UUID) ([]uuid.UUID, error) {
-	rows, err := q.db.Query(ctx, listEventOrganizerIDs, eventID)
+type LatestApplicationsForUserParams struct {
+	UserID   uuid.UUID
+	EventIds []uuid.UUID
+}
+
+type LatestApplicationsForUserRow struct {
+	ID      uuid.UUID
+	EventID uuid.UUID
+	Status  string
+}
+
+func (q *Queries) LatestApplicationsForUser(ctx context.Context, arg LatestApplicationsForUserParams) ([]LatestApplicationsForUserRow, error) {
+	rows, err := q.db.Query(ctx, latestApplicationsForUser, arg.UserID, arg.EventIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []LatestApplicationsForUserRow{}
+	for rows.Next() {
+		var i LatestApplicationsForUserRow
+		if err := rows.Scan(&i.ID, &i.EventID, &i.Status); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAccessForUser = `-- name: ListAccessForUser :many
+SELECT e.id AS event_id,
+    EXISTS (SELECT 1 FROM event_organizers o WHERE o.event_id = e.id AND o.user_id = $1)::bool AS is_organizer,
+    COALESCE((SELECT m.role FROM event_members m WHERE m.event_id = e.id AND m.user_id = $1 AND m.status = 'active'), '')::text AS role
+FROM events e WHERE e.id = ANY ($2::uuid[])
+`
+
+type ListAccessForUserParams struct {
+	UserID   uuid.UUID
+	EventIds []uuid.UUID
+}
+
+type ListAccessForUserRow struct {
+	EventID     uuid.UUID
+	IsOrganizer bool
+	Role        string
+}
+
+func (q *Queries) ListAccessForUser(ctx context.Context, arg ListAccessForUserParams) ([]ListAccessForUserRow, error) {
+	rows, err := q.db.Query(ctx, listAccessForUser, arg.UserID, arg.EventIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListAccessForUserRow{}
+	for rows.Next() {
+		var i ListAccessForUserRow
+		if err := rows.Scan(&i.EventID, &i.IsOrganizer, &i.Role); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listActiveMemberIDs = `-- name: ListActiveMemberIDs :many
+SELECT user_id FROM event_members WHERE event_id = $1 AND status = 'active'
+`
+
+func (q *Queries) ListActiveMemberIDs(ctx context.Context, eventID uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, listActiveMemberIDs, eventID)
 	if err != nil {
 		return nil, err
 	}
@@ -590,31 +877,105 @@ func (q *Queries) ListEventOrganizerIDs(ctx context.Context, eventID uuid.UUID) 
 	return items, nil
 }
 
+const listApplications = `-- name: ListApplications :many
+SELECT a.id, a.event_id, a.user_id, a.message, a.status, a.granted_role, a.decided_by, a.decision_note, a.created_at, a.decided_at, a.updated_at, u.full_name, u.email, p.public_id, COALESCE(d.full_name, '')::text AS decided_by_name
+FROM event_applications a
+JOIN users u ON u.id = a.user_id
+LEFT JOIN pilot_profiles p ON p.user_id = a.user_id
+LEFT JOIN users d ON d.id = a.decided_by
+WHERE a.event_id = $1 AND (cardinality($2::text[]) = 0 OR a.status = ANY ($2::text[]))
+  AND ($3::uuid IS NULL OR a.id = $3::uuid)
+ORDER BY a.created_at, a.id
+`
+
+type ListApplicationsParams struct {
+	EventID  uuid.UUID
+	Statuses []string
+	OnlyID   *uuid.UUID
+}
+
+type ListApplicationsRow struct {
+	ID            uuid.UUID
+	EventID       uuid.UUID
+	UserID        uuid.UUID
+	Message       string
+	Status        string
+	GrantedRole   *string
+	DecidedBy     *uuid.UUID
+	DecisionNote  string
+	CreatedAt     time.Time
+	DecidedAt     *time.Time
+	UpdatedAt     time.Time
+	FullName      string
+	Email         string
+	PublicID      *string
+	DecidedByName string
+}
+
+func (q *Queries) ListApplications(ctx context.Context, arg ListApplicationsParams) ([]ListApplicationsRow, error) {
+	rows, err := q.db.Query(ctx, listApplications, arg.EventID, arg.Statuses, arg.OnlyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListApplicationsRow{}
+	for rows.Next() {
+		var i ListApplicationsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.EventID,
+			&i.UserID,
+			&i.Message,
+			&i.Status,
+			&i.GrantedRole,
+			&i.DecidedBy,
+			&i.DecisionNote,
+			&i.CreatedAt,
+			&i.DecidedAt,
+			&i.UpdatedAt,
+			&i.FullName,
+			&i.Email,
+			&i.PublicID,
+			&i.DecidedByName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listEvents = `-- name: ListEvents :many
 SELECT e.id, e.slug, e.name, e.description, e.kind, e.status, e.is_demo, e.visibility, e.location_name, e.center_lat,
-    e.center_lon, e.center_is_approximate, e.starts_at, e.ends_at, e.cover_image_url, e.registration_open,
-    e.live_tracking, e.flight_recording, e.observers_allowed, e.emergency_testing, e.public_live_map, e.organizer_id,
+    e.center_lon, e.center_is_approximate, e.starts_at, e.ends_at, e.cover_image_url, e.applications_open,
+    e.live_tracking, e.public_live_map, e.pilots_see_each_other, e.landing_prompt, e.created_by,
     e.created_at, e.updated_at
 FROM events e
-LEFT JOIN event_participants m ON m.event_id = e.id AND m.user_id = $1::uuid AND m.status = 'active'
-WHERE ($2::bool OR (e.visibility = 'public' AND e.status <> 'draft') OR m.user_id IS NOT NULL)
-  AND ($2::bool OR e.status <> 'draft' OR m.role = 'organizer')
-  AND (cardinality($3::text[]) = 0 OR e.status = ANY ($3::text[]))
-  AND ($4::text = '' OR e.name ILIKE '%' || $4::text || '%' OR e.location_name ILIKE '%' || $4::text || '%')
-  AND ($5::timestamptz IS NULL OR e.ends_at >= $5::timestamptz)
-  AND ($6::timestamptz IS NULL OR e.starts_at <= $6::timestamptz)
-  AND ($7::float8 IS NULL OR ST_DWithin(e.center,
-        ST_SetSRID(ST_MakePoint($8::float8, $7::float8), 4326)::geography,
-        $9::float8))
-  AND ($10::timestamptz IS NULL
-       OR (e.starts_at, e.id) < ($10::timestamptz, $11::uuid))
+LEFT JOIN event_members m ON m.event_id = e.id AND m.user_id = $1::uuid AND m.status = 'active'
+LEFT JOIN event_organizers o ON o.event_id = e.id AND o.user_id = $1::uuid
+WHERE ($2::bool OR (e.visibility = 'public' AND e.status <> 'draft') OR m.user_id IS NOT NULL OR o.user_id IS NOT NULL)
+  AND ($2::bool OR e.status <> 'draft' OR o.user_id IS NOT NULL)
+  AND (NOT $3::bool OR m.user_id IS NOT NULL OR o.user_id IS NOT NULL)
+  AND (cardinality($4::text[]) = 0 OR e.status = ANY ($4::text[]))
+  AND ($5::text = '' OR e.name ILIKE '%' || $5::text || '%' OR e.location_name ILIKE '%' || $5::text || '%')
+  AND ($6::timestamptz IS NULL OR e.ends_at >= $6::timestamptz)
+  AND ($7::timestamptz IS NULL OR e.starts_at <= $7::timestamptz)
+  AND ($8::float8 IS NULL OR ST_DWithin(e.center,
+        ST_SetSRID(ST_MakePoint($9::float8, $8::float8), 4326)::geography,
+        $10::float8))
+  AND ($11::timestamptz IS NULL
+       OR (e.starts_at, e.id) < ($11::timestamptz, $12::uuid))
 ORDER BY e.starts_at DESC, e.id DESC
-LIMIT $12
+LIMIT $13
 `
 
 type ListEventsParams struct {
 	ViewerID    *uuid.UUID
 	IsAdmin     bool
+	Mine        bool
 	Statuses    []string
 	Q           string
 	FromT       *time.Time
@@ -643,13 +1004,12 @@ type ListEventsRow struct {
 	StartsAt            time.Time
 	EndsAt              time.Time
 	CoverImageUrl       *string
-	RegistrationOpen    bool
+	ApplicationsOpen    bool
 	LiveTracking        bool
-	FlightRecording     bool
-	ObserversAllowed    bool
-	EmergencyTesting    bool
 	PublicLiveMap       bool
-	OrganizerID         *uuid.UUID
+	PilotsSeeEachOther  bool
+	LandingPrompt       bool
+	CreatedBy           *uuid.UUID
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 }
@@ -658,6 +1018,7 @@ func (q *Queries) ListEvents(ctx context.Context, arg ListEventsParams) ([]ListE
 	rows, err := q.db.Query(ctx, listEvents,
 		arg.ViewerID,
 		arg.IsAdmin,
+		arg.Mine,
 		arg.Statuses,
 		arg.Q,
 		arg.FromT,
@@ -692,13 +1053,12 @@ func (q *Queries) ListEvents(ctx context.Context, arg ListEventsParams) ([]ListE
 			&i.StartsAt,
 			&i.EndsAt,
 			&i.CoverImageUrl,
-			&i.RegistrationOpen,
+			&i.ApplicationsOpen,
 			&i.LiveTracking,
-			&i.FlightRecording,
-			&i.ObserversAllowed,
-			&i.EmergencyTesting,
 			&i.PublicLiveMap,
-			&i.OrganizerID,
+			&i.PilotsSeeEachOther,
+			&i.LandingPrompt,
+			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -761,28 +1121,28 @@ func (q *Queries) ListLaunchSites(ctx context.Context, eventID uuid.UUID) ([]Lis
 	return items, nil
 }
 
-const listMembershipsForUser = `-- name: ListMembershipsForUser :many
-SELECT event_id, role FROM event_participants WHERE user_id = $1 AND status = 'active'
+const listMemberIDsByRole = `-- name: ListMemberIDsByRole :many
+SELECT user_id FROM event_members WHERE event_id = $1 AND status = 'active' AND role = $2
 `
 
-type ListMembershipsForUserRow struct {
+type ListMemberIDsByRoleParams struct {
 	EventID uuid.UUID
 	Role    string
 }
 
-func (q *Queries) ListMembershipsForUser(ctx context.Context, userID uuid.UUID) ([]ListMembershipsForUserRow, error) {
-	rows, err := q.db.Query(ctx, listMembershipsForUser, userID)
+func (q *Queries) ListMemberIDsByRole(ctx context.Context, arg ListMemberIDsByRoleParams) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, listMemberIDsByRole, arg.EventID, arg.Role)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListMembershipsForUserRow{}
+	items := []uuid.UUID{}
 	for rows.Next() {
-		var i ListMembershipsForUserRow
-		if err := rows.Scan(&i.EventID, &i.Role); err != nil {
+		var user_id uuid.UUID
+		if err := rows.Scan(&user_id); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, user_id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -790,44 +1150,56 @@ func (q *Queries) ListMembershipsForUser(ctx context.Context, userID uuid.UUID) 
 	return items, nil
 }
 
-const listParticipants = `-- name: ListParticipants :many
-SELECT m.user_id, u.full_name, p.public_id, m.role, m.status, m.joined_at
-FROM event_participants m
-JOIN users u ON u.id = m.user_id
-LEFT JOIN pilot_profiles p ON p.user_id = m.user_id
-WHERE m.event_id = $1 AND ($2::bool OR m.status = 'active')
-ORDER BY CASE m.role WHEN 'organizer' THEN 0 WHEN 'participant' THEN 1 ELSE 2 END, u.full_name
+const listMembers = `-- name: ListMembers :many
+SELECT u.id AS user_id, u.full_name, p.public_id, COALESCE(p.phone, '')::text AS phone,
+    m.role AS role, COALESCE(m.status, 'active')::text AS status,
+    (o.user_id IS NOT NULL)::bool AS is_organizer,
+    COALESCE(m.joined_at, o.assigned_at)::timestamptz AS joined_at
+FROM users u
+LEFT JOIN event_members m ON m.event_id = $1 AND m.user_id = u.id
+LEFT JOIN event_organizers o ON o.event_id = $1 AND o.user_id = u.id
+LEFT JOIN pilot_profiles p ON p.user_id = u.id
+WHERE (m.user_id IS NOT NULL OR o.user_id IS NOT NULL)
+  AND ($2::bool OR o.user_id IS NOT NULL OR m.status = 'active')
+  AND ($3::text = '' OR m.role = $3::text)
+ORDER BY (o.user_id IS NULL), CASE m.role WHEN 'pilot' THEN 0 WHEN 'retriever' THEN 1 ELSE 2 END, u.full_name
 `
 
-type ListParticipantsParams struct {
+type ListMembersParams struct {
 	EventID        uuid.UUID
 	IncludeRemoved bool
+	Role           string
 }
 
-type ListParticipantsRow struct {
-	UserID   uuid.UUID
-	FullName string
-	PublicID *string
-	Role     string
-	Status   string
-	JoinedAt time.Time
+type ListMembersRow struct {
+	UserID      uuid.UUID
+	FullName    string
+	PublicID    *string
+	Phone       string
+	Role        *string
+	Status      string
+	IsOrganizer bool
+	JoinedAt    time.Time
 }
 
-func (q *Queries) ListParticipants(ctx context.Context, arg ListParticipantsParams) ([]ListParticipantsRow, error) {
-	rows, err := q.db.Query(ctx, listParticipants, arg.EventID, arg.IncludeRemoved)
+// Union of organizers and members; role is NULL for organizers without a member role.
+func (q *Queries) ListMembers(ctx context.Context, arg ListMembersParams) ([]ListMembersRow, error) {
+	rows, err := q.db.Query(ctx, listMembers, arg.EventID, arg.IncludeRemoved, arg.Role)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListParticipantsRow{}
+	items := []ListMembersRow{}
 	for rows.Next() {
-		var i ListParticipantsRow
+		var i ListMembersRow
 		if err := rows.Scan(
 			&i.UserID,
 			&i.FullName,
 			&i.PublicID,
+			&i.Phone,
 			&i.Role,
 			&i.Status,
+			&i.IsOrganizer,
 			&i.JoinedAt,
 		); err != nil {
 			return nil, err
@@ -840,36 +1212,126 @@ func (q *Queries) ListParticipants(ctx context.Context, arg ListParticipantsPara
 	return items, nil
 }
 
-const removeParticipant = `-- name: RemoveParticipant :execrows
-UPDATE event_participants SET status = 'removed', updated_at = now()
+const listOrganizerIDs = `-- name: ListOrganizerIDs :many
+SELECT user_id FROM event_organizers WHERE event_id = $1
+`
+
+func (q *Queries) ListOrganizerIDs(ctx context.Context, eventID uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, listOrganizerIDs, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []uuid.UUID{}
+	for rows.Next() {
+		var user_id uuid.UUID
+		if err := rows.Scan(&user_id); err != nil {
+			return nil, err
+		}
+		items = append(items, user_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listOrganizersForEvents = `-- name: ListOrganizersForEvents :many
+SELECT o.event_id, o.user_id, u.full_name, o.assigned_at
+FROM event_organizers o JOIN users u ON u.id = o.user_id
+WHERE o.event_id = ANY ($1::uuid[])
+ORDER BY o.assigned_at, u.full_name
+`
+
+type ListOrganizersForEventsRow struct {
+	EventID    uuid.UUID
+	UserID     uuid.UUID
+	FullName   string
+	AssignedAt time.Time
+}
+
+func (q *Queries) ListOrganizersForEvents(ctx context.Context, eventIds []uuid.UUID) ([]ListOrganizersForEventsRow, error) {
+	rows, err := q.db.Query(ctx, listOrganizersForEvents, eventIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListOrganizersForEventsRow{}
+	for rows.Next() {
+		var i ListOrganizersForEventsRow
+		if err := rows.Scan(
+			&i.EventID,
+			&i.UserID,
+			&i.FullName,
+			&i.AssignedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const lockApplication = `-- name: LockApplication :one
+SELECT id, event_id, user_id, message, status, granted_role, decided_by, decision_note, created_at, decided_at, updated_at FROM event_applications WHERE id = $1 AND event_id = $2 FOR UPDATE
+`
+
+type LockApplicationParams struct {
+	ID      uuid.UUID
+	EventID uuid.UUID
+}
+
+func (q *Queries) LockApplication(ctx context.Context, arg LockApplicationParams) (EventApplication, error) {
+	row := q.db.QueryRow(ctx, lockApplication, arg.ID, arg.EventID)
+	var i EventApplication
+	err := row.Scan(
+		&i.ID,
+		&i.EventID,
+		&i.UserID,
+		&i.Message,
+		&i.Status,
+		&i.GrantedRole,
+		&i.DecidedBy,
+		&i.DecisionNote,
+		&i.CreatedAt,
+		&i.DecidedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const removeMember = `-- name: RemoveMember :execrows
+UPDATE event_members SET status = 'removed', updated_at = now()
 WHERE event_id = $1 AND user_id = $2 AND status = 'active'
 `
 
-type RemoveParticipantParams struct {
+type RemoveMemberParams struct {
 	EventID uuid.UUID
 	UserID  uuid.UUID
 }
 
-func (q *Queries) RemoveParticipant(ctx context.Context, arg RemoveParticipantParams) (int64, error) {
-	result, err := q.db.Exec(ctx, removeParticipant, arg.EventID, arg.UserID)
+func (q *Queries) RemoveMember(ctx context.Context, arg RemoveMemberParams) (int64, error) {
+	result, err := q.db.Exec(ctx, removeMember, arg.EventID, arg.UserID)
 	if err != nil {
 		return 0, err
 	}
 	return result.RowsAffected(), nil
 }
 
-const setParticipantRole = `-- name: SetParticipantRole :execrows
-UPDATE event_participants SET role = $1, updated_at = now() WHERE event_id = $2 AND user_id = $3
+const removeOrganizer = `-- name: RemoveOrganizer :execrows
+DELETE FROM event_organizers WHERE event_id = $1 AND user_id = $2
 `
 
-type SetParticipantRoleParams struct {
-	Role    string
+type RemoveOrganizerParams struct {
 	EventID uuid.UUID
 	UserID  uuid.UUID
 }
 
-func (q *Queries) SetParticipantRole(ctx context.Context, arg SetParticipantRoleParams) (int64, error) {
-	result, err := q.db.Exec(ctx, setParticipantRole, arg.Role, arg.EventID, arg.UserID)
+func (q *Queries) RemoveOrganizer(ctx context.Context, arg RemoveOrganizerParams) (int64, error) {
+	result, err := q.db.Exec(ctx, removeOrganizer, arg.EventID, arg.UserID)
 	if err != nil {
 		return 0, err
 	}
@@ -880,10 +1342,10 @@ const updateEvent = `-- name: UpdateEvent :exec
 UPDATE events SET slug = $1, name = $2, description = $3, kind = $4, status = $5,
     visibility = $6, location_name = $7, center_lat = $8,
     center_lon = $9, center_is_approximate = $10, starts_at = $11,
-    ends_at = $12, cover_image_url = $13, registration_open = $14,
-    live_tracking = $15, flight_recording = $16, observers_allowed = $17,
-    emergency_testing = $18, public_live_map = $19, updated_at = now()
-WHERE id = $20
+    ends_at = $12, cover_image_url = $13, applications_open = $14,
+    live_tracking = $15, public_live_map = $16,
+    pilots_see_each_other = $17, landing_prompt = $18, updated_at = now()
+WHERE id = $19
 `
 
 type UpdateEventParams struct {
@@ -900,12 +1362,11 @@ type UpdateEventParams struct {
 	StartsAt            time.Time
 	EndsAt              time.Time
 	CoverImageUrl       *string
-	RegistrationOpen    bool
+	ApplicationsOpen    bool
 	LiveTracking        bool
-	FlightRecording     bool
-	ObserversAllowed    bool
-	EmergencyTesting    bool
 	PublicLiveMap       bool
+	PilotsSeeEachOther  bool
+	LandingPrompt       bool
 	ID                  uuid.UUID
 }
 
@@ -924,12 +1385,11 @@ func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) error 
 		arg.StartsAt,
 		arg.EndsAt,
 		arg.CoverImageUrl,
-		arg.RegistrationOpen,
+		arg.ApplicationsOpen,
 		arg.LiveTracking,
-		arg.FlightRecording,
-		arg.ObserversAllowed,
-		arg.EmergencyTesting,
 		arg.PublicLiveMap,
+		arg.PilotsSeeEachOther,
+		arg.LandingPrompt,
 		arg.ID,
 	)
 	return err
@@ -981,25 +1441,37 @@ func (q *Queries) UpdateLaunchSite(ctx context.Context, arg UpdateLaunchSitePara
 	return err
 }
 
-const upsertParticipant = `-- name: UpsertParticipant :exec
-INSERT INTO event_participants (event_id, user_id, role, status, added_by)
+const upsertMember = `-- name: UpsertMember :exec
+INSERT INTO event_members (event_id, user_id, role, status, added_by)
 VALUES ($1, $2, $3, 'active', $4)
-ON CONFLICT (event_id, user_id) DO UPDATE SET role = EXCLUDED.role, status = 'active', updated_at = now()
+ON CONFLICT (event_id, user_id) DO UPDATE SET role = EXCLUDED.role, status = 'active', updated_at = now(),
+    joined_at = CASE WHEN event_members.status = 'removed' THEN now() ELSE event_members.joined_at END
 `
 
-type UpsertParticipantParams struct {
+type UpsertMemberParams struct {
 	EventID uuid.UUID
 	UserID  uuid.UUID
 	Role    string
 	AddedBy *uuid.UUID
 }
 
-func (q *Queries) UpsertParticipant(ctx context.Context, arg UpsertParticipantParams) error {
-	_, err := q.db.Exec(ctx, upsertParticipant,
+func (q *Queries) UpsertMember(ctx context.Context, arg UpsertMemberParams) error {
+	_, err := q.db.Exec(ctx, upsertMember,
 		arg.EventID,
 		arg.UserID,
 		arg.Role,
 		arg.AddedBy,
 	)
 	return err
+}
+
+const userOrganizesAny = `-- name: UserOrganizesAny :one
+SELECT EXISTS (SELECT 1 FROM event_organizers WHERE user_id = $1)::bool
+`
+
+func (q *Queries) UserOrganizesAny(ctx context.Context, userID uuid.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, userOrganizesAny, userID)
+	var column_1 bool
+	err := row.Scan(&column_1)
+	return column_1, err
 }

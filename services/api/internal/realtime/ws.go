@@ -18,6 +18,7 @@ import (
 	"github.com/mdenizay/retfast/services/api/internal/authz"
 	"github.com/mdenizay/retfast/services/api/internal/events"
 	"github.com/mdenizay/retfast/services/api/internal/flights"
+	"github.com/mdenizay/retfast/services/api/internal/live"
 	"github.com/mdenizay/retfast/services/api/internal/platform/db/dbq"
 	"github.com/mdenizay/retfast/services/api/internal/platform/httpx"
 	"github.com/mdenizay/retfast/services/api/internal/platform/metrics"
@@ -39,22 +40,13 @@ type TokenResolver interface {
 	ResolveToken(ctx context.Context, token string) (*authz.Actor, error)
 }
 
-// IncidentProvider supplies scope and snapshots for the incidents channel.
-type IncidentProvider interface {
-	// Scope reports whether a sees all incidents, or the event ids it may see.
-	Scope(ctx context.Context, a *authz.Actor) (all bool, events []uuid.UUID, err error)
-	// Snapshot returns the open incidents in scope.
-	Snapshot(ctx context.Context, a *authz.Actor) (any, error)
-}
-
 // Server is the /realtime WebSocket endpoint.
 type Server struct {
 	Hub            *Hub
 	Auth           TokenResolver
 	Q              *dbq.Queries
-	Live           *flights.LiveService
+	Live           *live.Service
 	Redis          *redisx.Client
-	Incidents      IncidentProvider
 	Metrics        *metrics.Metrics
 	Log            *slog.Logger
 	OriginPatterns []string
@@ -278,83 +270,94 @@ func (c *conn) subscribe(ctx context.Context, channel, since string) {
 		}
 		cursor = id
 	}
-	switch {
-	case kind == "event" && rest != "":
+	loadEvent := func() (events.Row, authz.Access, bool) {
 		id, err := uuid.Parse(rest)
 		if err != nil {
 			c.sendError("unknown_channel", channel)
-			return
+			return events.Row{}, authz.Access{}, false
 		}
 		e, err := events.Load(sctx, c.s.Q, id.String())
 		if err != nil {
 			c.sendError("unknown_channel", channel)
-			return
+			return events.Row{}, authz.Access{}, false
 		}
-		member, err := events.MemberRole(sctx, c.s.Q, e.ID, a)
+		acc, err := events.AccessOf(sctx, c.s.Q, e.ID, a)
 		if err != nil {
 			c.sendError("internal", channel)
+			return events.Row{}, authz.Access{}, false
+		}
+		if !authz.CanViewEvent(a, events.Facts(e), acc) {
+			c.sendError(errCode(a), channel)
+			return events.Row{}, authz.Access{}, false
+		}
+		return e, acc, true
+	}
+	switch {
+	case kind == "event" && rest != "":
+		e, acc, ok := loadEvent()
+		if !ok {
 			return
 		}
-		if !authz.CanViewEventLive(a, events.Facts(e), member) {
+		facts := events.Facts(e)
+		if !authz.CanViewEventLive(a, facts, acc) {
 			c.sendError(errCode(a), channel)
 			return
 		}
-		sub.Kind, sub.Event, sub.Member = KindEvent, events.Facts(e), member
-		sub.GuestView = member == "" && !a.IsGlobalResponder()
+		sub.Kind, sub.EventID = KindEvent, e.ID
+		sub.SetFacts(&facts, acc)
 		register()
-		live, err := c.s.Live.Snapshot(sctx, a, e, member)
+		snap, err := c.s.Live.Build(sctx, nil, a, e, acc, true)
 		if err != nil {
 			c.sendError("internal", channel)
 			return
 		}
-		live.Cursor = cursor
-		snapshot = live
+		snap.Cursor = cursor
+		snapshot = snap
+	case kind == "retrievals" && rest != "":
+		e, acc, ok := loadEvent()
+		if !ok {
+			return
+		}
+		if !authz.CanListRetrievals(a, acc) {
+			c.sendError(errCode(a), channel)
+			return
+		}
+		facts := events.Facts(e)
+		sub.Kind, sub.EventID = KindRetrievals, e.ID
+		sub.SetFacts(&facts, acc)
+		register()
+		snap, err := c.s.Live.Build(sctx, nil, a, e, acc, false)
+		if err != nil {
+			c.sendError("internal", channel)
+			return
+		}
+		snap.Cursor = cursor
+		snapshot = snap.ForRetrievals()
 	case kind == "flight" && rest != "":
-		row, err := flights.LoadVisible(sctx, c.s.Q, rest, a)
+		row, guest, err := flights.LoadVisible(sctx, c.s.Q, rest, a)
 		if err != nil {
 			c.sendError(errCode(a), channel)
 			return
 		}
-		member := ""
-		if row.EventID != nil {
-			member, _ = events.MemberRole(sctx, c.s.Q, *row.EventID, a)
+		ev, acc, err := flights.Policy(sctx, c.s.Q, row.FlightSession, a)
+		if err != nil {
+			c.sendError("internal", channel)
+			return
 		}
-		sub.Kind, sub.FlightID, sub.FlightEventID, sub.FlightMember = KindFlight, row.ID, row.EventID, member
+		sub.Kind, sub.FlightID = KindFlight, row.ID
+		if ev != nil {
+			sub.EventID = ev.ID
+		}
+		sub.SetFacts(ev, acc)
 		if channel != "flight:"+row.ID.String() {
 			channel = "flight:" + row.ID.String()
 			sub.Channel = channel
 		}
 		register()
-		dto := flights.DTO(row)
-		if member == "" && !a.IsGlobalResponder() && !a.Is(row.PilotID) {
-			if p, err := c.s.Q.GetPilotProfile(sctx, row.PilotID); err == nil {
-				dto.Pilot.FullName = p.DisplayName
-			}
-		}
-		snapshot = dto
-	case channel == "incidents":
-		if !a.Authenticated() || c.s.Incidents == nil {
-			c.sendError(errCode(a), channel)
-			return
-		}
-		all, evs, err := c.s.Incidents.Scope(sctx, a)
-		if err != nil {
-			c.sendError("internal", channel)
-			return
-		}
-		if !authz.CanSubscribeIncidents(a, len(evs) > 0) {
-			c.sendError("forbidden", channel)
-			return
-		}
-		sub.Kind, sub.IncidentAll = KindIncidents, all
-		sub.IncidentEvents = map[uuid.UUID]bool{}
-		for _, e := range evs {
-			sub.IncidentEvents[e] = true
-		}
-		register()
-		if snapshot, err = c.s.Incidents.Snapshot(sctx, a); err != nil {
-			c.sendError("internal", channel)
-			return
+		if guest {
+			snapshot = flights.PublicDTO(sctx, c.s.Q, row)
+		} else {
+			snapshot = flights.DTO(row)
 		}
 	default:
 		c.sendError("unknown_channel", channel)

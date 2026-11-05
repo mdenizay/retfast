@@ -60,7 +60,7 @@ func TestRedisDownIngestionSucceedsAndOutboxDrainsLater(t *testing.T) {
 	e := newEnvWith(t, envOpts{redisURL: url})
 	ctx := context.Background()
 	u := e.Register("Redis Down Pilot")
-	fid := e.CreateFlight(u, nil, "public")
+	fid := e.CreateFlight(u, nil)
 	// baseline: relay works
 	Eventually(t, 10*time.Second, func() bool {
 		var n int

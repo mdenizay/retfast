@@ -65,6 +65,7 @@ type AdminUser struct {
 	FullName           string      `json:"full_name"`
 	PublicID           *string     `json:"public_id"`
 	Roles              []string    `json:"roles"`
+	IsPlatformAdmin    bool        `json:"is_platform_admin"`
 	EmailVerified      bool        `json:"email_verified"`
 	MustChangePassword bool        `json:"must_change_password"`
 	Disabled           bool        `json:"disabled"`
@@ -98,7 +99,8 @@ func (h *Handler) users(w http.ResponseWriter, r *http.Request) error {
 			break
 		}
 		out.Items = append(out.Items, AdminUser{ID: u.ID, Email: u.Email, FullName: u.FullName, PublicID: u.PublicID, Roles: u.Roles,
-			EmailVerified: u.EmailVerifiedAt != nil, MustChangePassword: u.MustChangePassword, Disabled: u.DisabledAt != nil,
+			IsPlatformAdmin: slices.Contains(u.Roles, authz.RolePlatformAdmin),
+			EmailVerified:   u.EmailVerifiedAt != nil, MustChangePassword: u.MustChangePassword, Disabled: u.DisabledAt != nil,
 			CreatedAt: httpx.T(u.CreatedAt), DisabledAt: httpx.TP(u.DisabledAt)})
 	}
 	httpx.WriteJSON(w, http.StatusOK, out)
@@ -125,21 +127,14 @@ func (h *Handler) patchUser(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	var in struct {
-		Roles    *[]string `json:"roles"`
-		Disabled *bool     `json:"disabled"`
+		IsPlatformAdmin *bool `json:"is_platform_admin"`
+		Disabled        *bool `json:"disabled"`
 	}
 	if err := httpx.DecodeJSON(w, r, 4<<10, &in); err != nil {
 		return err
 	}
-	if in.Roles != nil {
-		for _, role := range *in.Roles {
-			if !slices.Contains(authz.AllRoles, role) {
-				return httpx.Validation(map[string]string{"roles": "unknown role " + role})
-			}
-		}
-		if u.ID == a.UserID && !slices.Contains(*in.Roles, authz.RolePlatformAdmin) {
-			return httpx.Validation(map[string]string{"roles": "you cannot remove your own platform_admin role"})
-		}
+	if in.IsPlatformAdmin != nil && !*in.IsPlatformAdmin && u.ID == a.UserID {
+		return httpx.Validation(map[string]string{"is_platform_admin": "you cannot remove your own platform_admin role"})
 	}
 	if in.Disabled != nil && *in.Disabled && u.ID == a.UserID {
 		return httpx.Validation(map[string]string{"disabled": "you cannot disable yourself"})
@@ -147,20 +142,21 @@ func (h *Handler) patchUser(w http.ResponseWriter, r *http.Request) error {
 	err = pgx.BeginFunc(ctx, h.Pool, func(tx pgx.Tx) error {
 		q := dbq.New(tx)
 		details := map[string]any{}
-		if in.Roles != nil {
+		if in.IsPlatformAdmin != nil {
 			before, err := q.ListUserRoles(ctx, u.ID)
 			if err != nil {
 				return err
 			}
-			if err := q.DeleteUserRolesNotIn(ctx, dbq.DeleteUserRolesNotInParams{UserID: u.ID, Roles: *in.Roles}); err != nil {
+			if *in.IsPlatformAdmin {
+				err = q.AddUserRole(ctx, dbq.AddUserRoleParams{UserID: u.ID, Role: authz.RolePlatformAdmin, GrantedBy: &a.UserID})
+			} else {
+				err = q.RemoveUserRole(ctx, dbq.RemoveUserRoleParams{UserID: u.ID, Role: authz.RolePlatformAdmin})
+			}
+			if err != nil {
 				return err
 			}
-			for _, role := range *in.Roles {
-				if err := q.AddUserRole(ctx, dbq.AddUserRoleParams{UserID: u.ID, Role: role, GrantedBy: &a.UserID}); err != nil {
-					return err
-				}
-			}
-			details["roles_before"], details["roles_after"] = before, *in.Roles
+			details["was_platform_admin"] = slices.Contains(before, authz.RolePlatformAdmin)
+			details["is_platform_admin"] = *in.IsPlatformAdmin
 		}
 		if in.Disabled != nil {
 			if err := q.SetUserDisabled(ctx, dbq.SetUserDisabledParams{ID: u.ID, Disabled: *in.Disabled}); err != nil {
@@ -186,7 +182,8 @@ func (h *Handler) patchUser(w http.ResponseWriter, r *http.Request) error {
 	for _, x := range rows {
 		if x.ID == u.ID {
 			httpx.WriteJSON(w, http.StatusOK, AdminUser{ID: x.ID, Email: x.Email, FullName: x.FullName, PublicID: x.PublicID, Roles: x.Roles,
-				EmailVerified: x.EmailVerifiedAt != nil, MustChangePassword: x.MustChangePassword, Disabled: x.DisabledAt != nil,
+				IsPlatformAdmin: slices.Contains(x.Roles, authz.RolePlatformAdmin),
+				EmailVerified:   x.EmailVerifiedAt != nil, MustChangePassword: x.MustChangePassword, Disabled: x.DisabledAt != nil,
 				CreatedAt: httpx.T(x.CreatedAt), DisabledAt: httpx.TP(x.DisabledAt)})
 			return nil
 		}
@@ -279,9 +276,10 @@ func (h *Handler) stats(w http.ResponseWriter, r *http.Request) error {
 		status = h.Status(r.Context())
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]any{
-		"generated_at": httpx.T(time.Now()), "active_events": s.ActiveEvents, "tracking_pilots": s.TrackingPilots,
-		"stale_sessions": s.StaleSessions, "open_incidents": s.OpenIncidents, "recent_flights": s.RecentFlights,
-		"users": s.Users, "system_status": map[string]any{"checks": status, "outbox_depth": s.OutboxDepth,
+		"generated_at": httpx.T(time.Now()), "active_events": s.ActiveEvents, "pilots_in_air": s.TrackingPilots,
+		"stale_sessions": s.StaleSessions, "open_retrievals": s.OpenRetrievals, "pending_applications": s.PendingApplications,
+		"recent_flights": s.RecentFlights,
+		"users":          s.Users, "system_status": map[string]any{"checks": status, "outbox_depth": s.OutboxDepth,
 			"email_pending": s.EmailPending, "email_failed_24h": s.EmailFailed24h},
 	})
 	return nil

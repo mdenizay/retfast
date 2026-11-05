@@ -122,6 +122,10 @@ func (m *Maintenance) RunPartitions(ctx context.Context) {
 	}
 }
 
+// PositionRetention bounds how long retriever positions and retrieval pilot
+// positions are stored.
+const PositionRetention = 30 * 24 * time.Hour
+
 // RunHousekeeping prunes retention-limited tables hourly and abandons silent flights.
 func (m *Maintenance) RunHousekeeping(ctx context.Context) {
 	t := time.NewTicker(time.Hour)
@@ -159,6 +163,11 @@ func (m *Maintenance) HousekeepOnce(ctx context.Context) {
 	run("email_outbox", func() (int64, error) { return q.PruneEmailOutbox(ctx) })
 	run("notification_records", func() (int64, error) { return q.PruneReadNotifications(ctx) })
 	run("audit_logs", func() (int64, error) { return q.PruneAuditLogs(ctx) })
+	// retriever/pilot positions shared for retrievals are kept 30 days (security.md)
+	positionsBefore := time.Now().Add(-PositionRetention)
+	run("retriever_positions", func() (int64, error) { return q.PruneRetrieverPositions(ctx, positionsBefore) })
+	run("retrieval_positions", func() (int64, error) { return q.PruneRetrievalPositions(ctx, positionsBefore) })
+	run("retriever_states", func() (int64, error) { return q.ClearStaleRetrieverStates(ctx, &positionsBefore) })
 	abandon := m.AbandonAfter
 	if abandon == 0 {
 		abandon = 12 * time.Hour

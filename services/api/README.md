@@ -1,6 +1,6 @@
 # retfast-api
 
-Go modular monolith for Retfast live tracking and search-and-rescue: REST + WebSocket
+Go modular monolith for Retfast event tracking and pilot retrieval (ADR-012): REST + WebSocket
 API, telemetry ingestion, transactional outbox → Redis Streams fan-out, email outbox,
 and the `retfast-simulator` load/demo tool.
 
@@ -20,18 +20,19 @@ cmd/api            retfast-api: serve | migrate up|down N|status | seed | health
 cmd/simulator      retfast-simulator
 internal/app       wiring, router, workers, graceful shutdown
 internal/auth      Argon2id, JWT, refresh rotation + reuse detection, password/email flows, middleware
-internal/authz     the single authorization policy (pure functions, REST + WebSocket)
+internal/authz     the single authorization policy (pure functions over event roles, REST + WebSocket)
 internal/users     /me, profiles, devices, export, account deletion worker
-internal/events    events, memberships (one table with a role column), launch sites, report
-internal/flights   flights, positions, GPX, live snapshot read model
+internal/events    events, organizers, applications, members (one role per user per event), launch sites, report
+internal/flights   flights, positions, GPX, live pilots read model
+internal/live      GET /events/{id}/live and WebSocket snapshots (pilots + retrievals + retrievers)
+internal/retrievals  retrieval state machine, pilot positions, retriever duty/positions
 internal/tracking  telemetry ingestion (ADR-004), partitions, housekeeping, stats recompute
 internal/tracking/stats  running statistics (pure)
 internal/realtime  outbox relay (leader), stream tailer, hub, WebSocket server; bus = outbox envelope
-internal/emergencies  incidents, state machine, rescue assignments/team, responder audit
 internal/notifications  in-app notifications, PushSender interface (APNs NOT configured: no-op)
 internal/email     templates (TR first), outbox, Resend sender, worker
 internal/admin     /admin
-internal/seed      production bootstrap (5 users + Çameli demo event)
+internal/seed      production bootstrap (5 users, 2 admins, Çameli demo event with organizers and members)
 internal/sim       deterministic route generator + simulator runner (fixtures in testdata/)
 internal/platform  config, db (pool, migration runner, sqlc dbq), redisx, httpx, log, metrics, ratelimit, geo, slug
 migrations/        embedded NNNN_name.up.sql / .down.sql
@@ -91,12 +92,16 @@ a superuser, as shown above.
 `retfast-api seed [--demo-starts-at 2026-11-04T00:00:00+03:00] [--demo-window-days 90] [--renew-bootstrap]`
 
 - Creates the five bootstrap accounts with the initial password `password`. Each one has
-  `must_change_password=true`, `password_expires_at=now+7d` and a verified email. The
-  seed also creates their pilot profiles and default preferences (`event`, private
-  profile), plus the Çameli demo event (active, public, all settings on). The event's
-  launch site "Yaylacık (Çameli)" has no coordinates and is unverified.
-- Re-running changes nothing. It never resets a user who changed their password, and it
-  does not move the demo window unless you pass the flags.
+  `must_change_password=true`, `password_expires_at=now+7d` and a verified email. Deniz and
+  Altay are `platform_admin` (the only global privilege). The seed also creates pilot profiles
+  and default preferences, plus the Çameli demo event (active, public, demo; settings:
+  `applications_open`, `live_tracking`, `pilots_see_each_other`, `landing_prompt` on,
+  `public_live_map` off). Organizers: Deniz, Altay. Members: Deniz → pilot, Altay → observer,
+  Tecelli → pilot, Emre → pilot, Kübra → retriever. The launch site "Yaylacık (Çameli)" has no
+  coordinates and is unverified.
+- Re-running changes nothing. It never resets a user who changed their password, never
+  overwrites organizer/member assignments changed in the app, and does not move the demo
+  window unless you pass the flags. It prints counts only.
 - `--renew-bootstrap` re-issues `password` with a fresh 7-day expiry, and only for
   accounts that never changed it.
 - The seed is safe to run in production as the controlled bootstrap. Passwords are never logged.
@@ -119,24 +124,61 @@ random port, and skips if `redis-server` is not installed.
 
 ## Simulator
 
+Simulator accounts must be members of the event. Accounts that are not apply to it, and an
+approver (`--approver-email/--approver-password`, an organizer or platform admin of the event)
+approves them with the right role. For local development create one approver once:
+
 ```sh
-# development: register sim-001..020@sim.retfast.local and fly them in the demo event
-go run ./cmd/simulator --api http://localhost:8080/api/v1 --pilots 20 \
-  --register --password 'Sim-Pilot-Password-2026' --forward-ip --duration 2m
-
-# existing accounts from a CSV (email,password[,name]); no --register
-go run ./cmd/simulator --api https://api.retfast.com/api/v1 --accounts-csv sims.csv --event cameli-paragliding-demo
-
-# load test: 60 s, no disturbances, 2 WebSocket observers, JSON report
-go run ./cmd/simulator --pilots 500 --register --password 'Sim-Pilot-Password-2026' --forward-ip --load --report load.json
+curl -s -X POST localhost:8080/api/v1/auth/register -H 'Content-Type: application/json' \
+  -d '{"email":"sim-organizer@sim.retfast.local","password":"Sim-Organizer-Password-2026","full_name":"SIM Organizer","client":"ios"}'
+psql -d retfast_dev -c "INSERT INTO user_roles (user_id, role) SELECT id, 'platform_admin' FROM users
+  WHERE email = 'sim-organizer@sim.retfast.local' ON CONFLICT DO NOTHING"   # development only
 ```
 
-- Flights are created with `is_simulated=true`. The simulator never creates incidents.
+```sh
+# development: 10 pilots that land within ~2 minutes, then request retrievals; 3 simulated
+# retrievers accept, drive to them at 15 m/s, pick them up and deliver them
+go run ./cmd/simulator --api http://localhost:8080/api/v1 --pilots 10 --register \
+  --password 'Sim-Pilot-Password-2026' --forward-ip \
+  --approver-email sim-organizer@sim.retfast.local --approver-password 'Sim-Organizer-Password-2026' \
+  --retrievals --retrievers 3 --land-within 2m --duration 4m
+
+# flights only (no retrievals), 20 pilots for 2 minutes
+go run ./cmd/simulator --pilots 20 --register --password 'Sim-Pilot-Password-2026' --forward-ip \
+  --approver-email sim-organizer@sim.retfast.local --approver-password 'Sim-Organizer-Password-2026' --duration 2m
+
+# existing, already-approved accounts from CSV (email,password[,name]); no --register
+go run ./cmd/simulator --api https://api.retfast.com/api/v1 --accounts-csv sims.csv \
+  --retrievals --retrievers-csv sim-retrievers.csv --event cameli-paragliding-demo
+
+# load test: 60 s, no disturbances, 2 WebSocket observers, JSON report
+go run ./cmd/simulator --pilots 500 --register --password 'Sim-Pilot-Password-2026' --forward-ip \
+  --approver-email … --approver-password … --load --report load.json
+```
+
+- Flights and retrievals are created with `is_simulated=true`. Simulated retrievers only
+  accept retrievals that are `is_simulated` (and, when the simulator also flies the pilots,
+  only those pilots' requests): they never act on a real pilot's retrieval.
+- `--retrievals`: after landing, each pilot creates a retrieval (pickup = landing point, a
+  short note), then posts its position every `--pilot-position-interval` (10 s), walking up
+  to ~300 m towards a road; after pickup it reports the car's position. Each retriever goes
+  on duty at a base on the valley road 3.5–5 km south-east of launch, posts its position
+  every `--retriever-interval` (3 s), accepts the nearest open simulated request (409 races
+  are counted as `accept_conflicts`), drives towards the pilot's latest position along a
+  curved path at `--drive-speed` (15 m/s), waits 10 s, marks picked up, drives back to base
+  (at most 3 minutes) and marks delivered. Retrievals not delivered within
+  `--retrieval-timeout` (20 min) are cancelled by the pilot. The report has a `retrievals`
+  section with counts.
+- `--duration` bounds the flying; the retrieval phase of pilots that landed continues until
+  delivery or the timeout.
+- `--land-within D` starts each pilot late in its (deterministic) route so it lands within
+  0.3–1.0 × D; without it, `--start-offset-max` picks a random start offset.
 - It refuses `--register` when `GET /meta` reports `production`, unless you pass
-  `--allow-prod-register`. In production it only flies in demo events.
-- Routes are deterministic for a given `--seed`. Each pilot climbs in thermals, glides,
-  descends and lands around Çameli. The fixtures are `internal/sim/testdata/*.csv`;
-  regenerate them with `go test ./internal/sim -run Fixtures -update`.
+  `--allow-prod-register`. In production it only works in demo events.
+- Routes, start offsets, notes, retriever bases and road curvature are deterministic for a
+  given `--seed`. Each pilot climbs in thermals, glides, descends and lands around Çameli.
+  The fixtures are `internal/sim/testdata/*.csv`; regenerate them with
+  `go test ./internal/sim -run Fixtures -update`.
 - Disturbances:
   - `--gps-degrade`: h_acc rises to 25–120 m for 20–60 s.
   - `--outage-prob/--outage-min/--outage-max`: samples are buffered, then resent.
@@ -144,7 +186,7 @@ go run ./cmd/simulator --pilots 500 --register --password 'Sim-Pilot-Password-20
   - `--dup-prob`: a batch is resent under a new batch id.
   - `--stagger`: pilot start times are spread out, which is the default. Use
     `--stagger=false` for worst-case lockstep uploads.
-- `--forward-ip` is for local load tests only. It gives each pilot a distinct
+- `--forward-ip` is for local load tests only. It gives each account a distinct
   `X-Forwarded-For`, so per-IP auth limits behave as they would with real phones. It
   works only when the server lists the simulator host in `TRUSTED_PROXIES`, for
   example `TRUSTED_PROXIES=127.0.0.1,::1`.
@@ -173,6 +215,9 @@ in-flight requests, stops the workers and exits within `SHUTDOWN_TIMEOUT`.
   - `retfast_http_request_duration_seconds{method,route,status}`
   - `retfast_push_unconfigured_total`
   - `retfast_partition_maintenance_errors_total`
+  - `retfast_retrieval_transitions_total{kind}`
+- Retriever positions and retrieval pilot positions are pruned after 30 days by the hourly
+  housekeeping (see `docs/architecture/security.md`).
 - APNs is not configured. Notifications are stored and listed by `GET /notifications`.
   The push worker uses `UnconfiguredAPNs`, which logs `apns_unconfigured` and sets
   `push_status=unconfigured` (or `no_device`). A real sender only needs to implement

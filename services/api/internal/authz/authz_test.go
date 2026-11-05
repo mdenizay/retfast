@@ -6,149 +6,157 @@ import (
 	"github.com/google/uuid"
 )
 
-var (
-	owner   = uuid.New()
-	ev      = uuid.New()
-	guest   *Actor
-	pilot   = &Actor{UserID: uuid.New(), Roles: []string{RolePilot}}
-	ownerA  = &Actor{UserID: owner, Roles: []string{RolePilot}}
-	admin   = &Actor{UserID: uuid.New(), Roles: []string{RolePlatformAdmin}}
-	rescuer = &Actor{UserID: uuid.New(), Roles: []string{RoleRescueOperator}}
-	orgRole = &Actor{UserID: uuid.New(), Roles: []string{RoleEventOrganizer}}
-)
-
-func flight(vis string, incident bool) Flight {
-	e := ev
-	return Flight{OwnerID: owner, EventID: &e, Visibility: vis, IncidentOpen: incident}
+func actor(admin bool) *Actor {
+	a := &Actor{UserID: uuid.New()}
+	if admin {
+		a.Roles = []string{RolePlatformAdmin}
+	}
+	return a
 }
 
-// TestLiveVisibilityMatrix encodes the contract's "Live visibility" rules.
-func TestLiveVisibilityMatrix(t *testing.T) {
-	pub := Event{ID: ev, Visibility: EventPublic, Status: "active", PublicLiveMap: true}
-	noMap := Event{ID: ev, Visibility: EventPublic, Status: "active", PublicLiveMap: false}
-	type row struct {
-		name   string
-		a      *Actor
-		member string
-		e      Event
-		vis    string
-		inc    bool
-		want   bool
+func TestEventPolicies(t *testing.T) {
+	pub := Event{ID: uuid.New(), Visibility: EventPublic, Status: "active", ApplicationsOpen: true}
+	res := Event{ID: uuid.New(), Visibility: EventRestrict, Status: "active", ApplicationsOpen: true}
+	draft := Event{ID: uuid.New(), Visibility: EventPublic, Status: "draft"}
+	u, adm := actor(false), actor(true)
+	var guest *Actor
+	if !CanCreateEvent(adm) || CanCreateEvent(u) || CanCreateEvent(guest) {
+		t.Error("only admins create events")
 	}
-	rows := []row{
-		{"guest public flight public map", guest, "", pub, VisPublic, false, true},
-		{"guest event flight", guest, "", pub, VisEvent, false, false},
-		{"guest private flight", guest, "", pub, VisPrivate, false, false},
-		{"guest public flight no public map", guest, "", noMap, VisPublic, false, false},
-		{"non-member pilot public", pilot, "", pub, VisPublic, false, true},
-		{"non-member pilot event", pilot, "", pub, VisEvent, false, false},
-		{"participant event", pilot, MemberParticipant, noMap, VisEvent, false, true},
-		{"observer public", pilot, MemberObserver, noMap, VisPublic, false, true},
-		{"participant private", pilot, MemberParticipant, pub, VisPrivate, false, false},
-		{"participant private with incident", pilot, MemberParticipant, pub, VisPrivate, true, false},
-		{"organizer private no incident", pilot, MemberOrganizer, pub, VisPrivate, false, false},
-		{"organizer private with incident", pilot, MemberOrganizer, pub, VisPrivate, true, true},
-		{"organizer event", pilot, MemberOrganizer, noMap, VisEvent, false, true},
-		{"admin private", admin, "", noMap, VisPrivate, false, true},
-		{"rescue private", rescuer, "", noMap, VisPrivate, false, true},
-		{"owner private", ownerA, "", noMap, VisPrivate, false, true},
-		{"global organizer role alone grants nothing", orgRole, "", noMap, VisEvent, false, false},
+	if !CanViewEvent(guest, pub, Access{}) || CanViewEvent(u, res, Access{}) || !CanViewEvent(u, res, Access{Role: MemberObserver}) {
+		t.Error("view visibility")
 	}
-	for _, r := range rows {
-		if got := CanSeeLiveFlight(r.a, r.e, r.member, flight(r.vis, r.inc)); got != r.want {
-			t.Errorf("%s: got %v want %v", r.name, got, r.want)
-		}
+	if CanViewEvent(u, draft, Access{Role: MemberPilot}) || !CanViewEvent(u, draft, Access{Organizer: true}) || !CanViewEvent(adm, draft, Access{}) {
+		t.Error("drafts are for organizers/admins")
 	}
-}
-
-func TestEventAccess(t *testing.T) {
-	pub := Event{Visibility: EventPublic, Status: "active", PublicLiveMap: true, RegistrationOpen: true, ObserversAllowed: true}
-	res := Event{Visibility: EventRestrict, Status: "active", PublicLiveMap: true, RegistrationOpen: true}
-	draft := Event{Visibility: EventPublic, Status: "draft"}
-	checks := []struct {
-		name string
-		got  bool
-		want bool
-	}{
-		{"guest sees public", CanViewEvent(guest, pub, ""), true},
-		{"guest cannot see restricted", CanViewEvent(guest, res, ""), false},
-		{"member sees restricted", CanViewEvent(pilot, res, MemberParticipant), true},
-		{"guest cannot see draft", CanViewEvent(guest, draft, ""), false},
-		{"participant cannot see draft", CanViewEvent(pilot, draft, MemberParticipant), false},
-		{"organizer sees draft", CanViewEvent(pilot, draft, MemberOrganizer), true},
-		{"admin sees everything", CanViewEvent(admin, res, ""), true},
-		{"restricted live map not public even with flag", CanViewEventLive(guest, res, ""), false},
-		{"rescue sees restricted live", CanViewEventLive(rescuer, res, ""), true},
-		{"pilot may create? no", CanCreateEvent(pilot), false},
-		{"event_organizer may create", CanCreateEvent(orgRole), true},
-		{"admin may create", CanCreateEvent(admin), true},
-		{"organizer manages", CanManageEvent(pilot, MemberOrganizer), true},
-		{"participant does not manage", CanManageEvent(pilot, MemberParticipant), false},
-		{"guest cannot manage", CanManageEvent(guest, MemberOrganizer), false},
-		{"participants list needs membership", CanViewParticipants(pilot, ""), false},
+	if CanManageEvent(u, Access{Role: MemberObserver}) || !CanManageEvent(u, Access{Organizer: true}) || !CanManageEvent(adm, Access{}) {
+		t.Error("manage")
 	}
-	for _, c := range checks {
-		if c.got != c.want {
-			t.Errorf("%s: got %v want %v", c.name, c.got, c.want)
-		}
-	}
-	if CanJoinEvent(pilot, pub, MemberParticipant) != JoinAllowed {
-		t.Error("pilot join public")
-	}
-	if CanJoinEvent(&Actor{UserID: uuid.New(), Roles: []string{RoleObserver}}, pub, MemberParticipant) != JoinNotPilot {
-		t.Error("observer as participant")
-	}
-	if CanJoinEvent(pilot, res, MemberParticipant) != JoinForbidden {
-		t.Error("restricted self-join")
+	if CanApply(u, pub, Access{}) != ApplyAllowed || CanApply(u, pub, Access{Role: MemberPilot}) != ApplyAlreadyMember ||
+		CanApply(guest, pub, Access{}) != ApplyForbidden || CanApply(u, res, Access{}) != ApplyForbidden {
+		t.Error("apply")
 	}
 	closed := pub
-	closed.RegistrationOpen = false
-	if CanJoinEvent(pilot, closed, MemberParticipant) != JoinClosed {
-		t.Error("closed registration")
+	closed.ApplicationsOpen = false
+	if CanApply(u, closed, Access{}) != ApplyClosed {
+		t.Error("closed applications")
 	}
-	noObs := pub
-	noObs.ObserversAllowed = false
-	if CanJoinEvent(pilot, noObs, MemberObserver) != JoinObserversDisallowed {
-		t.Error("observers disallowed")
-	}
-	if CanJoinEvent(guest, pub, MemberParticipant) != JoinForbidden {
-		t.Error("guest join")
+	if !CanSearchUsers(u, true) || CanSearchUsers(u, false) || !CanSearchUsers(adm, false) {
+		t.Error("user search")
 	}
 }
 
-func TestFlightAndIncidentAccess(t *testing.T) {
-	checks := []struct {
-		name string
-		got  bool
-		want bool
+func TestLiveMatrix(t *testing.T) {
+	owner := uuid.New()
+	base := Event{ID: uuid.New(), Visibility: EventPublic, Status: "active", PilotsSeeEachOther: true}
+	u := actor(false)
+	cases := []struct {
+		name   string
+		a      *Actor
+		e      func(Event) Event
+		acc    Access
+		scope  LiveScope
+		sees   bool
+		guestV bool
 	}{
-		{"guest public flight", CanViewFlight(guest, flight(VisPublic, false), ""), true},
-		{"guest event flight", CanViewFlight(guest, flight(VisEvent, false), ""), false},
-		{"member event flight", CanViewFlight(pilot, flight(VisEvent, false), MemberObserver), true},
-		{"member private flight", CanViewFlight(pilot, flight(VisPrivate, false), MemberParticipant), false},
-		{"organizer private during incident", CanViewFlight(pilot, flight(VisPrivate, true), MemberOrganizer), true},
-		{"organizer private after incident", CanViewFlight(pilot, flight(VisPrivate, false), MemberOrganizer), false},
-		{"owner private", CanViewFlight(ownerA, flight(VisPrivate, false), ""), true},
-		{"rescue private", CanViewFlight(rescuer, flight(VisPrivate, false), ""), true},
-		{"incident owner", CanViewIncident(ownerA, owner, ""), true},
-		{"incident stranger", CanViewIncident(pilot, owner, ""), false},
-		{"incident event participant", CanViewIncident(pilot, owner, MemberParticipant), false},
-		{"incident organizer", CanViewIncident(pilot, owner, MemberOrganizer), true},
-		{"incident admin", IsIncidentResponder(admin, ""), true},
-		{"incident rescue", IsIncidentResponder(rescuer, ""), true},
-		{"incident guest", IsIncidentResponder(guest, MemberOrganizer), false},
-		{"contact for organizer", CanSeeEmergencyContact(pilot, owner, MemberOrganizer), true},
-		{"contact for participant", CanSeeEmergencyContact(pilot, owner, MemberParticipant), false},
-		{"incidents channel: plain pilot", CanSubscribeIncidents(pilot, false), false},
-		{"incidents channel: organizer", CanSubscribeIncidents(pilot, true), true},
-		{"incidents channel: rescue", CanSubscribeIncidents(rescuer, false), true},
-		{"rescue console: organizer", CanUseRescueConsole(orgRole), false},
-		{"pilots list: pilot", CanListPilots(pilot, false), false},
-		{"pilots list: organizer of an event", CanListPilots(pilot, true), true},
+		{"organizer", u, nil, Access{Organizer: true}, LiveFull, true, false},
+		{"organizer+retriever", u, nil, Access{Organizer: true, Role: MemberRetriever}, LiveFull, true, false},
+		{"observer", u, nil, Access{Role: MemberObserver}, LiveFull, true, false},
+		{"admin", actor(true), nil, Access{}, LiveFull, true, false},
+		{"pilot sees others", u, nil, Access{Role: MemberPilot}, LivePilot, true, false},
+		{"pilot alone", u, func(e Event) Event { e.PilotsSeeEachOther = false; return e }, Access{Role: MemberPilot}, LivePilot, false, false},
+		{"retriever", u, nil, Access{Role: MemberRetriever}, LiveRetriever, false, false},
+		{"guest no map", nil, nil, Access{}, LiveNone, false, false},
+		{"guest public map", nil, func(e Event) Event { e.PublicLiveMap = true; return e }, Access{}, LiveGuest, true, true},
+		{"outsider public map", u, func(e Event) Event { e.PublicLiveMap = true; return e }, Access{}, LiveGuest, true, true},
+		{"restricted public map", nil, func(e Event) Event { e.PublicLiveMap = true; e.Visibility = EventRestrict; return e }, Access{}, LiveNone, false, false},
 	}
-	for _, c := range checks {
-		if c.got != c.want {
-			t.Errorf("%s: got %v want %v", c.name, c.got, c.want)
+	for _, c := range cases {
+		e := base
+		if c.e != nil {
+			e = c.e(e)
 		}
+		if got := LiveScopeFor(c.a, e, c.acc); got != c.scope {
+			t.Errorf("%s: scope %d want %d", c.name, got, c.scope)
+		}
+		if got := CanSeeLiveFlight(c.a, e, c.acc, owner); got != c.sees {
+			t.Errorf("%s: sees %v", c.name, got)
+		}
+		if got := GuestView(c.a, e, c.acc); got != c.guestV {
+			t.Errorf("%s: guest view %v", c.name, got)
+		}
+	}
+	// owners always see their own flight
+	o := &Actor{UserID: owner}
+	alone := base
+	alone.PilotsSeeEachOther = false
+	if !CanSeeLiveFlight(o, alone, Access{Role: MemberPilot}, owner) {
+		t.Error("own flight")
+	}
+	// flights outside events: owner and admin only
+	f := Flight{OwnerID: owner}
+	if !CanViewFlight(o, f, nil, Access{}) || !CanViewFlight(actor(true), f, nil, Access{}) || CanViewFlight(u, f, nil, Access{Organizer: true}) {
+		t.Error("private flight")
+	}
+	eid := base.ID
+	ef := Flight{OwnerID: owner, EventID: &eid}
+	if CanViewFlight(u, ef, &base, Access{Role: MemberRetriever}) || !CanViewFlight(u, ef, &base, Access{Role: MemberObserver}) {
+		t.Error("event flight")
+	}
+}
+
+func TestRetrievalPolicies(t *testing.T) {
+	pilot, ra, rb := actor(false), actor(false), actor(false)
+	org, obs, adm := actor(false), actor(false), actor(true)
+	asR := Access{Role: MemberRetriever}
+	asO := Access{Organizer: true}
+	asObs := Access{Role: MemberObserver}
+	asP := Access{Role: MemberPilot}
+	req := Retrieval{PilotID: pilot.UserID, Status: RetrievalRequested}
+	acc := Retrieval{PilotID: pilot.UserID, RetrieverID: &ra.UserID, Status: RetrievalAccepted}
+	del := Retrieval{PilotID: pilot.UserID, RetrieverID: &ra.UserID, Status: RetrievalDelivered}
+
+	if !CanViewRetrieval(rb, asR, req) || CanViewRetrieval(rb, asR, acc) || !CanViewRetrieval(ra, asR, acc) {
+		t.Error("retriever visibility")
+	}
+	if !CanViewRetrieval(obs, asObs, acc) || !CanViewRetrieval(org, asO, acc) || !CanViewRetrieval(adm, Access{}, acc) {
+		t.Error("organizer/observer/admin see all")
+	}
+	if !CanViewRetrieval(pilot, asP, acc) || CanViewRetrieval(actor(false), asP, acc) {
+		t.Error("pilots see their own only")
+	}
+	// phones
+	if CanSeePilotPhone(rb, asR, req) || CanSeePilotPhone(ra, asR, req) {
+		t.Error("no pilot phone before acceptance")
+	}
+	if !CanSeePilotPhone(ra, asR, acc) || CanSeePilotPhone(ra, asR, del) || CanSeePilotPhone(obs, asObs, acc) {
+		t.Error("pilot phone only to the accepting retriever while held")
+	}
+	if !CanSeePilotPhone(org, asO, req) || !CanSeePilotPhone(adm, Access{}, req) {
+		t.Error("organizers/admins see phones")
+	}
+	if !CanSeeRetrieverPhone(pilot, asP, acc) || CanSeeRetrieverPhone(pilot, asP, del) || CanSeeRetrieverPhone(obs, asObs, acc) ||
+		CanSeeRetrieverPhone(rb, asR, acc) {
+		t.Error("retriever phone to the pilot after acceptance only")
+	}
+	// live pilot position inside a retrieval
+	if CanSeeRetrievalPilotPosition(rb, asR, req) || !CanSeeRetrievalPilotPosition(ra, asR, acc) || CanSeeRetrievalPilotPosition(ra, asR, del) ||
+		!CanSeeRetrievalPilotPosition(obs, asObs, acc) {
+		t.Error("pilot position")
+	}
+	// actions
+	if !CanCreateRetrieval(asP) || CanCreateRetrieval(asR) || !CanAcceptRetrieval(asR) || CanAcceptRetrieval(asO) {
+		t.Error("create/accept")
+	}
+	if !CanCancelRetrieval(pilot, asP, acc) || !CanCancelRetrieval(org, asO, acc) || CanCancelRetrieval(ra, asR, acc) {
+		t.Error("cancel")
+	}
+	if !CanAddRetrievalNote(ra, asR, acc) || CanAddRetrievalNote(rb, asR, acc) || CanAddRetrievalNote(obs, asObs, acc) {
+		t.Error("notes")
+	}
+	// retriever visibility (positions)
+	if !CanSeeRetriever(obs, asObs, ra.UserID, nil) || !CanSeeRetriever(ra, asR, ra.UserID, nil) || CanSeeRetriever(rb, asR, ra.UserID, nil) ||
+		!CanSeeRetriever(pilot, asP, ra.UserID, []uuid.UUID{pilot.UserID}) || CanSeeRetriever(pilot, asP, ra.UserID, nil) {
+		t.Error("retriever positions")
 	}
 }

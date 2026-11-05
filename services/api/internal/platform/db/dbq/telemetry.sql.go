@@ -245,7 +245,7 @@ func (q *Queries) InsertSampleKeys(ctx context.Context, arg InsertSampleKeysPara
 }
 
 const lockFlightWithPilot = `-- name: LockFlightWithPilot :one
-SELECT f.id, f.public_id, f.pilot_id, f.event_id, f.status, f.visibility, f.is_simulated, f.started_at, f.ended_at, f.device_platform, f.device_app_version, f.created_at, f.updated_at, f.last_sample_id, f.last_seq, f.last_t, f.last_lat, f.last_lon, f.last_gps_alt_m, f.last_h_acc_m, f.last_v_acc_m, f.last_speed_ms, f.last_course_deg, f.last_position_received_at, f.last_received_at, f.sample_count, f.distance_m, f.max_gps_alt_m, f.min_gps_alt_m, f.max_ground_speed_ms, f.total_ascent_m, f.total_descent_m, f.gap_count, f.first_sample_t, f.last_sample_t, f.stats_state, f.stats_dirty, u.full_name AS pilot_name, COALESCE(p.public_id, '') AS pilot_public_id,
+SELECT f.id, f.public_id, f.pilot_id, f.event_id, f.status, f.is_simulated, f.started_at, f.ended_at, f.device_platform, f.device_app_version, f.created_at, f.updated_at, f.last_sample_id, f.last_seq, f.last_t, f.last_lat, f.last_lon, f.last_gps_alt_m, f.last_h_acc_m, f.last_v_acc_m, f.last_speed_ms, f.last_course_deg, f.last_position_received_at, f.last_received_at, f.sample_count, f.distance_m, f.max_gps_alt_m, f.min_gps_alt_m, f.max_ground_speed_ms, f.total_ascent_m, f.total_descent_m, f.gap_count, f.first_sample_t, f.last_sample_t, f.stats_state, f.stats_dirty, u.full_name AS pilot_name, COALESCE(p.public_id, '') AS pilot_public_id,
        COALESCE(p.display_name, u.full_name) AS pilot_display_name
 FROM flight_sessions f
 JOIN users u ON u.id = f.pilot_id
@@ -270,7 +270,6 @@ func (q *Queries) LockFlightWithPilot(ctx context.Context, id uuid.UUID) (LockFl
 		&i.FlightSession.PilotID,
 		&i.FlightSession.EventID,
 		&i.FlightSession.Status,
-		&i.FlightSession.Visibility,
 		&i.FlightSession.IsSimulated,
 		&i.FlightSession.StartedAt,
 		&i.FlightSession.EndedAt,

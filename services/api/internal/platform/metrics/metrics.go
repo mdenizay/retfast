@@ -30,6 +30,7 @@ type Metrics struct {
 	RateLimitFallback prometheus.Counter
 	PushUnconfigured  prometheus.Counter
 	PartitionErrors   prometheus.Counter
+	Retrievals        *prometheus.CounterVec
 }
 
 // New registers all collectors on a fresh registry.
@@ -76,9 +77,12 @@ func New() *Metrics {
 	m.PartitionErrors = prometheus.NewCounter(prometheus.CounterOpts{
 		Name: "retfast_partition_maintenance_errors_total", Help: "flight_positions partition maintenance failures.",
 	})
+	m.Retrievals = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "retfast_retrieval_transitions_total", Help: "Retrieval state changes by resulting kind (requested|accepted|released|assigned|picked_up|delivered|cancelled).",
+	}, []string{"kind"})
 	for _, c := range []prometheus.Collector{m.HTTPDuration, m.TelemetrySamples, m.TelemetryBatches, m.TelemetryLatency,
 		m.OutboxDepth, m.OutboxRelayed, m.OutboxRelayErrors, m.WSConnections, m.WSDropped, m.WSMessages,
-		m.EmailSent, m.EmailFailures, m.RateLimited, m.RateLimitFallback, m.PushUnconfigured, m.PartitionErrors} {
+		m.EmailSent, m.EmailFailures, m.RateLimited, m.RateLimitFallback, m.PushUnconfigured, m.PartitionErrors, m.Retrievals} {
 		f(c)
 	}
 	return m

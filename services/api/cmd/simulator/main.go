@@ -1,10 +1,14 @@
 // Command retfast-simulator flies deterministic synthetic paragliding flights
 // around Çameli through the public Retfast API. Flights are created with
-// is_simulated=true; the simulator never creates incidents.
+// is_simulated=true. With --retrievals, landed pilots request retrievals
+// (is_simulated) and simulated retrievers complete them; they never touch a
+// real pilot's retrieval.
 //
 // Accounts come from --accounts-csv (email,password[,name]), from
 // --email-pattern/--password, or are created with --register (refused against
-// a production API unless --allow-prod-register). In production it only flies
+// a production API unless --allow-prod-register). Accounts that are not yet
+// members apply to the event; --approver-email/--approver-password (an
+// organizer or admin of the event) approves them. In production it only flies
 // in demo events (ADR-011).
 package main
 
@@ -39,7 +43,17 @@ func main() {
 	password := fs.String("password", "", "password for --email-pattern accounts (or RETFAST_SIM_PASSWORD)")
 	register := fs.Bool("register", false, "register missing --email-pattern accounts (development/staging only)")
 	allowProd := fs.Bool("allow-prod-register", false, "allow --register against a production API")
-	visibility := fs.String("visibility", "event", "flight visibility: private|event|public")
+	approverEmail := fs.String("approver-email", "", "organizer/admin account that approves the simulator accounts' applications")
+	approverPassword := fs.String("approver-password", "", "password for --approver-email (or RETFAST_SIM_APPROVER_PASSWORD)")
+	landWithin := fs.Duration("land-within", 0, "start each pilot late in its route so it lands within this duration (0 = use --start-offset-max)")
+	retrievals := fs.Bool("retrievals", false, "after landing, request a retrieval; simulated retrievers accept, drive, pick up and deliver")
+	nRetrievers := fs.Int("retrievers", 2, "number of simulated retrievers (with --retrievals)")
+	retrieverPattern := fs.String("retriever-email-pattern", "sim-retriever-%03d@sim.retfast.local", "retriever email pattern (fmt, index from 1)")
+	retrieverCSV := fs.String("retrievers-csv", "", "CSV file of retriever accounts email,password[,name] (instead of the pattern)")
+	driveSpeed := fs.Float64("drive-speed", 15, "retriever road speed in m/s")
+	retrieverIv := fs.Duration("retriever-interval", 3*time.Second, "retriever position interval")
+	pilotPosIv := fs.Duration("pilot-position-interval", 10*time.Second, "pilot position interval while a retrieval is open")
+	retrievalTimeout := fs.Duration("retrieval-timeout", 20*time.Minute, "cancel a simulated retrieval that is not delivered within this time")
 	degrade := fs.Float64("gps-degrade", 0.1, "probability per minute of a 20-60 s GPS accuracy degradation")
 	outage := fs.Float64("outage-prob", 0.02, "probability per minute of a network outage (samples buffered, resent after)")
 	outageMin := fs.Duration("outage-min", 20*time.Second, "minimum outage length")
@@ -73,8 +87,34 @@ func main() {
 			accounts = append(accounts, sim.Account{Email: fmt.Sprintf(*pattern, i), Password: pw, Name: fmt.Sprintf("SIM Pilot %03d", i)})
 		}
 	}
+	var retrieverAccounts []sim.Account
+	if *retrievals {
+		if *retrieverCSV != "" {
+			var err error
+			if retrieverAccounts, err = readCSV(*retrieverCSV); err != nil {
+				fatal(err)
+			}
+		} else {
+			if pw == "" {
+				fatal(errors.New("--password (or RETFAST_SIM_PASSWORD) is required for pattern retriever accounts"))
+			}
+			for i := 1; i <= *nRetrievers; i++ {
+				retrieverAccounts = append(retrieverAccounts, sim.Account{Email: fmt.Sprintf(*retrieverPattern, i), Password: pw, Name: fmt.Sprintf("SIM Retriever %03d", i)})
+			}
+		}
+	}
+	var approver *sim.Account
+	if *approverEmail != "" {
+		ap := *approverPassword
+		if ap == "" {
+			ap = os.Getenv("RETFAST_SIM_APPROVER_PASSWORD")
+		}
+		approver = &sim.Account{Email: *approverEmail, Password: ap}
+	}
 	cfg := sim.Config{API: strings.TrimRight(*api, "/"), Event: *event, Accounts: accounts, Register: *register, AllowProdRegister: *allowProd,
-		Seed: *seed, SampleInterval: *sampleIv, BatchInterval: *batchIv, Duration: *duration, Visibility: *visibility,
+		Approver: approver, LandWithin: *landWithin, Retrievals: *retrievals, Retrievers: retrieverAccounts, DriveSpeed: *driveSpeed,
+		RetrieverInterval: *retrieverIv, PilotPositionInterval: *pilotPosIv, RetrievalTimeout: *retrievalTimeout,
+		Seed: *seed, SampleInterval: *sampleIv, BatchInterval: *batchIv, Duration: *duration,
 		DegradeProbPerMin: *degrade, OutageProbPerMin: *outage, OutageMin: *outageMin, OutageMax: *outageMax,
 		InactivityProbPerMin: *inactivity, InactivityMin: 30 * time.Second, InactivityMax: 90 * time.Second,
 		DupProb: *dup, StartOffsetMax: *offset, EndOnExit: true, WSSubscribers: *wsSubs, ForwardIPs: *forwardIP, Stagger: *stagger}
@@ -92,7 +132,7 @@ func main() {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	fmt.Fprintf(os.Stderr, "retfast-simulator: %d pilots, seed %d, sample %s, batch %s, event %s\n", len(accounts), *seed, *sampleIv, *batchIv, *event)
+	fmt.Fprintf(os.Stderr, "retfast-simulator: %d pilots, %d retrievers, seed %d, sample %s, batch %s, event %s\n", len(accounts), len(retrieverAccounts), *seed, *sampleIv, *batchIv, *event)
 	rep, err := sim.Run(ctx, cfg)
 	if err != nil {
 		fatal(err)

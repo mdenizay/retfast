@@ -46,7 +46,7 @@ func (h *Handler) Routes(r chi.Router) {
 	r.Delete("/me/deletion-request", httpx.H(h.cancelDeletion))
 	r.Get("/me/export", httpx.H(h.export))
 	r.Post("/me/devices", httpx.H(h.upsertDevice))
-	r.Get("/pilots", httpx.H(h.listPilots))
+	r.Get("/users/search", httpx.H(h.searchUsers))
 }
 
 // PublicRoutes mounts endpoints available to guests.
@@ -63,15 +63,12 @@ func (h *Handler) getMe(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-var visibilities = map[string]bool{"private": true, "event": true, "public": true}
-
 func (h *Handler) patchMe(w http.ResponseWriter, r *http.Request) error {
 	var in struct {
 		FullName    *string `json:"full_name"`
 		Preferences *struct {
-			Units                   *string `json:"units"`
-			DefaultFlightVisibility *string `json:"default_flight_visibility"`
-			PublicProfile           *bool   `json:"public_profile"`
+			Units         *string `json:"units"`
+			PublicProfile *bool   `json:"public_profile"`
 		} `json:"preferences"`
 	}
 	if err := httpx.DecodeJSON(w, r, 16<<10, &in); err != nil {
@@ -97,12 +94,6 @@ func (h *Handler) patchMe(w http.ResponseWriter, r *http.Request) error {
 			}
 			prefs.Units = *p.Units
 		}
-		if p.DefaultFlightVisibility != nil {
-			if !visibilities[*p.DefaultFlightVisibility] {
-				details["preferences.default_flight_visibility"] = "must be private, event or public"
-			}
-			prefs.DefaultFlightVisibility = *p.DefaultFlightVisibility
-		}
 		if p.PublicProfile != nil {
 			prefs.PublicProfile = *p.PublicProfile
 		}
@@ -119,7 +110,7 @@ func (h *Handler) patchMe(w http.ResponseWriter, r *http.Request) error {
 		}
 		if in.Preferences != nil {
 			return q.UpsertPreferences(r.Context(), dbq.UpsertPreferencesParams{UserID: a.UserID, Units: prefs.Units,
-				DefaultFlightVisibility: prefs.DefaultFlightVisibility, PublicProfile: prefs.PublicProfile})
+				PublicProfile: prefs.PublicProfile})
 		}
 		return nil
 	})
@@ -149,9 +140,8 @@ func (h *Handler) patchPilot(w http.ResponseWriter, r *http.Request) error {
 		max int
 	}{
 		"display_name": {&p.DisplayName, 200}, "bio": {&p.Bio, 2000}, "wing": {&p.Wing, 200},
-		"license_no": {&p.LicenseNo, 100}, "nationality": {&p.Nationality, 2},
+		"license_no": {&p.LicenseNo, 100}, "nationality": {&p.Nationality, 2}, "phone": {&p.Phone, 50},
 		"emergency_contact_name": {&p.EmergencyContactName, 200}, "emergency_contact_phone": {&p.EmergencyContactPhone, 50},
-		"blood_type": {&p.BloodType, 10},
 	}
 	details := map[string]string{}
 	for k, raw := range in {
@@ -187,8 +177,8 @@ func (h *Handler) patchPilot(w http.ResponseWriter, r *http.Request) error {
 		return httpx.Validation(details)
 	}
 	if err := h.Q.UpdatePilotProfile(r.Context(), dbq.UpdatePilotProfileParams{UserID: a.UserID, DisplayName: p.DisplayName,
-		Bio: p.Bio, Wing: p.Wing, LicenseNo: p.LicenseNo, Nationality: p.Nationality,
-		EmergencyContactName: p.EmergencyContactName, EmergencyContactPhone: p.EmergencyContactPhone, BloodType: p.BloodType}); err != nil {
+		Bio: p.Bio, Wing: p.Wing, LicenseNo: p.LicenseNo, Nationality: p.Nationality, Phone: p.Phone,
+		EmergencyContactName: p.EmergencyContactName, EmergencyContactPhone: p.EmergencyContactPhone}); err != nil {
 		return err
 	}
 	return h.getMe(w, r)
@@ -305,54 +295,41 @@ func (h *Handler) getPilot(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func (h *Handler) listPilots(w http.ResponseWriter, r *http.Request) error {
-	a := authz.ActorFrom(r.Context())
-	mem, err := h.Q.ListMembershipsForUser(r.Context(), a.UserID)
+// searchUsers serves GET /users/search for organizers and admins (adding
+// organizers and members). It never returns contact data beyond the email.
+func (h *Handler) searchUsers(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	a := authz.ActorFrom(ctx)
+	organizes, err := h.Q.UserOrganizesAny(ctx, a.UserID)
 	if err != nil {
 		return err
 	}
-	organizes := false
-	for _, m := range mem {
-		if m.Role == authz.MemberOrganizer {
-			organizes = true
-		}
+	if !authz.CanSearchUsers(a, organizes) {
+		return httpx.Forbidden("Only organizers and admins can search users")
 	}
-	if !authz.CanListPilots(a, organizes) {
-		return httpx.Forbidden("")
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	if utf8.RuneCountInString(q) > 100 {
+		return httpx.Validation(map[string]string{"q": "too long"})
 	}
-	lim, err := httpx.Limit(r, 50, 200)
+	lim, err := httpx.Limit(r, 20, 50)
 	if err != nil {
 		return err
 	}
-	p := dbq.SearchUsersParams{Q: strings.TrimSpace(r.URL.Query().Get("q")), Lim: int32(lim + 1)}
-	var cur struct {
-		N  string    `json:"n"`
-		ID uuid.UUID `json:"id"`
-	}
-	if ok, err := httpx.DecodeCursor(r, &cur); err != nil {
-		return err
-	} else if ok {
-		p.AfterName, p.AfterID = &cur.N, &cur.ID
-	}
-	rows, err := h.Q.SearchUsers(r.Context(), p)
+	rows, err := h.Q.SearchUsersBasic(ctx, dbq.SearchUsersBasicParams{Q: q, Lim: int32(lim)})
 	if err != nil {
 		return err
 	}
 	type item struct {
 		ID       uuid.UUID `json:"id"`
 		FullName string    `json:"full_name"`
+		Email    string    `json:"email"`
 		PublicID *string   `json:"public_id"`
-		Roles    []string  `json:"roles"`
 	}
-	out := httpx.Page[item]{Items: []item{}}
-	for i, u := range rows {
-		if i == lim {
-			out.NextCursor = httpx.EncodeCursor(map[string]any{"n": rows[lim-1].FullName, "id": rows[lim-1].ID})
-			break
-		}
-		out.Items = append(out.Items, item{ID: u.ID, FullName: u.FullName, PublicID: u.PublicID, Roles: u.Roles})
+	out := make([]item, 0, len(rows))
+	for _, u := range rows {
+		out = append(out, item{ID: u.ID, FullName: u.FullName, Email: u.Email, PublicID: u.PublicID})
 	}
-	httpx.WriteJSON(w, http.StatusOK, out)
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{"items": out})
 	return nil
 }
 
@@ -384,6 +361,31 @@ func (h *Handler) export(w http.ResponseWriter, r *http.Request) error {
 	for _, d := range devs {
 		ds = append(ds, device{d.DeviceID, d.Platform, d.ApnsToken != nil, d.AppVersion, d.OsVersion, httpx.T(d.LastSeenAt)})
 	}
+	rets, err := h.Q.ListRetrievalsForPilot(ctx, a.UserID)
+	if err != nil {
+		return err
+	}
+	type retrieval struct {
+		ID          uuid.UUID   `json:"id"`
+		EventID     uuid.UUID   `json:"event_id"`
+		FlightID    *uuid.UUID  `json:"flight_id"`
+		Status      string      `json:"status"`
+		PickupLat   float64     `json:"pickup_lat"`
+		PickupLon   float64     `json:"pickup_lon"`
+		PickupT     httpx.Time  `json:"pickup_t"`
+		Note        string      `json:"note"`
+		RequestedAt httpx.Time  `json:"requested_at"`
+		AcceptedAt  *httpx.Time `json:"accepted_at"`
+		PickedUpAt  *httpx.Time `json:"picked_up_at"`
+		DeliveredAt *httpx.Time `json:"delivered_at"`
+		CancelledAt *httpx.Time `json:"cancelled_at"`
+		IsSimulated bool        `json:"is_simulated"`
+	}
+	rs := make([]retrieval, 0, len(rets))
+	for _, x := range rets {
+		rs = append(rs, retrieval{x.ID, x.EventID, x.FlightID, x.Status, x.PickupLat, x.PickupLon, httpx.T(x.PickupT), x.Note,
+			httpx.T(x.RequestedAt), httpx.TP(x.AcceptedAt), httpx.TP(x.PickedUpAt), httpx.TP(x.DeliveredAt), httpx.TP(x.CancelledAt), x.IsSimulated})
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="retfast-export.json"`)
 	enc := json.NewEncoder(w)
@@ -394,6 +396,8 @@ func (h *Handler) export(w http.ResponseWriter, r *http.Request) error {
 	_ = enc.Encode(me)
 	write(`,"devices":`)
 	_ = enc.Encode(ds)
+	write(`,"retrievals":`)
+	_ = enc.Encode(rs)
 	write(`,"flights":[`)
 	for i, f := range flights {
 		if i > 0 {
@@ -421,7 +425,7 @@ func (h *Handler) export(w http.ResponseWriter, r *http.Request) error {
 		}
 		fs := f.FlightSession
 		_ = enc.Encode(map[string]any{"id": fs.ID, "public_id": fs.PublicID, "event_id": fs.EventID, "status": fs.Status,
-			"visibility": fs.Visibility, "is_simulated": fs.IsSimulated, "started_at": httpx.T(fs.StartedAt),
+			"is_simulated": fs.IsSimulated, "started_at": httpx.T(fs.StartedAt),
 			"ended_at": httpx.TP(fs.EndedAt), "positions": ps})
 	}
 	write("]}")
@@ -455,8 +459,9 @@ func (d *DeletionWorker) Run(ctx context.Context) {
 
 // ProcessOnce anonymises due accounts: credentials, profile and contact data are
 // wiped, sessions revoked, devices and notifications deleted, flights and their
-// positions deleted. Incident records are kept (safety record) but reference the
-// anonymised user.
+// positions deleted, retriever positions and retrieval position history deleted,
+// memberships/organizer assignments removed. Retrieval records are kept (event
+// record) but reference the anonymised user.
 func (d *DeletionWorker) ProcessOnce(ctx context.Context) (int, error) {
 	n := 0
 	err := pgx.BeginFunc(ctx, d.Pool, func(tx pgx.Tx) error {
@@ -482,6 +487,11 @@ func (d *DeletionWorker) ProcessOnce(ctx context.Context) (int, error) {
 				func() error { return q.AnonymizePilotProfile(ctx, req.UserID) },
 				func() error { return q.SetPublicProfileOff(ctx, req.UserID) },
 				func() error { return q.RemoveUserMemberships(ctx, req.UserID) },
+				func() error { return q.RemoveUserOrganizerships(ctx, req.UserID) },
+				func() error { return q.WithdrawUserApplications(ctx, req.UserID) },
+				func() error { return q.DeleteUserRetrieverData(ctx, req.UserID) },
+				func() error { return q.DeleteUserRetrieverStates(ctx, req.UserID) },
+				func() error { return q.DeleteUserRetrievalPositions(ctx, req.UserID) },
 				func() error { return q.DeleteUserRoles(ctx, req.UserID) },
 				func() error { return q.AnonymizeUser(ctx, dbq.AnonymizeUserParams{ID: req.UserID, PasswordHash: hash}) },
 				func() error { return q.CompleteDeletionRequest(ctx, req.ID) },

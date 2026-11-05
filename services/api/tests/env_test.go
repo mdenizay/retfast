@@ -366,7 +366,27 @@ func (e *Env) Login(u *User) {
 	u.Refresh, _ = m["refresh_token"].(string)
 }
 
-// CreateEvent creates an event as organizer u (who needs event_organizer).
+// Admin registers a user and makes them platform_admin.
+func (e *Env) Admin(name string) *User {
+	e.T.Helper()
+	u := e.Register(name)
+	e.Grant(u, "platform_admin")
+	return u
+}
+
+// AssignOrganizer makes u an organizer of the event (as admin adm).
+func (e *Env) AssignOrganizer(adm *User, eventID any, u *User) {
+	e.T.Helper()
+	e.Must(e.Do("POST", fmt.Sprintf("/events/%v/organizers", eventID), map[string]any{"user_id": u.ID}, Req{Token: adm.Token}), 201)
+}
+
+// AddMember adds u to the event with role (as organizer/admin by).
+func (e *Env) AddMember(by *User, eventID any, u *User, role string) {
+	e.T.Helper()
+	e.Must(e.Do("POST", fmt.Sprintf("/events/%v/members", eventID), map[string]any{"user_id": u.ID, "role": role}, Req{Token: by.Token}), 201)
+}
+
+// CreateEvent creates an event as platform admin u.
 func (e *Env) CreateEvent(u *User, body map[string]any) map[string]any {
 	e.T.Helper()
 	base := map[string]any{"name": "Test Event " + randHex(3), "starts_at": time.Now().Add(-time.Hour).UTC().Format(time.RFC3339),
@@ -378,10 +398,10 @@ func (e *Env) CreateEvent(u *User, body map[string]any) map[string]any {
 }
 
 // CreateFlight creates a flight for u.
-func (e *Env) CreateFlight(u *User, eventID any, visibility string) uuid.UUID {
+func (e *Env) CreateFlight(u *User, eventID any) uuid.UUID {
 	e.T.Helper()
 	id := uuid.New()
-	body := map[string]any{"id": id, "started_at": time.Now().Add(-10 * time.Minute).UTC().Format(time.RFC3339Nano), "visibility": visibility,
+	body := map[string]any{"id": id, "started_at": time.Now().Add(-10 * time.Minute).UTC().Format(time.RFC3339Nano),
 		"device": map[string]any{"platform": "ios", "app_version": "test"}}
 	if eventID != nil {
 		body["event_id"] = eventID

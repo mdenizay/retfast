@@ -1,7 +1,7 @@
 -- name: InsertFlight :one
-INSERT INTO flight_sessions (id, public_id, pilot_id, event_id, visibility, is_simulated, started_at,
+INSERT INTO flight_sessions (id, public_id, pilot_id, event_id, is_simulated, started_at,
     device_platform, device_app_version)
-VALUES (@id, @public_id, @pilot_id, sqlc.narg('event_id'), @visibility, @is_simulated, @started_at,
+VALUES (@id, @public_id, @pilot_id, sqlc.narg('event_id'), @is_simulated, @started_at,
     @device_platform, @device_app_version)
 ON CONFLICT (id) DO NOTHING
 RETURNING id;
@@ -26,8 +26,8 @@ SELECT EXISTS (SELECT 1 FROM flight_sessions WHERE public_id = $1);
 -- name: LockFlight :one
 SELECT * FROM flight_sessions WHERE id = $1 FOR UPDATE;
 
--- name: UpdateFlightSharing :exec
-UPDATE flight_sessions SET visibility = @visibility, event_id = sqlc.narg('event_id'), updated_at = now()
+-- name: UpdateFlightEvent :exec
+UPDATE flight_sessions SET event_id = sqlc.narg('event_id'), updated_at = now()
 WHERE id = @id;
 
 -- name: EndFlight :exec
@@ -50,10 +50,11 @@ WHERE (sqlc.narg('pilot_id')::uuid IS NULL OR f.pilot_id = sqlc.narg('pilot_id')
   AND (
       f.pilot_id = @viewer_id
       OR @see_all::bool
-      OR (f.visibility <> 'private' AND f.event_id IN (
-            SELECT m.event_id FROM event_participants m
+      OR f.event_id IN (SELECT o.event_id FROM event_organizers o WHERE o.user_id = @viewer_id)
+      OR (NOT @organizer_only::bool AND f.event_id IN (
+            SELECT m.event_id FROM event_members m JOIN events e ON e.id = m.event_id
             WHERE m.user_id = @viewer_id AND m.status = 'active'
-              AND (m.role = 'organizer' OR NOT @organizer_only::bool)))
+              AND (m.role = 'observer' OR (m.role = 'pilot' AND e.pilots_see_each_other))))
   )
   AND (sqlc.narg('after_started')::timestamptz IS NULL
        OR (f.started_at, f.id) < (sqlc.narg('after_started')::timestamptz, sqlc.narg('after_id')::uuid))
@@ -75,9 +76,7 @@ ORDER BY seq, t;
 
 -- name: LiveFlightsForEvent :many
 SELECT sqlc.embed(f), u.full_name AS pilot_name, COALESCE(p.public_id, '') AS pilot_public_id,
-       COALESCE(p.display_name, u.full_name) AS pilot_display_name,
-       EXISTS (SELECT 1 FROM emergency_incidents i WHERE i.flight_id = f.id
-               AND i.status IN ('open', 'acknowledged', 'responding'))::bool AS incident_open
+       COALESCE(p.display_name, u.full_name) AS pilot_display_name
 FROM flight_sessions f
 JOIN users u ON u.id = f.pilot_id
 LEFT JOIN pilot_profiles p ON p.user_id = f.pilot_id
@@ -91,9 +90,6 @@ SELECT flight_id, seq, t, lat, lon, gps_alt_m, h_acc_m
 FROM flight_positions
 WHERE flight_id = ANY (@flight_ids::uuid[]) AND received_at > @since AND t > @since_t
 ORDER BY flight_id, seq;
-
--- name: FlightHasOpenIncident :one
-SELECT EXISTS (SELECT 1 FROM emergency_incidents WHERE flight_id = $1 AND status IN ('open', 'acknowledged', 'responding'));
 
 -- name: ListDirtyFlights :many
 SELECT id FROM flight_sessions WHERE stats_dirty ORDER BY updated_at LIMIT @lim;

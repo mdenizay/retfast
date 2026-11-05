@@ -24,11 +24,11 @@ import (
 
 // Kinds.
 const (
-	KindEventUpdate    = "event_update"
-	KindFlight         = "flight"
-	KindEmergencyAlert = "emergency_alert"
-	KindRescueAck      = "rescue_ack"
-	KindSystem         = "system"
+	KindEventUpdate = "event_update"
+	KindApplication = "application"
+	KindRetrieval   = "retrieval"
+	KindFlight      = "flight"
+	KindSystem      = "system"
 )
 
 // Notify inserts one record per recipient using q (transaction-bound when it

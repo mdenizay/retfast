@@ -74,40 +74,6 @@ type EmailVerificationToken struct {
 	UsedAt    *time.Time
 }
 
-type EmergencyIncident struct {
-	ID              uuid.UUID
-	Kind            string
-	IsTest          bool
-	Status          string
-	PilotID         uuid.UUID
-	FlightID        *uuid.UUID
-	EventID         *uuid.UUID
-	Lat             *float64
-	Lon             *float64
-	GpsAltM         *float64
-	HAccM           *float64
-	PositionT       *time.Time
-	Message         string
-	CreatedAtDevice time.Time
-	ReceivedAt      time.Time
-	AcknowledgedAt  *time.Time
-	AcknowledgedBy  *uuid.UUID
-	ResolvedAt      *time.Time
-	CancelledAt     *time.Time
-	CancelReason    string
-	UpdatedAt       time.Time
-}
-
-type EmergencyUpdate struct {
-	ID         uuid.UUID
-	IncidentID uuid.UUID
-	Kind       string
-	ActorID    *uuid.UUID
-	Body       string
-	Status     string
-	CreatedAt  time.Time
-}
-
 type Event struct {
 	ID                  uuid.UUID
 	Slug                string
@@ -125,18 +91,31 @@ type Event struct {
 	StartsAt            time.Time
 	EndsAt              time.Time
 	CoverImageUrl       *string
-	RegistrationOpen    bool
+	ApplicationsOpen    bool
 	LiveTracking        bool
-	FlightRecording     bool
-	ObserversAllowed    bool
-	EmergencyTesting    bool
 	PublicLiveMap       bool
-	OrganizerID         *uuid.UUID
+	PilotsSeeEachOther  bool
+	LandingPrompt       bool
+	CreatedBy           *uuid.UUID
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 }
 
-type EventParticipant struct {
+type EventApplication struct {
+	ID           uuid.UUID
+	EventID      uuid.UUID
+	UserID       uuid.UUID
+	Message      string
+	Status       string
+	GrantedRole  *string
+	DecidedBy    *uuid.UUID
+	DecisionNote string
+	CreatedAt    time.Time
+	DecidedAt    *time.Time
+	UpdatedAt    time.Time
+}
+
+type EventMember struct {
 	EventID   uuid.UUID
 	UserID    uuid.UUID
 	Role      string
@@ -144,6 +123,13 @@ type EventParticipant struct {
 	JoinedAt  time.Time
 	UpdatedAt time.Time
 	AddedBy   *uuid.UUID
+}
+
+type EventOrganizer struct {
+	EventID    uuid.UUID
+	UserID     uuid.UUID
+	AssignedBy *uuid.UUID
+	AssignedAt time.Time
 }
 
 type FlightPosition struct {
@@ -190,7 +176,6 @@ type FlightSession struct {
 	PilotID                uuid.UUID
 	EventID                *uuid.UUID
 	Status                 string
-	Visibility             string
 	IsSimulated            bool
 	StartedAt              time.Time
 	EndedAt                *time.Time
@@ -268,9 +253,9 @@ type PilotProfile struct {
 	Wing                  string
 	LicenseNo             string
 	Nationality           string
+	Phone                 string
 	EmergencyContactName  string
 	EmergencyContactPhone string
-	BloodType             string
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
 }
@@ -284,24 +269,87 @@ type RealtimeOutbox struct {
 	CreatedAt time.Time
 }
 
-type RescueAssignment struct {
-	ID          uuid.UUID
-	IncidentID  uuid.UUID
-	ResponderID uuid.UUID
-	Status      string
-	AssignedBy  *uuid.UUID
-	AssignedAt  time.Time
-	UpdatedAt   time.Time
+type Retrieval struct {
+	ID            uuid.UUID
+	EventID       uuid.UUID
+	PilotID       uuid.UUID
+	FlightID      *uuid.UUID
+	Status        string
+	PickupLat     float64
+	PickupLon     float64
+	PickupGpsAltM *float64
+	PickupHAccM   *float64
+	PickupT       time.Time
+	Note          string
+	RetrieverID   *uuid.UUID
+	RequestedAt   time.Time
+	AcceptedAt    *time.Time
+	PickedUpAt    *time.Time
+	DeliveredAt   *time.Time
+	CancelledAt   *time.Time
+	CancelledBy   *uuid.UUID
+	CancelReason  string
+	DeliveryNote  string
+	IsSimulated   bool
+	PpSeq         int32
+	PpSampleID    *uuid.UUID
+	PpT           *time.Time
+	PpLat         *float64
+	PpLon         *float64
+	PpGpsAltM     *float64
+	PpHAccM       *float64
+	PpReceivedAt  *time.Time
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
-type RescueResponder struct {
-	UserID       uuid.UUID
-	Availability string
-	LastLat      *float64
-	LastLon      *float64
-	LastHAccM    *float64
-	LastT        *time.Time
-	UpdatedAt    time.Time
+type RetrievalPosition struct {
+	ID          int64
+	RetrievalID uuid.UUID
+	Seq         int32
+	T           time.Time
+	Lat         float64
+	Lon         float64
+	GpsAltM     *float64
+	HAccM       float64
+	ReceivedAt  time.Time
+}
+
+type RetrievalUpdate struct {
+	ID          uuid.UUID
+	RetrievalID uuid.UUID
+	Kind        string
+	ActorID     *uuid.UUID
+	Body        string
+	CreatedAt   time.Time
+}
+
+type RetrieverPosition struct {
+	ID         int64
+	EventID    uuid.UUID
+	UserID     uuid.UUID
+	T          time.Time
+	Lat        float64
+	Lon        float64
+	HAccM      float64
+	CourseDeg  *float64
+	SpeedMs    *float64
+	ReceivedAt time.Time
+}
+
+type RetrieverState struct {
+	EventID            uuid.UUID
+	UserID             uuid.UUID
+	OnDuty             bool
+	Lat                *float64
+	Lon                *float64
+	HAccM              *float64
+	T                  *time.Time
+	CourseDeg          *float64
+	SpeedMs            *float64
+	PositionReceivedAt *time.Time
+	DutyChangedAt      *time.Time
+	UpdatedAt          time.Time
 }
 
 type TelemetryBatch struct {
@@ -335,11 +383,10 @@ type User struct {
 }
 
 type UserPreference struct {
-	UserID                  uuid.UUID
-	Units                   string
-	DefaultFlightVisibility string
-	PublicProfile           bool
-	UpdatedAt               time.Time
+	UserID        uuid.UUID
+	Units         string
+	PublicProfile bool
+	UpdatedAt     time.Time
 }
 
 type UserRole struct {

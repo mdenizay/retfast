@@ -130,7 +130,7 @@ func TestGracefulRestartKeepsCommittedTelemetry(t *testing.T) {
 	}
 	_ = json.Unmarshal(body, &auth)
 	fid := uuid.New()
-	if st, b, _ := post(s1.base, "/flights", auth.AccessToken, map[string]any{"id": fid, "started_at": time.Now().Add(-time.Hour).UTC().Format(time.RFC3339), "visibility": "private"}); st != 201 {
+	if st, b, _ := post(s1.base, "/flights", auth.AccessToken, map[string]any{"id": fid, "started_at": time.Now().Add(-time.Hour).UTC().Format(time.RFC3339)}); st != 201 {
 		t.Fatalf("flight: %d %s", st, b)
 	}
 

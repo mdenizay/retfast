@@ -22,7 +22,6 @@ import (
 	"github.com/mdenizay/retfast/services/api/internal/platform/httpx"
 	"github.com/mdenizay/retfast/services/api/internal/platform/slug"
 	"github.com/mdenizay/retfast/services/api/internal/tracking/stats"
-	"github.com/mdenizay/retfast/services/api/internal/users"
 )
 
 // Handler serves /flights.
@@ -31,7 +30,7 @@ type Handler struct {
 	Q    *dbq.Queries
 }
 
-// PublicRoutes are mounted with optional auth (public flights are viewable by guests).
+// PublicRoutes are mounted with optional auth (flights of public_live_map events are viewable by guests).
 func (h *Handler) PublicRoutes(r chi.Router) {
 	r.Get("/flights/{id}", httpx.H(h.get))
 	r.Get("/flights/{id}/positions", httpx.H(h.positions))
@@ -46,16 +45,17 @@ func (h *Handler) Routes(r chi.Router) {
 	r.Post("/flights/{id}/end", httpx.H(h.end))
 }
 
-var visibilities = map[string]bool{authz.VisPrivate: true, authz.VisEvent: true, authz.VisPublic: true}
-
 // checkEventForFlight verifies the pilot may link a flight to the event.
 func checkEventForFlight(ctx context.Context, q *dbq.Queries, eventID uuid.UUID, a *authz.Actor) error {
-	e, role, err := events.LoadVisible(ctx, q, eventID.String(), a)
+	e, acc, err := events.LoadVisible(ctx, q, eventID.String(), a)
 	if err != nil {
 		return httpx.Validation(map[string]string{"event_id": "unknown event"})
 	}
-	if role != authz.MemberParticipant && role != authz.MemberOrganizer {
-		return httpx.Forbidden("Join the event as a participant before recording flights in it")
+	if !authz.CanCreateFlightInEvent(acc) {
+		return httpx.Forbidden("Only pilots of this event can record flights in it")
+	}
+	if e.Status == "archived" || e.Status == "completed" || e.Status == "draft" {
+		return httpx.Forbidden("The event is not running")
 	}
 	if !e.LiveTracking {
 		return httpx.Forbidden("Live tracking is disabled for this event")
@@ -70,7 +70,6 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 		ID          uuid.UUID   `json:"id"`
 		EventID     *uuid.UUID  `json:"event_id"`
 		StartedAt   *httpx.Time `json:"started_at"`
-		Visibility  string      `json:"visibility"`
 		IsSimulated bool        `json:"is_simulated"`
 		Device      Device      `json:"device"`
 	}
@@ -85,16 +84,6 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 		d["started_at"] = "required"
 	} else if in.StartedAt.After(time.Now().Add(10 * time.Minute)) {
 		d["started_at"] = "must not be in the future"
-	}
-	if in.Visibility == "" {
-		prefs, err := users.LoadPreferences(ctx, h.Q, a.UserID)
-		if err != nil {
-			return err
-		}
-		in.Visibility = prefs.DefaultFlightVisibility
-	}
-	if !visibilities[in.Visibility] {
-		d["visibility"] = "must be private, event or public"
 	}
 	if in.Device.Platform == "" {
 		in.Device.Platform = "ios"
@@ -125,7 +114,7 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) error {
 		q := dbq.New(tx)
 		for i := 0; i < 5; i++ {
 			_, err := q.InsertFlight(ctx, dbq.InsertFlightParams{ID: in.ID, PublicID: slug.Random(10), PilotID: a.UserID, EventID: in.EventID,
-				Visibility: in.Visibility, IsSimulated: in.IsSimulated, StartedAt: in.StartedAt.Time, DevicePlatform: in.Device.Platform,
+				IsSimulated: in.IsSimulated, StartedAt: in.StartedAt.Time, DevicePlatform: in.Device.Platform,
 				DeviceAppVersion: in.Device.AppVersion})
 			if db.NotFound(err) {
 				return nil // concurrent insert of the same id won
@@ -180,15 +169,17 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) error {
 	pilotParam, eventParam := qs.Get("pilot_id"), qs.Get("event_id")
 	switch {
 	case eventParam != "":
-		e, role, err := events.LoadVisible(ctx, h.Q, eventParam, a)
+		e, acc, err := events.LoadVisible(ctx, h.Q, eventParam, a)
 		if err != nil {
 			return err
 		}
-		if role == "" && !a.IsGlobalResponder() {
-			return httpx.Forbidden("Only event members can list event flights")
+		switch authz.LiveScopeFor(a, events.Facts(e), acc) {
+		case authz.LiveFull, authz.LivePilot:
+		default:
+			return httpx.Forbidden("Only organizers, observers and pilots of the event can list its flights")
 		}
 		p.EventID = &e.ID
-		p.SeeAll = a.IsGlobalResponder()
+		p.SeeAll = a.IsAdmin()
 		if pilotParam != "" {
 			pid, err := uuid.Parse(pilotParam)
 			if err != nil {
@@ -203,10 +194,8 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) error {
 		}
 		p.PilotID = &pid
 		if pid != a.UserID {
-			if !a.IsAdmin() && !a.Has(authz.RoleRescueOperator) {
-				p.OrganizerOnly = true // only that pilot's non-private flights in events the caller organises
-			}
-			p.SeeAll = a.IsGlobalResponder()
+			p.OrganizerOnly = !a.IsAdmin() // only that pilot's flights in events the caller organises
+			p.SeeAll = a.IsAdmin()
 		}
 	default:
 		p.PilotID = &a.UserID
@@ -238,9 +227,13 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) error {
-	row, err := LoadVisible(r.Context(), h.Q, chi.URLParam(r, "id"), authz.ActorFrom(r.Context()))
+	row, guest, err := LoadVisible(r.Context(), h.Q, chi.URLParam(r, "id"), authz.ActorFrom(r.Context()))
 	if err != nil {
 		return err
+	}
+	if guest {
+		httpx.WriteJSON(w, http.StatusOK, PublicDTO(r.Context(), h.Q, row))
+		return nil
 	}
 	httpx.WriteJSON(w, http.StatusOK, DTO(row))
 	return nil
@@ -248,7 +241,7 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) error {
 
 func (h *Handler) loadOwned(ctx context.Context, id string) (Row, error) {
 	a := authz.ActorFrom(ctx)
-	row, err := LoadVisible(ctx, h.Q, id, a)
+	row, _, err := LoadVisible(ctx, h.Q, id, a)
 	if err != nil {
 		return Row{}, err
 	}
@@ -268,34 +261,37 @@ func (h *Handler) patch(w http.ResponseWriter, r *http.Request) error {
 	if err := httpx.DecodeJSON(w, r, 8<<10, &raw); err != nil {
 		return err
 	}
-	vis, eventID := row.Visibility, row.EventID
-	if v, ok := raw["visibility"]; ok {
-		s, _ := v.(string)
-		if !visibilities[s] {
-			return httpx.Validation(map[string]string{"visibility": "must be private, event or public"})
+	for k := range raw {
+		if k != "event_id" {
+			return httpx.Validation(map[string]string{k: "unknown or read-only field"})
 		}
-		vis = s
 	}
-	if v, ok := raw["event_id"]; ok {
-		if v == nil {
-			eventID = nil
-		} else {
-			s, _ := v.(string)
-			id, err := uuid.Parse(s)
-			if err != nil {
-				return httpx.Validation(map[string]string{"event_id": "must be a UUID or null"})
-			}
-			if row.EventID == nil || *row.EventID != id {
-				if err := checkEventForFlight(ctx, h.Q, id, authz.ActorFrom(ctx)); err != nil {
-					return err
-				}
-			}
-			eventID = &id
+	v, ok := raw["event_id"]
+	if !ok {
+		return h.get(w, r)
+	}
+	if row.Status != "recording" {
+		return httpx.Conflict("The event of a flight can only be changed while recording")
+	}
+	eventID := row.EventID
+	if v == nil {
+		eventID = nil
+	} else {
+		s, _ := v.(string)
+		id, err := uuid.Parse(s)
+		if err != nil {
+			return httpx.Validation(map[string]string{"event_id": "must be a UUID or null"})
 		}
+		if row.EventID == nil || *row.EventID != id {
+			if err := checkEventForFlight(ctx, h.Q, id, authz.ActorFrom(ctx)); err != nil {
+				return err
+			}
+		}
+		eventID = &id
 	}
 	err = pgx.BeginFunc(ctx, h.Pool, func(tx pgx.Tx) error {
 		q := dbq.New(tx)
-		if err := q.UpdateFlightSharing(ctx, dbq.UpdateFlightSharingParams{ID: row.ID, Visibility: vis, EventID: eventID}); err != nil {
+		if err := q.UpdateFlightEvent(ctx, dbq.UpdateFlightEventParams{ID: row.ID, EventID: eventID}); err != nil {
 			return err
 		}
 		return PublishFlight(ctx, q, row.ID)
@@ -374,7 +370,7 @@ func (h *Handler) end(w http.ResponseWriter, r *http.Request) error {
 
 func (h *Handler) positions(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	row, err := LoadVisible(ctx, h.Q, chi.URLParam(r, "id"), authz.ActorFrom(ctx))
+	row, _, err := LoadVisible(ctx, h.Q, chi.URLParam(r, "id"), authz.ActorFrom(ctx))
 	if err != nil {
 		return err
 	}
@@ -446,9 +442,12 @@ func (h *Handler) positions(w http.ResponseWriter, r *http.Request) error {
 
 func (h *Handler) gpx(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	row, err := LoadVisible(ctx, h.Q, chi.URLParam(r, "id"), authz.ActorFrom(ctx))
+	row, guest, err := LoadVisible(ctx, h.Q, chi.URLParam(r, "id"), authz.ActorFrom(ctx))
 	if err != nil {
 		return err
+	}
+	if guest {
+		row.PilotName = displayName(ctx, h.Q, row)
 	}
 	all, err := h.Q.ListAllPositions(ctx, row.ID)
 	if err != nil {

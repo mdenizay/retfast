@@ -1,7 +1,8 @@
 // Package sim generates deterministic synthetic paragliding flights around
 // Çameli and drives them through the public Retfast API (cmd/simulator).
-// All data it produces is labelled simulated (is_simulated=true); it never
-// creates incidents.
+// All data it produces is labelled simulated (is_simulated=true): flights and,
+// with --retrievals, retrieval requests and their handling by simulated
+// retrievers (never a real pilot's retrieval).
 package sim
 
 import (

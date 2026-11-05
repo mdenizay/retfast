@@ -4,7 +4,8 @@ SELECT
     (SELECT count(*) FROM flight_sessions WHERE status = 'recording' AND last_received_at > now() - interval '30 seconds')::int AS tracking_pilots,
     (SELECT count(*) FROM flight_sessions WHERE status = 'recording'
         AND COALESCE(last_received_at, created_at) < now() - interval '5 minutes')::int AS stale_sessions,
-    (SELECT count(*) FROM emergency_incidents WHERE status IN ('open', 'acknowledged', 'responding'))::int AS open_incidents,
+    (SELECT count(*) FROM retrievals WHERE status IN ('requested', 'accepted', 'picked_up'))::int AS open_retrievals,
+    (SELECT count(*) FROM event_applications WHERE status = 'pending')::int AS pending_applications,
     (SELECT count(*) FROM flight_sessions WHERE started_at > now() - interval '24 hours')::int AS recent_flights,
     (SELECT count(*) FROM users WHERE deleted_at IS NULL)::int AS users,
     (SELECT count(*) FROM realtime_outbox)::int AS outbox_depth,

@@ -16,8 +16,8 @@ SELECT role FROM user_roles WHERE user_id = $1 ORDER BY role;
 INSERT INTO user_roles (user_id, role, granted_by) VALUES (@user_id, @role, sqlc.narg('granted_by'))
 ON CONFLICT DO NOTHING;
 
--- name: DeleteUserRolesNotIn :exec
-DELETE FROM user_roles WHERE user_id = @user_id AND NOT (role = ANY (@roles::text[]));
+-- name: RemoveUserRole :exec
+DELETE FROM user_roles WHERE user_id = @user_id AND role = @role;
 
 -- name: UpdateUserPassword :exec
 UPDATE users SET password_hash = @password_hash, must_change_password = @must_change_password,
@@ -55,18 +55,17 @@ SELECT EXISTS (SELECT 1 FROM pilot_profiles WHERE public_id = $1);
 
 -- name: UpdatePilotProfile :exec
 UPDATE pilot_profiles SET display_name = @display_name, bio = @bio, wing = @wing, license_no = @license_no,
-    nationality = @nationality, emergency_contact_name = @emergency_contact_name,
-    emergency_contact_phone = @emergency_contact_phone, blood_type = @blood_type, updated_at = now()
+    nationality = @nationality, phone = @phone, emergency_contact_name = @emergency_contact_name,
+    emergency_contact_phone = @emergency_contact_phone, updated_at = now()
 WHERE user_id = @user_id;
 
 -- name: GetPreferences :one
 SELECT * FROM user_preferences WHERE user_id = $1;
 
 -- name: UpsertPreferences :exec
-INSERT INTO user_preferences (user_id, units, default_flight_visibility, public_profile)
-VALUES (@user_id, @units, @default_flight_visibility, @public_profile)
+INSERT INTO user_preferences (user_id, units, public_profile)
+VALUES (@user_id, @units, @public_profile)
 ON CONFLICT (user_id) DO UPDATE SET units = EXCLUDED.units,
-    default_flight_visibility = EXCLUDED.default_flight_visibility,
     public_profile = EXCLUDED.public_profile, updated_at = now();
 
 -- name: EnsurePreferences :exec
@@ -130,7 +129,7 @@ WHERE id = @id;
 
 -- name: AnonymizePilotProfile :exec
 UPDATE pilot_profiles SET display_name = 'Silinmiş pilot', bio = '', wing = '', license_no = '', nationality = '',
-    emergency_contact_name = '', emergency_contact_phone = '', blood_type = '', updated_at = now()
+    phone = '', emergency_contact_name = '', emergency_contact_phone = '', updated_at = now()
 WHERE user_id = $1;
 
 -- name: DeleteUserDevices :exec
@@ -146,7 +145,22 @@ DELETE FROM user_roles WHERE user_id = $1;
 UPDATE user_preferences SET public_profile = false, updated_at = now() WHERE user_id = $1;
 
 -- name: RemoveUserMemberships :exec
-UPDATE event_participants SET status = 'removed', updated_at = now() WHERE user_id = $1;
+UPDATE event_members SET status = 'removed', updated_at = now() WHERE user_id = $1;
+
+-- name: RemoveUserOrganizerships :exec
+DELETE FROM event_organizers WHERE user_id = $1;
+
+-- name: WithdrawUserApplications :exec
+UPDATE event_applications SET status = 'withdrawn', updated_at = now() WHERE user_id = $1 AND status = 'pending';
+
+-- name: SearchUsersBasic :many
+SELECT u.id, u.full_name, u.email, p.public_id
+FROM users u LEFT JOIN pilot_profiles p ON p.user_id = u.id
+WHERE u.deleted_at IS NULL AND u.disabled_at IS NULL
+  AND (@q::text = '' OR u.full_name ILIKE '%' || @q::text || '%' OR u.email::text ILIKE '%' || @q::text || '%'
+       OR p.public_id ILIKE '%' || @q::text || '%')
+ORDER BY u.full_name, u.id
+LIMIT @lim;
 
 -- name: DeleteUserNotifications :exec
 DELETE FROM notification_records WHERE user_id = $1;

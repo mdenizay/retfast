@@ -192,10 +192,56 @@ func GetMeta(ctx context.Context, h *http.Client, base string) (Meta, error) {
 
 // Event is the subset of the event representation the simulator needs.
 type Event struct {
-	ID     string  `json:"id"`
-	Slug   string  `json:"slug"`
-	IsDemo bool    `json:"is_demo"`
-	MyRole *string `json:"my_role"`
+	ID     string `json:"id"`
+	Slug   string `json:"slug"`
+	IsDemo bool   `json:"is_demo"`
+	Me     struct {
+		Role        *string `json:"role"`
+		Application *struct {
+			ID     string `json:"id"`
+			Status string `json:"status"`
+		} `json:"application"`
+	} `json:"me"`
+}
+
+// EnsureMember makes c a member of event with role. It applies (or reuses a
+// pending application) and, when approver is set (an organizer or admin of
+// the event), approves it or changes an existing role. Without an approver
+// the account must already hold the role.
+func EnsureMember(ctx context.Context, c, approver *Client, event, role string) (Event, error) {
+	var ev Event
+	if err := c.Call(ctx, "GET", "/events/"+event, nil, &ev); err != nil {
+		return ev, fmt.Errorf("event: %w", err)
+	}
+	if ev.Me.Role != nil && *ev.Me.Role == role {
+		return ev, nil
+	}
+	if approver == nil {
+		return ev, fmt.Errorf("%s is not a %s of the event and no --approver is configured", c.Email, role)
+	}
+	if ev.Me.Role != nil {
+		if err := approver.Call(ctx, "PATCH", "/events/"+ev.ID+"/members/"+c.UserID, map[string]any{"role": role}, nil); err != nil {
+			return ev, fmt.Errorf("change role: %w", err)
+		}
+		return ev, nil
+	}
+	appID := ""
+	if ev.Me.Application != nil && ev.Me.Application.Status == "pending" {
+		appID = ev.Me.Application.ID
+	} else {
+		var app struct {
+			ID string `json:"id"`
+		}
+		if err := c.Call(ctx, "POST", "/events/"+ev.ID+"/applications", map[string]any{"message": "retfast-simulator account"}, &app); err != nil {
+			return ev, fmt.Errorf("apply: %w", err)
+		}
+		appID = app.ID
+	}
+	if err := approver.Call(ctx, "POST", "/events/"+ev.ID+"/applications/"+appID+"/approve", map[string]any{"role": role,
+		"note": "retfast-simulator"}, nil); err != nil {
+		return ev, fmt.Errorf("approve: %w", err)
+	}
+	return ev, nil
 }
 
 // BatchResult mirrors POST /telemetry/batches.

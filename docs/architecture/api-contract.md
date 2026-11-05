@@ -10,7 +10,7 @@ Base URL: production `https://api.retfast.com/api/v1`, local `http://localhost:8
 ## Conventions
 
 - JSON, UTF-8, `snake_case` fields. Timestamps are RFC 3339 UTC strings with milliseconds (`2026-11-04T12:00:00.123Z`).
-- IDs are UUIDs (strings). Client-generated IDs (flights, samples, incidents, batches) are UUIDv4/v7 and make creation idempotent.
+- IDs are UUIDs (strings). Client-generated IDs (flights, samples, retrievals, batches) are UUIDv4/v7 and make creation idempotent.
 - Coordinates: `lat`, `lon` in WGS84 decimal degrees; altitudes in metres (GPS/ellipsoid-derived as reported by Core Location `altitude`, labelled `gps_alt_m`); speeds m/s; course/heading degrees 0–360 (null if invalid); accuracies metres.
 - Pagination: `?limit=` (default 50, max 200) and `?cursor=` (opaque). Response `{ "items": [...], "next_cursor": "..." | null }`.
 - Errors: HTTP status + body
@@ -21,10 +21,21 @@ Base URL: production `https://api.retfast.com/api/v1`, local `http://localhost:8
 - Auth header: `Authorization: Bearer <access_token>`.
 - Every response carries `X-Request-Id`.
 
-## Roles
+## Roles and the event workflow
 
-Global roles (a user may hold several): `pilot`, `observer`, `event_organizer`, `rescue_operator`, `platform_admin`. `guest` = unauthenticated.
-Per-event roles: `organizer`, `participant`, `observer` (table-backed). Global `event_organizer` or `platform_admin` may create events; the creator becomes the event's organizer.
+Retfast is an **event tracking and pilot retrieval** platform, not an emergency/rescue service.
+
+Global role: only `platform_admin` (a user may also have none). `guest` = unauthenticated.
+
+Per-event roles:
+- `organizer` — assigned by a platform admin. Manages the event, reviews applications, assigns member roles, sees everything in the event. An organizer can also hold a member role (e.g. also fly as `pilot`).
+- Member role (exactly one per user per event): `pilot` | `observer` | `retriever`.
+
+Workflow:
+1. A platform admin creates the event and assigns one or more organizers.
+2. Users apply to the event (`requested_role` is a wish). Organizers approve (choosing the final role: pilot, observer or retriever) or reject.
+3. On the day: observers follow the event's live map (web). Pilots open the iOS app, pick the event, see the event map and start a flight; their live position appears for organizers and observers (and for other pilots of the event when `pilots_see_each_other`).
+4. After landing the pilot requests a retrieve. Retrievers see open requests (pickup position, note, time) and accept one or several. Once accepted, the retriever sees that pilot's live position and phone; the pilot sees the retriever approaching. The retriever marks *picked up* and then *delivered*.
 
 ## Auth — `/auth`
 
@@ -57,15 +68,17 @@ AuthResponse = {
 
 ```json
 Me = {
-  "id": "uuid", "email": "...", "email_verified": true, "full_name": "...", "roles": ["pilot","platform_admin"],
+  "id": "uuid", "email": "...", "email_verified": true, "full_name": "...", "roles": ["platform_admin"],   // global roles only
   "must_change_password": false, "created_at": "...",
   "pilot": PilotProfile | null,
-  "preferences": { "units": "metric"|"imperial", "default_flight_visibility": "private"|"event"|"public", "public_profile": false }
+  "preferences": { "units": "metric"|"imperial", "public_profile": false }
 }
 PilotProfile = {
   "public_id": "short slug", "display_name": "...", "bio": "", "wing": "", "license_no": "",
-  "nationality": "TR", "emergency_contact_name": "", "emergency_contact_phone": "", "blood_type": ""
+  "nationality": "TR", "phone": "", "emergency_contact_name": "", "emergency_contact_phone": ""
 }
+// phone + emergency contact are visible only to the user, the event organizers, platform admins,
+// and a retriever while they hold an accepted retrieval for this pilot.
 ```
 
 | Method | Path | Notes |
@@ -78,7 +91,7 @@ PilotProfile = {
 | GET | `/me/export` | JSON export of own data (profile, flights, positions) |
 | POST | `/me/devices` | `{device_id, platform:"ios", apns_token?, app_version, os_version}` → `204` (upsert) |
 | GET | `/pilots/{public_id}` | public pilot profile — only if `public_profile`; never returns contact/emergency/license fields |
-| GET | `/pilots` | organizer/admin: list `{id, full_name, public_id, roles}` (search `?q=`) |
+| GET | `/users/search?q=` | organizer/admin: `{items:[{id, full_name, email, public_id}]}` (for adding organizers/members) |
 
 ## Events
 
@@ -89,31 +102,44 @@ Event = {
   "is_demo": true, "visibility": "public"|"restricted",
   "location_name": "Çameli, Denizli, Türkiye", "center": {"lat":..,"lon":..} | null, "center_is_approximate": true,
   "starts_at": "...", "ends_at": "...", "cover_image_url": null,
-  "settings": { "registration_open": true, "live_tracking": true, "flight_recording": true,
-                "observers_allowed": true, "emergency_testing": true, "public_live_map": true },
-  "organizer": {"id": "...", "full_name": "..."}, "participant_count": 3,
-  "my_role": "organizer"|"participant"|"observer"|null, "created_at": "...", "updated_at": "..."
+  "settings": { "applications_open": true, "live_tracking": true, "public_live_map": false,
+                "pilots_see_each_other": true, "landing_prompt": true },
+  "organizers": [{"user_id","full_name"}],
+  "counts": {"pilots": 0, "observers": 0, "retrievers": 0, "pending_applications": 0},   // pending only for organizers
+  "me": { "is_organizer": false, "role": "pilot"|"observer"|"retriever"|null,
+          "application": {"id","status":"pending"|"rejected"|"withdrawn","requested_role"} | null },
+  "created_at": "...", "updated_at": "..."
 }
 LaunchSite = { "id","event_id","name","position": {"lat","lon"} | null, "elevation_m": null, "notes": "", "is_verified": false }
-Participant = { "user_id","full_name","public_id","role":"organizer"|"participant"|"observer","status":"active"|"removed","joined_at" }
+Member = { "user_id","full_name","public_id","role":"pilot"|"observer"|"retriever"|null,"is_organizer":bool,"status":"active"|"removed","joined_at",
+           "phone": "" /* organizers only */ }
+Application = { "id","event_id","user":{"user_id","full_name","email","public_id"},"requested_role":"pilot"|"observer"|"retriever",
+                "message":"","status":"pending"|"approved"|"rejected"|"withdrawn","granted_role":null|"pilot"|"observer"|"retriever",
+                "decided_by":{"user_id","full_name"}|null,"decision_note":"","created_at","decided_at" }
 ```
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| GET | `/events` | optional | public events for guests; plus restricted events the caller belongs to. Filters `?status=active,published&q=&from=&to=&near=lat,lon&radius_km=` |
-| POST | `/events` | event_organizer/admin | create; `slug` generated from name if absent |
-| GET | `/events/{id_or_slug}` | optional | restricted → 404 for non-members |
-| PATCH | `/events/{id}` | event organizer/admin | partial update incl. `settings` |
-| POST | `/events/{id}/archive` | event organizer/admin | |
-| GET | `/events/{id}/participants` | members (organizers see all incl. removed) | `{items:[Participant]}` |
-| POST | `/events/{id}/join` | pilot | public + registration_open, or restricted with organizer add |
+| GET | `/events` | optional | public events + restricted events where the caller is organizer/member. `?status=&q=&from=&to=&mine=true` |
+| POST | `/events` | platform_admin | create; `slug` generated if absent |
+| GET | `/events/{id_or_slug}` | optional | restricted → 404 for outsiders |
+| PATCH | `/events/{id}` | organizer/admin | partial update incl. `settings` |
+| POST | `/events/{id}/archive` | organizer/admin | |
+| GET/POST | `/events/{id}/organizers` | read: members; write: admin | POST `{user_id}` |
+| DELETE | `/events/{id}/organizers/{user_id}` | admin | |
+| POST | `/events/{id}/applications` | any authenticated non-member | `{requested_role, message?}`; requires `applications_open`; one pending per user (409) |
+| GET | `/events/{id}/applications` | organizer/admin | `?status=pending` → `{items:[Application]}` |
+| POST | `/events/{id}/applications/{app_id}/approve` | organizer/admin | `{role, note?}` → creates/updates the membership |
+| POST | `/events/{id}/applications/{app_id}/reject` | organizer/admin | `{note?}` |
+| POST | `/events/{id}/applications/{app_id}/withdraw` | applicant | |
+| GET | `/events/{id}/members` | organizer/admin: all; members: active members without phone | `?role=` → `{items:[Member]}` |
+| POST | `/events/{id}/members` | organizer/admin | add directly `{user_id, role}` |
+| PATCH/DELETE | `/events/{id}/members/{user_id}` | organizer/admin | change role / remove |
 | POST | `/events/{id}/leave` | member | |
-| POST | `/events/{id}/participants` | organizer/admin | `{user_id, role}` |
-| PATCH/DELETE | `/events/{id}/participants/{user_id}` | organizer/admin | change role / remove |
 | GET/POST | `/events/{id}/launch-sites` | read: as event; write: organizer | |
 | PATCH/DELETE | `/events/{id}/launch-sites/{site_id}` | organizer | |
-| GET | `/events/{id}/live` | see "Live visibility" | snapshot, see below |
-| GET | `/events/{id}/report` | organizer/admin | participation, flight count, durations, telemetry completeness, interruptions |
+| GET | `/events/{id}/live` | see "Live visibility" | snapshot |
+| GET | `/events/{id}/report` | organizer/admin | members by role, flights, durations, telemetry completeness, interruptions, retrievals (count, median request→accept, accept→pickup, pickup→delivery) |
 
 ## Flights
 
@@ -121,7 +147,7 @@ Participant = { "user_id","full_name","public_id","role":"organizer"|"participan
 Flight = {
   "id": "uuid (client-generated)", "public_id": "short", "pilot": {"user_id","full_name","public_id"},
   "event_id": "uuid"|null, "status": "recording"|"ended"|"abandoned",
-  "visibility": "private"|"event"|"public", "is_simulated": false,
+  "is_simulated": false,
   "started_at": "...", "ended_at": null, "last_position": Position | null, "last_received_at": "...",
   "stats": { "duration_s": 0, "distance_m": 0, "max_gps_alt_m": null, "min_gps_alt_m": null,
              "max_ground_speed_ms": null, "total_ascent_m": 0, "total_descent_m": 0,
@@ -134,10 +160,10 @@ Position = { "id": "uuid", "seq": 0, "t": "recorded (GPS) time", "received_at": 
 
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/flights` | `{id, event_id?, started_at, visibility, is_simulated?, device: {...}}` → `201 Flight` or `200 Flight` if `id` already exists for this pilot (idempotent). `409` if the id belongs to someone else. Requires event membership + `live_tracking` when `event_id` set. |
+| POST | `/flights` | `{id, event_id?, started_at, is_simulated?, device: {...}}` → `201 Flight` or `200 Flight` if `id` already exists for this pilot (idempotent). `409` if the id belongs to someone else. Requires the `pilot` role in the event + `live_tracking` when `event_id` set. A flight without an event is private to its pilot. |
 | GET | `/flights` | own flights; `?pilot_id=` (organizer/admin within their events), `?event_id=`, `?status=` |
-| GET | `/flights/{id_or_public_id}` | per "Flight visibility" |
-| PATCH | `/flights/{id}` | owner: `{visibility?, event_id?}` |
+| GET | `/flights/{id_or_public_id}` | pilot; event organizers/observers; admin; guests only for `public_live_map` events |
+| PATCH | `/flights/{id}` | owner: `{event_id?}` (only while recording) |
 | POST | `/flights/{id}/end` | owner: `{ended_at}` → final stats (idempotent) |
 | GET | `/flights/{id}/positions` | `?after_seq=&limit=` (max 5000) and `?simplify=true` for route display; returns `{items:[Position], next_cursor}` |
 | GET | `/flights/{id}/track.gpx` | GPX 1.1 (not a certified log) |
@@ -183,11 +209,13 @@ Position processing: originals are stored as received. Server-side stats skip sa
 - `freshness`: `live` < 30 s, `stale` 30 s – 5 min, `lost` > 5 min since last received position (recording flights only, plus ended flights from the last 2 h with `status:"ended"`).
 - `trail`: last 15 minutes, simplified, max 300 points.
 
-Live visibility:
-- Guest / non-member on a `public` event with `public_live_map`: flights with `visibility = public` only; pilot shown by `display_name`/`public_id`; never contact or emergency data.
-- Event members (participant/observer/organizer): flights with `visibility` `event` or `public` linked to the event.
-- Organizers, rescue_operators, platform_admin: all flights linked to the event (any visibility) — organizers see private ones only while an incident is open on them; otherwise `event|public`. Admin/rescue see all.
-- Owners always see their own flights.
+Live visibility (event flights only; taking part in an event means sharing flights with it — the app says so before the first flight):
+- Organizers, observers, platform admins: all event flights.
+- Pilots: their own flight, plus other pilots' flights when `pilots_see_each_other`.
+- Retrievers: **not** the general live map. They see open retrieval requests (pickup position) and, for retrievals they accepted, the pilot's live position until delivery.
+- Guests/outsiders: only when the event is `public` and `public_live_map` is on (positions and display names only).
+
+The snapshot also contains `"retrievals": [Retrieval]` (open + last 2 h, filtered per role as in "Retrievals") and `"retrievers": [{user_id, full_name, on_duty, position, age_s, active_retrievals}]` (organizers/observers/admin; a pilot sees only the retriever who accepted them).
 
 ## Realtime WebSocket — `GET /realtime`
 
@@ -198,7 +226,7 @@ Client → server
 { "type": "auth", "access_token": "..." }
 { "type": "subscribe", "channel": "event:<uuid>", "since": "<cursor>"? }
 { "type": "subscribe", "channel": "flight:<uuid>", "since": "<cursor>"? }
-{ "type": "subscribe", "channel": "incidents" }            // rescue_operator, platform_admin, event organizers (scoped)
+{ "type": "subscribe", "channel": "retrievals:<event_uuid>" }   // filtered per role (see Retrievals)
 { "type": "unsubscribe", "channel": "..." }
 { "type": "ping" }
 ```
@@ -207,8 +235,10 @@ Server → client
 { "type": "auth_ok", "user_id": "..." }
 { "type": "subscribed", "channel": "...", "snapshot": <same shape as /events/{id}/live or Flight> , "cursor": "..." }
 { "type": "position", "channel": "event:<id>", "cursor": "...", "data": { "flight_id", "pilot", "is_simulated", "position": Position } }
-{ "type": "flight", "channel": "...", "cursor": "...", "data": Flight }          // started/ended/visibility changed
-{ "type": "incident", "channel": "incidents", "cursor": "...", "data": Incident }
+{ "type": "flight", "channel": "...", "cursor": "...", "data": Flight }          // started/ended
+{ "type": "retrieval", "channel": "retrievals:<event_id>", "cursor": "...", "data": Retrieval }
+{ "type": "retriever_position", "channel": "retrievals:<event_id>", "cursor": "...", "data": {"user_id","full_name","position":{"lat","lon","h_acc_m","t","course_deg","speed_ms"}} }
+{ "type": "pilot_position", "channel": "retrievals:<event_id>", "cursor": "...", "data": {"retrieval_id","user_id","position": Position} }   // to the accepting retriever, organizers, observers
 { "type": "error", "code": "forbidden"|"unknown_channel"|"unauthorized", "channel": "..." }
 { "type": "ping" } / { "type": "pong" }
 ```
@@ -216,51 +246,52 @@ Server → client
 - `since`: if the cursor is still in the server's replay window (Redis stream, ~10 min), missed events are replayed; otherwise a fresh `snapshot` is sent. Clients must always treat `subscribed.snapshot` as the source of truth.
 - Per-connection outbound queue is bounded (256 messages). A slow consumer is disconnected with close code `4008`; the client reconnects and resubscribes.
 - Close codes: `4001` unauthorized, `4008` slow consumer, `1012` server restart. Clients reconnect with exponential backoff (1 s → 30 s, jitter) and resubscribe with their last cursor.
-- Authorization is checked at subscribe time and filtered per message (visibility can change).
+- Authorization is checked at subscribe time and re-checked per message (roles can change during the event).
 
-## Incidents (emergency)
+## Retrievals
 
 ```json
-Incident = {
-  "id": "uuid (client-generated)", "kind": "sos", "is_test": false,
-  "status": "open"|"acknowledged"|"responding"|"resolved"|"cancelled",
-  "pilot": {"user_id","full_name","public_id","emergency_contact_name","emergency_contact_phone","blood_type"},  // contact fields only for authorized responders
-  "flight_id": "uuid"|null, "event_id": "uuid"|null,
-  "position": {"lat","lon","gps_alt_m","h_acc_m","t"} | null, "last_known_position": Position | null,
-  "message": "", "created_at_device": "...", "received_at": "...",
-  "acknowledged_at": null, "acknowledged_by": {"user_id","full_name"} | null,
-  "resolved_at": null, "assignments": [Assignment], "updates": [IncidentUpdate]
+Retrieval = {
+  "id": "uuid (client-generated)", "event_id": "uuid", "flight_id": "uuid"|null,
+  "pilot": {"user_id","full_name","public_id","phone"},          // phone only for organizers/admin and the accepting retriever
+  "status": "requested"|"accepted"|"picked_up"|"delivered"|"cancelled",
+  "pickup": {"lat","lon","gps_alt_m","h_acc_m","t"},              // where the pilot asked to be picked up
+  "pilot_position": Position | null,                              // latest shared position (the pilot may walk to a road)
+  "note": "Yol kenarındayım, kanat toplandı",
+  "retriever": {"user_id","full_name","phone"} | null,             // phone visible to the pilot after acceptance
+  "retriever_position": {"lat","lon","h_acc_m","t"} | null,        // to the pilot, organizers, observers
+  "requested_at","accepted_at","picked_up_at","delivered_at","cancelled_at",
+  "cancelled_by": {"user_id","full_name"} | null, "cancel_reason": "", "delivery_note": "",
+  "is_simulated": false,
+  "updates": [{ "id","kind":"requested"|"accepted"|"released"|"assigned"|"picked_up"|"delivered"|"cancelled"|"note","actor":{"user_id","full_name"}|null,"body":"","created_at" }]
 }
-IncidentUpdate = { "id","kind":"created"|"acknowledged"|"status_changed"|"note"|"assigned"|"assignment_status"|"position","actor":{"user_id","full_name"}|null,"body":"","status":"...","created_at" }
-Assignment = { "id","incident_id","responder":{"user_id","full_name"},"status":"assigned"|"en_route"|"on_scene"|"completed"|"withdrawn","assigned_at","updated_at","last_position": {"lat","lon","t"} | null }
 ```
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| POST | `/incidents` | pilot | `{id, kind:"sos", is_test, flight_id?, position?, message?, created_at_device}` → `201`/`200` idempotent on `id`. `is_test:true` only allowed in events with `emergency_testing`. |
-| GET | `/incidents` | pilot: own; responders: scoped | `?status=open,acknowledged,responding&event_id=` |
-| GET | `/incidents/{id}` | owner or authorized responder | |
-| POST | `/incidents/{id}/cancel` | owner | `{reason?}` → status `cancelled` |
-| POST | `/incidents/{id}/acknowledge` | responder | sets `acknowledged` |
-| POST | `/incidents/{id}/status` | responder | `{status:"responding"\|"resolved", note?}` |
-| POST | `/incidents/{id}/notes` | responder | `{body}` |
-| POST | `/incidents/{id}/assignments` | responder | `{responder_user_id}` |
-| GET | `/rescue/assignments` | rescue_operator/admin | own assignments |
-| POST | `/rescue/assignments/{id}/status` | assignee | `{status}` |
-| PUT | `/rescue/me/status` | rescue_operator | `{availability:"available"\|"unavailable"}` |
-| POST | `/rescue/me/position` | rescue_operator | `{lat, lon, h_acc_m, t}` (team positions on rescue map) |
-| GET | `/rescue/team` | responder | `{items:[{user_id, full_name, availability, last_position, active_assignment}]}` |
+| POST | `/events/{id}/retrievals` | event pilot | `{id, flight_id?, pickup, note?}` → `201`/`200` idempotent on `id`; one open retrieval per pilot per event (409 with the open one) |
+| GET | `/events/{id}/retrievals` | see visibility | `?status=requested,accepted,picked_up` |
+| GET | `/retrievals/{id}` | see visibility | |
+| POST | `/retrievals/{id}/position` | owning pilot | `{lat, lon, h_acc_m, t, gps_alt_m?}` while the retrieval is open (≈ every 30 s from the app) |
+| POST | `/retrievals/{id}/accept` | event retriever | first one wins; `409 conflict` if already taken |
+| POST | `/retrievals/{id}/release` | accepting retriever | back to `requested` |
+| POST | `/retrievals/{id}/assign` | organizer/admin | `{retriever_user_id}` (must be a retriever of the event) |
+| POST | `/retrievals/{id}/picked-up` | accepting retriever | |
+| POST | `/retrievals/{id}/delivered` | accepting retriever | `{note?}` |
+| POST | `/retrievals/{id}/cancel` | pilot (own) or organizer/admin | `{reason?}` (e.g. "kendim döndüm") |
+| POST | `/retrievals/{id}/notes` | pilot, accepting retriever, organizer | `{body}` |
+| POST | `/events/{id}/retrievers/me/position` | event retriever | `{lat, lon, h_acc_m, t, course_deg?, speed_ms?}` while on duty or holding an active retrieval |
+| PUT | `/events/{id}/retrievers/me/duty` | event retriever | `{on_duty: bool}` — shows them as available to organizers |
 
-Responder = `platform_admin`, `rescue_operator`, or organizer of the incident's event. Every responder action writes `audit_logs`.
-Client-side SOS states (iOS) — `created_locally` → `pending_transmission` → `received_by_server` (HTTP 2xx) → `acknowledged` (incident `acknowledged_at` set, learned by polling `GET /incidents/{id}` every 10 s while open, or via push). The app never shows "help is coming" before `acknowledged`.
+Visibility: organizers/observers/admin see all retrievals of the event; retrievers see all `requested` ones plus those they accepted; pilots see their own. Every state change is written to `audit_logs` and pushed on `retrievals:<event_id>`.
 
 ## Notifications
 
-`GET /notifications` → `{items:[{id, kind:"event_update"|"flight"|"emergency_alert"|"rescue_ack"|"system", title, body, data, read_at, created_at}]}`; `POST /notifications/{id}/read`; `POST /notifications/read-all`.
+`GET /notifications` → `{items:[{id, kind:"event_update"|"application"|"retrieval"|"flight"|"system", title, body, data, read_at, created_at}]}`; `POST /notifications/{id}/read`; `POST /notifications/read-all`.
 
 ## Admin — `/admin` (platform_admin)
 
-`GET /admin/users?q=`, `PATCH /admin/users/{id}` `{roles?, disabled?}`, `POST /admin/users/{id}/reset-password` (sends reset email; returns `202`), `GET /admin/audit?actor_id=&action=&limit=`, `GET /admin/stats` (dashboard counters: active events, tracking pilots, stale sessions, open incidents, recent flights, system status).
+`GET /admin/users?q=`, `PATCH /admin/users/{id}` `{is_platform_admin?, disabled?}`, `POST /admin/users/{id}/reset-password` (sends reset email; returns `202`), `GET /admin/audit?actor_id=&action=&limit=`, `GET /admin/stats` (active events, pilots in the air, stale sessions, open retrievals, pending applications, recent flights, system status).
 
 ## Health
 

@@ -29,8 +29,8 @@ A conflict on `sample_id` with a different `(flight_id, seq)` is rejected as `in
 ## ADR-005 Realtime: transactional outbox → Redis Streams → WebSocket
 Telemetry commits write an outbox row in the same transaction. A relay goroutine (one active instance via `pg_try_advisory_lock`) reads the outbox (`LISTEN/NOTIFY` wake-up + 1 s poll), updates the Redis latest-position hash `rf:latest:<event_id>` and `XADD rf:rt * ...` (`MAXLEN ~ 100000`), then deletes the outbox rows. If Redis is down the outbox accumulates and drains later — committed telemetry is never lost, only delayed. Every API instance tails the stream with `XREAD BLOCK` and fans out to its local subscribers. Stream IDs are the client cursors. Snapshots come from PostgreSQL (`flight_sessions.last_position` + recent positions), with Redis as a cache only. Redis Pub/Sub is not used for anything that must survive.
 
-## ADR-006 Visibility model
-Flight visibility `private | event | public`, chosen per flight by the pilot (default from preferences, default `event`). Event visibility `public | restricted`. Authorization lives in one policy package (`internal/authz`) used by REST and WebSocket. Responders (admin, rescue_operator, organizers of the incident's event) can see an incident pilot's last position and emergency contacts regardless of flight visibility, and that access is audited.
+## ADR-006 Visibility model (superseded by ADR-012 on 2026-11-05)
+Visibility is defined by event roles (ADR-012), not per flight. Authorization lives in one policy package (`internal/authz`) used by REST and WebSocket.
 
 ## ADR-007 Email via Resend with an outbox
 `email_outbox` table + worker with bounded retries (5, exponential). If `RESEND_API_KEY` is absent or rejected, emails are marked `failed: provider_unconfigured` and a warning metric/log is emitted — no secrets or tokens logged. The previous Resend key was invalid at discovery, so production starts with email disabled until a new key is provided.
@@ -46,3 +46,15 @@ Dokploy project `retfast`, environment `production` (and `staging` when resource
 
 ## ADR-011 Simulated data
 Flights carry `is_simulated`. The simulator (`services/api/cmd/simulator`) only creates simulated flights through the public API using real accounts, uses deterministic seeds, and never creates incidents. The UI badges simulated flights ("SIM"). Production simulation only against the demo event.
+
+## ADR-012 Product pivot: event tracking + pilot retrieval (2026-11-05)
+Decided by the product owner: Retfast is an event tracking and **retrieval** app, not an emergency/rescue app.
+
+- Removed: SOS, incidents, rescue assignments, `rescue_operator`, per-flight visibility, global `pilot`/`observer`/`event_organizer` roles.
+- Global role: `platform_admin` only. Event roles: `organizer` (assigned by an admin, may also hold a member role) and one member role `pilot` | `observer` | `retriever`.
+- Users apply to events; organizers approve and choose the granted role.
+- Observers follow the live map on the web. Pilots fly with the iOS app; after landing they create a retrieval request; retrievers accept (first wins, can hold several), see the pilot live, mark picked up and delivered. Pilots see the accepted retriever approaching. Phones are revealed only inside an accepted retrieval (and to organizers).
+- Taking part in an event as a pilot means sharing that event's flights with organizers/observers (and other pilots if `pilots_see_each_other`). This is stated before the first flight. Flights outside events stay private.
+- Because production contained only test data, the schema is re-baselined (single `0001_init`) and the production database is reset (owner-authorized).
+
+Bootstrap data (`seed`): platform admins Mehmet Deniz Aydın and Altay Alp. Demo event "Çameli Paragliding Demo": organizers Deniz and Altay; members Deniz → pilot, Altay → observer, Tecelli → pilot, Emre → pilot, Kübra → retriever. All seeded accounts start with the bootstrap password and must change it (ADR-003).

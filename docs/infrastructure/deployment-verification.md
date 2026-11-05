@@ -20,7 +20,7 @@ The checks below were run on the pre-pivot build (2026-11-04/05). The production
 | 9 | Simulated telemetry ingestion | Pending on production | verified locally (backend-results.md) |
 | 10 | WebSocket live delivery | Pending on production | verified locally |
 | 11 | Email delivery | ❌ not configured | Resend key from the old deployment is invalid; `RESEND_API_KEY` empty → emails recorded as `failed: provider_unconfigured` |
-| 12 | iOS API connectivity | ✅ | TestFlight 4.0.0 (build 202611042343) on a real iPhone logged in against `https://api.retfast.com` |
+| 12 | iOS API connectivity | Pending | TestFlight 4.0.0 (build 202611042343) installed on the owner's iPhone; a successful app login against `https://api.retfast.com` has not been observed directly yet |
 | 13 | DNS | ✅ | `retfast.com` A, `www` CNAME, `api` A, `app` A (created) → 51.83.159.253, proxy off; mail records untouched |
 | 14 | HTTPS certificates | ✅ | Let's Encrypt; `retfast.com`/`www` valid to 2027-01-05, `app` to 2027-02-02 |
 | 15 | Persistence after restart | Pending on production | verified locally (graceful restart test) |

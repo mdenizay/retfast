@@ -150,6 +150,19 @@ final class StubBackend: URLProtocol, @unchecked Sendable {
             case "live":
                 return (200, ["event_id": eventId, "server_time": now(), "cursor": "0-0", "pilots": [], "retrievals": currentRetrievals(), "retrievers": []])
             case "retrievals": return (200, ["items": currentRetrievals()])
+            case "weather":
+                let base = Date().timeIntervalSince1970 - Date().timeIntervalSince1970.truncatingRemainder(dividingBy: 3600)
+                let hours: [[String: Any]] = (0..<12).map { i in
+                    let w = 2.5 + Double(i) * 0.4
+                    let fly = w > 5.5 ? "marginal" : "good"
+                    return ["t": ISO8601DateFormatter().string(from: Date(timeIntervalSince1970: base + Double(i) * 3600)),
+                            "temp_c": 18 + i % 4, "wind_ms": w, "wind_dir_deg": 240 + i * 5, "gust_ms": w + 2,
+                            "wind_850_ms": 6, "cape_jkg": 300, "precip_prob_pct": 5, "cloud_base_m": 2100,
+                            "flyability": fly, "fly_reasons": fly == "good" ? [] : ["strong_wind"]]
+                }
+                return (200, ["source": "open-meteo", "attribution": "Weather data by Open-Meteo.com (CC BY 4.0)", "elevation_m": 1300,
+                              "current": ["temp_c": 18, "wind_ms": 2.5, "wind_dir_deg": 240, "gust_ms": 4.5],
+                              "hourly": hours, "flyability": "good", "fly_reasons": []])
             default: return (404, ["error": ["code": "not_found", "message": "stub"]])
             }
         case ("POST", "events") where parts.count == 3 && parts[2] == "retrievals":

@@ -107,6 +107,7 @@ struct PreFlightView: View {
                             .font(.title3).foregroundStyle(AeroTokens.textSecondary)
                     }
                     ReadinessList()
+                    WeatherCard(event: event)
                 }
                 .padding(AeroTokens.Space.s4)
             }

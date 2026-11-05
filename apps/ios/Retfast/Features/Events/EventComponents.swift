@@ -304,3 +304,118 @@ struct InfoTile: View {
         .accessibilityElement(children: .combine)
     }
 }
+
+// MARK: Weather
+
+/// Open-Meteo forecast for the event centre with a coarse flyability advisory.
+/// Hidden when the event has no centre or the forecast is unavailable.
+struct WeatherCard: View {
+    @Environment(AppModel.self) private var model
+    let event: Event
+    @State private var weather: Weather?
+
+    var body: some View {
+        Group {
+            if let w = weather { content(w) } else { Color.clear.frame(height: 0) }
+        }
+        .task(id: event.id) {
+            guard event.center != nil else { return }
+            weather = try? await model.api.weather(eventId: event.id)
+        }
+    }
+
+    @ViewBuilder private func content(_ w: Weather) -> some View {
+        let now = w.hourly.first
+        VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
+            HStack {
+                Text("Hava durumu").font(.headline).foregroundStyle(AeroTokens.textPrimary)
+                Spacer()
+                Self.pill(w.flyability)
+            }
+            if let reasons = w.flyReasons, !reasons.isEmpty {
+                Text(reasons.map(Self.reason).joined(separator: " · "))
+                    .font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
+            }
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: AeroTokens.Space.s2), GridItem(.flexible())], spacing: AeroTokens.Space.s2) {
+                InfoTile(icon: "wind", title: String(localized: "Rüzgar"),
+                         value: Self.speed(w.current.windMs ?? now?.windMs) + Self.dir(w.current.windDirDeg ?? now?.windDirDeg))
+                InfoTile(icon: "wind", title: String(localized: "Hamle"), value: Self.speed(w.current.gustMs ?? now?.gustMs))
+                InfoTile(icon: "cloud", title: String(localized: "Bulut tabanı"), value: Self.alt(now?.cloudBaseM))
+                InfoTile(icon: "thermometer", title: String(localized: "Sıcaklık"),
+                         value: (w.current.tempC ?? now?.tempC).map { String(format: "%.0f °C", $0) } ?? Fmt.dash)
+            }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: AeroTokens.Space.s2) {
+                    ForEach(w.hourly.prefix(12)) { h in hourCell(h) }
+                }
+            }
+            .accessibilityIdentifier("weather.hours")
+            Text("Tahmin yalnızca bilgi amaçlıdır; uçuş kararı pilota aittir.")
+                .font(.caption).foregroundStyle(AeroTokens.textMuted)
+            Link(destination: URL(string: "https://open-meteo.com/")!) {
+                Text(w.attribution).font(.caption2).foregroundStyle(AeroTokens.textMuted)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityIdentifier("event.weather")
+    }
+
+    private func hourCell(_ h: WeatherHour) -> some View {
+        VStack(spacing: 4) {
+            Text(h.t, format: .dateTime.hour(.twoDigits(amPM: .omitted)))
+                .font(.caption2.monospacedDigit()).foregroundStyle(AeroTokens.textMuted)
+            Circle().fill(Self.tone(h.flyability).color).frame(width: 8, height: 8)
+            Image(icon: "arrow.up")
+                .font(.system(size: 14, weight: .bold))
+                .rotationEffect(.degrees((h.windDirDeg ?? 0) + 180))
+                .opacity(h.windDirDeg == nil ? 0.2 : 1)
+                .foregroundStyle(AeroTokens.textPrimary)
+            Text(Self.speedValue(h.windMs)).font(.caption.weight(.semibold).monospacedDigit())
+                .foregroundStyle(AeroTokens.textPrimary)
+            Text(Self.speedValue(h.gustMs)).font(.caption2.monospacedDigit()).foregroundStyle(AeroTokens.textSecondary)
+        }
+        .frame(width: 48)
+        .padding(.vertical, AeroTokens.Space.s2)
+        .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous))
+        .accessibilityElement(children: .combine)
+    }
+
+    static func tone(_ f: String) -> Tone {
+        switch f {
+        case "good": .success
+        case "marginal": .warning
+        case "poor": .error
+        default: .neutral
+        }
+    }
+
+    static func pill(_ f: String) -> StatusPill {
+        switch f {
+        case "good": StatusPill(String(localized: "Uçulabilir görünüyor"), systemImage: "checkmark.circle", tone: .success)
+        case "marginal": StatusPill(String(localized: "Sınırda"), systemImage: "exclamationmark.triangle", tone: .warning)
+        case "poor": StatusPill(String(localized: "Önerilmez"), systemImage: "exclamationmark.triangle", tone: .error)
+        default: StatusPill(String(localized: "Bilinmiyor"), systemImage: "questionmark.circle", tone: .neutral)
+        }
+    }
+
+    static func reason(_ r: String) -> String {
+        switch r {
+        case "strong_wind": String(localized: "Kuvvetli rüzgar")
+        case "gusty": String(localized: "Hamleli rüzgar")
+        case "wind_aloft": String(localized: "Yüksekte kuvvetli rüzgar")
+        case "rain": String(localized: "Yağış olasılığı")
+        case "overdevelopment": String(localized: "Aşırı gelişme (CB) riski")
+        default: r
+        }
+    }
+
+    static func speed(_ ms: Double?) -> String { let s = Fmt.speed(ms); return "\(s.0) \(s.1)" }
+    static func speedValue(_ ms: Double?) -> String { Fmt.speed(ms).0 }
+    static func alt(_ m: Double?) -> String { let a = Fmt.altitude(m); return "\(a.0) \(a.1)" }
+    static func dir(_ deg: Double?) -> String {
+        guard let deg else { return "" }
+        let names = Locale.current.language.languageCode == .turkish
+            ? ["K", "KD", "D", "GD", "G", "GB", "B", "KB"] : ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+        return " · " + names[Int(((deg.truncatingRemainder(dividingBy: 360) + 360 + 22.5) / 45)) % 8]
+    }
+}

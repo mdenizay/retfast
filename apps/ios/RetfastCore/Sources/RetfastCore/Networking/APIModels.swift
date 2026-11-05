@@ -588,3 +588,45 @@ public struct AppNotification: Codable, Sendable, Equatable, Identifiable {
     public var readAt: Date?
     public var createdAt: Date?
 }
+
+// MARK: Weather (Open-Meteo via the API)
+
+public struct WeatherCurrent: Codable, Sendable, Equatable {
+    public var t: Date?
+    public var tempC: Double?
+    public var windMs: Double?
+    public var windDirDeg: Double?
+    public var gustMs: Double?
+    public var cloudCoverPct: Double?
+    public var precipMm: Double?
+}
+
+public struct WeatherHour: Codable, Sendable, Equatable, Identifiable {
+    public var t: Date
+    public var tempC: Double?
+    public var dewPointC: Double?
+    public var windMs: Double?
+    public var windDirDeg: Double?
+    public var gustMs: Double?
+    public var wind850Ms: Double?
+    public var wind850DirDeg: Double?
+    public var capeJkg: Double?
+    public var precipProbPct: Double?
+    public var cloudCoverPct: Double?
+    public var cloudBaseM: Double?
+    public var flyability: String
+    public var flyReasons: [String]?
+    public var id: Date { t }
+}
+
+public struct Weather: Codable, Sendable, Equatable {
+    public var source: String
+    public var attribution: String
+    public var elevationM: Double?
+    public var fetchedAt: Date?
+    public var current: WeatherCurrent
+    public var hourly: [WeatherHour]
+    /// good | marginal | poor | unknown — a coarse advisory only.
+    public var flyability: String
+    public var flyReasons: [String]?
+}

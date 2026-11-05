@@ -38,6 +38,9 @@ final class ScreenshotTour: XCTestCase {
         tabs.element(boundBy: 0).tap()
         if let row = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'events.row.'")).allElementsBoundByIndex.first {
             row.tap(); shot("tour_event")
+            let wx = app.descendants(matching: .any)["event.weather"].firstMatch
+            _ = wx.waitForExistence(timeout: 10)
+            app.swipeUp(); shot("tour_weather")
         }
     }
 }

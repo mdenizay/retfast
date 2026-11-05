@@ -321,6 +321,13 @@ public actor APIClient {
         return try await send(r)
     }
 
+    /// Open-Meteo forecast for the event centre (next 12 h).
+    public func weather(eventId: String) async throws -> Weather {
+        var r = Request(method: "GET", path: "events/\(eventId)/weather")
+        r.authenticated = accessToken != nil || hasRefreshToken
+        return try await send(r)
+    }
+
     public func leaveEvent(_ id: String) async throws { try await sendNoContent(Request(method: "POST", path: "events/\(id)/leave")) }
 
     public func launchSites(eventId: String) async throws -> [LaunchSite] {

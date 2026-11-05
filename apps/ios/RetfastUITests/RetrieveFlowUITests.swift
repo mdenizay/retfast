@@ -71,6 +71,7 @@ final class RetrieveFlowUITests: XCTestCase {
 
 extension XCUIApplication {
     @MainActor func login(email: String, password: String, file: StaticString = #filePath, line: UInt = #line) {
+        if buttons["onboarding.next"].waitForExistence(timeout: 5) { completeOnboarding(file: file, line: line) }
         let viaEmail = buttons["auth.email"]
         if viaEmail.waitForExistence(timeout: 10) { viaEmail.tap() }
         let emailField = textFields["login.email"]

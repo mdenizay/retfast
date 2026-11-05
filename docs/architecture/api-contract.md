@@ -25,7 +25,7 @@ Base URL: production `https://api.retfast.com/api/v1`, local `http://localhost:8
 
 Retfast is an **event tracking and pilot retrieval** platform, not an emergency/rescue service.
 
-Global role: only `platform_admin` (a user may also have none). `guest` = unauthenticated.
+Users have **no role of their own**; all roles are per event. The only global privilege is `platform_admin` (creates events, assigns organizers, manages users) — ordinary users have none. `guest` = unauthenticated.
 
 Per-event roles:
 - `organizer` — assigned by a platform admin. Manages the event, reviews applications, assigns member roles, sees everything in the event. An organizer can also hold a member role (e.g. also fly as `pilot`).
@@ -33,7 +33,7 @@ Per-event roles:
 
 Workflow:
 1. A platform admin creates the event and assigns one or more organizers.
-2. Users apply to the event (`requested_role` is a wish). Organizers approve (choosing the final role: pilot, observer or retriever) or reject.
+2. Users apply to the event without choosing a role (an optional message only). When approving, the organizer chooses the role: pilot, observer or retriever. Or they reject.
 3. On the day: observers follow the event's live map (web). Pilots open the iOS app, pick the event, see the event map and start a flight; their live position appears for organizers and observers (and for other pilots of the event when `pilots_see_each_other`).
 4. After landing the pilot requests a retrieve. Retrievers see open requests (pickup position, note, time) and accept one or several. Once accepted, the retriever sees that pilot's live position and phone; the pilot sees the retriever approaching. The retriever marks *picked up* and then *delivered*.
 
@@ -107,13 +107,13 @@ Event = {
   "organizers": [{"user_id","full_name"}],
   "counts": {"pilots": 0, "observers": 0, "retrievers": 0, "pending_applications": 0},   // pending only for organizers
   "me": { "is_organizer": false, "role": "pilot"|"observer"|"retriever"|null,
-          "application": {"id","status":"pending"|"rejected"|"withdrawn","requested_role"} | null },
+          "application": {"id","status":"pending"|"rejected"|"withdrawn"} | null },
   "created_at": "...", "updated_at": "..."
 }
 LaunchSite = { "id","event_id","name","position": {"lat","lon"} | null, "elevation_m": null, "notes": "", "is_verified": false }
 Member = { "user_id","full_name","public_id","role":"pilot"|"observer"|"retriever"|null,"is_organizer":bool,"status":"active"|"removed","joined_at",
            "phone": "" /* organizers only */ }
-Application = { "id","event_id","user":{"user_id","full_name","email","public_id"},"requested_role":"pilot"|"observer"|"retriever",
+Application = { "id","event_id","user":{"user_id","full_name","email","public_id"},
                 "message":"","status":"pending"|"approved"|"rejected"|"withdrawn","granted_role":null|"pilot"|"observer"|"retriever",
                 "decided_by":{"user_id","full_name"}|null,"decision_note":"","created_at","decided_at" }
 ```
@@ -127,9 +127,9 @@ Application = { "id","event_id","user":{"user_id","full_name","email","public_id
 | POST | `/events/{id}/archive` | organizer/admin | |
 | GET/POST | `/events/{id}/organizers` | read: members; write: admin | POST `{user_id}` |
 | DELETE | `/events/{id}/organizers/{user_id}` | admin | |
-| POST | `/events/{id}/applications` | any authenticated non-member | `{requested_role, message?}`; requires `applications_open`; one pending per user (409) |
+| POST | `/events/{id}/applications` | any authenticated non-member | `{message?}` (no role — the organizer decides); requires `applications_open`; one pending per user (409) |
 | GET | `/events/{id}/applications` | organizer/admin | `?status=pending` → `{items:[Application]}` |
-| POST | `/events/{id}/applications/{app_id}/approve` | organizer/admin | `{role, note?}` → creates/updates the membership |
+| POST | `/events/{id}/applications/{app_id}/approve` | organizer/admin | `{role: "pilot"\|"observer"\|"retriever", note?}` (role required) → creates the membership |
 | POST | `/events/{id}/applications/{app_id}/reject` | organizer/admin | `{note?}` |
 | POST | `/events/{id}/applications/{app_id}/withdraw` | applicant | |
 | GET | `/events/{id}/members` | organizer/admin: all; members: active members without phone | `?role=` → `{items:[Member]}` |

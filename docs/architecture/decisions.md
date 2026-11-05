@@ -52,7 +52,7 @@ Decided by the product owner: Retfast is an event tracking and **retrieval** app
 
 - Removed: SOS, incidents, rescue assignments, `rescue_operator`, per-flight visibility, global `pilot`/`observer`/`event_organizer` roles.
 - Global role: `platform_admin` only. Event roles: `organizer` (assigned by an admin, may also hold a member role) and one member role `pilot` | `observer` | `retriever`.
-- Users apply to events; organizers approve and choose the granted role.
+- Users have no role of their own. They apply to an event without choosing a role; the organizer picks pilot, observer or retriever when approving (clarified by the owner 2026-11-05).
 - Observers follow the live map on the web. Pilots fly with the iOS app; after landing they create a retrieval request; retrievers accept (first wins, can hold several), see the pilot live, mark picked up and delivered. Pilots see the accepted retriever approaching. Phones are revealed only inside an accepted retrieval (and to organizers).
 - Taking part in an event as a pilot means sharing that event's flights with organizers/observers (and other pilots if `pilots_see_each_other`). This is stated before the first flight. Flights outside events stay private.
 - Because production contained only test data, the schema is re-baselined (single `0001_init`) and the production database is reset (owner-authorized).

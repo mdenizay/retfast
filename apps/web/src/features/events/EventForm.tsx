@@ -121,7 +121,7 @@ export function EventForm({
             <Input id="ev-slug" value={s.slug} onChange={(e) => set("slug", e.target.value.toLowerCase())} placeholder="cameli-2026" className="telemetry" />
           </Field>
           <Field id="ev-loc" label={t("eventForm.location")} error={err("location_name")}>
-            <Input id="ev-loc" value={s.location_name} onChange={(e) => set("location_name", e.target.value)} placeholder="Çameli, Denizli" />
+            <Input id="ev-loc" value={s.location_name} onChange={(e) => set("location_name", e.target.value)} placeholder="Teleferik, Denizli" />
           </Field>
           <Field id="ev-start" label={t("event.starts")} error={err("starts_at")}>
             <Input id="ev-start" type="datetime-local" value={s.starts_at} onChange={(e) => set("starts_at", e.target.value)} />

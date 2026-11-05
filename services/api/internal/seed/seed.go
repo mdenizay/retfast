@@ -1,5 +1,5 @@
 // Package seed creates the controlled production bootstrap: the five initial
-// accounts and the Çameli demo event. It is idempotent and never resets a user
+// accounts and the Denizli Teleferik demo event. It is idempotent and never resets a user
 // who already changed their password. It never logs the password.
 package seed
 
@@ -42,13 +42,13 @@ var Users = []User{
 // Demo event constants.
 const (
 	DemoSlug        = "cameli-paragliding-demo"
-	DemoName        = "Çameli Paragliding Demo"
-	DemoDescription = "Retfast canlı uçuş takibi, etkinlik yönetimi ve pilot konum paylaşımı özelliklerini test etmek amacıyla oluşturulan Çameli demo etkinliği."
-	DemoLocation    = "Çameli, Denizli, Türkiye"
-	DemoLat         = 37.0747
-	DemoLon         = 29.3450
-	SiteName        = "Yaylacık (Çameli)"
-	SiteNotes       = "Coordinates not verified; configure before use."
+	DemoName        = "Denizli Teleferik Paragliding Demo"
+	DemoDescription = "Retfast canlı uçuş takibi, etkinlik yönetimi ve pilot konum paylaşımı özelliklerini test etmek amacıyla oluşturulan Denizli Teleferik demo etkinliği."
+	DemoLocation    = "Denizli Teleferik, Bağbaşı, Denizli, Türkiye"
+	DemoLat         = 37.70804
+	DemoLon         = 29.13508
+	SiteName        = "Teleferik Üst İstasyon (Bağbaşı)"
+	SiteNotes       = "From OpenStreetMap (aerialway station); not verified on site."
 )
 
 // BootstrapTTL is how long the initial password stays valid.

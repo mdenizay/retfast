@@ -1,5 +1,5 @@
 // Package sim generates deterministic synthetic paragliding flights around
-// Çameli and drives them through the public Retfast API (cmd/simulator).
+// the Denizli Teleferik upper station and drives them through the public Retfast API (cmd/simulator).
 // All data it produces is labelled simulated (is_simulated=true): flights and,
 // with --retrievals, retrieval requests and their handling by simulated
 // retrievers (never a real pilot's retrieval).
@@ -13,10 +13,10 @@ import (
 
 // Launch area: approximate, synthetic. Labelled simulated, never presented as a verified site.
 const (
-	LaunchLat  = 37.070
-	LaunchLon  = 29.340
-	LaunchAlt  = 2100.0
-	LandingAlt = 1250.0
+	LaunchLat  = 37.708
+	LaunchLon  = 29.135
+	LaunchAlt  = 1300.0
+	LandingAlt = 400.0
 	mPerDegLat = 111320.0
 )
 
@@ -203,7 +203,7 @@ func (r *Route) Next() Point {
 		if r.alt <= LandingAlt {
 			vario, r.alt = 0, LandingAlt
 		}
-		if r.speed == 0 && r.phaseT > 25 {
+		if r.speed == 0 && r.phaseT > 25 && r.alt <= LandingAlt {
 			r.setPhase(PhaseFinished)
 			r.done = true
 		}

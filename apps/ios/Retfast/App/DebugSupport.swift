@@ -65,9 +65,9 @@ final class StubBackend: URLProtocol, @unchecked Sendable {
     }
 
     nonisolated(unsafe) static let event: [String: Any] = [
-        "id": eventId, "slug": "cameli-paragliding-demo", "name": "Çameli Paragliding Demo", "description": "UI test etkinliği",
-        "kind": "paragliding", "status": "active", "is_demo": true, "visibility": "public", "location_name": "Çameli, Denizli",
-        "center": ["lat": 37.07, "lon": 29.34], "center_is_approximate": true,
+        "id": eventId, "slug": "cameli-paragliding-demo", "name": "Denizli Teleferik Paragliding Demo", "description": "UI test etkinliği",
+        "kind": "paragliding", "status": "active", "is_demo": true, "visibility": "public", "location_name": "Denizli Teleferik, Bağbaşı",
+        "center": ["lat": 37.708, "lon": 29.135], "center_is_approximate": true,
         "starts_at": "2026-11-01T06:00:00.000Z", "ends_at": "2099-11-30T18:00:00.000Z",
         "settings": ["applications_open": true, "live_tracking": true, "public_live_map": false, "pilots_see_each_other": true, "landing_prompt": true],
         "organizers": [["user_id": "00000000-0000-4000-8000-000000000002", "full_name": "Organizatör"]],
@@ -84,7 +84,7 @@ final class StubBackend: URLProtocol, @unchecked Sendable {
         ]
         if status != "requested" && status != "cancelled" {
             r["retriever"] = ["user_id": "00000000-0000-4000-8000-000000000005", "full_name": "Kübra", "phone": "+90 555 000 00 00"]
-            r["retriever_position"] = ["lat": 37.05, "lon": 29.30, "h_acc_m": 8, "t": now()]
+            r["retriever_position"] = ["lat": 37.72, "lon": 29.14, "h_acc_m": 8, "t": now()]
             r["accepted_at"] = now()
         }
         return r
@@ -114,8 +114,8 @@ final class StubBackend: URLProtocol, @unchecked Sendable {
             switch parts[2] {
             case "launch-sites":
                 return (200, ["items": [
-                    ["id": "s1", "event_id": eventId, "name": "Çameli kalkış", "position": ["lat": 37.08, "lon": 29.35], "elevation_m": 1450, "notes": "", "is_verified": true],
-                    ["id": "s2", "event_id": eventId, "name": "Batı yamaç", "position": ["lat": 37.06, "lon": 29.31], "elevation_m": NSNull(), "notes": "", "is_verified": false],
+                    ["id": "s1", "event_id": eventId, "name": "Teleferik kalkış", "position": ["lat": 37.708, "lon": 29.135], "elevation_m": 1300, "notes": "", "is_verified": true],
+                    ["id": "s2", "event_id": eventId, "name": "Batı yamaç", "position": ["lat": 37.70, "lon": 29.12], "elevation_m": NSNull(), "notes": "", "is_verified": false],
                 ]])
             case "live":
                 return (200, ["event_id": eventId, "server_time": now(), "cursor": "0-0", "pilots": [], "retrievals": currentRetrievals(), "retrievers": []])
@@ -157,7 +157,7 @@ final class StubBackend: URLProtocol, @unchecked Sendable {
 }
 
 /// Synthetic location source for UI tests (`-stubLocation`): fixes at 2 Hz
-/// moving east at ~10 m/s from Çameli. Not used outside DEBUG.
+/// moving east at ~10 m/s from Denizli Teleferik. Not used outside DEBUG.
 @MainActor
 final class SimulatedLocationProvider: LocationProviding {
     var onLocations: (([RawLocation]) -> Void)?
@@ -192,7 +192,7 @@ final class SimulatedLocationProvider: LocationProviding {
 
     private func emit() {
         step += 1
-        let fix = RawLocation(timestamp: Date(), latitude: 37.07, longitude: 29.34 + Double(step) * 0.00006,
+        let fix = RawLocation(timestamp: Date(), latitude: 37.708, longitude: 29.135 + Double(step) * 0.00006,
                               altitude: 1400, horizontalAccuracy: 5, verticalAccuracy: 4, speed: 10, course: 90,
                               isSimulatedBySoftware: true)
         onLocations?([fix])

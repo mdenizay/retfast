@@ -1,5 +1,5 @@
 // Command retfast-simulator flies deterministic synthetic paragliding flights
-// around Çameli through the public Retfast API. Flights are created with
+// around Denizli Teleferik through the public Retfast API. Flights are created with
 // is_simulated=true. With --retrievals, landed pilots request retrievals
 // (is_simulated) and simulated retrievers complete them; they never touch a
 // real pilot's retrieval.

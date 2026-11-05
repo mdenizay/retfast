@@ -40,7 +40,7 @@ func usage() {
 commands:
   serve                         run the HTTP API, WebSocket hub and workers
   migrate up|down N|status      apply / revert / list schema migrations
-  seed [flags]                  create bootstrap users and the Çameli demo event (idempotent)
+  seed [flags]                  create bootstrap users and the Denizli Teleferik demo event (idempotent)
   healthcheck                   GET /api/v1/health/ready on localhost; exit 0 if ready
   reset-link --email ADDRESS    print a one-hour password reset link (operator use when email is not configured)`)
 }

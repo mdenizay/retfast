@@ -1,17 +1,29 @@
+import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, BatteryWarning, CloudOff, Database, MapPinned, Satellite, ShieldAlert, Siren, Smartphone } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
+import { ArrowRight, BatteryWarning, CloudOff, Database, Info, Satellite, ShieldOff, Smartphone } from "lucide-react";
+import { useI18n, type MessageKey } from "@/lib/i18n";
 import { eventsApi } from "@/lib/api/endpoints";
 import { APP_STORE_URL } from "@/lib/config";
+import { useSession } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, Loading } from "@/components/common";
-import { FreshnessBadge, SimBadge } from "@/components/status";
-import { Badge } from "@/components/ui/badge";
+import { FreshnessBadge, RetrievalStatusBadge, RoleBadge, SimBadge } from "@/components/status";
 import { EventRow } from "@/features/events/EventBits";
+
+const ROLES = ["pilot", "observer", "retriever", "organizer"] as const;
+const FLOW: [MessageKey, MessageKey][] = [
+  ["landing.flow1.title", "landing.flow1.body"],
+  ["landing.flow2.title", "landing.flow2.body"],
+  ["landing.flow3.title", "landing.flow3.body"],
+  ["landing.flow4.title", "landing.flow4.body"],
+  ["landing.flow5.title", "landing.flow5.body"],
+];
+const RETRIEVAL_STATES = ["requested", "accepted", "picked_up", "delivered"] as const;
 
 export default function LandingPage() {
   const { t } = useI18n();
+  const { status } = useSession();
   const events = useQuery({
     queryKey: ["public", "events", "landing"],
     queryFn: () => eventsApi.list({ status: "active,published", limit: 5 }),
@@ -19,86 +31,116 @@ export default function LandingPage() {
 
   return (
     <div>
-      {/* Hero */}
+      {/* Hero: statement left, the day's flow as a numbered instrument list right. */}
       <section className="border-b border-border">
-        <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:py-24">
+        <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:py-24">
           <div>
             <p className="text-caption font-medium tracking-[0.12em] text-primary uppercase">{t("landing.eyebrow")}</p>
             <h1 className="mt-4 text-[34px] leading-[40px] font-semibold tracking-tight text-fg sm:text-display">{t("landing.title")}</h1>
             <p className="mt-5 max-w-xl text-callout text-fg-secondary">{t("landing.lead")}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg"><Link to="/events">{t("landing.ctaEvents")} <ArrowRight /></Link></Button>
-              <Button asChild size="lg" variant="outline"><Link to="/login">{t("landing.ctaOps")}</Link></Button>
-            </div>
-            <div className="mt-6 inline-flex items-center gap-2 text-footnote text-fg-secondary">
-              <Smartphone className="size-4" aria-hidden />
-              {APP_STORE_URL ? (
-                <a href={APP_STORE_URL} className="text-primary hover:underline" rel="noopener">{t("landing.appStore")}</a>
+              {status === "authenticated" ? (
+                <Button asChild size="lg" variant="outline"><Link to="/app">{t("nav.openApp")}</Link></Button>
               ) : (
-                <span>{t("landing.iosSoon")}</span>
+                <Button asChild size="lg" variant="outline"><Link to="/register">{t("landing.ctaRegister")}</Link></Button>
               )}
+            </div>
+            <div className="mt-6 flex flex-col gap-2 text-footnote text-fg-secondary">
+              <span className="inline-flex items-center gap-2">
+                <Smartphone className="size-4" aria-hidden />
+                {APP_STORE_URL ? (
+                  <a href={APP_STORE_URL} className="text-primary hover:underline" rel="noopener">{t("landing.appStore")}</a>
+                ) : (
+                  <span>{t("landing.iosSoon")}</span>
+                )}
+              </span>
+              <span className="inline-flex items-start gap-2">
+                <ShieldOff className="mt-0.5 size-4 shrink-0" aria-hidden />
+                <span>{t("landing.notEmergency")}</span>
+              </span>
             </div>
           </div>
 
-          {/* Visual language legend — explains what users will see; not live data. */}
-          <div className="rounded-xl border border-border bg-surface">
-            <div className="border-b border-border px-5 py-3 text-caption font-medium tracking-wide text-fg-muted uppercase">{t("landing.legendTitle")}</div>
-            <ul className="divide-y divide-border">
-              <LegendRow badge={<FreshnessBadge freshness="live" />} text={t("landing.legend.live")} />
-              <LegendRow badge={<FreshnessBadge freshness="stale" />} text={t("landing.legend.stale")} />
-              <LegendRow badge={<FreshnessBadge freshness="lost" />} text={t("landing.legend.lost")} />
-              <LegendRow badge={<SimBadge />} text={t("landing.legend.sim")} />
-              <LegendRow badge={<Badge variant="emergency"><Siren aria-hidden />SOS</Badge>} text={t("landing.legend.sos")} />
-            </ul>
-            <p className="border-t border-border px-5 py-3 text-caption text-fg-muted">{t("landing.legendNote")}</p>
+          <div className="rounded-lg border border-border bg-surface">
+            <h2 className="border-b border-border px-5 py-3 text-caption font-medium tracking-wide text-fg-muted uppercase">{t("landing.flowTitle")}</h2>
+            <ol>
+              {FLOW.map(([title, body], i) => (
+                <li key={title} className="grid grid-cols-[2.5rem_1fr] gap-x-2 border-b border-border px-5 py-4 last:border-b-0">
+                  <span className="telemetry pt-0.5 text-footnote text-fg-muted">{String(i + 1).padStart(2, "0")}</span>
+                  <div>
+                    <h3 className="text-body font-semibold text-fg">{t(title)}</h3>
+                    <p className="mt-1 text-footnote text-fg-secondary">{t(body)}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
           </div>
         </div>
       </section>
 
-      {/* How it works */}
+      {/* Roles */}
       <section className="border-b border-border">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-          <h2 className="text-title2 font-semibold tracking-tight">{t("landing.howTitle")}</h2>
-          <ol className="mt-8 grid gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-3">
-            {[
-              { Icon: Satellite, title: t("landing.how1.title"), body: t("landing.how1.body") },
-              { Icon: MapPinned, title: t("landing.how2.title"), body: t("landing.how2.body") },
-              { Icon: Siren, title: t("landing.how3.title"), body: t("landing.how3.body") },
-            ].map(({ Icon, title, body }, i) => (
-              <li key={i} className="bg-surface p-6">
-                <div className="flex items-center gap-3">
-                  <span className="telemetry text-caption text-fg-muted">0{i + 1}</span>
-                  <Icon className="size-5 text-primary" aria-hidden />
-                </div>
-                <h3 className="mt-4 text-headline font-semibold">{title}</h3>
-                <p className="mt-2 text-footnote text-fg-secondary">{body}</p>
+          <div className="max-w-2xl">
+            <h2 className="text-title2 font-semibold tracking-tight">{t("landing.rolesTitle")}</h2>
+            <p className="mt-3 text-body text-fg-secondary">{t("landing.rolesLead")}</p>
+          </div>
+          <ul className="mt-8 grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
+            {ROLES.map((r) => (
+              <li key={r} className="bg-surface p-5">
+                <RoleBadge role={r} />
+                <p className="mt-3 text-footnote text-fg-secondary">{t(`landing.role.${r}`)}</p>
               </li>
             ))}
-          </ol>
+          </ul>
+        </div>
+      </section>
+
+      {/* Visual-state legend (explains the screens; not live data) */}
+      <section className="border-b border-border">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+          <h2 className="text-title2 font-semibold tracking-tight">{t("landing.legendTitle")}</h2>
+          <div className="mt-8 grid gap-6 lg:grid-cols-2">
+            <LegendGroup title={t("landing.legendFreshness")}>
+              <LegendRow badge={<FreshnessBadge freshness="live" />} text={t("landing.legend.live")} />
+              <LegendRow badge={<FreshnessBadge freshness="stale" />} text={t("landing.legend.stale")} />
+              <LegendRow badge={<FreshnessBadge freshness="lost" />} text={t("landing.legend.lost")} />
+              <LegendRow badge={<SimBadge />} text={t("landing.legend.sim")} />
+            </LegendGroup>
+            <LegendGroup title={t("landing.legendRetrieval")}>
+              {RETRIEVAL_STATES.map((s) => (
+                <LegendRow key={s} badge={<RetrievalStatusBadge status={s} />} text={t(`landing.legend.${s}`)} />
+              ))}
+            </LegendGroup>
+          </div>
+          <p className="mt-4 inline-flex items-center gap-2 text-caption text-fg-muted">
+            <Info className="size-3.5" aria-hidden />{t("landing.legendNote")}
+          </p>
         </div>
       </section>
 
       {/* Honest limitations */}
       <section className="border-b border-border">
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_1.4fr]">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_1.6fr]">
           <div>
             <h2 className="text-title2 font-semibold tracking-tight">{t("landing.limitsTitle")}</h2>
             <p className="mt-3 text-body text-fg-secondary">{t("landing.limitsLead")}</p>
           </div>
-          <ul className="grid gap-4 sm:grid-cols-2">
+          <ul className="divide-y divide-border rounded-lg border border-border bg-surface">
             {[
+              { Icon: ShieldOff, title: t("landing.limit3.title"), body: t("landing.limit3.body"), strong: true },
               { Icon: Satellite, title: t("landing.limit1.title"), body: t("landing.limit1.body") },
               { Icon: CloudOff, title: t("landing.limit2.title"), body: t("landing.limit2.body") },
-              { Icon: ShieldAlert, title: t("landing.limit3.title"), body: t("landing.limit3.body"), strong: true },
               { Icon: BatteryWarning, title: t("landing.limit4.title"), body: t("landing.limit4.body") },
               { Icon: Database, title: t("landing.limit5.title"), body: t("landing.limit5.body") },
-            ].map(({ Icon, title, body, strong }, i) => (
-              <li key={i} className={strong ? "rounded-lg border border-emergency/50 bg-emergency/5 p-5 sm:col-span-2" : "rounded-lg border border-border bg-surface p-5"}>
-                <div className="flex items-center gap-2">
-                  <Icon className={strong ? "size-5 text-emergency-text" : "size-5 text-fg-secondary"} aria-hidden />
+            ].map(({ Icon, title, body, strong }) => (
+              <li key={title} className="flex gap-4 p-5">
+                <Icon className={strong ? "mt-0.5 size-5 shrink-0 text-warning" : "mt-0.5 size-5 shrink-0 text-fg-secondary"} aria-hidden />
+                <div>
                   <h3 className="text-body font-semibold">{title}</h3>
+                  <p className="mt-1 text-footnote text-fg-secondary">{body}</p>
                 </div>
-                <p className="mt-2 text-footnote text-fg-secondary">{body}</p>
               </li>
             ))}
           </ul>
@@ -126,10 +168,19 @@ export default function LandingPage() {
   );
 }
 
-function LegendRow({ badge, text }: { badge: React.ReactNode; text: string }) {
+function LegendGroup({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="rounded-lg border border-border bg-surface">
+      <h3 className="border-b border-border px-5 py-3 text-caption font-medium tracking-wide text-fg-muted uppercase">{title}</h3>
+      <ul className="divide-y divide-border">{children}</ul>
+    </div>
+  );
+}
+
+function LegendRow({ badge, text }: { badge: ReactNode; text: string }) {
   return (
     <li className="flex items-center gap-4 px-5 py-3.5">
-      <div className="w-32 shrink-0">{badge}</div>
+      <div className="w-36 shrink-0">{badge}</div>
       <p className="text-footnote text-fg-secondary">{text}</p>
     </li>
   );

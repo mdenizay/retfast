@@ -29,6 +29,7 @@
   --color-stale: rgb(var(--rf-tracking-stale));
   --color-offline: rgb(var(--rf-offline));
   --color-focus: rgb(var(--rf-focus-ring));
+  --color-retrieval: rgb(var(--rf-retrieval));
 
   /* shadcn/ui semantic aliases → Aero tokens */
   --color-foreground: rgb(var(--rf-text-primary));

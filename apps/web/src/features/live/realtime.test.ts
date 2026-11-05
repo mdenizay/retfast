@@ -96,7 +96,7 @@ describe("RealtimeClient", () => {
   it("refreshes the token on close 4001 before reconnecting", async () => {
     const onUnauthorized = vi.fn(async () => true);
     const { client } = make({ onUnauthorized });
-    client.subscribe("incidents");
+    client.subscribe("retrievals:e-1");
     client.start();
     FakeSocket.last().open();
     FakeSocket.last().serverClose(4001);

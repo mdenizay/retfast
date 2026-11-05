@@ -5,6 +5,9 @@ import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath, URL } from "node:url";
 
 const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
+/** Dev/preview proxy target for /api (incl. WebSocket). Override to point at a separate local backend. */
+const apiTarget = process.env.RETFAST_API_PROXY ?? "http://localhost:8080";
+const proxy = { "/api": { target: apiTarget, changeOrigin: true, ws: true } };
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -18,10 +21,9 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     fs: { allow: [repoRoot] },
-    proxy: {
-      "/api": { target: "http://localhost:8080", changeOrigin: true, ws: true },
-    },
+    proxy,
   },
+  preview: { proxy },
   build: {
     sourcemap: false,
     chunkSizeWarningLimit: 1200,

@@ -1,16 +1,15 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, UserRound } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { CalendarRange, Download, Lock, UserRound } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-import { flightsApi } from "@/lib/api/endpoints";
-import type { Flight, FlightVisibility, Position } from "@/lib/api/types";
+import { eventsApi, flightsApi } from "@/lib/api/endpoints";
+import type { Flight, Position } from "@/lib/api/types";
 import { useSession } from "@/lib/auth";
 import { fmtAccuracy, fmtAltitude, fmtDateTime, fmtDistance, fmtDuration, fmtNumber, fmtPercent, fmtSpeed } from "@/lib/format";
 import { EmptyState, ErrorState, FormError, Loading, Panel, Stat } from "@/components/common";
 import { FlightStatusBadge, SimBadge } from "@/components/status";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapCanvas } from "@/components/map/MapCanvas";
 import { FlightRouteLayers } from "./FlightRouteLayers";
 import { FlightCharts } from "./FlightCharts";
@@ -73,12 +72,15 @@ export function FlightView({ idOrPublicId, mode }: { idOrPublicId: string; mode:
 function FlightHeader({ flight: f, mode }: { flight: Flight; mode: "public" | "app" }) {
   const { t, locale } = useI18n();
   const { user } = useSession();
-  const qc = useQueryClient();
   const isOwner = user?.id === f.pilot.user_id;
   const [dlError, setDlError] = useState<unknown>(null);
-  const vis = useMutation({
-    mutationFn: (v: FlightVisibility) => flightsApi.update(f.id, { visibility: v }),
-    onSuccess: (data) => qc.setQueryData(["app", "flight", f.id], data),
+  // Event name is a nicety; a failed lookup (e.g. no access) just falls back to a generic line.
+  const event = useQuery({
+    queryKey: ["app", "event", f.event_id],
+    queryFn: () => eventsApi.get(f.event_id!),
+    enabled: mode === "app" && Boolean(f.event_id),
+    retry: false,
+    staleTime: 60_000,
   });
 
   async function downloadGpx() {
@@ -115,21 +117,28 @@ function FlightHeader({ flight: f, mode }: { flight: Flight; mode: "public" | "a
           {fmtDateTime(f.started_at, locale)}{f.ended_at ? ` → ${fmtDateTime(f.ended_at, locale)}` : ""}
           {f.device ? ` · ${f.device.platform} ${f.device.app_version}` : ""}
         </p>
+        {mode === "app" && (
+          <p className="mt-2 inline-flex items-center gap-1.5 text-footnote text-fg-secondary">
+            {f.event_id ? (
+              <>
+                <CalendarRange className="size-4 text-fg-muted" aria-hidden />
+                {event.data ? (
+                  <span>
+                    {t("flight.eventShared", { name: event.data.name })}{" "}
+                    <Link to={`/app/events/${f.event_id}`} className="text-primary hover:underline" aria-label={event.data.name}>→</Link>
+                  </span>
+                ) : t("flight.eventSharedNoName")}
+              </>
+            ) : isOwner ? (
+              <><Lock className="size-4 text-fg-muted" aria-hidden />{t("flight.private")}</>
+            ) : null}
+          </p>
+        )}
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        {mode === "app" && isOwner ? (
-          <Select value={f.visibility} onValueChange={(v) => vis.mutate(v as FlightVisibility)}>
-            <SelectTrigger className="w-44" aria-label={t("flight.visibility")}><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {(["private", "event", "public"] as const).map((v) => <SelectItem key={v} value={v}>{t(`visibility.${v}`)}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        ) : (
-          <span className="text-footnote text-fg-secondary">{t("flight.visibility")}: {t(`visibility.${f.visibility}`)}</span>
-        )}
-        <Button variant="outline" onClick={downloadGpx}><Download /> GPX</Button>
+        <Button variant="outline" onClick={downloadGpx}><Download /> {t("flight.gpx")}</Button>
       </div>
-      {(vis.error != null || dlError != null) && <div className="w-full"><FormError error={vis.error ?? dlError} /></div>}
+      {dlError != null && <div className="w-full"><FormError error={dlError} /></div>}
     </div>
   );
 }

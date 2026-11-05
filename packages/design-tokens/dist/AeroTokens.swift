@@ -24,6 +24,7 @@ public enum AeroTokens {
     public static let trackingStale = Color(UIColor { $0.userInterfaceStyle == .dark ? UIColor(red: 0.9608, green: 0.7255, blue: 0.2902, alpha: 1) : UIColor(red: 0.5608, green: 0.3333, blue: 0.0000, alpha: 1) })
     public static let offline = Color(UIColor { $0.userInterfaceStyle == .dark ? UIColor(red: 0.5569, green: 0.6314, blue: 0.6941, alpha: 1) : UIColor(red: 0.3373, green: 0.4157, blue: 0.4824, alpha: 1) })
     public static let focusRing = Color(UIColor { $0.userInterfaceStyle == .dark ? UIColor(red: 0.5098, green: 0.7490, blue: 0.9098, alpha: 1) : UIColor(red: 0.1686, green: 0.4078, blue: 0.5804, alpha: 1) })
+    public static let retrieval = Color(UIColor { $0.userInterfaceStyle == .dark ? UIColor(red: 0.7804, green: 0.6431, blue: 0.9608, alpha: 1) : UIColor(red: 0.4549, green: 0.2510, blue: 0.6588, alpha: 1) })
 
     public enum Space {
         public static let s1: CGFloat = 4

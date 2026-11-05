@@ -22,6 +22,7 @@
   --rf-tracking-stale: 143 85 0;
   --rf-offline: 86 106 123;
   --rf-focus-ring: 43 104 148;
+  --rf-retrieval: 116 64 168;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -47,6 +48,7 @@
     --rf-tracking-stale: 245 185 74;
     --rf-offline: 142 161 177;
     --rf-focus-ring: 130 191 232;
+    --rf-retrieval: 199 164 245;
   }
 }
 [data-theme="dark"] {
@@ -72,6 +74,7 @@
   --rf-tracking-stale: 245 185 74;
   --rf-offline: 142 161 177;
   --rf-focus-ring: 130 191 232;
+  --rf-retrieval: 199 164 245;
 }
 :root {
   --rf-font-sans: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;

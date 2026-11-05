@@ -6,7 +6,9 @@
  * offset (server − client) from the latest snapshot and convert every received_at into client time,
  * so ages tick correctly even if the browser clock is wrong.
  */
-import type { Flight, FlightStatus, LivePilot, LiveSnapshot, PilotRef, Position, TrailPoint } from "@/lib/api/types";
+import type {
+  Flight, FlightStatus, LivePilot, LiveRetriever, LiveSnapshot, PilotRef, Position, Retrieval, RetrieverPosition, TrailPoint,
+} from "@/lib/api/types";
 import { ageSeconds, freshnessFor } from "./freshness";
 
 export const TRAIL_WINDOW_MS = 15 * 60 * 1000;
@@ -25,13 +27,42 @@ export interface LivePilotState {
   varioEstimate: number | null;
 }
 
+export interface RetrieverState {
+  userId: string;
+  fullName: string;
+  onDuty: boolean;
+  position: RetrieverPosition | null;
+  /** When we last learned this position, client clock (ms); null without a position. */
+  receivedAtMs: number | null;
+  activeRetrievals: number;
+}
+
 export interface LiveState {
   eventId: string | null;
+  /** Cursor of the `event:<id>` channel. */
   cursor: string | null;
+  /** Cursor of the `retrievals:<id>` channel. */
+  retrievalCursor: string | null;
   /** server clock − client clock (ms). */
   clockOffsetMs: number;
   pilots: Record<string, LivePilotState>;
+  retrievals: Record<string, Retrieval>;
+  retrievers: Record<string, RetrieverState>;
+  /** True once any source (snapshot / list / WS) told us about retrievals — distinguishes "none" from "unknown". */
+  retrievalsKnown: boolean;
   snapshotAtMs: number | null;
+}
+
+export interface PilotPositionMessageData {
+  retrieval_id: string;
+  user_id: string;
+  position: Position;
+}
+
+export interface RetrieverPositionMessageData {
+  user_id: string;
+  full_name: string;
+  position: RetrieverPosition;
 }
 
 export interface PositionMessageData {
@@ -46,15 +77,97 @@ export type LiveAction =
   | { type: "position"; data: PositionMessageData; cursor?: string | null; nowMs: number }
   | { type: "flight"; data: Flight; cursor?: string | null }
   | { type: "cursor"; cursor: string }
+  /** Authoritative list of retrievals (REST GET /events/{id}/retrievals or a `retrievals:` subscribe snapshot). */
+  | { type: "retrievals"; items: Retrieval[]; retrievers?: LiveRetriever[]; nowMs: number; serverTime?: string | null; cursor?: string | null }
+  | { type: "retrieval"; data: Retrieval; cursor?: string | null }
+  | { type: "retriever_position"; data: RetrieverPositionMessageData; cursor?: string | null; nowMs: number }
+  | { type: "pilot_position"; data: PilotPositionMessageData; cursor?: string | null }
   | { type: "reset"; eventId: string | null };
 
 export const initialLiveState = (eventId: string | null = null): LiveState => ({
   eventId,
   cursor: null,
+  retrievalCursor: null,
   clockOffsetMs: 0,
   pilots: {},
+  retrievals: {},
+  retrievers: {},
+  retrievalsKnown: false,
   snapshotAtMs: null,
 });
+
+/* ---------- retrieval helpers ---------- */
+
+/** Latest server-side change we know of for a retrieval (ms); used to keep the newer of two copies. */
+export function retrievalVersion(r: Retrieval): number {
+  let v = 0;
+  for (const iso of [r.requested_at, r.accepted_at, r.picked_up_at, r.delivered_at, r.cancelled_at]) {
+    const ms = iso ? Date.parse(iso) : NaN;
+    if (Number.isFinite(ms) && ms > v) v = ms;
+  }
+  for (const u of r.updates ?? []) {
+    const ms = Date.parse(u.created_at);
+    if (Number.isFinite(ms) && ms > v) v = ms;
+  }
+  return v;
+}
+
+const STATUS_RANK: Record<Retrieval["status"], number> = { requested: 0, accepted: 1, picked_up: 2, delivered: 3, cancelled: 3 };
+
+function newerPosition<T extends { t: string; seq?: number }>(a: T | null | undefined, b: T | null | undefined): T | null {
+  if (!a) return b ?? null;
+  if (!b) return a;
+  if (a.seq !== undefined && b.seq !== undefined && a.seq !== b.seq) return a.seq > b.seq ? a : b;
+  return Date.parse(b.t) >= Date.parse(a.t) ? b : a;
+}
+
+/** Merge two copies of the same retrieval: keep the newer state, but never lose a newer live position. */
+export function mergeRetrieval(prev: Retrieval | undefined, next: Retrieval): Retrieval {
+  if (!prev) return next;
+  const pv = retrievalVersion(prev);
+  const nv = retrievalVersion(next);
+  const nextWins = nv > pv || (nv === pv && STATUS_RANK[next.status] >= STATUS_RANK[prev.status]);
+  const base = nextWins ? next : prev;
+  const merged: Retrieval = {
+    ...base,
+    pilot_position: newerPosition(prev.pilot_position, next.pilot_position),
+    retriever_position: newerPosition(prev.retriever_position, next.retriever_position),
+    // Phone numbers are only sent to some viewers; don't drop one we already have for the same retrieval.
+    pilot: { ...base.pilot, phone: base.pilot.phone || (nextWins ? prev.pilot.phone : next.pilot.phone) || base.pilot.phone },
+  };
+  if (!base.updates && (prev.updates || next.updates)) merged.updates = next.updates ?? prev.updates;
+  return merged;
+}
+
+function mergeRetrievalList(state: LiveState, items: Retrieval[], authoritativeSinceMs: number | null): Record<string, Retrieval> {
+  const out: Record<string, Retrieval> = {};
+  for (const r of items) out[r.id] = mergeRetrieval(state.retrievals[r.id], r);
+  // Keep items the list doesn't contain only if they changed after the list was produced (streamed in meanwhile).
+  if (authoritativeSinceMs !== null) {
+    for (const [id, r] of Object.entries(state.retrievals)) {
+      if (!out[id] && retrievalVersion(r) > authoritativeSinceMs) out[id] = r;
+    }
+  }
+  return out;
+}
+
+function retrieversFrom(list: LiveRetriever[], prev: Record<string, RetrieverState>, nowMs: number): Record<string, RetrieverState> {
+  const out: Record<string, RetrieverState> = {};
+  for (const r of list) {
+    const old = prev[r.user_id];
+    const receivedAtMs = r.position ? nowMs - Math.max(0, r.age_s ?? 0) * 1000 : null;
+    const keepOld = old?.position && r.position && Date.parse(old.position.t) > Date.parse(r.position.t);
+    out[r.user_id] = {
+      userId: r.user_id,
+      fullName: r.full_name,
+      onDuty: r.on_duty,
+      activeRetrievals: r.active_retrievals ?? 0,
+      position: keepOld ? old!.position : r.position,
+      receivedAtMs: keepOld ? old!.receivedAtMs : receivedAtMs,
+    };
+  }
+  return out;
+}
 
 function toClient(serverIso: string, offset: number, fallback: number): number {
   const ms = Date.parse(serverIso);
@@ -130,7 +243,67 @@ export function liveReducer(state: LiveState, action: LiveAction): LiveState {
       // Pilots missing from the snapshot are no longer visible to us (ended long ago or visibility changed).
       const cursor =
         action.source === "ws" ? (snapshot.cursor ?? state.cursor) : (state.cursor ?? snapshot.cursor ?? null);
-      return { ...state, eventId: snapshot.event_id ?? state.eventId, cursor, clockOffsetMs, pilots, snapshotAtMs: nowMs };
+      let { retrievals, retrievers, retrievalsKnown } = state;
+      if (Array.isArray(snapshot.retrievals)) {
+        retrievals = mergeRetrievalList(state, snapshot.retrievals, Number.isFinite(serverMs) ? serverMs : null);
+        retrievalsKnown = true;
+      }
+      if (Array.isArray(snapshot.retrievers)) retrievers = retrieversFrom(snapshot.retrievers, state.retrievers, nowMs);
+      return {
+        ...state, eventId: snapshot.event_id ?? state.eventId, cursor, clockOffsetMs, pilots, retrievals, retrievers, retrievalsKnown,
+        snapshotAtMs: nowMs,
+      };
+    }
+
+    case "retrievals": {
+      const serverMs = action.serverTime ? Date.parse(action.serverTime) : NaN;
+      // Without a server time, treat the list as produced "now" in server clock.
+      const sinceMs = Number.isFinite(serverMs) ? serverMs : action.nowMs + state.clockOffsetMs;
+      const retrievals = mergeRetrievalList(state, action.items, sinceMs);
+      const retrievers = action.retrievers ? retrieversFrom(action.retrievers, state.retrievers, action.nowMs) : state.retrievers;
+      return { ...state, retrievals, retrievers, retrievalsKnown: true, retrievalCursor: action.cursor ?? state.retrievalCursor };
+    }
+
+    case "retrieval": {
+      const r = action.data;
+      const retrievalCursor = action.cursor ?? state.retrievalCursor;
+      if (state.eventId && r.event_id && r.event_id !== state.eventId) return { ...state, retrievalCursor };
+      const merged = mergeRetrieval(state.retrievals[r.id], r);
+      return { ...state, retrievalCursor, retrievalsKnown: true, retrievals: { ...state.retrievals, [r.id]: merged } };
+    }
+
+    case "retriever_position": {
+      const { data, nowMs } = action;
+      const retrievalCursor = action.cursor ?? state.retrievalCursor;
+      const prev = state.retrievers[data.user_id];
+      if (prev?.position && Date.parse(prev.position.t) > Date.parse(data.position.t)) return { ...state, retrievalCursor };
+      const retriever: RetrieverState = {
+        userId: data.user_id,
+        fullName: data.full_name || prev?.fullName || "",
+        onDuty: prev?.onDuty ?? true,
+        activeRetrievals: prev?.activeRetrievals ?? 0,
+        position: data.position,
+        receivedAtMs: nowMs,
+      };
+      // Mirror onto the open retrievals this retriever holds (the pilot/ops views read it there).
+      let retrievals = state.retrievals;
+      for (const r of Object.values(state.retrievals)) {
+        if (r.retriever?.user_id === data.user_id && (r.status === "accepted" || r.status === "picked_up")) {
+          if (retrievals === state.retrievals) retrievals = { ...state.retrievals };
+          retrievals[r.id] = { ...r, retriever_position: newerPosition(r.retriever_position, data.position) };
+        }
+      }
+      return { ...state, retrievalCursor, retrievals, retrievers: { ...state.retrievers, [data.user_id]: retriever } };
+    }
+
+    case "pilot_position": {
+      const { data } = action;
+      const retrievalCursor = action.cursor ?? state.retrievalCursor;
+      const r = state.retrievals[data.retrieval_id];
+      if (!r) return { ...state, retrievalCursor };
+      const pos = newerPosition(r.pilot_position, data.position);
+      if (pos === r.pilot_position) return { ...state, retrievalCursor };
+      return { ...state, retrievalCursor, retrievals: { ...state.retrievals, [r.id]: { ...r, pilot_position: pos } } };
     }
 
     case "position": {
@@ -213,6 +386,18 @@ export function viewPilots(state: LiveState, nowMs: number): LivePilotView[] {
   return Object.values(state.pilots).map((p) => {
     const ageS = ageSeconds(p.receivedAtMs, nowMs);
     return { ...p, ageS, freshness: freshnessFor(ageS) };
+  });
+}
+
+export interface RetrieverView extends RetrieverState {
+  ageS: number | null;
+  freshness: ReturnType<typeof freshnessFor> | null;
+}
+
+export function viewRetrievers(state: LiveState, nowMs: number): RetrieverView[] {
+  return Object.values(state.retrievers).map((r) => {
+    const ageS = r.receivedAtMs === null ? null : ageSeconds(r.receivedAtMs, nowMs);
+    return { ...r, ageS, freshness: ageS === null ? null : freshnessFor(ageS) };
   });
 }
 

@@ -43,7 +43,7 @@ export default function RegisterPage() {
     <RedirectIfAuthed>
       <AuthLayout>
         <h1 className="text-title2 font-semibold tracking-tight">{t("auth.register")}</h1>
-        <p className="mt-1 text-footnote text-fg-secondary">{t("auth.registerLead")}</p>
+        <p className="mt-1 text-footnote text-fg-secondary">{t("landing.registerLead")}</p>
         <form onSubmit={onSubmit} className="mt-8 flex flex-col gap-4" noValidate>
           <Field id="full_name" label={t("auth.fullName")} error={details.full_name}>
             <Input id="full_name" autoComplete="name" required value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />

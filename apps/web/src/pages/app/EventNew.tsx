@@ -13,7 +13,7 @@ export default function EventNewPage() {
     mutationFn: (input: EventInput) => eventsApi.create(input),
     onSuccess: (ev) => {
       void qc.invalidateQueries({ queryKey: ["app", "events"] });
-      navigate(`/app/events/${ev.id}`, { replace: true });
+      navigate(`/app/events/${ev.id}/settings#organizers`, { replace: true, state: { created: true } });
     },
   });
   return (

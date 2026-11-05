@@ -1,7 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router";
 import { useMutation } from "@tanstack/react-query";
-import { CheckCircle2, Download, MailWarning, Trash2 } from "lucide-react";
+import { CheckCircle2, Download, Eye, MailWarning, Trash2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { authApi, meApi } from "@/lib/api/endpoints";
 import type { Me, PilotProfile, Preferences } from "@/lib/api/types";
@@ -36,7 +36,7 @@ export default function SettingsPage() {
   if (!user) return null;
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <PageHeader title={t("nav.settings")} subtitle={user.email} />
+      <PageHeader title={t("settings.title")} subtitle={user.email} />
       <ProfileSection user={user} />
       <PilotSection user={user} />
       <PreferencesSection user={user} />
@@ -71,9 +71,6 @@ function ProfileSection({ user }: { user: Me }) {
             </>
           )}
         </div>
-        <div className="flex flex-wrap gap-1">
-          {user.roles.map((r) => <Badge key={r} variant="muted">{t(`role.global.${r}`)}</Badge>)}
-        </div>
         <FormError error={save.error ?? resend.error} />
         <div className="flex items-center gap-3"><Button type="submit" disabled={save.isPending || !name.trim()}>{t("common.save")}</Button><Saved show={saved} /></div>
       </form>
@@ -81,14 +78,14 @@ function ProfileSection({ user }: { user: Me }) {
   );
 }
 
-const PILOT_FIELDS = ["display_name", "wing", "license_no", "nationality", "blood_type"] as const;
+const PILOT_FIELDS = ["display_name", "wing", "license_no", "nationality"] as const;
 
 function PilotSection({ user }: { user: Me }) {
   const { t } = useI18n();
   const p = user.pilot;
   const [form, setForm] = useState<Partial<PilotProfile>>({
     display_name: p?.display_name ?? "", bio: p?.bio ?? "", wing: p?.wing ?? "", license_no: p?.license_no ?? "",
-    nationality: p?.nationality ?? "", blood_type: p?.blood_type ?? "",
+    nationality: p?.nationality ?? "", phone: p?.phone ?? "",
     emergency_contact_name: p?.emergency_contact_name ?? "", emergency_contact_phone: p?.emergency_contact_phone ?? "",
   });
   const [saved, setSaved] = useState(false);
@@ -99,11 +96,12 @@ function PilotSection({ user }: { user: Me }) {
   const details = isApiError(save.error) ? save.error.details : {};
   const set = (k: keyof PilotProfile, v: string) => setForm((f) => ({ ...f, [k]: v }));
   const labels: Record<(typeof PILOT_FIELDS)[number], string> = {
-    display_name: t("pilot.displayName"), wing: t("pilot.wing"), license_no: t("pilot.license"), nationality: t("pilot.nationality"), blood_type: t("pilot.bloodType"),
+    display_name: t("pilot.displayName"), wing: t("pilot.wing"), license_no: t("pilot.license"), nationality: t("pilot.nationality"),
   };
   return (
     <Panel title={t("settings.pilot")}>
       <form onSubmit={(e: FormEvent) => { e.preventDefault(); save.mutate(); }} className="space-y-4">
+        <p className="text-footnote text-fg-secondary">{t("settings.pilotLead")}</p>
         {p?.public_id && (
           <p className="text-footnote text-fg-secondary">
             {t("settings.publicId")}: <span className="telemetry">@{p.public_id}</span>
@@ -119,17 +117,33 @@ function PilotSection({ user }: { user: Me }) {
           <Field id="pilot-bio" label={t("pilot.bio")} className="sm:col-span-2"><Textarea id="pilot-bio" value={form.bio ?? ""} onChange={(e) => set("bio", e.target.value)} rows={3} /></Field>
         </div>
         <fieldset className="rounded-md border border-border p-4">
+          <legend className="px-1 text-footnote font-semibold">{t("settings.contact")}</legend>
+          <Field id="pilot-phone" label={t("settings.phone")} hint={t("settings.phoneHint")} error={details.phone}>
+            <Input id="pilot-phone" type="tel" autoComplete="tel" inputMode="tel" className="telemetry sm:w-72" value={form.phone ?? ""} onChange={(e) => set("phone", e.target.value)} />
+          </Field>
+          <VisibilityNote>{t("settings.phoneVisibility")}</VisibilityNote>
+        </fieldset>
+        <fieldset className="rounded-md border border-border p-4">
           <legend className="px-1 text-footnote font-semibold">{t("pilot.emergencyContact")}</legend>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="ec-name" label={t("common.name")} error={details.emergency_contact_name}><Input id="ec-name" value={form.emergency_contact_name ?? ""} onChange={(e) => set("emergency_contact_name", e.target.value)} /></Field>
-            <Field id="ec-phone" label={t("settings.phone")} error={details.emergency_contact_phone}><Input id="ec-phone" type="tel" autoComplete="tel" value={form.emergency_contact_phone ?? ""} onChange={(e) => set("emergency_contact_phone", e.target.value)} /></Field>
+            <Field id="ec-name" label={t("settings.emergencyName")} error={details.emergency_contact_name}><Input id="ec-name" value={form.emergency_contact_name ?? ""} onChange={(e) => set("emergency_contact_name", e.target.value)} /></Field>
+            <Field id="ec-phone" label={t("settings.emergencyPhone")} error={details.emergency_contact_phone}><Input id="ec-phone" type="tel" autoComplete="off" inputMode="tel" className="telemetry" value={form.emergency_contact_phone ?? ""} onChange={(e) => set("emergency_contact_phone", e.target.value)} /></Field>
           </div>
-          <p className="mt-3 text-caption text-fg-muted">{t("settings.emergencyHint")}</p>
+          <VisibilityNote>{t("settings.emergencyVisibility")}</VisibilityNote>
         </fieldset>
         <FormError error={save.error} />
         <div className="flex items-center gap-3"><Button type="submit" disabled={save.isPending}>{t("common.save")}</Button><Saved show={saved} /></div>
       </form>
     </Panel>
+  );
+}
+
+function VisibilityNote({ children }: { children: ReactNode }) {
+  return (
+    <p className="mt-3 flex items-start gap-2 text-caption text-fg-secondary">
+      <Eye className="mt-0.5 size-3.5 shrink-0 text-fg-muted" aria-hidden />
+      <span>{children}</span>
+    </p>
   );
 }
 
@@ -160,12 +174,6 @@ function PreferencesSection({ user }: { user: Me }) {
           <Select value={prefs.units} onValueChange={(v) => save.mutate({ units: v as Preferences["units"] })}>
             <SelectTrigger id="pref-units" className="w-40"><SelectValue /></SelectTrigger>
             <SelectContent><SelectItem value="metric">{t("settings.metric")}</SelectItem><SelectItem value="imperial">{t("settings.imperial")}</SelectItem></SelectContent>
-          </Select>
-        } />
-        <Row id="pref-vis" label={t("settings.defaultVisibility")} hint={t("settings.defaultVisibilityHint")} control={
-          <Select value={prefs.default_flight_visibility} onValueChange={(v) => save.mutate({ default_flight_visibility: v as Preferences["default_flight_visibility"] })}>
-            <SelectTrigger id="pref-vis" className="w-40"><SelectValue /></SelectTrigger>
-            <SelectContent>{(["private", "event", "public"] as const).map((v) => <SelectItem key={v} value={v}>{t(`visibility.${v}`)}</SelectItem>)}</SelectContent>
           </Select>
         } />
         <Row id="pref-public" label={t("settings.publicProfile")} hint={t("settings.publicProfileHint")} control={

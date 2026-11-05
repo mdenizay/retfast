@@ -1,6 +1,6 @@
 import { Navigate, Outlet, ScrollRestoration, type RouteObject } from "react-router";
 import { isAppHost } from "@/lib/config";
-import { ForcePasswordChange, FullScreenLoading, RequireAuth, RequireRole } from "@/layouts/guards";
+import { ForcePasswordChange, FullScreenLoading, RequireAuth, RequireEventAccess, RequireRole } from "@/layouts/guards";
 import { PublicLayout } from "@/layouts/PublicLayout";
 import { AppLayout } from "@/layouts/AppLayout";
 import { NotFoundPage, RouteErrorPage } from "@/pages/NotFound";
@@ -56,42 +56,50 @@ export function createRoutes(): RouteObject[] {
           path: "app",
           element: <RequireAuth />,
           children: [
-            { path: "events/:id/live", lazy: lazyPage(() => import("@/pages/app/AppLive")) },
+            // Full-screen operations room (organizers, observers, admins; pilots get their own map view).
+            { path: "events/:id/live", lazy: lazyPage(() => import("@/pages/app/event/Live")) },
             {
               element: <AppLayout />,
               children: [
-                { index: true, lazy: lazyPage(() => import("@/pages/app/Dashboard")) },
+                { index: true, lazy: lazyPage(() => import("@/pages/app/Home")) },
                 { path: "events", lazy: lazyPage(() => import("@/pages/app/Events")) },
                 {
                   path: "events/new",
-                  element: <RequireRole roles={["event_organizer", "platform_admin"]} />,
+                  element: <RequireRole roles={["platform_admin"]} />,
                   children: [{ index: true, lazy: lazyPage(() => import("@/pages/app/EventNew")) }],
                 },
-                { path: "events/:id", lazy: lazyPage(() => import("@/pages/app/EventEdit")) },
-                { path: "events/:id/participants", lazy: lazyPage(() => import("@/pages/app/Participants")) },
                 {
-                  element: <RequireRole roles={["event_organizer", "platform_admin"]} />,
+                  path: "events/:id",
+                  lazy: lazyPage(() => import("@/pages/app/event/EventLayout")),
                   children: [
-                    { path: "pilots", lazy: lazyPage(() => import("@/pages/app/Pilots")) },
-                    { path: "reports", lazy: lazyPage(() => import("@/pages/app/Reports")) },
+                    { index: true, lazy: lazyPage(() => import("@/pages/app/event/Overview")) },
+                    {
+                      element: <RequireEventAccess need="manage" />,
+                      children: [
+                        { path: "applications", lazy: lazyPage(() => import("@/pages/app/event/Applications")) },
+                        { path: "members", lazy: lazyPage(() => import("@/pages/app/event/Members")) },
+                        { path: "settings", lazy: lazyPage(() => import("@/pages/app/event/Settings")) },
+                        { path: "report", lazy: lazyPage(() => import("@/pages/app/event/Report")) },
+                      ],
+                    },
+                    {
+                      element: <RequireEventAccess need="retriever" />,
+                      children: [{ path: "retrievals", lazy: lazyPage(() => import("@/pages/app/event/MyRetrievals")) }],
+                    },
                   ],
                 },
+                { path: "retrievals", lazy: lazyPage(() => import("@/pages/app/Retrievals")) },
                 { path: "flights", lazy: lazyPage(() => import("@/pages/app/Flights")) },
                 { path: "flights/:id", lazy: lazyPage(() => import("@/pages/app/FlightDetail")) },
-                { path: "incidents", lazy: lazyPage(() => import("@/pages/app/Incidents")) },
-                { path: "incidents/:id", lazy: lazyPage(() => import("@/pages/app/IncidentDetail")) },
-                {
-                  element: <RequireRole roles={["rescue_operator", "platform_admin"]} />,
-                  children: [{ path: "rescue", lazy: lazyPage(() => import("@/pages/app/Rescue")) }],
-                },
                 { path: "settings", lazy: lazyPage(() => import("@/pages/app/Settings")) },
                 {
                   path: "admin",
                   element: <RequireRole roles={["platform_admin"]} />,
                   children: [
-                    { index: true, element: <Navigate to="users" replace /> },
-                    { path: "users", lazy: lazyPage(() => import("@/pages/app/AdminUsers")) },
-                    { path: "audit", lazy: lazyPage(() => import("@/pages/app/AdminAudit")) },
+                    { index: true, lazy: lazyPage(() => import("@/pages/app/admin/System")) },
+                    { path: "events", lazy: lazyPage(() => import("@/pages/app/admin/Events")) },
+                    { path: "users", lazy: lazyPage(() => import("@/pages/app/admin/Users")) },
+                    { path: "audit", lazy: lazyPage(() => import("@/pages/app/admin/Audit")) },
                   ],
                 },
                 { path: "*", element: <NotFoundPage /> },

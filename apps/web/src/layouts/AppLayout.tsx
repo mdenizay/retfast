@@ -1,76 +1,118 @@
 import { useState } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  BarChart3, CalendarRange, LayoutDashboard, LifeBuoy, LogOut, Menu, Plane, ScrollText, Settings, ShieldCheck, Siren, Users, UserSearch,
+  Bell, CalendarRange, Car, Gauge, Home, LogOut, Menu, Navigation2, ScrollText, Settings, ShieldCheck, Users,
 } from "lucide-react";
 import { useI18n, type MessageKey } from "@/lib/i18n";
-import { hasRole, isResponder, logout, useSession } from "@/lib/auth";
-import type { GlobalRole, Me } from "@/lib/api/types";
-import { incidentsApi } from "@/lib/api/endpoints";
+import { isAdmin, logout, useSession } from "@/lib/auth";
+import { eventsApi, notificationsApi } from "@/lib/api/endpoints";
+import type { RfEvent } from "@/lib/api/types";
+import { fmtDateTime } from "@/lib/format";
 import { Logo } from "@/components/common";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { LangToggle, ThemeToggle } from "./Preferences";
+
+/** My events (cached; shared by nav, home and the events page). */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useMyEvents() {
+  const { user } = useSession();
+  return useQuery({
+    queryKey: ["app", "events", "mine", user?.id ?? null],
+    queryFn: () => eventsApi.list({ mine: true, limit: 100 }),
+    staleTime: 30_000,
+    enabled: Boolean(user),
+  });
+}
 
 interface NavItem {
   to: string;
   label: MessageKey;
-  Icon: typeof Plane;
-  roles?: GlobalRole[];
+  Icon: typeof Home;
   end?: boolean;
 }
 
-const NAV: NavItem[] = [
-  { to: "/app", label: "nav.dashboard", Icon: LayoutDashboard, end: true },
-  { to: "/app/events", label: "nav.events", Icon: CalendarRange },
-  { to: "/app/flights", label: "nav.flights", Icon: Plane },
-  { to: "/app/incidents", label: "nav.incidents", Icon: Siren },
-  { to: "/app/rescue", label: "nav.rescue", Icon: LifeBuoy, roles: ["rescue_operator", "platform_admin"] },
-  { to: "/app/pilots", label: "nav.pilots", Icon: UserSearch, roles: ["event_organizer", "platform_admin"] },
-  { to: "/app/reports", label: "nav.reports", Icon: BarChart3, roles: ["event_organizer", "platform_admin"] },
-];
-const ADMIN_NAV: NavItem[] = [
-  { to: "/app/admin/users", label: "nav.adminUsers", Icon: Users, roles: ["platform_admin"] },
-  { to: "/app/admin/audit", label: "nav.adminAudit", Icon: ScrollText, roles: ["platform_admin"] },
-];
+const linkCls = ({ isActive }: { isActive: boolean }) =>
+  cn(
+    "flex h-11 items-center gap-3 rounded-sm px-3 text-body transition-colors",
+    isActive ? "bg-accent font-medium text-fg" : "text-fg-secondary hover:bg-accent hover:text-fg",
+  );
 
-// eslint-disable-next-line react-refresh/only-export-components
-export function visibleNav(user: Me | null, items: NavItem[]) {
-  return items.filter((i) => !i.roles || hasRole(user, ...i.roles));
+function NavSection({ label, Icon, children }: { label: string; Icon?: typeof Home; children: React.ReactNode }) {
+  return (
+    <>
+      <div className="mt-5 mb-1 flex items-center gap-1.5 px-3 text-caption font-medium tracking-wide text-fg-muted uppercase">
+        {Icon && <Icon className="size-3.5" aria-hidden />} {label}
+      </div>
+      {children}
+    </>
+  );
+}
+
+function isLiveNow(e: RfEvent) {
+  return e.status === "active" && e.settings.live_tracking;
 }
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const { t } = useI18n();
   const { user } = useSession();
-  const link = ({ isActive }: { isActive: boolean }) =>
-    cn(
-      "flex h-11 items-center gap-3 rounded-sm px-3 text-body transition-colors",
-      isActive ? "bg-accent font-medium text-fg" : "text-fg-secondary hover:bg-accent hover:text-fg",
-    );
-  const admin = visibleNav(user, ADMIN_NAV);
+  const mine = useMyEvents();
+  const events = mine.data?.items ?? [];
+  const retrieverEvents = events.filter((e) => e.me?.role === "retriever");
+  const opsNow = events.filter((e) => isLiveNow(e) && (e.me?.is_organizer || e.me?.role === "observer"));
+
+  const main: NavItem[] = [
+    { to: "/app", label: "nav.home", Icon: Home, end: true },
+    { to: "/app/events", label: "nav.myEvents", Icon: CalendarRange },
+  ];
+  if (retrieverEvents.length > 0) main.push({ to: "/app/retrievals", label: "nav.retrievals", Icon: Car });
+  main.push({ to: "/app/flights", label: "nav.flights", Icon: Navigation2 });
+
+  const admin: NavItem[] = isAdmin(user)
+    ? [
+        { to: "/app/admin", label: "nav.adminSystem", Icon: Gauge, end: true },
+        { to: "/app/admin/events", label: "nav.adminEvents", Icon: CalendarRange },
+        { to: "/app/admin/users", label: "nav.adminUsers", Icon: Users },
+        { to: "/app/admin/audit", label: "nav.adminAudit", Icon: ScrollText },
+      ]
+    : [];
+
   return (
     <nav aria-label={t("nav.app")} className="flex flex-col gap-0.5">
-      {visibleNav(user, NAV).map((i) => (
-        <NavLink key={i.to} to={i.to} end={i.end} className={link} onClick={onNavigate}>
+      {main.map((i) => (
+        <NavLink key={i.to} to={i.to} end={i.end} className={linkCls} onClick={onNavigate}>
           <i.Icon className="size-[18px]" aria-hidden /> {t(i.label)}
         </NavLink>
       ))}
+      {opsNow.length > 0 && (
+        <NavSection label={t("nav.liveNow")}>
+          {opsNow.map((e) => (
+            <NavLink key={e.id} to={`/app/events/${e.id}/live`} className={linkCls} onClick={onNavigate}>
+              <span className="relative grid size-[18px] place-items-center" aria-hidden>
+                <span className="size-2 rounded-full bg-live" />
+              </span>
+              <span className="min-w-0 flex-1 truncate">{e.name}</span>
+              <span className="sr-only">{t("fresh.live")}</span>
+            </NavLink>
+          ))}
+        </NavSection>
+      )}
       {admin.length > 0 && (
-        <>
-          <div className="mt-4 mb-1 flex items-center gap-1.5 px-3 text-caption font-medium tracking-wide text-fg-muted uppercase">
-            <ShieldCheck className="size-3.5" aria-hidden /> {t("nav.admin")}
-          </div>
+        <NavSection label={t("nav.admin")} Icon={ShieldCheck}>
           {admin.map((i) => (
-            <NavLink key={i.to} to={i.to} className={link} onClick={onNavigate}>
+            <NavLink key={i.to} to={i.to} end={i.end} className={linkCls} onClick={onNavigate}>
               <i.Icon className="size-[18px]" aria-hidden /> {t(i.label)}
             </NavLink>
           ))}
-        </>
+        </NavSection>
       )}
       <div className="my-3 h-px bg-border" />
-      <NavLink to="/app/settings" className={link} onClick={onNavigate}>
+      <NavLink to="/app/settings" className={linkCls} onClick={onNavigate}>
         <Settings className="size-[18px]" aria-hidden /> {t("nav.settings")}
       </NavLink>
     </nav>
@@ -109,33 +151,56 @@ function UserFooter() {
   );
 }
 
-/** Responders see a persistent banner while any SOS is open. */
-function OpenIncidentBanner() {
-  const { t } = useI18n();
-  const { user } = useSession();
-  const enabled = isResponder(user) || hasRole(user, "event_organizer");
-  const q = useQuery({
-    queryKey: ["incidents", "open-banner"],
-    queryFn: () => incidentsApi.list({ status: "open" }),
-    enabled,
-    refetchInterval: 15_000,
-  });
-  const open = (q.data?.items ?? []).filter((i) => i.status === "open");
-  if (!enabled || open.length === 0) return null;
-  const real = open.filter((i) => !i.is_test).length;
+/** In-app notifications (GET /notifications), polled once a minute. */
+function NotificationsMenu() {
+  const { t, locale } = useI18n();
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: ["notifications"], queryFn: notificationsApi.list, refetchInterval: 60_000, retry: false });
+  const readAll = useMutation({ mutationFn: notificationsApi.readAll, onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }) });
+  const read = useMutation({ mutationFn: notificationsApi.read, onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }) });
+  const items = q.data ?? [];
+  const unread = items.filter((n) => !n.read_at).length;
   return (
-    <Link
-      to="/app/incidents?status=open"
-      role="alert"
-      className={cn(
-        "flex min-h-11 items-center gap-2 px-4 text-footnote font-medium",
-        real > 0 ? "bg-emergency text-on-emergency" : "border-b border-warning/50 bg-warning/10 text-warning",
-      )}
-    >
-      <Siren className="size-4" aria-hidden />
-      {real > 0 ? t("incident.banner", { n: real }) : t("incident.bannerTest", { n: open.length })}
-      <span className="ml-auto underline underline-offset-2">{t("incident.bannerOpen")}</span>
-    </Link>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon-sm" aria-label={unread ? t("notif.labelUnread", { n: unread }) : t("notif.label")} className="relative">
+          <Bell />
+          {unread > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-on-primary tnum" aria-hidden>
+              {unread > 9 ? "9+" : unread}
+            </span>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-80">
+        <DropdownMenuLabel className="flex items-center justify-between">
+          {t("notif.title")}
+          {unread > 0 && (
+            <button type="button" className="text-caption font-medium text-primary hover:underline" onClick={() => readAll.mutate()}>
+              {t("notif.readAll")}
+            </button>
+          )}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {q.isError ? (
+          <div className="px-2 py-3 text-footnote text-fg-muted">{t("notif.unavailable")}</div>
+        ) : items.length === 0 ? (
+          <div className="px-2 py-3 text-footnote text-fg-muted">{q.isLoading ? t("common.loading") : t("notif.empty")}</div>
+        ) : (
+          items.slice(0, 12).map((n) => (
+            <DropdownMenuItem key={n.id} className="flex flex-col items-start gap-0.5 py-2" onSelect={() => !n.read_at && read.mutate(n.id)}>
+              <span className={cn("text-footnote", n.read_at ? "text-fg-secondary" : "font-semibold text-fg")}>
+                {!n.read_at && <span className="mr-1.5 inline-block size-1.5 rounded-full bg-primary align-middle" aria-hidden />}
+                {n.title}
+                {!n.read_at && <span className="sr-only"> ({t("notif.unread")})</span>}
+              </span>
+              {n.body && <span className="line-clamp-2 text-caption text-fg-muted">{n.body}</span>}
+              <span className="telemetry text-caption text-fg-muted">{fmtDateTime(n.created_at, locale)}</span>
+            </DropdownMenuItem>
+          ))
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -148,9 +213,10 @@ export function AppLayout() {
         {t("a11y.skip")}
       </a>
       <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-border bg-surface lg:flex">
-        <div className="flex h-16 items-center px-4">
+        <div className="flex h-16 items-center gap-2 px-4">
           <Link to="/app" aria-label="Retfast"><Logo /></Link>
-          <span className="ml-2 rounded-[6px] border border-border px-1.5 text-caption text-fg-muted">OPS</span>
+          <span className="rounded-[6px] border border-border px-1.5 text-caption text-fg-muted">OPS</span>
+          <div className="ml-auto"><NotificationsMenu /></div>
         </div>
         <div className="flex-1 overflow-y-auto px-2 py-2"><NavList /></div>
         <UserFooter />
@@ -161,8 +227,8 @@ export function AppLayout() {
             <Menu />
           </Button>
           <Link to="/app" aria-label="Retfast"><Logo /></Link>
+          <div className="ml-auto"><NotificationsMenu /></div>
         </header>
-        <OpenIncidentBanner />
         <main id="main" className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <Outlet />
         </main>

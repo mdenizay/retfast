@@ -2,6 +2,7 @@ import { lazy, Suspense, useState, type FormEvent } from "react";
 import type { EventInput } from "@/lib/api/endpoints";
 import type { EventSettings, EventStatus, LatLon, RfEvent } from "@/lib/api/types";
 import { useI18n, type MessageKey } from "@/lib/i18n";
+import { DEFAULT_SETTINGS, SETTING_LABELS } from "./settings";
 import { fromLocalInput, toLocalInput } from "@/lib/format";
 import { isApiError } from "@/lib/api/client";
 import { Field, FormError, Loading, Panel } from "@/components/common";
@@ -14,24 +15,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const PointPicker = lazy(() => import("./PointPicker").then((m) => ({ default: m.PointPicker })));
-
-export const DEFAULT_SETTINGS: EventSettings = {
-  registration_open: true,
-  live_tracking: true,
-  flight_recording: true,
-  observers_allowed: true,
-  emergency_testing: false,
-  public_live_map: false,
-};
-
-const SETTING_KEYS: { key: keyof EventSettings; label: MessageKey; hint: MessageKey }[] = [
-  { key: "registration_open", label: "settings.registration_open", hint: "settings.registration_open.hint" },
-  { key: "live_tracking", label: "settings.live_tracking", hint: "settings.live_tracking.hint" },
-  { key: "flight_recording", label: "settings.flight_recording", hint: "settings.flight_recording.hint" },
-  { key: "observers_allowed", label: "settings.observers_allowed", hint: "settings.observers_allowed.hint" },
-  { key: "public_live_map", label: "settings.public_live_map", hint: "settings.public_live_map.hint" },
-  { key: "emergency_testing", label: "settings.emergency_testing", hint: "settings.emergency_testing.hint" },
-];
 
 interface FormState {
   name: string;
@@ -117,7 +100,7 @@ export function EventForm({
       visibility: s.visibility,
       center: centerOf(s),
       center_is_approximate: s.center_is_approximate,
-      settings: s.settings,
+      settings: { ...s.settings, public_live_map: s.settings.public_live_map && s.settings.live_tracking && s.visibility === "public" },
       kind: "paragliding",
     };
     if (s.slug.trim()) input.slug = s.slug.trim();
@@ -198,13 +181,18 @@ export function EventForm({
 
       <Panel title={t("eventForm.settings")} bodyClassName="p-0">
         <ul className="divide-y divide-border">
-          {SETTING_KEYS.map(({ key, label, hint }) => (
+          {SETTING_LABELS.map(({ key, label, hint }) => (
             <li key={key} className="flex items-center gap-4 px-4 py-3.5">
               <div className="min-w-0 flex-1">
                 <Label htmlFor={`set-${key}`} className="text-body text-fg">{t(label)}</Label>
                 <p className="mt-1 text-caption text-fg-muted">{t(hint)}</p>
               </div>
-              <Switch id={`set-${key}`} checked={s.settings[key]} onCheckedChange={(c) => set("settings", { ...s.settings, [key]: c })} />
+              <Switch
+                id={`set-${key}`}
+                checked={s.settings[key]}
+                disabled={key === "public_live_map" && (!s.settings.live_tracking || s.visibility === "restricted")}
+                onCheckedChange={(c) => set("settings", { ...s.settings, [key]: c })}
+              />
             </li>
           ))}
         </ul>

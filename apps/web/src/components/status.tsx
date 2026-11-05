@@ -1,12 +1,14 @@
 /**
- * Safety-state indicators. Rule: never color alone — every state = icon + text label + color.
+ * State indicators. Rule: never color alone — every state = icon + text label + color.
  */
-import { CircleDot, Clock3, LocateOff, CloudOff, Siren, FlaskConical, CheckCircle2, CircleSlash, Radio, Loader2 } from "lucide-react";
-import type { Freshness, IncidentStatus, FlightStatus } from "@/lib/api/types";
+import { CheckCircle2, CircleDot, CircleSlash, Clock3, CloudOff, FlaskConical, Hourglass, Loader2, LocateOff, Radio, XCircle } from "lucide-react";
+import type { ApplicationStatus, Freshness, FlightStatus, RetrievalStatus } from "@/lib/api/types";
+import type { EventBadgeRole } from "@/lib/roles";
 import { useI18n } from "@/lib/i18n";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { ConnectionStatus } from "@/features/live/realtime";
+import { RETRIEVAL_ICON, ROLE_ICON } from "./stateIcons";
 
 export function FreshnessBadge({ freshness, className }: { freshness: Freshness | "offline"; className?: string }) {
   const { t } = useI18n();
@@ -34,32 +36,44 @@ export function SimBadge({ className }: { className?: string }) {
   );
 }
 
-export function TestBadge({ className }: { className?: string }) {
+/** Event role chip: organizer / pilot / observer / retriever. Icon + label; color is secondary information. */
+export function RoleBadge({ role, className }: { role: EventBadgeRole; className?: string }) {
   const { t } = useI18n();
+  const Icon = ROLE_ICON[role];
+  const variant = role === "organizer" ? "primary" : role === "retriever" ? "retrieval" : role === "observer" ? "secondary" : "default";
   return (
-    <Badge variant="warning" className={cn("font-mono tracking-wider", className)} title={t("incident.testTitle")}>
-      <FlaskConical aria-hidden />
-      TEST
+    <Badge variant={variant} className={className} data-role={role}>
+      <Icon aria-hidden />
+      {t(`role.${role}`)}
     </Badge>
   );
 }
 
-export function IncidentStatusBadge({ status, isTest = false }: { status: IncidentStatus; isTest?: boolean }) {
+export function RetrievalStatusBadge({ status, className }: { status: RetrievalStatus; className?: string }) {
   const { t } = useI18n();
-  const conf: Record<IncidentStatus, { Icon: typeof Siren; variant: "emergency" | "warning" | "primary" | "success" | "muted" }> = {
-    open: { Icon: Siren, variant: "emergency" },
-    acknowledged: { Icon: CheckCircle2, variant: "warning" },
-    responding: { Icon: Radio, variant: "primary" },
-    resolved: { Icon: CheckCircle2, variant: "success" },
-    cancelled: { Icon: CircleSlash, variant: "muted" },
-  };
-  const c = conf[status];
-  // TEST incidents never use the emergency fill (design-system §6).
-  const variant = isTest && c.variant === "emergency" ? "warning" : c.variant;
+  const Icon = RETRIEVAL_ICON[status];
+  const variant = ({ requested: "retrieval", accepted: "secondary", picked_up: "primary", delivered: "success", cancelled: "muted" } as const)[status];
   return (
-    <Badge variant={variant} data-status={status}>
+    <Badge variant={variant} className={className} data-status={status}>
+      <Icon aria-hidden />
+      {t(`retrieval.status.${status}`)}
+    </Badge>
+  );
+}
+
+export function ApplicationStatusBadge({ status }: { status: ApplicationStatus }) {
+  const { t } = useI18n();
+  const conf = {
+    pending: { Icon: Hourglass, variant: "warning" },
+    approved: { Icon: CheckCircle2, variant: "success" },
+    rejected: { Icon: XCircle, variant: "error" },
+    withdrawn: { Icon: CircleSlash, variant: "muted" },
+  } as const;
+  const c = conf[status];
+  return (
+    <Badge variant={c.variant} data-status={status}>
       <c.Icon aria-hidden />
-      {t(`incident.status.${status}`)}
+      {t(`application.status.${status}`)}
     </Badge>
   );
 }

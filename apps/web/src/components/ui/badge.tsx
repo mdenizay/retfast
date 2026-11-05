@@ -16,6 +16,8 @@ const badgeVariants = cva(
         error: "border-error/50 bg-error/10 text-error",
         emergency: "border-emergency bg-emergency text-on-emergency",
         muted: "border-border bg-transparent text-fg-muted",
+        secondary: "border-secondary/50 bg-secondary/10 text-secondary",
+        retrieval: "border-retrieval/50 bg-retrieval/10 text-retrieval",
         sim: "border-secondary/60 bg-secondary/10 font-mono tracking-wider text-secondary",
       },
     },

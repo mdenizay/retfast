@@ -39,7 +39,7 @@ export function PublicLayout() {
       </main>
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-caption text-fg-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <span>© {new Date().getFullYear()} Retfast · {t("footer.tagline")}</span>
+          <span>© {new Date().getFullYear()} Retfast · {t("landing.footerTagline")}</span>
           <nav className="flex gap-4" aria-label={t("nav.footer")}>
             <Link to="/events" className="hover:text-fg">{t("nav.events")}</Link>
             <Link to="/privacy" className="hover:text-fg">{t("nav.privacy")}</Link>

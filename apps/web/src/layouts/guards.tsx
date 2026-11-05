@@ -5,6 +5,7 @@ import { hasRole, useSession } from "@/lib/auth";
 import type { GlobalRole } from "@/lib/api/types";
 import { useI18n } from "@/lib/i18n";
 import { Loading } from "@/components/common";
+import { useOptionalEventContext } from "@/features/events/context";
 
 /** Paths reachable while the server demands a password change. */
 const PASSWORD_CHANGE_ALLOWED = ["/change-password", "/privacy"];
@@ -43,6 +44,19 @@ export function RequireAuth({ children }: { children?: ReactNode }) {
 export function RequireRole({ roles, children }: { roles: GlobalRole[]; children?: ReactNode }) {
   const { user } = useSession();
   if (!hasRole(user, ...roles)) return <NoAccess />;
+  return <>{children ?? <Outlet />}</>;
+}
+
+/**
+ * Event-scoped guard (inside /app/events/:id): "manage" = organizer/admin, "operate" = + observers,
+ * "retriever" = event retriever (organizers/admins may look too).
+ */
+export function RequireEventAccess({ need, children }: { need: "manage" | "operate" | "retriever"; children?: ReactNode }) {
+  const ctx = useOptionalEventContext();
+  if (!ctx) return <NoAccess />;
+  const a = ctx.access;
+  const ok = need === "manage" ? a.canManage : need === "operate" ? a.canOperate : a.isRetriever || a.canManage;
+  if (!ok) return <NoAccess />;
   return <>{children ?? <Outlet />}</>;
 }
 

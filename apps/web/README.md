@@ -1,6 +1,8 @@
 # Retfast web (`apps/web`)
 
-One React SPA for the public site (`retfast.com`) and the operations app (`app.retfast.com` / `/app`).
+One React SPA for the public site (`retfast.com`) and the operations app (`app.retfast.com` / `/app`): live event
+tracking and landed-pilot retrieval (ADR-012). Roles are per event — organizer, pilot, observer, retriever; the only
+global privilege is platform admin.
 Contract: `docs/architecture/api-contract.md`. Design: `docs/product/design-system.md`, screens: `docs/product/screens.md`.
 
 Stack: React 19 · TypeScript (strict) · Vite 8 · Tailwind CSS v4 · shadcn/ui (Radix, restyled to Aero tokens) ·
@@ -17,6 +19,7 @@ TanStack Query · React Router 7 (data router) · MapLibre GL (OpenFreeMap) · R
 cd apps/web
 pnpm install
 pnpm dev          # http://localhost:5173 — proxies /api (incl. WebSocket /api/v1/realtime) to http://localhost:8080
+                  # (RETFAST_API_PROXY=http://localhost:8090 pnpm dev — or `pnpm preview` — to target another backend)
 pnpm typecheck    # tsc -b (strict)
 pnpm lint         # eslint (typescript-eslint, react-hooks)
 pnpm test         # vitest run (jsdom + MSW)
@@ -70,14 +73,26 @@ src/
   app/            providers, route tree (createRoutes — shared by the browser router and tests)
   layouts/        public + operations shells, guards (auth, forced password change, roles)
   lib/            config, api client (+ single-flight refresh), contract types, endpoints, auth session, i18n, theme, formatting
-  features/live/  live tracking: reducer/store, freshness, WebSocket client, map layers, LiveView
-  features/…      events (form, point picker), flights (route, charts, GPS quality), incidents (stream, map)
+  features/live/  operations room: store/reducer (pilots + retrievals + retrievers), derive (phases, board, distance,
+                  per-role visibility), WebSocket client, map layers/icons, pilot rail, retrieval board/detail, LiveView
+  features/events event context, role chooser, event form, settings labels, point picker
+  features/flights route, charts, GPS quality
+  pages/app/event event workspace: layout (tabs), overview, applications, members, settings, report, live, my retrievals
+  deploy/         config regression tests (nginx serves .mjs as JavaScript)
   components/     shared UI (status badges, common states, map canvas) and ui/ (shadcn)
   pages/          route components (public/, auth/, app/)
   test/           MSW server, fixtures, fake WebSocket, render helper
 ```
 
 ## Notes
+
+- Permissions in the UI come from `event.me` (`src/lib/roles.ts`, `RequireEventAccess`); the API is the security
+  boundary. Retrieval commands update the UI only from the server's response; a 409 re-fetches the retrieval and says
+  so.
+- Live data = REST snapshot (`/live`, or `/retrievals` for retrievers) refreshed every 60 s (15 s while the socket is
+  down) + one socket with `event:<id>` (since-cursor) and `retrievals:<id>`.
+- Screenshots in `docs/screenshots/e2e-*.png` are from a real run (built app via `vite preview` → API + simulator),
+  2026-11-05; simulated pilots are labelled SIM.
 
 - Access token is kept in memory only; `POST /auth/refresh` with `credentials: "include"` runs on boot, 60 s before
   expiry and on `401 token_expired` — one request at a time (refresh tokens rotate; parallel refreshes would trip reuse

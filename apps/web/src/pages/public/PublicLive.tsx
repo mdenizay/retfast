@@ -6,6 +6,7 @@ import { ErrorState } from "@/components/common";
 import { FullScreenLoading } from "@/layouts/guards";
 import { LiveView } from "@/features/live/LiveView";
 
+/** Public live map: shows exactly what GET /events/{id}/live returns for the caller (guests: public_live_map events only). */
 export default function PublicLivePage() {
   const { slug = "" } = useParams();
   const { user } = useSession();

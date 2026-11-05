@@ -57,7 +57,7 @@ describe("EventForm", () => {
       visibility: "public",
       center: { lat: 36.55, lon: 29.18 },
       center_is_approximate: true,
-      settings: { public_live_map: true, live_tracking: true, emergency_testing: false },
+      settings: { public_live_map: true, live_tracking: true, applications_open: true, pilots_see_each_other: true, landing_prompt: true },
     });
     expect(input.starts_at).toBe(new Date("2026-11-10T10:00").toISOString());
     expect(input.status).toBeUndefined(); // status only sent when editing
@@ -67,7 +67,7 @@ describe("EventForm", () => {
     const errs = validateEventForm({
       name: "x", slug: "Bad Slug", description: "", location_name: "", starts_at: "2026-01-01T00:00", ends_at: "2026-01-02T00:00",
       visibility: "public", status: "draft", lat: "95", lon: "29", center_is_approximate: true,
-      settings: { registration_open: true, live_tracking: true, flight_recording: true, observers_allowed: true, emergency_testing: false, public_live_map: false },
+      settings: { applications_open: true, live_tracking: true, public_live_map: false, pilots_see_each_other: true, landing_prompt: true },
     });
     expect(errs.slug).toBe("eventForm.slugInvalid");
     expect(errs.lat).toBe("eventForm.coordInvalid");

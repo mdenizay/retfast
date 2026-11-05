@@ -1,7 +1,10 @@
-/** Types mirroring docs/architecture/api-contract.md (v1). snake_case kept as on the wire. */
+/** Types mirroring docs/architecture/api-contract.md (v1, ADR-012). snake_case kept as on the wire. */
 
-export type GlobalRole = "pilot" | "observer" | "event_organizer" | "rescue_operator" | "platform_admin";
-export type EventRole = "organizer" | "participant" | "observer";
+/** Only global role (ADR-012). */
+export type GlobalRole = "platform_admin";
+/** Member role inside an event (exactly one per user per event). */
+export type MemberRole = "pilot" | "observer" | "retriever";
+export const MEMBER_ROLES: MemberRole[] = ["pilot", "observer", "retriever"];
 
 export interface Page<T> {
   items: T[];
@@ -19,14 +22,13 @@ export interface PilotProfile {
   wing: string;
   license_no: string;
   nationality: string;
+  phone: string;
   emergency_contact_name: string;
   emergency_contact_phone: string;
-  blood_type: string;
 }
 
 export interface Preferences {
   units: "metric" | "imperial";
-  default_flight_visibility: FlightVisibility;
   public_profile: boolean;
 }
 
@@ -58,11 +60,12 @@ export interface PublicPilot {
   nationality?: string;
 }
 
-export interface PilotListItem {
+/** GET /users/search items. */
+export interface UserSearchItem {
   id: string;
   full_name: string;
+  email: string;
   public_id: string | null;
-  roles: GlobalRole[];
 }
 
 export interface LatLon {
@@ -73,12 +76,19 @@ export interface LatLon {
 export type EventStatus = "draft" | "published" | "active" | "completed" | "archived";
 
 export interface EventSettings {
-  registration_open: boolean;
+  applications_open: boolean;
   live_tracking: boolean;
-  flight_recording: boolean;
-  observers_allowed: boolean;
-  emergency_testing: boolean;
   public_live_map: boolean;
+  pilots_see_each_other: boolean;
+  landing_prompt: boolean;
+}
+
+export type ApplicationStatus = "pending" | "approved" | "rejected" | "withdrawn";
+
+export interface EventMe {
+  is_organizer: boolean;
+  role: MemberRole | null;
+  application: { id: string; status: Exclude<ApplicationStatus, "approved"> } | null;
 }
 
 export interface RfEvent {
@@ -97,9 +107,10 @@ export interface RfEvent {
   ends_at: string;
   cover_image_url: string | null;
   settings: EventSettings;
-  organizer: { id: string; full_name: string } | null;
-  participant_count: number;
-  my_role: EventRole | null;
+  organizers: { user_id: string; full_name: string }[];
+  counts: { pilots: number; observers: number; retrievers: number; pending_applications?: number };
+  /** Absent for guests. */
+  me?: EventMe | null;
   created_at: string;
   updated_at: string;
 }
@@ -114,16 +125,31 @@ export interface LaunchSite {
   is_verified: boolean;
 }
 
-export interface Participant {
+export interface Member {
   user_id: string;
   full_name: string;
   public_id: string | null;
-  role: EventRole;
+  role: MemberRole | null;
+  is_organizer: boolean;
   status: "active" | "removed";
   joined_at: string;
+  /** Organizers only. */
+  phone?: string;
 }
 
-export type FlightVisibility = "private" | "event" | "public";
+export interface Application {
+  id: string;
+  event_id: string;
+  user: { user_id: string; full_name: string; email: string; public_id: string | null };
+  message: string;
+  status: ApplicationStatus;
+  granted_role: MemberRole | null;
+  decided_by: { user_id: string; full_name: string } | null;
+  decision_note: string;
+  created_at: string;
+  decided_at: string | null;
+}
+
 export type FlightStatus = "recording" | "ended" | "abandoned";
 
 export interface Position {
@@ -165,7 +191,6 @@ export interface Flight {
   pilot: PilotRef;
   event_id: string | null;
   status: FlightStatus;
-  visibility: FlightVisibility;
   is_simulated: boolean;
   started_at: string;
   ended_at: string | null;
@@ -191,77 +216,99 @@ export interface LivePilot {
   trail: TrailPoint[];
 }
 
+/* ---------- retrievals ---------- */
+
+export type RetrievalStatus = "requested" | "accepted" | "picked_up" | "delivered" | "cancelled";
+export const OPEN_RETRIEVAL_STATUSES: RetrievalStatus[] = ["requested", "accepted", "picked_up"];
+
+export interface RetrievalPoint {
+  lat: number;
+  lon: number;
+  gps_alt_m?: number | null;
+  h_acc_m?: number | null;
+  t: string;
+}
+
+export interface RetrievalUpdate {
+  id: string;
+  kind: "requested" | "accepted" | "released" | "assigned" | "picked_up" | "delivered" | "cancelled" | "note";
+  actor: { user_id: string; full_name: string } | null;
+  body: string;
+  created_at: string;
+}
+
+export interface Retrieval {
+  id: string;
+  event_id: string;
+  flight_id: string | null;
+  pilot: { user_id: string; full_name: string; public_id: string | null; phone?: string | null };
+  status: RetrievalStatus;
+  pickup: RetrievalPoint;
+  pilot_position: Position | null;
+  note: string;
+  retriever: { user_id: string; full_name: string; phone?: string | null } | null;
+  retriever_position: { lat: number; lon: number; h_acc_m?: number | null; t: string } | null;
+  requested_at: string;
+  accepted_at: string | null;
+  picked_up_at: string | null;
+  delivered_at: string | null;
+  cancelled_at: string | null;
+  cancelled_by: { user_id: string; full_name: string } | null;
+  cancel_reason: string;
+  delivery_note: string;
+  is_simulated: boolean;
+  updates?: RetrievalUpdate[];
+}
+
+export interface RetrieverPosition {
+  lat: number;
+  lon: number;
+  h_acc_m?: number | null;
+  t: string;
+  course_deg?: number | null;
+  speed_ms?: number | null;
+}
+
+export interface LiveRetriever {
+  user_id: string;
+  full_name: string;
+  on_duty: boolean;
+  position: RetrieverPosition | null;
+  age_s: number | null;
+  active_retrievals: number;
+}
+
 export interface LiveSnapshot {
   event_id: string;
   server_time: string;
   cursor: string | null;
   pilots: LivePilot[];
+  retrievals?: Retrieval[];
+  retrievers?: LiveRetriever[];
 }
 
-export type IncidentStatus = "open" | "acknowledged" | "responding" | "resolved" | "cancelled";
+/* ---------- notifications ---------- */
 
-export interface IncidentPilot extends PilotRef {
-  emergency_contact_name?: string | null;
-  emergency_contact_phone?: string | null;
-  blood_type?: string | null;
-}
-
-export interface IncidentUpdate {
+export interface NotificationItem {
   id: string;
-  kind: "created" | "acknowledged" | "status_changed" | "note" | "assigned" | "assignment_status" | "position";
-  actor: { user_id: string; full_name: string } | null;
+  kind: "event_update" | "application" | "retrieval" | "flight" | "system";
+  title: string;
   body: string;
-  status: string;
+  data?: Record<string, unknown> | null;
+  read_at: string | null;
   created_at: string;
 }
 
-export type AssignmentStatus = "assigned" | "en_route" | "on_scene" | "completed" | "withdrawn";
+/* ---------- admin ---------- */
 
-export interface Assignment {
-  id: string;
-  incident_id: string;
-  responder: { user_id: string; full_name: string };
-  status: AssignmentStatus;
-  assigned_at: string;
-  updated_at: string;
-  last_position: { lat: number; lon: number; t: string } | null;
-}
-
-export interface Incident {
-  id: string;
-  kind: "sos";
-  is_test: boolean;
-  status: IncidentStatus;
-  pilot: IncidentPilot;
-  flight_id: string | null;
-  event_id: string | null;
-  position: { lat: number; lon: number; gps_alt_m: number | null; h_acc_m: number | null; t: string } | null;
-  last_known_position: Position | null;
-  message: string;
-  created_at_device: string;
-  received_at: string;
-  acknowledged_at: string | null;
-  acknowledged_by: { user_id: string; full_name: string } | null;
-  resolved_at: string | null;
-  assignments: Assignment[];
-  updates: IncidentUpdate[];
-}
-
-export interface RescueTeamMember {
-  user_id: string;
-  full_name: string;
-  availability: "available" | "unavailable";
-  last_position: { lat: number; lon: number; t: string } | null;
-  active_assignment: Assignment | null;
-}
-
-/** GET /admin/stats (as implemented by services/api; contract lists the counters by name only). */
+/** GET /admin/stats — counters named in the contract; every field optional (we never invent a value). */
 export interface AdminStats {
   generated_at?: string;
   active_events?: number;
-  tracking_pilots?: number;
+  pilots_in_air?: number;
   stale_sessions?: number;
-  open_incidents?: number;
+  open_retrievals?: number;
+  pending_applications?: number;
   recent_flights?: number;
   users?: number;
   system_status?: {
@@ -272,13 +319,14 @@ export interface AdminStats {
   } & Record<string, unknown>;
 }
 
-/** GET /admin/users items (as implemented by services/api). */
+/** GET /admin/users items. The flag is read from `is_platform_admin` or, if absent, `roles`. */
 export interface AdminUser {
   id: string;
   email: string;
   full_name: string;
   public_id?: string | null;
-  roles: GlobalRole[];
+  is_platform_admin?: boolean;
+  roles?: string[];
   disabled: boolean;
   disabled_at?: string | null;
   email_verified: boolean;
@@ -286,7 +334,10 @@ export interface AdminUser {
   created_at: string;
 }
 
-/** GET /admin/audit items (as implemented by services/api). */
+export function isPlatformAdminUser(u: AdminUser): boolean {
+  return u.is_platform_admin ?? Boolean(u.roles?.includes("platform_admin"));
+}
+
 export interface AuditEntry {
   id: string;
   actor: { user_id: string; full_name: string } | null;
@@ -300,7 +351,8 @@ export interface AuditEntry {
   created_at: string;
 }
 
-/** GET /events/{id}/report (as implemented by services/api). */
+/* ---------- report ---------- */
+
 export interface EventReportFlight {
   flight_id: string;
   pilot_id: string;
@@ -316,20 +368,19 @@ export interface EventReportFlight {
   max_gps_alt_m: number | null;
 }
 
+/** GET /events/{id}/report. Only fields present in the response are shown. */
 export interface EventReport {
   event_id: string;
   generated_at: string;
-  participation: { participants: number; observers: number; organizers: number; removed: number; pilots_flown: number };
-  flights: { count: number; by_status: Partial<Record<FlightStatus, number>>; total_duration_s: number; avg_duration_s: number };
-  telemetry: { samples: number; expected_samples: number; completeness: number | null; interruptions: number; note?: string };
-  items: EventReportFlight[];
-}
-
-export interface NotificationItem {
-  id: string;
-  kind: string;
-  title: string;
-  body: string;
-  read_at: string | null;
-  created_at: string;
+  members?: Partial<Record<MemberRole | "organizers" | "removed", number>>;
+  flights?: { count: number; by_status?: Partial<Record<FlightStatus, number>>; total_duration_s?: number; avg_duration_s?: number; simulated?: number };
+  telemetry?: { samples: number; expected_samples: number; completeness: number | null; interruptions: number; note?: string };
+  retrievals?: {
+    count: number;
+    by_status?: Partial<Record<RetrievalStatus, number>>;
+    median_request_to_accept_s?: number | null;
+    median_accept_to_pickup_s?: number | null;
+    median_pickup_to_delivery_s?: number | null;
+  };
+  items?: EventReportFlight[];
 }

@@ -3,7 +3,7 @@ import Observation
 import RetfastCore
 import SwiftUI
 import UIKit
-import UserNotifications
+@preconcurrency import UserNotifications
 import os
 
 enum AuthPhase: Equatable {

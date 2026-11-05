@@ -1,7 +1,7 @@
 import RetfastCore
 import SwiftUI
 
-/// Home: big header, my events as large cards, then events open to apply.
+/// Home: "Today" header, a stats card, then my events and events open to apply as cards.
 struct EventsListView: View {
     @Environment(AppModel.self) private var model
 
@@ -9,19 +9,22 @@ struct EventsListView: View {
         let mine = model.myEvents
         let others = model.otherEvents
         ScrollView {
-            VStack(alignment: .leading, spacing: AeroTokens.Space.s4) {
+            VStack(alignment: .leading, spacing: 14) {
                 header
                 notices
+                statsCard(mine)
+                SectionTitle(String(localized: "Etkinliklerim"), count: mine.count)
+                    .padding(.top, 10)
+                    .padding(.horizontal, 4)
                 if mine.isEmpty && !model.eventsLoading {
                     emptyMine
                 }
-                ForEach(mine) { e in card(e, style: .hero) }
+                ForEach(mine) { e in card(e) }
                 if !others.isEmpty {
-                    Text("Keşfet ve başvur")
-                        .font(.title3.bold())
-                        .foregroundStyle(AeroTokens.textPrimary)
-                        .padding(.top, AeroTokens.Space.s2)
-                    ForEach(others) { e in card(e, style: .compact) }
+                    SectionTitle(String(localized: "Keşfet ve başvur"), count: others.count)
+                        .padding(.top, 14)
+                        .padding(.horizontal, 4)
+                    ForEach(others) { e in card(e) }
                 }
             }
             .padding(.horizontal, AeroTokens.Space.s4)
@@ -35,23 +38,51 @@ struct EventsListView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .bottom) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide)).uppercased(with: Locale(identifier: "tr_TR")))
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(AeroTokens.textSecondary)
-                Text("Etkinlikler")
-                    .font(.system(size: 34, weight: .bold))
-                    .foregroundStyle(AeroTokens.textPrimary)
-            }
-            Spacer()
+        HStack(spacing: 12) {
             Button { model.selectedTab = .profile } label: {
-                Avatar(name: model.me?.fullName, size: 44, tint: AeroTokens.primary)
+                Avatar(name: model.me?.fullName, size: 46, tint: AeroTokens.primary)
             }
             .buttonStyle(.plain)
             .accessibilityLabel(Text("Profil"))
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Bugün, \(Date.now.formatted(.dateTime.day().month(.abbreviated)))")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(AeroTokens.textPrimary)
+                Text("Etkinlikler")
+                    .font(.footnote)
+                    .foregroundStyle(AeroTokens.textSecondary)
+            }
+            Spacer()
+            HeaderCircleButton(systemImage: "arrow.clockwise", label: "Yenile") {
+                Task { await model.refreshEvents() }
+            }
         }
-        .padding(.top, AeroTokens.Space.s4)
+        .padding(.top, AeroTokens.Space.s2)
+        .padding(.bottom, AeroTokens.Space.s2)
+    }
+
+    private func statsCard(_ mine: [Event]) -> some View {
+        let active = mine.filter { $0.status == "active" }.count
+        let pending = mine.compactMap { $0.counts?.pendingApplications }.reduce(0, +)
+        return AeroCard {
+            HStack {
+                Text("Özet").font(.headline).foregroundStyle(AeroTokens.textPrimary)
+                Spacer()
+                if active > 0 { StatusPill(String(localized: "Canlı"), systemImage: "dot.radiowaves.left.and.right", tone: .active) }
+            }
+            HStack(spacing: 10) {
+                StatTile(value: "\(mine.count)", label: String(localized: "Etkinliğim"))
+                StatTile(value: "\(active)", label: String(localized: "Şu an aktif"))
+                StatTile(value: "\(model.otherEvents.count)", label: String(localized: "Açık etkinlik"))
+            }
+            if pending > 0 {
+                Label("\(pending) başvuru onay bekliyor", icon: "tray.full")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(AeroTokens.warning)
+                    .padding(.horizontal, 14).frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
+                    .background(AeroTokens.warning.opacity(0.14), in: Capsule())
+            }
+        }
     }
 
     @ViewBuilder private var notices: some View {
@@ -74,95 +105,76 @@ struct EventsListView: View {
 
     private var emptyMine: some View {
         AeroCard(padding: AeroTokens.Space.s6) {
-            BrandMark(size: 44, color: AeroTokens.textMuted)
+            Image(icon: "calendar")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(AeroTokens.textSecondary)
+                .frame(width: 52, height: 52)
+                .background(AeroTokens.surfaceElevated, in: Circle())
             Text("Henüz bir etkinliğin yok").font(.headline)
             Text("Aşağıdan bir etkinliğe başvur. Organizatör onaylayınca rolünle burada görünür.")
                 .font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
         }
     }
 
-    private func card(_ e: Event, style: EventCard.Style) -> some View {
-        NavigationLink(value: EventRoute.event(e.id)) { EventCard(event: e, style: style) }
+    private func card(_ e: Event) -> some View {
+        NavigationLink(value: EventRoute.event(e.id)) { EventCard(event: e) }
             .buttonStyle(.plain)
             .accessibilityIdentifier("events.row.\(e.slug ?? e.id)")
     }
 }
 
-/// Large gradient event card with a date tile (reference: event list).
+/// Event card: date tile, name, place and role pills on a graphite surface.
 struct EventCard: View {
-    enum Style { case hero, compact }
     let event: Event
-    let style: Style
-
-    private var gradient: LinearGradient {
-        let top: Color = event.isMember ? Brand.accent : AeroTokens.retrieval
-        return LinearGradient(colors: [top, top.opacity(0.55), Brand.ink],
-                              startPoint: .topTrailing, endPoint: .bottomLeading)
-    }
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            gradient
-            BrandMark(size: style == .hero ? 260 : 150, color: .white.opacity(0.10))
-                .offset(x: style == .hero ? 120 : 170, y: style == .hero ? -40 : -10)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top) {
-                    chips
-                    Spacer()
-                    dateTile
+        let live = event.status == "active"
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 14) {
+                DateTile(date: event.startsAt, active: live)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(event.name)
+                        .font(.headline)
+                        .foregroundStyle(AeroTokens.textPrimary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    if let loc = event.locationName, !loc.isEmpty {
+                        Label(loc, icon: "mappin.and.ellipse")
+                            .font(.footnote)
+                            .foregroundStyle(AeroTokens.textSecondary)
+                            .lineLimit(1)
+                    }
+                    subtitle
+                        .font(.footnote)
+                        .foregroundStyle(AeroTokens.textMuted)
+                        .lineLimit(1)
                 }
-                Spacer(minLength: AeroTokens.Space.s3)
-                if let loc = event.locationName, !loc.isEmpty {
-                    Text(loc).font(.subheadline.weight(.medium)).foregroundStyle(.white.opacity(0.8)).lineLimit(1)
-                }
-                Text(event.name)
-                    .font(style == .hero ? .title.bold() : .title3.bold())
-                    .foregroundStyle(.white)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                subtitle
-                    .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.85))
-                    .padding(.top, 2)
+                Spacer(minLength: 0)
+                Image(icon: "chevron.right")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(AeroTokens.textMuted)
+                    .frame(width: 30, height: 30)
+                    .background(AeroTokens.surfaceElevated, in: Circle())
             }
-            .padding(AeroTokens.Space.s4)
+            if hasChips { chips }
         }
-        .frame(height: style == .hero ? 230 : 150)
-        .clipShape(RoundedRectangle(cornerRadius: AeroTokens.Radius.xl, style: .continuous))
-        .contentShape(RoundedRectangle(cornerRadius: AeroTokens.Radius.xl, style: .continuous))
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
         .accessibilityElement(children: .combine)
+    }
+
+    private var hasChips: Bool {
+        event.memberRole != nil || event.isOrganizer || event.status == "active" || (event.isDemo ?? false)
     }
 
     private var chips: some View {
         HStack(spacing: 6) {
-            if let role = event.memberRole { chip(role.title, role.systemImage) }
-            if event.isOrganizer { chip(String(localized: "Organizatör"), "star.fill") }
-            if event.status == "active" { chip(String(localized: "Canlı"), "dot.radiowaves.left.and.right") }
-            if event.isDemo ?? false { chip("DEMO", "sparkles") }
-        }
-    }
-
-    private func chip(_ text: String, _ icon: String) -> some View {
-        Label(text, icon: icon)
-            .font(.caption.weight(.semibold))
-            .lineLimit(1)
-            .foregroundStyle(.white)
-            .padding(.horizontal, 10).padding(.vertical, 6)
-            .background(.black.opacity(0.28), in: Capsule())
-    }
-
-    @ViewBuilder private var dateTile: some View {
-        if let d = event.startsAt {
-            VStack(spacing: 0) {
-                Text(d.formatted(.dateTime.day())).font(.title2.bold())
-                Text(d.formatted(.dateTime.month(.abbreviated)).uppercased(with: Locale(identifier: "tr_TR")))
-                    .font(.caption2.weight(.semibold))
-            }
-            .foregroundStyle(Brand.ink)
-            .frame(width: 54, height: 58)
-            .background(.white, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            if event.status == "active" { StatusPill(String(localized: "Canlı"), systemImage: "dot.radiowaves.left.and.right", tone: .active) }
+            if let role = event.memberRole { StatusPill(role.title, systemImage: role.systemImage, tone: .neutral) }
+            if event.isOrganizer { StatusPill(String(localized: "Organizatör"), systemImage: "star.fill", tone: .info) }
+            if event.isDemo ?? false { StatusPill("DEMO", systemImage: "sparkles", tone: .warning) }
         }
     }
 

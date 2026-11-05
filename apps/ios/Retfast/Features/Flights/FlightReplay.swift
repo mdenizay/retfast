@@ -291,7 +291,7 @@ struct FlightReplayView: View {
                     .font(.title2.weight(.bold))
                     .foregroundStyle(.white)
                     .frame(width: 64, height: 64)
-                    .background(Brand.gradient, in: Circle())
+                    .background(AeroTokens.primary, in: Circle())
                     .shadow(color: Brand.accent.opacity(0.4), radius: 10, y: 4)
                     .contentTransition(.symbolEffect(.replace))
             }

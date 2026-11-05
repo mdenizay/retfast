@@ -80,18 +80,17 @@ private struct FlightCardContent<Footer: View>: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: AeroTokens.Space.s3) {
-            VStack(spacing: 0) {
+            VStack(spacing: 1) {
                 Text(date.map { $0.formatted(.dateTime.day()) } ?? Fmt.dash)
-                    .font(.system(.title2, design: .rounded).weight(.bold)).monospacedDigit()
+                    .font(.system(size: 20, weight: .semibold)).monospacedDigit()
                 Text(date.map { $0.formatted(.dateTime.weekday(.abbreviated)) } ?? "")
-                    .font(.caption2.weight(.semibold)).textCase(.uppercase)
+                    .font(.system(size: 10, weight: .semibold)).textCase(.uppercase)
+                    .foregroundStyle(isLive ? AeroTokens.onPrimary : AeroTokens.textMuted)
             }
-            .foregroundStyle(isLive ? .white : AeroTokens.primary)
-            .frame(width: 52, height: 56)
-            .background {
-                RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous)
-                    .fill(isLive ? AnyShapeStyle(Brand.gradient) : AnyShapeStyle(AeroTokens.primarySoft))
-            }
+            .foregroundStyle(isLive ? AeroTokens.onPrimary : AeroTokens.textPrimary)
+            .frame(width: 52, height: 52)
+            .background(isLive ? AeroTokens.primary : AeroTokens.surfaceElevated,
+                        in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 6) {
                     Text(title).font(.headline).lineLimit(1)
@@ -110,10 +109,11 @@ private struct FlightCardContent<Footer: View>: View {
                 footer
             }
             Spacer(minLength: 0)
-            Image(icon: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(AeroTokens.textMuted)
-                .padding(.top, 4)
+            Image(icon: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(AeroTokens.textMuted)
+                .frame(width: 30, height: 30)
+                .background(AeroTokens.surfaceElevated, in: Circle())
         }
-        .padding(AeroTokens.Space.s3)
+        .padding(16)
         .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
         .contentShape(RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
     }
@@ -162,11 +162,9 @@ struct FlightsListView: View {
                 }
                 if let remoteError { WarningRow(text: remoteError, tone: .warning).padding(.horizontal, 4) }
                 ForEach(months, id: \.key) { month in
-                    Text(month.key.formatted(.dateTime.month(.wide).year()))
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(AeroTokens.textSecondary)
-                        .padding(.top, AeroTokens.Space.s3)
-                        .padding(.leading, 4)
+                    SectionTitle(month.key.formatted(.dateTime.month(.wide).year()), count: month.items.count)
+                        .padding(.top, AeroTokens.Space.s4)
+                        .padding(.horizontal, 4)
                     ForEach(month.items) { entry in row(entry) }
                 }
             }
@@ -205,39 +203,41 @@ struct FlightsListView: View {
         let cal = Calendar.current
         let thisYear = all.filter { cal.isDate($0.date, equalTo: .now, toGranularity: .year) }
         let longest = all.map(\.duration).max() ?? 0
-        return VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
-            HStack {
-                Label("Toplam havada", icon: "timer").font(.subheadline.weight(.semibold)).foregroundStyle(.white.opacity(0.8))
-                Spacer()
-                Image(icon: "trophy").foregroundStyle(.white.opacity(0.8))
-            }
-            Text(hours(airtime))
-                .font(.system(size: 40, weight: .bold, design: .rounded)).monospacedDigit()
-                .foregroundStyle(.white)
-            HStack(spacing: 0) {
-                summaryStat(String(localized: "Uçuş"), "\(all.count)")
-                summaryStat(String(localized: "Bu yıl"), "\(thisYear.count)")
-                summaryStat(String(localized: "En uzun"), hours(longest))
-            }
-        }
-        .padding(AeroTokens.Space.s4)
-        .background {
-            RoundedRectangle(cornerRadius: AeroTokens.Radius.xl, style: .continuous).fill(Brand.ink)
-                .overlay(alignment: .topTrailing) {
-                    Circle().fill(Brand.accent.opacity(0.55)).frame(width: 220).blur(radius: 60).offset(x: 60, y: -80)
+        return VStack(spacing: 14) {
+            AeroCard {
+                Text("Özet").font(.headline).foregroundStyle(AeroTokens.textPrimary)
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                    StatTile(value: hours(airtime), label: String(localized: "Toplam havada"), systemImage: "timer")
+                    StatTile(value: "\(all.count)", label: String(localized: "Toplam uçuş"), systemImage: "paperplane")
+                    StatTile(value: "\(thisYear.count)", label: String(localized: "Bu yıl"), systemImage: "calendar")
+                    StatTile(value: hours(longest), label: String(localized: "En uzun"), systemImage: "trophy")
                 }
-                .clipShape(RoundedRectangle(cornerRadius: AeroTokens.Radius.xl, style: .continuous))
+            }
+            AeroCard {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Uçuş aktivitesi").font(.headline).foregroundStyle(AeroTokens.textPrimary)
+                    Text("Son 16 hafta").font(.footnote).foregroundStyle(AeroTokens.textSecondary)
+                }
+                ActivityHeatmap(levels: heatLevels(all), columns: 16, spacing: 4)
+            }
         }
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("flights.summary")
     }
 
-    private func summaryStat(_ label: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(value).font(.system(.headline, design: .rounded)).monospacedDigit().foregroundStyle(.white)
-            Text(label).font(.caption).foregroundStyle(.white.opacity(0.6))
+    /// 112 days, oldest first; level from airtime that day.
+    private func heatLevels(_ all: [FlightEntry]) -> [Int] {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: .now)
+        var perDay = [Int: TimeInterval]()
+        for e in all {
+            let d = cal.dateComponents([.day], from: cal.startOfDay(for: e.date), to: today).day ?? 999
+            if d >= 0 && d < 112 { perDay[111 - d, default: 0] += e.duration }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        return (0..<112).map { i in
+            guard let s = perDay[i], s > 0 else { return 0 }
+            return s < 1800 ? 1 : s < 3600 ? 2 : s < 7200 ? 3 : 4
+        }
     }
 
     private func hours(_ s: TimeInterval) -> String {
@@ -276,9 +276,9 @@ struct FlightTrackSummary: View {
                     Button { replaying = true } label: {
                         Label("Tekrar oynat", icon: "play.fill")
                             .font(.subheadline.weight(.bold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 16).frame(height: 44)
-                            .background(Brand.gradient, in: Capsule())
+                            .foregroundStyle(AeroTokens.onPrimary)
+                            .padding(.horizontal, 18).frame(height: 46)
+                            .background(AeroTokens.primary, in: Capsule())
                             .shadow(color: .black.opacity(0.25), radius: 8, y: 3)
                     }
                     .padding(AeroTokens.Space.s3)

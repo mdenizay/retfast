@@ -63,7 +63,7 @@ struct OnboardingView: View {
                                 .accessibilityIdentifier("onboarding.next")
                         }
                     }
-                    .buttonStyle(WhiteCapsuleButtonStyle())
+                    .buttonStyle(.aeroPrimary)
                 }
                 .padding(.horizontal, AeroTokens.Space.s6)
                 .padding(.bottom, AeroTokens.Space.s4)
@@ -79,8 +79,9 @@ struct OnboardingView: View {
             Spacer(minLength: 0)
             Group {
                 if p.icon == "brand" {
-                    BrandMark(size: 150, color: .white)
-                        .shadow(color: Brand.accent.opacity(0.6), radius: 30)
+                    BrandMark(size: 64, color: Brand.ink)
+                        .frame(width: 132, height: 132)
+                        .background(Brand.accent, in: RoundedRectangle(cornerRadius: 38, style: .continuous))
                 } else {
                     HeroIcon(icon: p.icon)
                 }
@@ -89,7 +90,7 @@ struct OnboardingView: View {
             .accessibilityHidden(true)
             VStack(spacing: AeroTokens.Space.s3) {
                 Text(p.title)
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .font(.system(size: 32, weight: .semibold))
                     .foregroundStyle(.white)
                 Text(p.body)
                     .font(.body)
@@ -125,7 +126,7 @@ struct OnboardingView: View {
         .toggleStyle(.switch)
         .tint(Brand.accent)
         .padding(AeroTokens.Space.s4)
-        .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
+        .background(Color(red: 0.102, green: 0.102, blue: 0.11), in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
         .accessibilityIdentifier("onboarding.ack")
     }
 }

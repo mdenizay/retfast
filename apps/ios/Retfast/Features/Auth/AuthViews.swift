@@ -22,10 +22,11 @@ struct AuthWelcomeView: View {
             VStack(spacing: 0) {
                 Spacer(minLength: AeroTokens.Space.s8)
                 VStack(spacing: AeroTokens.Space.s4) {
-                    BrandMark(size: 96, color: .white)
-                        .shadow(color: Brand.accent.opacity(0.55), radius: 26)
+                    BrandMark(size: 44, color: Brand.ink)
+                        .frame(width: 84, height: 84)
+                        .background(Brand.accent, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
                     Text("Retfast")
-                        .font(.system(size: 40, weight: .bold, design: .rounded))
+                        .font(.system(size: 36, weight: .semibold))
                         .foregroundStyle(.white)
                     Text("Uç. İn. Alın.")
                         .font(.title3.weight(.medium))
@@ -92,13 +93,10 @@ struct AuthScaffold<Content: View>: View {
     var body: some View {
         ZStack(alignment: .top) {
             Brand.ink.ignoresSafeArea()
-            RadialGradient(colors: [Brand.accent.opacity(0.28), .clear], center: .top, startRadius: 0, endRadius: 360)
-                .ignoresSafeArea()
-                .accessibilityHidden(true)
             ScrollView {
                 VStack(alignment: .leading, spacing: AeroTokens.Space.s6) {
                     VStack(alignment: .leading, spacing: AeroTokens.Space.s2) {
-                        Text(title).font(.system(size: 32, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                        Text(title).font(.system(size: 30, weight: .semibold)).foregroundStyle(.white)
                         if let subtitle { Text(subtitle).font(.body).foregroundStyle(.white.opacity(0.6)) }
                     }
                     content
@@ -188,9 +186,9 @@ struct EmailLoginView: View {
             Button {
                 Task { await login() }
             } label: {
-                if busy { ProgressView().tint(.black) } else { Text("Giriş yap") }
+                if busy { ProgressView().tint(Brand.ink) } else { Text("Giriş yap") }
             }
-            .buttonStyle(WhiteCapsuleButtonStyle())
+            .buttonStyle(.aeroPrimary)
             .disabled(!canSubmit)
             .accessibilityIdentifier("login.submit")
 
@@ -266,8 +264,8 @@ struct RegisterView: View {
                     do { model.didSignIn(try await model.api.register(email: email, password: password, fullName: fullName)) }
                     catch { self.error = ErrorText.message(error); Haptics.attention() }
                 }
-            } label: { if busy { ProgressView().tint(.black) } else { Text("Hesap oluştur") } }
-            .buttonStyle(WhiteCapsuleButtonStyle())
+            } label: { if busy { ProgressView().tint(Brand.ink) } else { Text("Hesap oluştur") } }
+            .buttonStyle(.aeroPrimary)
             .disabled(busy || fullName.isEmpty || email.isEmpty || password.count < 10)
             .accessibilityIdentifier("register.submit")
         }
@@ -316,8 +314,8 @@ struct ForgotPasswordView: View {
                     do { try await model.api.forgotPassword(email: email); sent = true; error = nil; Haptics.success() }
                     catch { self.error = ErrorText.message(error) }
                 }
-            } label: { if busy { ProgressView().tint(.black) } else { Text("Bağlantı gönder") } }
-            .buttonStyle(WhiteCapsuleButtonStyle())
+            } label: { if busy { ProgressView().tint(Brand.ink) } else { Text("Bağlantı gönder") } }
+            .buttonStyle(.aeroPrimary)
             .disabled(busy || email.isEmpty)
             Text("Güvenlik nedeniyle hesabın var olup olmadığını göstermiyoruz.")
                 .font(.footnote).foregroundStyle(.white.opacity(0.45))

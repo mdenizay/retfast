@@ -1,10 +1,10 @@
 import SwiftUI
 import UIKit
 
-// Retfast iOS theme (2026-11 "soft" redesign, matches the web).
-// Neutral zinc surfaces; sky blue is the single brand accent.
-// Dark: #09090B background · #18181B surface · sky #38BDF8.
-// Light: #FAFAFA background · white surface · sky #0284C7.
+// Retfast iOS theme (2026-11 minimal redesign, matches the web).
+// Near-black canvas, borderless graphite cards, large radii; sky blue is the single accent.
+// Dark: #080809 background · #1A1A1C surface · #28282C inner tiles · sky #38BDF8.
+// Light: #F2F2F4 background · white surface · #F0F0F2 inner tiles · sky #0284C7.
 // Every colour is dynamic: nothing may force a colour scheme locally.
 
 private func rgb(_ hex: UInt32) -> UIColor {
@@ -18,7 +18,7 @@ private func dyn(light: UInt32, dark: UInt32) -> Color {
 
 public enum Brand {
     /// Splash / launch background (always dark, matches LaunchBackground).
-    public static let ink = Color(rgb(0x09090B))
+    public static let ink = Color(rgb(0x080809))
     public static let accent = Color(rgb(0x38BDF8))
     public static let accentDeep = Color(rgb(0x0284C7))
     public static let accentLight = Color(rgb(0x67E8F9))
@@ -28,10 +28,10 @@ public enum Brand {
 }
 
 public enum AeroTokens {
-    public static let background = dyn(light: 0xFAFAFA, dark: 0x09090B)
-    public static let surface = dyn(light: 0xFFFFFF, dark: 0x18181B)
-    public static let surfaceElevated = dyn(light: 0xF4F4F5, dark: 0x232327)
-    public static let border = dyn(light: 0xE4E4E7, dark: 0x2A2A2E)
+    public static let background = dyn(light: 0xF2F2F4, dark: 0x080809)
+    public static let surface = dyn(light: 0xFFFFFF, dark: 0x1A1A1C)
+    public static let surfaceElevated = dyn(light: 0xF0F0F2, dark: 0x28282C)
+    public static let border = dyn(light: 0xE4E4E7, dark: 0x2C2C30)
     public static let textPrimary = dyn(light: 0x09090B, dark: 0xFAFAFA)
     public static let textSecondary = dyn(light: 0x52525B, dark: 0xA1A1AA)
     public static let textMuted = dyn(light: 0x71717A, dark: 0x8E8E98)
@@ -45,7 +45,7 @@ public enum AeroTokens {
     public static let secondary = dyn(light: 0x0E7490, dark: 0x67E8F9)
     public static let onSecondary = dyn(light: 0xFFFFFF, dark: 0x083344)
     /// Soft tinted fill behind primary-coloured icons.
-    public static let primarySoft = dyn(light: 0xE0F2FE, dark: 0x0C2A3D)
+    public static let primarySoft = dyn(light: 0xE0F2FE, dark: 0x0F2C3D)
 
     public static let success = dyn(light: 0x15803D, dark: 0x4ADE80)
     public static let warning = dyn(light: 0xB45309, dark: 0xFBBF24)
@@ -60,7 +60,7 @@ public enum AeroTokens {
     /// Retrievers / retrieve requests (violet, distinct from pilots' sky blue).
     public static let retrieval = dyn(light: 0x7C3AED, dark: 0xA78BFA)
     /// Hairline shadow for soft cards (shadcn-like).
-    public static let shadow = Color.black.opacity(0.05)
+    public static let shadow = Color.black.opacity(0.04)
 
     public enum Space {
         public static let s1: CGFloat = 4
@@ -71,13 +71,13 @@ public enum AeroTokens {
         public static let s8: CGFloat = 32
     }
     public enum Radius {
-        public static let sm: CGFloat = 8
-        public static let md: CGFloat = 12
-        public static let lg: CGFloat = 16
-        public static let xl: CGFloat = 22
+        public static let sm: CGFloat = 10
+        public static let md: CGFloat = 16
+        public static let lg: CGFloat = 26
+        public static let xl: CGFloat = 30
     }
     public enum Control {
-        public static let height: CGFloat = 50
+        public static let height: CGFloat = 52
         public static let heightLarge: CGFloat = 58
     }
     public enum Freshness {

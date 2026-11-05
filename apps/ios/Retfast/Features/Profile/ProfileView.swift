@@ -128,29 +128,31 @@ struct ProfileView: View {
     }
 
     private func hero(_ me: Me) -> some View {
-        VStack(spacing: AeroTokens.Space.s2) {
-            ZStack {
-                Circle().fill(Brand.accent.opacity(0.25)).frame(width: 112, height: 112).blur(radius: 18)
-                Avatar(name: me.pilot?.displayName ?? me.fullName, size: 88, tint: Brand.accent)
-                    .overlay(Circle().stroke(AeroTokens.surface, lineWidth: 4))
-            }
-            Text(me.pilot?.displayName ?? me.fullName).font(.title2.bold()).foregroundStyle(AeroTokens.textPrimary)
-            Text(me.email).font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
-            HStack(spacing: 6) {
-                if let id = me.pilot?.publicId {
-                    Text("@\(id)").font(.caption.monospaced()).foregroundStyle(AeroTokens.textMuted)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 14) {
+                Avatar(name: me.pilot?.displayName ?? me.fullName, size: 64, tint: AeroTokens.primary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(me.pilot?.displayName ?? me.fullName).font(.title3.weight(.semibold)).foregroundStyle(AeroTokens.textPrimary)
+                    Text(me.email).font(.footnote).foregroundStyle(AeroTokens.textSecondary).lineLimit(1)
+                    if let id = me.pilot?.publicId {
+                        Text("@\(id)").font(.footnote.weight(.semibold)).foregroundStyle(AeroTokens.primary)
+                    }
                 }
-                if let wing = me.pilot?.wing, !wing.isEmpty {
-                    Label(wing, icon: "wind").font(.caption.weight(.medium)).foregroundStyle(AeroTokens.textSecondary)
-                }
+                Spacer(minLength: 0)
             }
-            HStack(spacing: 6) {
-                if me.isPlatformAdmin { StatusPill(String(localized: "Platform yöneticisi"), systemImage: "person.badge.key", tone: .info) }
-                if me.emailVerified == false { StatusPill(String(localized: "E-posta doğrulanmadı"), systemImage: "exclamationmark.triangle", tone: .warning) }
+            let wing = me.pilot?.wing ?? ""
+            if !wing.isEmpty || me.isPlatformAdmin || me.emailVerified == false {
+                HStack(spacing: 6) {
+                    if !wing.isEmpty { StatusPill(wing, systemImage: "wind", tone: .neutral) }
+                    if me.isPlatformAdmin { StatusPill(String(localized: "Platform yöneticisi"), systemImage: "person.badge.key", tone: .info) }
+                    if me.emailVerified == false { StatusPill(String(localized: "E-posta doğrulanmadı"), systemImage: "exclamationmark.triangle", tone: .warning) }
+                }
             }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, AeroTokens.Space.s4)
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
+        .padding(.top, AeroTokens.Space.s2)
     }
 
     private func export() async {
@@ -274,9 +276,9 @@ struct IconRow: View {
         HStack(spacing: AeroTokens.Space.s3) {
             Image(icon: icon)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 32, height: 32)
-                .background(tint.gradient, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                .foregroundStyle(titleColor == AeroTokens.textPrimary ? AeroTokens.textSecondary : titleColor)
+                .frame(width: 36, height: 36)
+                .background(AeroTokens.surfaceElevated, in: Circle())
             VStack(alignment: .leading, spacing: 1) {
                 Text(title).foregroundStyle(titleColor)
                 if let subtitle { Text(subtitle).font(.caption).foregroundStyle(AeroTokens.textSecondary) }

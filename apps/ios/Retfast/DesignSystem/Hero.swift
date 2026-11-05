@@ -13,15 +13,8 @@ struct SkyBackdrop: View {
     var body: some View {
         ZStack {
             Brand.ink
-            RadialGradient(colors: [Brand.accent.opacity(0.55), Color(red: 0.01, green: 0.41, blue: 0.63).opacity(0.22), .clear],
-                           center: glowCenter, startRadius: 0, endRadius: 420)
-            if animated && !reduceMotion && !ProcessInfo.processInfo.arguments.contains("-uiTesting") {
-                TimelineView(.animation(minimumInterval: 1 / 30)) { ctx in
-                    canvas(phase: ctx.date.timeIntervalSinceReferenceDate)
-                }
-            } else {
-                canvas(phase: nil)
-            }
+            RadialGradient(colors: [Brand.accent.opacity(0.14), .clear], center: glowCenter, startRadius: 0, endRadius: 360)
+            canvas(phase: nil).opacity(0.6)
         }
         .ignoresSafeArea()
         .accessibilityHidden(true)
@@ -43,19 +36,6 @@ struct SkyBackdrop: View {
                 ctx.stroke(p, with: .color(.white.opacity(0.055)), lineWidth: 1)
             }
 
-            // Thermal track: drifting spiral that climbs from bottom-left.
-            let points = Self.track(in: size)
-            let cycle = 7.0
-            let progress = phase.map { min(1, ($0.truncatingRemainder(dividingBy: cycle)) / (cycle * 0.8)) } ?? 1
-            let count = max(2, Int(Double(points.count) * progress))
-            var track = Path()
-            track.addLines(Array(points.prefix(count)))
-            ctx.stroke(track, with: .linearGradient(Gradient(colors: [Brand.accentLight.opacity(0.0), Brand.accentLight.opacity(0.22), Brand.accent.opacity(0.45)]),
-                                                     startPoint: points[0], endPoint: points[count - 1]),
-                       style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
-            let head = points[count - 1]
-            ctx.fill(Path(ellipseIn: CGRect(x: head.x - 9, y: head.y - 9, width: 18, height: 18)), with: .color(Brand.accent.opacity(0.12)))
-            ctx.fill(Path(ellipseIn: CGRect(x: head.x - 3, y: head.y - 3, width: 6, height: 6)), with: .color(Brand.accent.opacity(0.6)))
         }
     }
 
@@ -79,7 +59,7 @@ struct SplashView: View {
     var body: some View {
         ZStack {
             Brand.ink.ignoresSafeArea()
-            RadialGradient(colors: [Brand.accent.opacity(0.6), .clear], center: .center, startRadius: 0, endRadius: bloom ? 320 : 40)
+            RadialGradient(colors: [Brand.accent.opacity(0.22), .clear], center: .center, startRadius: 0, endRadius: bloom ? 320 : 40)
                 .opacity(bloom ? 1 : 0)
                 .ignoresSafeArea()
             VStack(spacing: AeroTokens.Space.s4) {
@@ -114,11 +94,11 @@ struct WhiteCapsuleButtonStyle: ButtonStyle {
             .font(.headline)
             .foregroundStyle(Color(red: 0.07, green: 0.07, blue: 0.07))
             .frame(maxWidth: .infinity, minHeight: AeroTokens.Control.height)
-            .background(.white, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous))
+            .background(.white, in: Capsule())
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .opacity(isEnabled ? (configuration.isPressed ? 0.85 : 1) : 0.4)
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
-            .contentShape(RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous))
+            .contentShape(Capsule())
     }
 }
 
@@ -130,12 +110,11 @@ struct GlassCapsuleButtonStyle: ButtonStyle {
             .font(.headline)
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity, minHeight: AeroTokens.Control.height)
-            .background(Color.white.opacity(configuration.isPressed ? 0.16 : 0.08), in: RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous).strokeBorder(.white.opacity(0.14)))
+            .background(Color.white.opacity(configuration.isPressed ? 0.16 : 0.09), in: Capsule())
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .opacity(isEnabled ? 1 : 0.4)
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
-            .contentShape(RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous))
+            .contentShape(Capsule())
     }
 }
 
@@ -175,8 +154,7 @@ struct AuthField<Content: View>: View {
         .font(.body)
         .padding(.horizontal, AeroTokens.Space.s4)
         .frame(height: AeroTokens.Control.height)
-        .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous).strokeBorder(.white.opacity(0.08)))
+        .background(Color(red: 0.102, green: 0.102, blue: 0.11), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 }
 
@@ -186,14 +164,10 @@ struct HeroIcon: View {
     @State private var appear = false
     var body: some View {
         ZStack {
-            Circle().fill(Brand.accent.opacity(0.18)).frame(width: 220, height: 220).blur(radius: 30)
-            Circle().strokeBorder(Brand.gradient, lineWidth: 1.5).frame(width: 170, height: 170).opacity(0.7)
-            Circle().strokeBorder(.white.opacity(0.08), lineWidth: 1).frame(width: 230, height: 230)
-            Circle().fill(Brand.gradient).frame(width: 118, height: 118)
-                .shadow(color: Brand.accent.opacity(0.5), radius: 24, y: 8)
+            Circle().fill(Brand.accent.opacity(0.16)).frame(width: 132, height: 132)
             Image(icon: icon)
                 .font(.system(size: 50, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(Brand.accent)
                 .symbolEffect(.bounce, value: appear)
         }
         .scaleEffect(appear ? 1 : 0.85)

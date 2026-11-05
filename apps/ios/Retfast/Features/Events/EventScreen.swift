@@ -15,11 +15,14 @@ struct EventScreen: View {
     @State private var camera: MapCameraPosition = .automatic
     @State private var cameraSet = false
     @State private var preflightDone = false
+    /// Map height covered by the sheet; keeps centring above it.
+    @State private var sheetCover: CGFloat = 0
 
     var body: some View {
         ZStack(alignment: .top) {
             if let event {
-                EventMapView(event: event, sites: sites, live: live, camera: $camera)
+                EventMapView(event: event, live: live, camera: $camera)
+                    .safeAreaPadding(.bottom, sheetCover)
                     .ignoresSafeArea(edges: .bottom)
                 mapOverlay(event)
                 BottomSheet(detent: $detent) {
@@ -27,9 +30,12 @@ struct EventScreen: View {
                 } content: {
                     sheetContent(event)
                 }
+                .onPreferenceChange(SheetCoverKey.self) { h in
+                    withAnimation(.smooth(duration: 0.3)) { sheetCover = h }
+                }
             } else if let loadError {
                 ContentUnavailableView {
-                    Label("Etkinlik açılamadı", systemImage: "exclamationmark.triangle")
+                    Label("Etkinlik açılamadı", icon: "exclamationmark.triangle")
                 } description: { Text(loadError) } actions: {
                     Button("Tekrar dene") { Task { await load() } }
                 }
@@ -71,7 +77,6 @@ struct EventScreen: View {
             VStack(spacing: AeroTokens.Space.s2) {
                 MapCircleButton(systemImage: "location.fill", label: "Konumuma git") { camera = .userLocation(fallback: camera) }
                 MapCircleButton(systemImage: "scope", label: "Etkinliği ortala") { fitEvent(event) }
-                MapCircleButton(systemImage: "arrow.clockwise", label: "Yenile") { Task { await load(); await live?.reload() } }
             }
         }
         .padding(.horizontal, AeroTokens.Space.s4)
@@ -154,7 +159,6 @@ struct EventScreen: View {
 struct EventMapView: View {
     @Environment(AppModel.self) private var model
     let event: Event
-    let sites: [LaunchSite]
     let live: EventLiveModel?
     @Binding var camera: MapCameraPosition
 
@@ -164,20 +168,21 @@ struct EventMapView: View {
 
     var body: some View {
         Map(position: $camera) {
-            UserAnnotation()
+            if let me = myPosition {
+                Annotation(String(localized: "Ben"), coordinate: me.coordinate, anchor: .center) {
+                    HeadingMarker(course: me.course, tint: isRetriever ? AeroTokens.retrieval : AeroTokens.primary,
+                                  shape: isRetriever ? .triangle : .arrow, isMe: true)
+                }
+                .annotationTitles(.hidden)
+            } else {
+                UserAnnotation()
+            }
             if let c = event.center {
                 Annotation(event.centerIsApproximate ?? false ? String(localized: "Etkinlik (yaklaşık)") : String(localized: "Etkinlik"),
                            coordinate: CLLocationCoordinate2D(latitude: c.lat, longitude: c.lon)) {
-                    Image(systemName: "flag.fill").font(.caption).padding(5)
+                    Image(icon: "flag.fill").font(.caption).padding(5)
                         .foregroundStyle(AeroTokens.onSecondary).background(AeroTokens.secondary, in: Circle())
                 }
-            }
-            ForEach(sites.filter { $0.position != nil }) { s in
-                let verified = s.isVerified ?? false
-                Marker(verified ? s.name : "\(s.name) · \(String(localized: "doğrulanmamış"))",
-                       systemImage: verified ? "arrow.up.right.circle" : "questionmark.circle",
-                       coordinate: CLLocationCoordinate2D(latitude: s.position!.lat, longitude: s.position!.lon))
-                    .tint(verified ? AeroTokens.success : AeroTokens.warning)
             }
             if isMyFlightHere, model.session.track.count > 1 {
                 MapPolyline(coordinates: model.session.track.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lon) })
@@ -189,7 +194,7 @@ struct EventMapView: View {
                         MapPolyline(coordinates: p.trail).stroke(AeroTokens.secondary.opacity(0.5), lineWidth: 2)
                     }
                     if let c = p.coordinate {
-                        Annotation(p.name, coordinate: c) {
+                        Annotation(p.name, coordinate: c, anchor: .center) {
                             PilotMarker(freshness: p.freshness, simulated: p.isSimulated, course: p.position?.courseDeg)
                         }
                     }
@@ -206,19 +211,36 @@ struct EventMapView: View {
                         MapPolyline(coordinates: [rp.coordinate, pos.coordinate])
                             .stroke(AeroTokens.secondary, style: StrokeStyle(lineWidth: 2, dash: [6, 4]))
                     }
-                    Annotation(r.retriever?.fullName ?? String(localized: "Retriever"), coordinate: rp.coordinate) {
-                        RetrieverPin()
+                    Annotation(r.retriever?.fullName ?? String(localized: "Retriever"), coordinate: rp.coordinate, anchor: .center) {
+                        RetrieverPin(course: rp.courseDeg)
                     }
                 }
             }
             ForEach(otherRetrievers) { r in
                 if let p = r.position {
-                    Annotation(r.fullName ?? String(localized: "Retriever"), coordinate: p.coordinate) { RetrieverPin(onDuty: r.onDuty ?? false) }
+                    Annotation(r.fullName ?? String(localized: "Retriever"), coordinate: p.coordinate, anchor: .center) {
+                        RetrieverPin(onDuty: r.onDuty ?? false, course: p.courseDeg)
+                    }
                 }
             }
         }
         .mapStyle(.standard(elevation: .realistic, pointsOfInterest: .excludingAll))
         .mapControls { MapScaleView(); MapCompass() }
+    }
+
+    private var isRetriever: Bool { event.memberRole == .retriever }
+
+    /// Own position with course: the flight computer while flying here, else
+    /// the sharing fix (retriever duty). Nil falls back to the system dot.
+    private var myPosition: (coordinate: CLLocationCoordinate2D, course: Double?)? {
+        let v = model.session.values
+        if isMyFlightHere, let lat = v.latitude, let lon = v.longitude {
+            return (CLLocationCoordinate2D(latitude: lat, longitude: lon), v.heading)
+        }
+        if model.sharing.mode != .off, let f = model.sharing.lastFix, Date().timeIntervalSince(f.timestamp) < 120 {
+            return (CLLocationCoordinate2D(latitude: f.latitude, longitude: f.longitude), f.course >= 0 ? f.course : nil)
+        }
+        return nil
     }
 
     /// Server already filters per role; retrievers additionally use their board.
@@ -236,6 +258,51 @@ struct EventMapView: View {
     }
 }
 
+/// Direction marker: a paper-plane style arrow for pilots, a triangle for
+/// retrievers (cars). Points to the course; a dot when it is unknown.
+struct HeadingMarker: View {
+    enum Shape { case arrow, triangle }
+    let course: Double?
+    var tint: Color
+    var shape: Shape = .arrow
+    var isMe = false
+    var dimmed = false
+
+    var body: some View {
+        ZStack {
+            if isMe {
+                Circle().fill(tint.opacity(0.18)).frame(width: 44, height: 44)
+            }
+            if let course {
+                MarkerShape(kind: shape)
+                .fill(dimmed ? AeroTokens.offline : tint)
+                .overlay { MarkerShape(kind: shape).stroke(.white, lineWidth: 2) }
+                .frame(width: 22, height: 26)
+                .rotationEffect(.degrees(course))
+                .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
+            } else {
+                Circle().fill(dimmed ? AeroTokens.offline : tint).frame(width: 16, height: 16)
+                    .overlay(Circle().stroke(.white, lineWidth: 2.5))
+                    .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
+            }
+        }
+    }
+}
+
+/// Navigation arrow with a notch (pilot) or plain triangle (retriever).
+struct MarkerShape: SwiftUI.Shape {
+    let kind: HeadingMarker.Shape
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: r.midX, y: r.minY))
+        p.addLine(to: CGPoint(x: r.maxX, y: r.maxY))
+        if kind == .arrow { p.addLine(to: CGPoint(x: r.midX, y: r.maxY - r.height * 0.28)) }
+        p.addLine(to: CGPoint(x: r.minX, y: r.maxY))
+        p.closeSubpath()
+        return p
+    }
+}
+
 struct PilotMarker: View {
     let freshness: String
     let simulated: Bool
@@ -243,10 +310,8 @@ struct PilotMarker: View {
 
     var body: some View {
         VStack(spacing: 2) {
-            Image(systemName: freshness == "live" ? "paperplane.fill" : (freshness == "stale" ? "paperplane" : "questionmark.circle"))
-                .rotationEffect(.degrees((course ?? 45) - 45))
-                .font(.title3)
-                .foregroundStyle(freshness == "live" ? AeroTokens.secondary : (freshness == "stale" ? AeroTokens.warning : AeroTokens.offline))
+            HeadingMarker(course: course, tint: AeroTokens.primary, shape: .arrow, dimmed: freshness == "lost")
+                .opacity(freshness == "stale" ? 0.6 : 1)
             if simulated { SimBadge() }
         }
         .accessibilityElement(children: .ignore)
@@ -257,7 +322,7 @@ struct PilotMarker: View {
 struct RetrievalPin: View {
     let status: RetrievalStatus
     var body: some View {
-        Image(systemName: status == .requested ? "hand.raised.fill" : (status == .pickedUp ? "figure.seated.side" : "mappin.circle.fill"))
+        Image(icon: status == .requested ? "hand.raised.fill" : (status == .pickedUp ? "figure.seated.side" : "mappin.circle.fill"))
             .font(.callout.weight(.bold))
             .padding(6)
             .foregroundStyle(.white)
@@ -269,12 +334,10 @@ struct RetrievalPin: View {
 
 struct RetrieverPin: View {
     var onDuty = true
+    var course: Double? = nil
     var body: some View {
-        Image(systemName: "car.fill")
-            .font(.caption.weight(.bold))
-            .padding(6)
-            .foregroundStyle(AeroTokens.onSecondary)
-            .background(onDuty ? AeroTokens.secondary : AeroTokens.offline, in: RoundedRectangle(cornerRadius: 6))
+        HeadingMarker(course: course ?? 0, tint: AeroTokens.retrieval, shape: .triangle, dimmed: !onDuty)
+            .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text(onDuty ? "Retriever (görevde)" : "Retriever"))
     }
 }

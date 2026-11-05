@@ -45,10 +45,7 @@ final class RetrieveFlowUITests: XCTestCase {
         XCTAssertTrue(confirm.waitForExistence(timeout: 5))
         app.settleAndTap(confirm)
 
-        // Summary → retrieve request.
-        let retrieve = app.buttons["summary.retrieve"]
-        XCTAssertTrue(retrieve.waitForExistence(timeout: 10), "summary with retrieve button not shown")
-        retrieve.tap()
+        // Ending opens the retrieve request directly.
         let chip = app.buttons["retrieve.chip.0"]
         XCTAssertTrue(chip.waitForExistence(timeout: 10))
         chip.tap()

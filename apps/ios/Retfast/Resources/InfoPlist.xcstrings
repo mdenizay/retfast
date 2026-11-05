@@ -1,44 +1,66 @@
 {
-  "sourceLanguage": "tr",
-  "strings": {
-    "CFBundleDisplayName": {
-      "shouldTranslate": false
+  "sourceLanguage" : "tr",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "Bundle display name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Retfast"
+          }
+        }
+      },
+      "shouldTranslate" : false
     },
-    "CFBundleName": {
-      "shouldTranslate": false
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Retfast"
+          }
+        }
+      },
+      "shouldTranslate" : false
     },
-    "NSLocationWhenInUseUsageDescription": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Retfast records your position with GPS during a flight and shares it with the organizers and observers of the event you take part in. While you wait for a retrieve, or while you are on retriever duty, your position is shared with the person picking you up / you are picking up."
+    "NSLocationAlwaysAndWhenInUseUsageDescription" : {
+      "comment" : "Privacy - Location Always and When In Use Usage Description",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Needed so flight recording and retrieve position sharing keep working while the screen is locked or the app is in the background. Retfast uses your location only while you record a flight, wait for a retrieve or are on retriever duty."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Retfast, uçuş kaydı sırasında konumunuzu GPS ile kaydeder ve katıldığınız etkinliğin organizatör ve gözlemcileriyle paylaşır. Retrieve beklerken veya retriever olarak görevdeyken konumunuz alacak/alınacak kişiyle paylaşılır."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekran kilitliyken veya uygulama arka plandayken uçuş kaydının ve retrieve konum paylaşımının kesilmemesi için gereklidir. Retfast konumu yalnızca siz uçuş başlattığınızda, retrieve beklerken veya retriever görevindeyken kullanır."
           }
         }
       }
     },
-    "NSLocationAlwaysAndWhenInUseUsageDescription": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Needed so flight recording and retrieve position sharing keep working while the screen is locked or the app is in the background. Retfast uses your location only while you record a flight, wait for a retrieve or are on retriever duty."
+    "NSLocationWhenInUseUsageDescription" : {
+      "comment" : "Privacy - Location When In Use Usage Description",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retfast records your position with GPS during a flight and shares it with the organizers and observers of the event you take part in. While you wait for a retrieve, or while you are on retriever duty, your position is shared with the person picking you up / you are picking up."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ekran kilitliyken veya uygulama arka plandayken uçuş kaydının ve retrieve konum paylaşımının kesilmemesi için gereklidir. Retfast konumu yalnızca siz uçuş başlattığınızda, retrieve beklerken veya retriever görevindeyken kullanır."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retfast, uçuş kaydı sırasında konumunuzu GPS ile kaydeder ve katıldığınız etkinliğin organizatör ve gözlemcileriyle paylaşır. Retrieve beklerken veya retriever olarak görevdeyken konumunuz alacak/alınacak kişiyle paylaşılır."
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }

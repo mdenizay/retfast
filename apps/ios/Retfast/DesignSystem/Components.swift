@@ -59,7 +59,7 @@ struct StatusPill: View {
         Label {
             Text(text).lineLimit(1)
         } icon: {
-            Image(systemName: systemImage)
+            Image(icon: systemImage)
         }
         .font(.caption.weight(.semibold))
         .foregroundStyle(tone.color)
@@ -177,7 +177,7 @@ struct MapCircleButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: systemImage)
+            Image(icon: systemImage)
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(AeroTokens.textPrimary)
                 .frame(width: 48, height: 48)
@@ -198,7 +198,7 @@ struct RoundIconButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: systemImage)
+            Image(icon: systemImage)
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(tint)
                 .frame(width: 46, height: 46)
@@ -333,7 +333,7 @@ struct StepTimeline: View {
             Circle().fill(step.done ? AeroTokens.primary : .clear)
             Circle().strokeBorder(step.done || step.current ? AeroTokens.primary : AeroTokens.border, lineWidth: 2)
             if step.done {
-                Image(systemName: "checkmark").font(.system(size: 10, weight: .heavy)).foregroundStyle(.white)
+                Image(icon: "checkmark").font(.system(size: 10, weight: .heavy)).foregroundStyle(.white)
             } else if step.current {
                 Circle().fill(AeroTokens.primary).frame(width: 8, height: 8)
             }
@@ -426,7 +426,7 @@ struct WarningRow: View {
     var tone: Tone = .warning
     var systemImage = "exclamationmark.triangle.fill"
     var body: some View {
-        Label { Text(text).fixedSize(horizontal: false, vertical: true) } icon: { Image(systemName: systemImage).foregroundStyle(tone.color) }
+        Label { Text(text).fixedSize(horizontal: false, vertical: true) } icon: { Image(icon: systemImage).foregroundStyle(tone.color) }
             .font(.subheadline)
             .foregroundStyle(AeroTokens.textPrimary)
     }

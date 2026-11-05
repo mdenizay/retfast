@@ -47,14 +47,12 @@ struct ObserverSheet: View {
                     }
                 }
             }
-            Text("Ayrıntılı takip ve yönetim web uygulamasındadır (app.retfast.com).")
-                .font(.caption).foregroundStyle(AeroTokens.textSecondary)
         }
     }
 
     private func counter(_ title: String, _ n: Int, _ icon: String, _ tone: Tone) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Label("\(n)", systemImage: icon).font(.title3.monospacedDigit().weight(.semibold)).foregroundStyle(tone.color)
+            Label("\(n)", icon: icon).font(.title3.monospacedDigit().weight(.semibold)).foregroundStyle(tone.color)
             Text(title).font(.caption).foregroundStyle(AeroTokens.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -115,7 +113,7 @@ struct ApplySheet: View {
             Button {
                 Task { await apply() }
             } label: {
-                if busy { ProgressView() } else { Label("Başvur", systemImage: "paperplane") }
+                if busy { ProgressView() } else { Label("Başvur", icon: "paperplane") }
             }
             .buttonStyle(.aeroPrimary)
             .disabled(busy)
@@ -153,7 +151,7 @@ struct OrganizerToolsCard: View {
             SectionHeader(title: String(localized: "Organizatör"))
             NavigationLink(value: EventRoute.applications(event.id)) {
                 HStack {
-                    Label("Başvurular", systemImage: "tray.full")
+                    Label("Başvurular", icon: "tray.full")
                     Spacer()
                     if let n = event.counts?.pendingApplications, n > 0 {
                         StatusPill(String(localized: "\(n) bekliyor"), systemImage: "clock", tone: .warning)
@@ -161,7 +159,7 @@ struct OrganizerToolsCard: View {
                 }
             }
             .accessibilityIdentifier("organizer.applications")
-            NavigationLink(value: EventRoute.members(event.id)) { Label("Üyeler", systemImage: "person.3") }
+            NavigationLink(value: EventRoute.members(event.id)) { Label("Üyeler", icon: "person.3") }
             Text("Etkinlik ayarları, kalkış alanları ve raporlar web uygulamasındadır.").font(.caption).foregroundStyle(AeroTokens.textSecondary)
         }
     }
@@ -259,7 +257,7 @@ struct MembersListView: View {
                                 }
                                 Spacer()
                                 if let tel = AppleMaps.telURL(m.phone) {
-                                    Button { openURL(tel) } label: { Image(systemName: "phone.fill") }
+                                    Button { openURL(tel) } label: { Image(icon: "phone.fill") }
                                         .accessibilityLabel(Text("Ara"))
                                 }
                             }

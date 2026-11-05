@@ -111,76 +111,97 @@ extension SharedPosition {
 
 enum SheetDetent: CaseIterable { case peek, half, full }
 
+/// Height of the map area the sheet covers at its resting detent (not during a
+/// drag), so maps can keep their centre and the user's dot above it.
+struct SheetCoverKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
+}
+
 /// Map-first bottom sheet with three detents. Custom (not a system sheet) so
 /// it lives inside the navigation stack, keeps the map interactive and
-/// coexists with alerts and other sheets. Reduce Motion: no spring.
+/// coexists with alerts and other sheets. The sheet keeps a fixed size and is
+/// moved with an offset, so dragging never re-lays out its content.
 struct BottomSheet<Header: View, Content: View>: View {
     @Binding var detent: SheetDetent
+    var peekHeight: CGFloat = 196
     @ViewBuilder var header: Header
     @ViewBuilder var content: Content
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    /// Live drag offset. Plain @State (not @GestureState) so the release can be
-    /// animated together with the detent change instead of jumping back first.
     @State private var drag: CGFloat = 0
     /// Content is scrolled to the top: dragging it down collapses the sheet.
     @State private var atTop = true
 
-    private var spring: Animation? { reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.86) }
+    private var spring: Animation? { reduceMotion ? nil : .interactiveSpring(response: 0.38, dampingFraction: 0.86, blendDuration: 0.1) }
 
     var body: some View {
         GeometryReader { geo in
-            let full = geo.size.height * 0.92
-            let heights: [SheetDetent: CGFloat] = [.peek: min(180, full), .half: geo.size.height * 0.52, .full: full]
+            let bottomInset = geo.safeAreaInsets.bottom
+            let total = geo.size.height + bottomInset
+            let full = total - 8
+            let heights: [SheetDetent: CGFloat] = [.peek: min(peekHeight + bottomInset, full), .half: total * 0.5, .full: full]
             let base = heights[detent] ?? 300
-            let height = min(full + 24, max(heights[.peek]! - 24, base - drag))
+            let visible = rubberBand(base - drag, min: heights[.peek]!, max: full)
 
-            VStack(spacing: 0) {
-                VStack(spacing: AeroTokens.Space.s2) {
-                    Capsule().fill(AeroTokens.textMuted.opacity(0.6)).frame(width: 44, height: 5).padding(.top, 10)
-                        .accessibilityHidden(true)
-                    header
-                }
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    withAnimation(spring) { detent = detent == .peek ? .half : (detent == .half ? .full : .half) }
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityAddTraits(.isButton)
-                .accessibilityHint(Text("Paneli büyüt veya küçült"))
-                .accessibilityIdentifier("sheet.handle")
-                .accessibilityAction(named: Text("Büyüt")) { detent = detent == .peek ? .half : .full }
-                .accessibilityAction(named: Text("Küçült")) { detent = detent == .full ? .half : .peek }
-
-                ScrollView {
-                    content
-                        .padding(.horizontal, AeroTokens.Space.s4)
-                        .padding(.bottom, AeroTokens.Space.s6)
-                        .onGeometryChange(for: Bool.self) { $0.frame(in: .named("sheetScroll")).minY >= -1 } action: { atTop = $0 }
-                }
-                .coordinateSpace(name: "sheetScroll")
-                // Below full height the whole sheet is a drag surface (like Maps):
-                // swiping the content moves the sheet instead of scrolling it.
-                .scrollDisabled(detent != .full)
-            }
-            .frame(height: height, alignment: .top)
-            .frame(maxWidth: .infinity)
-            .background(AeroTokens.background, in: UnevenRoundedRectangle(topLeadingRadius: AeroTokens.Radius.xl, topTrailingRadius: AeroTokens.Radius.xl, style: .continuous))
-            .clipShape(UnevenRoundedRectangle(topLeadingRadius: AeroTokens.Radius.xl, topTrailingRadius: AeroTokens.Radius.xl, style: .continuous))
-            .shadow(color: .black.opacity(0.25), radius: 16, y: -2)
-            .simultaneousGesture(dragGesture(heights: heights, base: base), including: detent == .full && !atTop ? .subviews : .all)
-            // Ink panel under a light map, like the reference designs.
-            .environment(\.colorScheme, .dark)
-            .frame(maxHeight: .infinity, alignment: .bottom)
-            .ignoresSafeArea(edges: .bottom)
+            chrome(bottomInset: bottomInset)
+                .frame(width: geo.size.width, height: full, alignment: .top)
+                .background(AeroTokens.background, in: UnevenRoundedRectangle(topLeadingRadius: AeroTokens.Radius.xl, topTrailingRadius: AeroTokens.Radius.xl, style: .continuous))
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: AeroTokens.Radius.xl, topTrailingRadius: AeroTokens.Radius.xl, style: .continuous))
+                .shadow(color: .black.opacity(0.18), radius: 18, y: -2)
+                .simultaneousGesture(dragGesture(heights: heights, base: base), including: detent == .full && !atTop ? .subviews : .all)
+                .offset(y: total - visible)
+                .frame(maxHeight: .infinity, alignment: .top)
+                .ignoresSafeArea(edges: .bottom)
+                .preference(key: SheetCoverKey.self, value: min(base, total * 0.5))
         }
     }
 
+    private func chrome(bottomInset: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            VStack(spacing: AeroTokens.Space.s2) {
+                Capsule().fill(AeroTokens.textMuted.opacity(0.45)).frame(width: 40, height: 5).padding(.top, 8)
+                    .accessibilityHidden(true)
+                header
+            }
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(spring) { detent = detent == .peek ? .half : (detent == .half ? .full : .half) }
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityHint(Text("Paneli büyüt veya küçült"))
+            .accessibilityIdentifier("sheet.handle")
+            .accessibilityAction(named: Text("Büyüt")) { detent = detent == .peek ? .half : .full }
+            .accessibilityAction(named: Text("Küçült")) { detent = detent == .full ? .half : .peek }
+
+            ScrollView {
+                content
+                    .padding(.horizontal, AeroTokens.Space.s4)
+                    .padding(.top, AeroTokens.Space.s1)
+                    .padding(.bottom, bottomInset + AeroTokens.Space.s8)
+                    .onGeometryChange(for: Bool.self) { $0.frame(in: .named("sheetScroll")).minY >= -1 } action: { atTop = $0 }
+            }
+            .coordinateSpace(name: "sheetScroll")
+            .scrollIndicators(.hidden)
+            // Below full height the whole sheet is a drag surface (like Maps).
+            .scrollDisabled(detent != .full)
+        }
+    }
+
+    /// Soft resistance past the first/last detent instead of a hard stop.
+    private func rubberBand(_ v: CGFloat, min lo: CGFloat, max hi: CGFloat) -> CGFloat {
+        if v < lo { return lo - (lo - v) * 0.25 }
+        if v > hi { return hi + (v - hi) * 0.15 }
+        return v
+    }
+
     private func dragGesture(heights: [SheetDetent: CGFloat], base: CGFloat) -> some Gesture {
-        DragGesture(minimumDistance: 8)
+        DragGesture(minimumDistance: 6, coordinateSpace: .global)
             .onChanged { v in
                 // At full height only a downward pull from the top collapses; upward is scrolling.
-                if detent == .full && v.translation.height < 0 { drag = 0; return }
+                if detent == .full && v.translation.height < 0 { if drag != 0 { drag = 0 }; return }
+                if detent == .full && !atTop { return }
                 drag = v.translation.height
             }
             .onEnded { v in
@@ -207,18 +228,19 @@ struct EventSheetHeader: View {
     var body: some View {
         HStack(alignment: .center, spacing: AeroTokens.Space.s3) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(event.name).font(.title2.bold()).foregroundStyle(AeroTokens.textPrimary).lineLimit(2)
+                Text(event.name).font(.title3.weight(.bold)).foregroundStyle(AeroTokens.textPrimary).lineLimit(1)
                 HStack(spacing: 6) {
                     if let role = event.memberRole {
-                        Label(role.title, systemImage: role.systemImage)
+                        Label(role.title, icon: role.systemImage).foregroundStyle(AeroTokens.primary)
                     }
-                    if event.isOrganizer { Label("Organizatör", systemImage: "star.fill") }
-                    if let loc = event.locationName, !loc.isEmpty { Text("· \(loc)").lineLimit(1) }
+                    if let loc = event.locationName, !loc.isEmpty {
+                        Text(loc).lineLimit(1)
+                    }
                 }
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(AeroTokens.textSecondary)
             }
-            Spacer()
+            Spacer(minLength: 0)
             EventStatusPill(status: event.status)
         }
         .padding(.horizontal, AeroTokens.Space.s4)
@@ -226,33 +248,59 @@ struct EventSheetHeader: View {
     }
 }
 
-/// Event details card (description, dates, launch sites).
+/// Event details: wide info tiles plus the description. Organizers are not shown.
 struct EventInfoCard: View {
     let event: Event
     var live: EventLiveModel?
 
     var body: some View {
         VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
-            HStack(spacing: AeroTokens.Space.s2) {
-                fact("calendar", EventDates.range(event))
-                if let live { fact("paperplane.fill", String(localized: "\(live.pilots.count) uçuşta")) }
+            Text("Etkinlik").font(.headline).foregroundStyle(AeroTokens.textPrimary)
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: AeroTokens.Space.s2), GridItem(.flexible())], spacing: AeroTokens.Space.s2) {
+                InfoTile(icon: "calendar", title: String(localized: "Tarih"), value: EventDates.range(event))
+                if let live {
+                    InfoTile(icon: "paperplane.fill", title: String(localized: "Havada"), value: String(localized: "\(live.pilots.count) pilot"))
+                }
+                if let loc = event.locationName, !loc.isEmpty {
+                    InfoTile(icon: "mappin.and.ellipse", title: String(localized: "Konum"), value: loc)
+                }
+                if let live {
+                    InfoTile(icon: "car.fill", title: String(localized: "Retriever"), value: String(localized: "\(live.retrievers.count) araç"))
+                }
             }
-            if let loc = event.locationName, !loc.isEmpty { fact("mappin.and.ellipse", loc) }
-            if let o = event.organizers, !o.isEmpty { fact("person.crop.circle", o.map(\.displayName).joined(separator: ", ")) }
             if let d = event.description, !d.isEmpty {
                 Text(d).font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityIdentifier("event.info")
     }
+}
 
-    private func fact(_ icon: String, _ text: String) -> some View {
-        Label(text, systemImage: icon)
-            .font(.subheadline)
-            .foregroundStyle(AeroTokens.textPrimary)
-            .lineLimit(1)
-            .padding(.horizontal, 12).padding(.vertical, 8)
-            .background(AeroTokens.surface, in: Capsule())
+/// Wide two-line info box: icon, small caption, value.
+struct InfoTile: View {
+    let icon: String
+    let title: String
+    let value: String
+
+    var body: some View {
+        HStack(spacing: AeroTokens.Space.s3) {
+            Image(icon: icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(AeroTokens.primary)
+                .frame(width: 36, height: 36)
+                .background(AeroTokens.primarySoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title).font(.caption).foregroundStyle(AeroTokens.textMuted)
+                Text(value).font(.subheadline.weight(.semibold)).foregroundStyle(AeroTokens.textPrimary)
+                    .lineLimit(2).minimumScaleFactor(0.8)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(AeroTokens.Space.s3)
+        .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+        .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous))
+        .accessibilityElement(children: .combine)
     }
 }

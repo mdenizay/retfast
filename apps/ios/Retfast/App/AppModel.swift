@@ -374,6 +374,7 @@ final class AppModel {
         landing = LandingPromptDetector(enabled: event.settings?.landingPrompt ?? true)
         try? store.setValue(event.id, forKey: "flightEventId")
         Haptics.start()
+        updateSharingNotice()
     }
 
     /// The flight is shown in its event's bottom sheet: bring that event to front.
@@ -396,6 +397,7 @@ final class AppModel {
         do {
             try session.end()
             Haptics.stop()
+            updateSharingNotice()
             Task { await sync.kick() }
         } catch {
             Self.log.error("end failed \(String(describing: error), privacy: .public)")
@@ -406,8 +408,19 @@ final class AppModel {
     func endFlightAndRequestRetrieve() {
         let flight = session.flight
         if session.isActive { endFlight() }
-        guard let flight, let eventId = flight.eventId?.uuidString.lowercased() else { return }
+        guard let flight, let eventId = flight.eventId?.uuidString.lowercased() else {
+            if session.state == .completed { overlay = .flight }
+            return
+        }
         retrieveRequest = RetrieveContext(eventId: eventId, eventName: flight.eventName, flightId: flight.id)
+    }
+
+    /// The retrieve request was closed without sending ("no retrieve" or swipe):
+    /// the finished flight is already saved, so just clear it.
+    func dismissRetrieveRequest() {
+        retrieveRequest = nil
+        if session.state == .completed { session.reset() }
+        if overlay == .flight { overlay = nil }
     }
 
     var isSimulatedBuild: Bool {
@@ -522,6 +535,57 @@ final class AppModel {
 
     func refreshSharing() {
         sharing.update(mode: SharingMode.decide(activeRetrieval: activeRetrieval, duty: retrieverDuty))
+        updateSharingNotice()
+    }
+
+    /// What the "your location is shared" notification currently says (nil = none).
+    private var sharingNoticeKey: String?
+
+    /// Keeps one quiet notification in Notification Center / on the lock
+    /// screen while Retfast shares the position with an event (live flight,
+    /// waiting for a retrieve, retriever duty), and removes it when sharing stops.
+    func updateSharingNotice() {
+        let body: String?
+        let eventName: String?
+        if session.isActive {
+            eventName = session.flight?.eventName
+            body = String(localized: "Uçuşun canlı takip ediliyor.")
+        } else {
+            switch sharing.mode {
+            case .off: eventName = nil; body = nil
+            case .pilotWaiting:
+                eventName = activeRetrieval?.eventName
+                body = String(localized: "Retriever seni bulabilsin diye konumun paylaşılıyor.")
+            case .retriever(let id):
+                eventName = events.first { $0.id.lowercased() == id.lowercased() }?.name
+                body = String(localized: "Retrieve görevindesin; konumun paylaşılıyor.")
+            }
+        }
+        let key = body.map { "\($0)|\(eventName ?? "")" }
+        guard key != sharingNoticeKey else { return }
+        sharingNoticeKey = key
+        let center = UNUserNotificationCenter.current()
+        guard let body else {
+            center.removeDeliveredNotifications(withIdentifiers: ["sharing"])
+            return
+        }
+        let title = eventName.map { String(localized: "Konumun paylaşılıyor · \($0)") } ?? String(localized: "Konumun paylaşılıyor")
+        center.getNotificationSettings { settings in
+            let post = {
+                let content = UNMutableNotificationContent()
+                content.title = title
+                content.body = body
+                content.interruptionLevel = .passive
+                content.threadIdentifier = "sharing"
+                center.add(UNNotificationRequest(identifier: "sharing", content: content, trigger: nil))
+            }
+            switch settings.authorizationStatus {
+            case .authorized, .provisional, .ephemeral: post()
+            case .notDetermined:
+                center.requestAuthorization(options: [.alert, .sound]) { ok, _ in if ok { post() } }
+            default: break
+            }
+        }
     }
 
     /// Best recent own position: flight computer, else sharing.
@@ -545,7 +609,7 @@ final class AppModel {
         case .active:
             if session.isActive {
                 if overlay == nil { openFlightEvent() }
-            } else if session.state == .completed {
+            } else if session.state == .completed, retrieveRequest == nil {
                 if overlay == nil { overlay = .flight }
             } else if !restoredOverlayShown, overlay == nil, let r = activeRetrieval {
                 // Relaunch with an open retrieve: show the waiting screen again.

@@ -95,7 +95,7 @@ struct EventCard: View {
     let style: Style
 
     private var gradient: LinearGradient {
-        let top: Color = event.isMember ? Brand.red : Brand.blue
+        let top: Color = event.isMember ? Brand.orange : AeroTokens.retrieval
         return LinearGradient(colors: [top, top.opacity(0.55), Brand.ink],
                               startPoint: .topTrailing, endPoint: .bottomLeading)
     }
@@ -145,7 +145,7 @@ struct EventCard: View {
     }
 
     private func chip(_ text: String, _ icon: String) -> some View {
-        Label(text, systemImage: icon)
+        Label(text, icon: icon)
             .font(.caption.weight(.semibold))
             .lineLimit(1)
             .foregroundStyle(.white)
@@ -168,12 +168,12 @@ struct EventCard: View {
 
     @ViewBuilder private var subtitle: some View {
         switch EventSheetMode.mode(for: event) {
-        case .notMember(.pending): Label("Başvurun onay bekliyor", systemImage: "clock")
-        case .notMember(.rejected): Label("Başvuru reddedildi", systemImage: "xmark.circle")
-        case .notMember(.canApply): Label("Başvuruya açık", systemImage: "person.badge.plus")
+        case .notMember(.pending): Label("Başvurun onay bekliyor", icon: "clock")
+        case .notMember(.rejected): Label("Başvuru reddedildi", icon: "xmark.circle")
+        case .notMember(.canApply): Label("Başvuruya açık", icon: "person.badge.plus")
         default:
             if event.isOrganizer, let n = event.counts?.pendingApplications, n > 0 {
-                Label("\(n) başvuru bekliyor", systemImage: "tray.full")
+                Label("\(n) başvuru bekliyor", icon: "tray.full")
             } else {
                 Text(EventDates.range(event))
             }

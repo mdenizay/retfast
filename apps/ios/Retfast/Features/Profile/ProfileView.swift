@@ -48,18 +48,31 @@ struct ProfileView: View {
                 Picker("Uygulama görünümü", selection: $appearance) {
                     ForEach(AppAppearance.allCases) { Text($0.title).tag($0.rawValue) }
                 }
+                // iOS per-app language (Türkçe / English) lives in Settings › Retfast › Language.
+                Button {
+                    if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                } label: {
+                    HStack {
+                        Label("Dil / Language", icon: "globe").foregroundStyle(AeroTokens.textPrimary)
+                        Spacer()
+                        Text(Bundle.main.preferredLocalizations.first == "en" ? "English" : "Türkçe")
+                            .foregroundStyle(AeroTokens.textSecondary)
+                        Image(icon: "arrow.up.right").font(.caption).foregroundStyle(AeroTokens.textMuted)
+                    }
+                }
+                .accessibilityIdentifier("profile.language")
             }
             Section("Verilerim") {
                 Button {
                     Task { await export() }
-                } label: { if exporting { ProgressView() } else { Label("Verilerimi dışa aktar (JSON)", systemImage: "square.and.arrow.down") } }
-                if let exportURL { ShareLink(item: exportURL) { Label("Dışa aktarılan dosyayı paylaş", systemImage: "square.and.arrow.up") } }
+                } label: { if exporting { ProgressView() } else { Label("Verilerimi dışa aktar (JSON)", icon: "square.and.arrow.down") } }
+                if let exportURL { ShareLink(item: exportURL) { Label("Dışa aktarılan dosyayı paylaş", icon: "square.and.arrow.up") } }
                 if let exportError { WarningRow(text: exportError, tone: .error) }
             }
             Section("Uygulama") {
-                NavigationLink { DiagnosticsView() } label: { Label("Tanılama", systemImage: "stethoscope") }
-                NavigationLink { ChangePasswordView(forced: false) } label: { Label("Şifre değiştir", systemImage: "key") }
-                Button { model.onboardingCompleted = false } label: { Label("Tanıtımı yeniden göster", systemImage: "info.circle") }
+                NavigationLink { DiagnosticsView() } label: { Label("Tanılama", icon: "stethoscope") }
+                NavigationLink { ChangePasswordView(forced: false) } label: { Label("Şifre değiştir", icon: "key") }
+                Button { model.onboardingCompleted = false } label: { Label("Tanıtımı yeniden göster", icon: "info.circle") }
                 KeyValueRow(key: String(localized: "Sürüm"), value: "\(model.config.appVersion) (\(model.config.build))")
             }
             Section {

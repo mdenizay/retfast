@@ -31,9 +31,9 @@ struct OnboardingView: View {
                         VStack(alignment: .leading, spacing: AeroTokens.Space.s4) {
                             Group {
                                 if p.icon == "brand" {
-                                    BrandMark(size: 96, color: Brand.red)
+                                    BrandMark(size: 96, color: Brand.orange)
                                 } else {
-                                    Image(systemName: p.icon)
+                                    Image(icon: p.icon)
                                         .font(.system(size: 40, weight: .semibold))
                                         .foregroundStyle(AeroTokens.primary)
                                         .frame(width: 88, height: 88)

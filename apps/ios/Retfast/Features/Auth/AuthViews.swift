@@ -45,7 +45,7 @@ struct LoginView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: AeroTokens.Space.s6) {
                 VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
-                    BrandMark(size: 64, color: Brand.red)
+                    BrandMark(size: 64, color: Brand.orange)
                     Text("Retfast").font(.system(size: 40, weight: .bold))
                     Text("Uçuşunu kaydet, iniş yerini paylaş, retriever seni alsın.")
                         .font(.title3).foregroundStyle(AeroTokens.textSecondary)
@@ -168,7 +168,7 @@ struct PasswordPolicyHint: View {
         .font(.caption)
     }
     private func rule(_ text: LocalizedStringKey, ok: Bool) -> some View {
-        Label { Text(text) } icon: { Image(systemName: ok ? "checkmark.circle.fill" : "circle") }
+        Label { Text(text) } icon: { Image(icon: ok ? "checkmark.circle.fill" : "circle") }
             .foregroundStyle(ok ? AeroTokens.success : AeroTokens.textSecondary)
     }
 }
@@ -234,9 +234,9 @@ struct ChangePasswordView: View {
             } footer: {
                 VStack(alignment: .leading) {
                     PasswordPolicyHint(password: new, email: model.me?.email ?? "")
-                    Label { Text("Mevcut şifreden farklı olmalı") } icon: { Image(systemName: !new.isEmpty && new != current ? "checkmark.circle.fill" : "circle") }
+                    Label { Text("Mevcut şifreden farklı olmalı") } icon: { Image(icon: !new.isEmpty && new != current ? "checkmark.circle.fill" : "circle") }
                         .font(.caption)
-                    Label { Text("Tekrar ile eşleşmeli") } icon: { Image(systemName: !new.isEmpty && new == confirm ? "checkmark.circle.fill" : "circle") }
+                    Label { Text("Tekrar ile eşleşmeli") } icon: { Image(icon: !new.isEmpty && new == confirm ? "checkmark.circle.fill" : "circle") }
                         .font(.caption)
                 }
             }

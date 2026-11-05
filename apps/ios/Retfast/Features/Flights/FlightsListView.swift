@@ -194,7 +194,7 @@ struct FlightDetailView: View {
             if let gpxURL {
                 Section {
                     ShareLink(item: gpxURL) {
-                        Label("GPX dışa aktar", systemImage: "square.and.arrow.up")
+                        Label("GPX dışa aktar", icon: "square.and.arrow.up")
                     }
                 } footer: {
                     Text("GPX dosyası telefondaki ham GPS noktalarından oluşturulur. Sertifikalı bir uçuş kaydı değildir (not a certified flight log); yarışma/rekor kanıtı olarak kullanılamaz.")
@@ -242,10 +242,10 @@ struct FlightRouteMap: View {
         Map(initialPosition: .automatic) {
             MapPolyline(coordinates: coordinates).stroke(AeroTokens.primary, lineWidth: 3)
             if let first = coordinates.first {
-                Annotation(String(localized: "Kalkış"), coordinate: first) { Image(systemName: "arrow.up.circle.fill").foregroundStyle(AeroTokens.success) }
+                Annotation(String(localized: "Kalkış"), coordinate: first) { Image(icon: "arrow.up.circle.fill").foregroundStyle(AeroTokens.success) }
             }
             if let last = coordinates.last {
-                Annotation(String(localized: "İniş"), coordinate: last) { Image(systemName: "arrow.down.circle.fill").foregroundStyle(AeroTokens.error) }
+                Annotation(String(localized: "İniş"), coordinate: last) { Image(icon: "arrow.down.circle.fill").foregroundStyle(AeroTokens.error) }
             }
         }
         .mapStyle(.standard(elevation: .realistic))

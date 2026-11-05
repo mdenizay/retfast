@@ -86,9 +86,6 @@ final class EndToEndTests: XCTestCase {
         XCTAssertTrue(confirm.waitForExistence(timeout: 5))
         app.settleAndTap(confirm)
 
-        let retrieve = app.buttons["summary.retrieve"]
-        XCTAssertTrue(retrieve.waitForExistence(timeout: 10))
-        retrieve.tap()
         let chip = app.buttons["retrieve.chip.0"]
         XCTAssertTrue(chip.waitForExistence(timeout: 10))
         chip.tap()

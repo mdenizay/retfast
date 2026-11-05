@@ -15,6 +15,7 @@
 		3208D8C1FCDC020C82619B45 /* RetrieverSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 109F31A18F88EC8B7F2A2EC8 /* RetrieverSheet.swift */; };
 		32C405072F828C69CE6432BD /* OneShotLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DB4504830187341C671BD90 /* OneShotLocator.swift */; };
 		360AEF3856E42436A83F341F /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F846D2A44770FD7BA1F0D3A3 /* InfoPlist.xcstrings */; };
+		37FC4FCCA459C910E83E659D /* Icons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94DF3EFC7FA51653C9FED9B0 /* Icons.swift */; };
 		3A501F1EDE06787BFC2E487E /* FlightComputerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D6AE547A29C99FFE1C04FA /* FlightComputerView.swift */; };
 		3CB8E65CA86526731A1C669D /* OtherSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB94654A647C8ABE23769AA /* OtherSheets.swift */; };
 		41DFF61A27C3F7F699BF9F65 /* DebugSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4985A8880BE7801B4B569F6A /* DebugSupport.swift */; };
@@ -23,6 +24,7 @@
 		5684C6A02552505E7E09C4E5 /* RetrieveRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49C754F8A4B4FECAF95895C6 /* RetrieveRequestView.swift */; };
 		57ABA55EFCAE26970FE95AFE /* RetfastCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0FB5F8DAF75430D9C3DC7F87 /* RetfastCore */; };
 		5DB2C560238825E4ACF7ABD6 /* EndToEndTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B58FF6F1AD88C9512903EECB /* EndToEndTests.swift */; };
+		6DBA63BC3CCF112D0F264E05 /* EmergencySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2171C978F83311426973847B /* EmergencySheet.swift */; };
 		792520C91CCFE7D67D0AE6A4 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5430D5DDB62234ADA95B3185 /* Components.swift */; };
 		797953238203E4B53D07BDB6 /* RetrieveFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B27374FA46F735789EB098BE /* RetrieveFlowUITests.swift */; };
 		88AF3E11D636F8720CBDBB4D /* AuthViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B74AA1AF6065D63780E53F3 /* AuthViews.swift */; };
@@ -55,6 +57,7 @@
 		0E2A525C7369E7BBC655C5D9 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		109F31A18F88EC8B7F2A2EC8 /* RetrieverSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetrieverSheet.swift; sourceTree = "<group>"; };
 		1471BF7D70D53C1D97FB0C18 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		2171C978F83311426973847B /* EmergencySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmergencySheet.swift; sourceTree = "<group>"; };
 		21BF432A7597F5F3593D8881 /* EventComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventComponents.swift; sourceTree = "<group>"; };
 		2355DFCDF46485A1518092DD /* cameli-sim-route.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "cameli-sim-route.gpx"; sourceTree = "<group>"; };
 		2862CE3CA636FC431873B75A /* Retfast.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Retfast.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -69,6 +72,7 @@
 		7FE9DFD0037B83FDC899CDF4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		89C02FAB1AD6F9F20B640BF0 /* EventLiveModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventLiveModel.swift; sourceTree = "<group>"; };
 		8F6960A75DDB3AF5238B9587 /* RetfastCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = RetfastCore; path = RetfastCore; sourceTree = SOURCE_ROOT; };
+		94DF3EFC7FA51653C9FED9B0 /* Icons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Icons.swift; sourceTree = "<group>"; };
 		9DB4504830187341C671BD90 /* OneShotLocator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OneShotLocator.swift; sourceTree = "<group>"; };
 		A56579908C80354AA80341DB /* FlightsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightsListView.swift; sourceTree = "<group>"; };
 		B15D28E4E23DC75B6B2539E1 /* EventScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventScreen.swift; sourceTree = "<group>"; };
@@ -132,6 +136,7 @@
 			children = (
 				5430D5DDB62234ADA95B3185 /* Components.swift */,
 				499AC846D7ABC4FE286A8514 /* Formatting.swift */,
+				94DF3EFC7FA51653C9FED9B0 /* Icons.swift */,
 				EEA7370710D897E0F9014D81 /* Theme.swift */,
 			);
 			path = DesignSystem;
@@ -167,6 +172,7 @@
 		468071C7EF75C5FF31A49E32 /* Flight */ = {
 			isa = PBXGroup;
 			children = (
+				2171C978F83311426973847B /* EmergencySheet.swift */,
 				C5D6AE547A29C99FFE1C04FA /* FlightComputerView.swift */,
 				9DB4504830187341C671BD90 /* OneShotLocator.swift */,
 			);
@@ -420,6 +426,7 @@
 				792520C91CCFE7D67D0AE6A4 /* Components.swift in Sources */,
 				41DFF61A27C3F7F699BF9F65 /* DebugSupport.swift in Sources */,
 				1090B239178063CE541DA6AB /* DiagnosticsView.swift in Sources */,
+				6DBA63BC3CCF112D0F264E05 /* EmergencySheet.swift in Sources */,
 				16E9DA2DA4C13B49F5BD8FD6 /* EventComponents.swift in Sources */,
 				BED83981045367E088711E97 /* EventLiveModel.swift in Sources */,
 				B12EC4B697D18C962AF8ABB9 /* EventScreen.swift in Sources */,
@@ -427,6 +434,7 @@
 				3A501F1EDE06787BFC2E487E /* FlightComputerView.swift in Sources */,
 				99DBDD16A5D6FE7E1A8B5D6D /* FlightsListView.swift in Sources */,
 				D8B30C90786BCF20C6B5AC7F /* Formatting.swift in Sources */,
+				37FC4FCCA459C910E83E659D /* Icons.swift in Sources */,
 				23A62136881612C6C3F4E89D /* OnboardingView.swift in Sources */,
 				32C405072F828C69CE6432BD /* OneShotLocator.swift in Sources */,
 				3CB8E65CA86526731A1C669D /* OtherSheets.swift in Sources */,

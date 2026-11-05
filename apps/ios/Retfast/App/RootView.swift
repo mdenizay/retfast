@@ -60,20 +60,15 @@ struct FlowSheets: ViewModifier {
     func body(content: Content) -> some View {
         content
             .sheet(item: Binding(get: { active ? model.retrieveRequest : nil },
-                                 set: { if active { model.retrieveRequest = $0 } })) { ctx in
+                                 set: { if active && $0 == nil { model.dismissRetrieveRequest() } })) { ctx in
                 NavigationStack { RetrieveRequestView(context: ctx) }
                     .environment(model)
             }
             .alert("İndin mi?", isPresented: Binding(get: { active && model.showLandingPrompt },
                                                      set: { if active && !$0 { model.showLandingPrompt = false } })) {
-                Button("Uçuşu bitir ve retrieve iste") {
+                Button("Uçuşu bitir") {
                     model.showLandingPrompt = false
                     model.endFlightAndRequestRetrieve()
-                }
-                Button("Uçuşu bitir, retrieve gerekmez") {
-                    model.showLandingPrompt = false
-                    model.endFlight()
-                    model.overlay = .flight
                 }
                 Button("Hâlâ uçuyorum", role: .cancel) { model.snoozeLandingPrompt() }
             } message: {
@@ -99,17 +94,17 @@ struct MainTabView: View {
                     }
             }
             .safeAreaInset(edge: .bottom, spacing: 0) { ActivityBar() }
-            .tabItem { Label("Etkinlikler", systemImage: "flag.2.crossed") }
+            .tabItem { Label("Etkinlikler", icon: "flag.2.crossed") }
             .tag(AppTab.events)
 
             NavigationStack { FlightsListView() }
                 .safeAreaInset(edge: .bottom, spacing: 0) { ActivityBar() }
-                .tabItem { Label("Uçuşlarım", systemImage: "point.topleft.down.to.point.bottomright.curvepath") }
+                .tabItem { Label("Uçuşlarım", icon: "point.topleft.down.to.point.bottomright.curvepath") }
                 .tag(AppTab.flights)
 
             NavigationStack { ProfileView() }
                 .safeAreaInset(edge: .bottom, spacing: 0) { ActivityBar() }
-                .tabItem { Label("Profil", systemImage: "person.crop.circle") }
+                .tabItem { Label("Profil", icon: "person.crop.circle") }
                 .tag(AppTab.profile)
         }
     }
@@ -126,7 +121,7 @@ struct ActivityBar: View {
                 bar(tone: .active, accessibilityId: "activity.flight") {
                     model.openFlightEvent()
                 } content: {
-                    Image(systemName: model.session.state.systemImage)
+                    Image(icon: model.session.state.systemImage)
                         .symbolEffect(.pulse, isActive: model.session.state == .recording)
                     Text(model.session.state.title).font(.subheadline.weight(.semibold))
                     TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -141,26 +136,13 @@ struct ActivityBar: View {
                 bar(tone: .info, accessibilityId: "activity.retrieval") {
                     model.overlay = .retrieval(r.id)
                 } content: {
-                    Image(systemName: r.stage.systemImage)
+                    Image(icon: r.stage.systemImage)
                     Text(r.stage.shortTitle).font(.subheadline.weight(.semibold)).lineLimit(1)
                     if let name = r.server?.retriever?.fullName, r.stage == .accepted {
                         Text("· \(name)").font(.subheadline).lineLimit(1)
                     }
                     Spacer(minLength: 4)
                     Text("Retrieve").font(.subheadline)
-                }
-            }
-            if case .retriever(let eventId) = model.sharing.mode, model.activeRetrieval == nil {
-                bar(tone: .success, accessibilityId: "activity.duty") {
-                    model.selectedTab = .events
-                    if model.eventsPath.last != .event(eventId) { model.eventsPath = [.event(eventId)] }
-                } content: {
-                    Image(systemName: "car.fill")
-                    Text("Retrieve görevi").font(.subheadline.weight(.semibold))
-                    let n = model.retrieverDuty?.activePickups ?? 0
-                    if n > 0 { Text("· \(n) alım").font(.subheadline) }
-                    Spacer(minLength: 4)
-                    Text("Konum paylaşılıyor").font(.caption)
                 }
             }
         }
@@ -171,7 +153,7 @@ struct ActivityBar: View {
         Button(action: action) {
             HStack(spacing: AeroTokens.Space.s2) {
                 content()
-                Image(systemName: "chevron.up")
+                Image(icon: "chevron.up")
             }
             .foregroundStyle(tone == .info ? AeroTokens.onSecondary : AeroTokens.onPrimary)
             .padding(.horizontal, AeroTokens.Space.s4)

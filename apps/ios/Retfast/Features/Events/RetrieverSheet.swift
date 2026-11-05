@@ -55,7 +55,7 @@ struct RetrieverSheet: View {
 
     private func emptyState(_ title: String, _ text: String, _ icon: String) -> some View {
         VStack(spacing: AeroTokens.Space.s2) {
-            Image(systemName: icon).font(.title).foregroundStyle(AeroTokens.textMuted)
+            Image(icon: icon).font(.title).foregroundStyle(AeroTokens.textMuted)
             Text(title).font(.headline)
             Text(text).font(.subheadline).foregroundStyle(AeroTokens.textSecondary).multilineTextAlignment(.center)
         }
@@ -63,26 +63,49 @@ struct RetrieverSheet: View {
         .padding(.vertical, AeroTokens.Space.s6)
     }
 
+    /// Big start/stop control, styled like "Uçuşa başla".
     private var dutyCard: some View {
-        AeroCard {
-            Toggle(isOn: Binding(get: { board.onDuty }, set: { on in
-                Task {
-                    dutyBusy = true; defer { dutyBusy = false }
-                    do { try await board.setDuty(on); dutyError = nil; Haptics.tick() }
-                    catch { dutyError = ErrorText.message(error) }
-                }
-            })) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Görevdeyim").font(.headline)
-                    Text(board.onDuty ? "Organizatörler seni müsait görür; konumun ≈15 sn'de bir paylaşılır."
-                                      : "Görevde değilken konumun yalnızca kabul ettiğin alım sürerken paylaşılır.")
-                        .font(.caption).foregroundStyle(AeroTokens.textSecondary)
+        VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
+            if board.onDuty {
+                HStack(spacing: AeroTokens.Space.s3) {
+                    Image(icon: "car.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(AeroTokens.retrieval)
+                        .frame(width: 44, height: 44)
+                        .background(AeroTokens.retrieval.opacity(0.15), in: RoundedRectangle(cornerRadius: AeroTokens.Radius.sm, style: .continuous))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Görevdesin").font(.headline).foregroundStyle(AeroTokens.textPrimary)
+                        Text("Pilotlar ve organizatörler seni haritada görür.")
+                            .font(.caption).foregroundStyle(AeroTokens.textSecondary)
+                    }
                 }
             }
+            Button { setDuty(!board.onDuty) } label: {
+                HStack {
+                    if dutyBusy { ProgressView().tint(board.onDuty ? AeroTokens.textPrimary : AeroTokens.onPrimary) }
+                    else { Image(icon: board.onDuty ? "stop.fill" : "play.fill") }
+                    Text(board.onDuty ? "Görevi bitir" : "Göreve başla")
+                }
+            }
+            .buttonStyle(PrimaryButtonStyle(kind: board.onDuty ? .secondary : .primary, large: !board.onDuty))
             .disabled(dutyBusy)
             .accessibilityIdentifier("retriever.duty")
-            SharingStatusRow()
+            .accessibilityValue(Text(board.onDuty ? "1" : "0"))
+            if !board.onDuty {
+                Text("Görevdeyken konumun ≈15 sn'de bir paylaşılır. Görevde değilken yalnızca kabul ettiğin alım sürerken paylaşılır.")
+                    .font(.caption).foregroundStyle(AeroTokens.textMuted)
+            } else {
+                SharingStatusRow()
+            }
             if let dutyError { WarningRow(text: dutyError, tone: .error) }
+        }
+    }
+
+    private func setDuty(_ on: Bool) {
+        Task {
+            dutyBusy = true; defer { dutyBusy = false }
+            do { try await board.setDuty(on); dutyError = nil; Haptics.success() }
+            catch { dutyError = ErrorText.message(error) }
         }
     }
 
@@ -113,7 +136,7 @@ struct SharingStatusRow: View {
                     Label {
                         Text(s.lastSentAt.map { String(localized: "Konum paylaşılıyor · son gönderim \(Fmt.age(max(0, ctx.date.timeIntervalSince($0)))) önce") }
                              ?? String(localized: "Konum paylaşımı başladı · ilk konum bekleniyor"))
-                    } icon: { Image(systemName: "location.fill.viewfinder").foregroundStyle(AeroTokens.trackingActive) }
+                    } icon: { Image(icon: "location.fill.viewfinder").foregroundStyle(AeroTokens.trackingActive) }
                     if let e = s.lastError {
                         Text("Son gönderim başarısız: \(e). Tekrar denenecek.").font(.caption).foregroundStyle(AeroTokens.warning)
                     }
@@ -123,7 +146,7 @@ struct SharingStatusRow: View {
                 }
                 .font(.subheadline)
             } else {
-                Label("Konum paylaşılmıyor", systemImage: "location.slash").font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
+                Label("Konum paylaşılmıyor", icon: "location.slash").font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
             }
         }
         .accessibilityIdentifier("sharing.status")
@@ -169,7 +192,7 @@ struct OpenRequestCard: View {
                 Spacer()
             }
             if let note = retrieval.note, !note.isEmpty {
-                Label(note, systemImage: "text.bubble").font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
+                Label(note, icon: "text.bubble").font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
             }
             Button {
                 Task {
@@ -177,7 +200,7 @@ struct OpenRequestCard: View {
                     if outcome == .accepted { Haptics.success() } else { Haptics.attention() }
                 }
             } label: {
-                if board.busy.contains(retrieval.id) { ProgressView() } else { Label("Kabul et", systemImage: "checkmark") }
+                if board.busy.contains(retrieval.id) { ProgressView() } else { Label("Kabul et", icon: "checkmark") }
             }
             .buttonStyle(.aeroPrimary)
             .disabled(board.busy.contains(retrieval.id))
@@ -202,7 +225,7 @@ struct PickupCard: View {
                 Avatar(name: retrieval.pilot?.fullName, size: 48, tint: AeroTokens.primary)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(retrieval.pilot?.fullName ?? String(localized: "Pilot")).font(.headline)
-                    Label(status.title, systemImage: status.systemImage)
+                    Label(status.title, icon: status.systemImage)
                         .font(.subheadline).foregroundStyle(status.tone.color)
                 }
                 Spacer()
@@ -215,7 +238,7 @@ struct PickupCard: View {
             }
             HStack(spacing: AeroTokens.Space.s2) {
                 if let d = RetrievalInfo.distance(retrieval, from: me) {
-                    Label(d, systemImage: "location").font(.subheadline.monospacedDigit())
+                    Label(d, icon: "location").font(.subheadline.monospacedDigit())
                 }
                 TimelineView(.periodic(from: .now, by: 15)) { ctx in
                     if let age = RetrievalInfo.positionAge(retrieval, now: ctx.date) {
@@ -224,13 +247,13 @@ struct PickupCard: View {
                     }
                 }
             }
-            if let note = retrieval.note, !note.isEmpty { Label(note, systemImage: "text.bubble").font(.subheadline) }
+            if let note = retrieval.note, !note.isEmpty { Label(note, icon: "text.bubble").font(.subheadline) }
             if AppleMaps.telURL(retrieval.pilot?.phone) == nil {
                 Text("Pilot telefon numarası eklememiş.").font(.caption).foregroundStyle(AeroTokens.textSecondary)
             }
             if status == .accepted {
                 Button { Task { if await board.markPickedUp(retrieval.id) { Haptics.success() } } } label: {
-                    Label("Aldım", systemImage: "figure.seated.side")
+                    Label("Aldım", icon: "figure.seated.side")
                 }
                 .buttonStyle(.aeroPrimary)
                 .disabled(board.busy.contains(retrieval.id))
@@ -238,7 +261,7 @@ struct PickupCard: View {
                 Button("Bırak (başka retriever alsın)", role: .destructive) { confirmRelease = true }
                     .font(.subheadline)
             } else if status == .pickedUp {
-                Button { showDelivered = true } label: { Label("Teslim ettim", systemImage: "checkmark.circle.fill") }
+                Button { showDelivered = true } label: { Label("Teslim ettim", icon: "checkmark.circle.fill") }
                     .buttonStyle(.aeroPrimary)
                     .disabled(board.busy.contains(retrieval.id))
                     .accessibilityIdentifier("retriever.delivered")

@@ -36,12 +36,11 @@ struct PilotSheet: View {
                 startSection
             }
         }
-        .confirmationDialog("Uçuşu bitir?", isPresented: $confirmEnd, titleVisibility: .visible) {
-            Button("Uçuşu bitir ve retrieve iste") { model.endFlightAndRequestRetrieve() }
-            Button("Uçuşu bitir", role: .destructive) { model.endFlight(); model.overlay = .flight }
-            Button("Vazgeç", role: .cancel) {}
+        .alert("Uçuşu bitir?", isPresented: $confirmEnd) {
+            Button("Uçuşu bitir") { model.endFlightAndRequestRetrieve() }
+            Button("Uçmaya devam", role: .cancel) {}
         } message: {
-            Text("Kayıt durdurulur. Gönderilmemiş noktalar bağlantı gelince gönderilmeye devam eder.")
+            Text("Kayıt durur ve retrieve isteme ekranı açılır.")
         }
     }
 
@@ -58,7 +57,7 @@ struct PilotSheet: View {
         Button {
             start()
         } label: {
-            Label("Uçuşa başla", systemImage: "paperplane.fill")
+            Label("Uçuşa başla", icon: "paperplane.fill")
         }
         .buttonStyle(.aeroPrimaryLarge)
         .disabled(!canStart)
@@ -112,7 +111,7 @@ struct PreFlightView: View {
                 .padding(AeroTokens.Space.s4)
             }
             Button(action: onContinue) {
-                Label("Devam", systemImage: "arrow.right")
+                Label("Devam", icon: "arrow.right")
             }
             .buttonStyle(.aeroPrimaryLarge)
             .accessibilityIdentifier("preflight.next")
@@ -135,13 +134,13 @@ struct RetrievalStatusCard: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(retrieval.server?.retriever?.fullName ?? String(localized: "Retriever bekleniyor"))
                         .font(.headline)
-                    Label(retrieval.stage.shortTitle, systemImage: retrieval.stage.systemImage)
+                    Label(retrieval.stage.shortTitle, icon: retrieval.stage.systemImage)
                         .font(.subheadline).foregroundStyle(retrieval.stage.tone.color)
                 }
                 Spacer()
                 Text(Fmt.relative(retrieval.createdAt)).font(.caption).foregroundStyle(AeroTokens.textMuted)
             }
-            Button { model.overlay = .retrieval(retrieval.id) } label: { Label("Retrieve'ı takip et", systemImage: "map") }
+            Button { model.overlay = .retrieval(retrieval.id) } label: { Label("Retrieve'ı takip et", icon: "map") }
                 .buttonStyle(.aeroPrimary)
         }
         .padding(AeroTokens.Space.s4)
@@ -206,7 +205,7 @@ struct ReadinessList: View {
     private func card(_ item: Item) -> some View {
         VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
             HStack(alignment: .center, spacing: AeroTokens.Space.s3) {
-                Image(systemName: item.icon)
+                Image(icon: item.icon)
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(item.tone.color)
                     .frame(width: 48, height: 48)
@@ -241,13 +240,13 @@ struct ReadinessList: View {
     @ViewBuilder private func statusMark(_ tone: Tone) -> some View {
         switch tone {
         case .success:
-            Image(systemName: "checkmark.circle.fill").font(.title2).foregroundStyle(AeroTokens.success)
+            Image(icon: "checkmark.circle.fill").font(.title2).foregroundStyle(AeroTokens.success)
                 .accessibilityLabel(Text("Hazır"))
         case .error:
-            Image(systemName: "xmark.circle.fill").font(.title2).foregroundStyle(AeroTokens.error)
+            Image(icon: "xmark.circle.fill").font(.title2).foregroundStyle(AeroTokens.error)
                 .accessibilityLabel(Text("Engel"))
         case .warning:
-            Image(systemName: "exclamationmark.circle.fill").font(.title2).foregroundStyle(AeroTokens.warning)
+            Image(icon: "exclamationmark.circle.fill").font(.title2).foregroundStyle(AeroTokens.warning)
                 .accessibilityLabel(Text("Uyarı"))
         default:
             EmptyView()

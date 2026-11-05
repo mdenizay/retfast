@@ -163,7 +163,7 @@ struct DiagnosticsView: View {
                     }
                 }
                 Section {
-                    ShareLink(item: d.report) { Label("Tanılama raporunu paylaş (koordinat içermez)", systemImage: "square.and.arrow.up") }
+                    ShareLink(item: d.report) { Label("Tanılama raporunu paylaş (koordinat içermez)", icon: "square.and.arrow.up") }
                 }
             }
         }

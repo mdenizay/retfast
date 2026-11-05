@@ -14,6 +14,8 @@ public enum APIError: Error, Sendable, Equatable {
     public var status: Int? { if case let .server(s, _, _, _, _) = self { s } else { nil } }
     public var code: String? { if case let .server(_, c, _, _, _) = self { c } else { nil } }
     public var isOffline: Bool { if case let .transport(_, offline) = self { offline } else { false } }
+    public var retryAfter: Double? { if case let .server(_, _, _, _, r) = self { r } else { nil } }
+    public var details: [String: String]? { if case let .server(_, _, _, d, _) = self { d } else { nil } }
     public var isPasswordChangeRequired: Bool { code == "password_change_required" }
 }
 
@@ -302,12 +304,11 @@ public actor APIClient {
 
     // MARK: Events
 
-    public func events(status: [String] = [], query: String? = nil, near: LatLon? = nil, radiusKm: Double? = nil, cursor: String? = nil) async throws -> ItemsResponse<Event> {
+    public func events(status: [String] = [], query: String? = nil, mine: Bool = false, cursor: String? = nil) async throws -> ItemsResponse<Event> {
         var q: [URLQueryItem] = []
         if !status.isEmpty { q.append(URLQueryItem(name: "status", value: status.joined(separator: ","))) }
         if let query, !query.isEmpty { q.append(URLQueryItem(name: "q", value: query)) }
-        if let near { q.append(URLQueryItem(name: "near", value: "\(near.lat),\(near.lon)")) }
-        if let radiusKm { q.append(URLQueryItem(name: "radius_km", value: String(radiusKm))) }
+        if mine { q.append(URLQueryItem(name: "mine", value: "true")) }
         if let cursor { q.append(URLQueryItem(name: "cursor", value: cursor)) }
         var r = Request(method: "GET", path: "events", query: q)
         r.authenticated = accessToken != nil || hasRefreshToken
@@ -320,7 +321,6 @@ public actor APIClient {
         return try await send(r)
     }
 
-    public func joinEvent(_ id: String) async throws { try await sendNoContent(Request(method: "POST", path: "events/\(id)/join")) }
     public func leaveEvent(_ id: String) async throws { try await sendNoContent(Request(method: "POST", path: "events/\(id)/leave")) }
 
     public func launchSites(eventId: String) async throws -> [LaunchSite] {
@@ -331,14 +331,102 @@ public actor APIClient {
         return try decoder.decode([LaunchSite].self, from: data)
     }
 
-    public func participants(eventId: String) async throws -> [Participant] {
-        try await send(Request(method: "GET", path: "events/\(eventId)/participants"), as: ItemsResponse<Participant>.self).items
+    public func members(eventId: String, role: EventRole? = nil) async throws -> [Member] {
+        var q: [URLQueryItem] = []
+        if let role { q.append(URLQueryItem(name: "role", value: role.rawValue)) }
+        return try await send(Request(method: "GET", path: "events/\(eventId)/members", query: q), as: ItemsResponse<Member>.self).items
     }
 
     public func liveSnapshot(eventId: String) async throws -> LiveSnapshot {
         var r = Request(method: "GET", path: "events/\(eventId)/live")
         r.authenticated = accessToken != nil || hasRefreshToken
         return try await send(r)
+    }
+
+    // MARK: Applications
+
+    /// Apply to an event. No role: the organizer chooses it when approving.
+    /// Returns the application if the server echoes it.
+    @discardableResult
+    public func apply(eventId: String, message: String?) async throws -> EventApplication? {
+        struct Body: Encodable { var message: String? }
+        let data = try await sendRaw(Request(method: "POST", path: "events/\(eventId)/applications",
+                                             body: try encoder.encode(Body(message: message))))
+        return try? decoder.decode(EventApplication.self, from: data)
+    }
+
+    public func withdrawApplication(eventId: String, applicationId: String) async throws {
+        _ = try await sendRaw(Request(method: "POST", path: "events/\(eventId)/applications/\(applicationId)/withdraw"))
+    }
+
+    public func applications(eventId: String, status: String? = "pending") async throws -> [EventApplication] {
+        var q: [URLQueryItem] = []
+        if let status { q.append(URLQueryItem(name: "status", value: status)) }
+        return try await send(Request(method: "GET", path: "events/\(eventId)/applications", query: q), as: ItemsResponse<EventApplication>.self).items
+    }
+
+    public func approveApplication(eventId: String, applicationId: String, role: EventRole, note: String?) async throws {
+        struct Body: Encodable { var role: String; var note: String? }
+        _ = try await sendRaw(Request(method: "POST", path: "events/\(eventId)/applications/\(applicationId)/approve",
+                                      body: try encoder.encode(Body(role: role.rawValue, note: note))))
+    }
+
+    public func rejectApplication(eventId: String, applicationId: String, note: String?) async throws {
+        struct Body: Encodable { var note: String? }
+        _ = try await sendRaw(Request(method: "POST", path: "events/\(eventId)/applications/\(applicationId)/reject",
+                                      body: try encoder.encode(Body(note: note))))
+    }
+
+    // MARK: Retrievals
+
+    /// Idempotent on `body.id`. 409 when the pilot already has an open request.
+    public func createRetrieval(eventId: String, _ body: CreateRetrievalRequest) async throws -> Retrieval {
+        try await send(Request(method: "POST", path: "events/\(eventId)/retrievals", body: try encoder.encode(body)))
+    }
+
+    public func retrievals(eventId: String, status: [String] = []) async throws -> [Retrieval] {
+        var q: [URLQueryItem] = []
+        if !status.isEmpty { q.append(URLQueryItem(name: "status", value: status.joined(separator: ","))) }
+        return try await send(Request(method: "GET", path: "events/\(eventId)/retrievals", query: q), as: ItemsResponse<Retrieval>.self).items
+    }
+
+    public func retrieval(_ id: String) async throws -> Retrieval {
+        try await send(Request(method: "GET", path: "retrievals/\(id)"))
+    }
+
+    /// The pilot's latest position while their retrieval is open.
+    public func postRetrievalPosition(_ id: String, _ p: SharedPosition) async throws {
+        _ = try await sendRaw(Request(method: "POST", path: "retrievals/\(id)/position", body: try encoder.encode(p)))
+    }
+
+    /// Retriever accepts. First one wins; `409 conflict` if already taken.
+    public func acceptRetrieval(_ id: String) async throws -> Retrieval? { try await retrievalAction(id, "accept") }
+    public func releaseRetrieval(_ id: String) async throws -> Retrieval? { try await retrievalAction(id, "release") }
+    public func markPickedUp(_ id: String) async throws -> Retrieval? { try await retrievalAction(id, "picked-up") }
+
+    public func markDelivered(_ id: String, note: String?) async throws -> Retrieval? {
+        try await retrievalAction(id, "delivered", body: try encoder.encode(["note": note ?? ""]))
+    }
+
+    public func cancelRetrieval(_ id: String, reason: String?) async throws -> Retrieval? {
+        try await retrievalAction(id, "cancel", body: try encoder.encode(["reason": reason ?? ""]))
+    }
+
+    public func addRetrievalNote(_ id: String, body: String) async throws {
+        _ = try await sendRaw(Request(method: "POST", path: "retrievals/\(id)/notes", body: try encoder.encode(["body": body])))
+    }
+
+    private func retrievalAction(_ id: String, _ action: String, body: Data? = nil) async throws -> Retrieval? {
+        let data = try await sendRaw(Request(method: "POST", path: "retrievals/\(id)/\(action)", body: body))
+        return try? decoder.decode(Retrieval.self, from: data)
+    }
+
+    public func postRetrieverPosition(eventId: String, _ p: SharedPosition) async throws {
+        _ = try await sendRaw(Request(method: "POST", path: "events/\(eventId)/retrievers/me/position", body: try encoder.encode(p)))
+    }
+
+    public func setRetrieverDuty(eventId: String, onDuty: Bool) async throws {
+        _ = try await sendRaw(Request(method: "PUT", path: "events/\(eventId)/retrievers/me/duty", body: try encoder.encode(["on_duty": onDuty])))
     }
 
     // MARK: Flights
@@ -374,64 +462,6 @@ public actor APIClient {
         return try await send(r)
     }
 
-    // MARK: Incidents & rescue
-
-    public func createIncident(_ body: CreateIncidentRequest) async throws -> Incident {
-        try await send(Request(method: "POST", path: "incidents", body: try encoder.encode(body)))
-    }
-
-    public func incident(_ id: String) async throws -> Incident { try await send(Request(method: "GET", path: "incidents/\(id)")) }
-
-    public func incidents(status: [String] = [], eventId: String? = nil) async throws -> [Incident] {
-        var q: [URLQueryItem] = []
-        if !status.isEmpty { q.append(URLQueryItem(name: "status", value: status.joined(separator: ","))) }
-        if let eventId { q.append(URLQueryItem(name: "event_id", value: eventId)) }
-        return try await send(Request(method: "GET", path: "incidents", query: q), as: ItemsResponse<Incident>.self).items
-    }
-
-    public func cancelIncident(_ id: String, reason: String?) async throws {
-        _ = try await sendRaw(Request(method: "POST", path: "incidents/\(id)/cancel", body: try encoder.encode(["reason": reason ?? ""])))
-    }
-
-    public func acknowledgeIncident(_ id: String) async throws {
-        _ = try await sendRaw(Request(method: "POST", path: "incidents/\(id)/acknowledge"))
-    }
-
-    public func setIncidentStatus(_ id: String, status: String, note: String?) async throws {
-        var payload = ["status": status]
-        if let note, !note.isEmpty { payload["note"] = note }
-        _ = try await sendRaw(Request(method: "POST", path: "incidents/\(id)/status", body: try encoder.encode(payload)))
-    }
-
-    public func addIncidentNote(_ id: String, body: String) async throws {
-        _ = try await sendRaw(Request(method: "POST", path: "incidents/\(id)/notes", body: try encoder.encode(["body": body])))
-    }
-
-    public func assignIncident(_ id: String, responderUserId: String) async throws {
-        _ = try await sendRaw(Request(method: "POST", path: "incidents/\(id)/assignments", body: try encoder.encode(["responder_user_id": responderUserId])))
-    }
-
-    public func myAssignments() async throws -> [Assignment] {
-        try await send(Request(method: "GET", path: "rescue/assignments"), as: ItemsResponse<Assignment>.self).items
-    }
-
-    public func setAssignmentStatus(_ id: String, status: String) async throws {
-        _ = try await sendRaw(Request(method: "POST", path: "rescue/assignments/\(id)/status", body: try encoder.encode(["status": status])))
-    }
-
-    public func setAvailability(_ availability: String) async throws {
-        _ = try await sendRaw(Request(method: "PUT", path: "rescue/me/status", body: try encoder.encode(["availability": availability])))
-    }
-
-    public func postRescuePosition(_ p: IncidentPosition) async throws {
-        struct Body: Encodable { var lat: Double; var lon: Double; var hAccM: Double?; var t: Date }
-        _ = try await sendRaw(Request(method: "POST", path: "rescue/me/position", body: try encoder.encode(Body(lat: p.lat, lon: p.lon, hAccM: p.hAccM, t: p.t ?? Date()))))
-    }
-
-    public func rescueTeam() async throws -> [TeamMember] {
-        try await send(Request(method: "GET", path: "rescue/team"), as: ItemsResponse<TeamMember>.self).items
-    }
-
     // MARK: Notifications
 
     public func notifications() async throws -> [AppNotification] {
@@ -440,6 +470,10 @@ public actor APIClient {
 
     public func markNotificationRead(_ id: String) async throws {
         _ = try await sendRaw(Request(method: "POST", path: "notifications/\(id)/read"))
+    }
+
+    public func markAllNotificationsRead() async throws {
+        _ = try await sendRaw(Request(method: "POST", path: "notifications/read-all"))
     }
 
     // MARK: Session bootstrap

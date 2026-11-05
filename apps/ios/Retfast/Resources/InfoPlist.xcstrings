@@ -12,13 +12,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Retfast records your position with GPS during a flight and shares it on the live map with the people you allow. Your location is used only while a flight recording or an emergency call is open."
+            "value": "Retfast records your position with GPS during a flight and shares it with the organizers and observers of the event you take part in. While you wait for a retrieve, or while you are on retriever duty, your position is shared with the person picking you up / you are picking up."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Retfast, uçuş kaydı sırasında konumunuzu GPS ile kaydeder ve izin verdiğiniz kişilerle canlı haritada paylaşır. Konumunuz yalnızca uçuş kaydı veya acil durum çağrısı açıkken kullanılır."
+            "value": "Retfast, uçuş kaydı sırasında konumunuzu GPS ile kaydeder ve katıldığınız etkinliğin organizatör ve gözlemcileriyle paylaşır. Retrieve beklerken veya retriever olarak görevdeyken konumunuz alacak/alınacak kişiyle paylaşılır."
           }
         }
       }
@@ -28,13 +28,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Needed so the track keeps recording while the screen is locked or the app is in the background during a flight. Retfast records location only after you start a flight and stops when it ends."
+            "value": "Needed so flight recording and retrieve position sharing keep working while the screen is locked or the app is in the background. Retfast uses your location only while you record a flight, wait for a retrieve or are on retriever duty."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Uçuş sırasında ekran kilitliyken veya uygulama arka plandayken de iz kaydının kesilmemesi için gereklidir. Retfast konumu yalnızca siz bir uçuş başlattığınızda kaydeder; uçuş bitince durdurur."
+            "value": "Ekran kilitliyken veya uygulama arka plandayken uçuş kaydının ve retrieve konum paylaşımının kesilmemesi için gereklidir. Retfast konumu yalnızca siz uçuş başlattığınızda, retrieve beklerken veya retriever görevindeyken kullanır."
           }
         }
       }

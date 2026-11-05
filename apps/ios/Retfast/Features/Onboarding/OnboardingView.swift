@@ -14,19 +14,19 @@ struct OnboardingView: View {
 
     private let pages: [Page] = [
         Page(id: 0, icon: "paperplane.circle", title: "Retfast nedir?",
-             body: "Retfast yamaç paraşütü uçuşlarınızı GPS ile kaydeder, katıldığınız organizasyonun canlı haritasında paylaşır ve acil durumda konumunuzu kurtarma ekibine iletmeye çalışır."),
-        Page(id: 1, icon: "location.north.line", title: "Takip nasıl çalışır?",
-             body: "Uçuşu siz başlatırsınız. Her GPS noktası önce telefonunuza kaydedilir, bağlantı olduğunda sunucuya gönderilir. Uçuş ekranından çıkmak kaydı durdurmaz; kaydı yalnızca siz bitirirsiniz."),
-        Page(id: 2, icon: "lock.iphone", title: "Arka planda konum",
-             body: "Ekran kilitliyken kaydın sürmesi için konum iznini \"Her Zaman\" olarak vermeniz önerilir. Kayıt sırasında durum çubuğunda konum göstergesi görünür. Uygulamayı uygulama değiştiriciden kaydırarak kapatırsanız iOS konum vermeyi durdurur ve iz kesilir."),
-        Page(id: 3, icon: "battery.75percent", title: "Pil kullanımı",
-             body: "Sürekli GPS pil tüketir. Uçuşa tam şarjla çıkın. Düşük Güç Modu ve yüksek sıcaklık konum güncellemelerini seyrekleştirebilir; örnekleme sıklığı hedeftir, garanti değildir."),
-        Page(id: 4, icon: "eye", title: "Gizlilik ve paylaşım",
-             body: "Her uçuş için görünürlüğü siz seçersiniz: yalnızca ben, organizasyon veya herkese açık. Acil durum çağrısı açtığınızda yetkili kurtarma ekibi son konumunuzu ve acil durum kişinizi görebilir."),
-        Page(id: 5, icon: "antenna.radiowaves.left.and.right.slash", title: "Bağlantı sınırları",
-             body: "Dağda mobil veri olmayabilir. Bağlantı yokken kayıt devam eder ama canlı haritada görünmezsiniz; veriler bağlantı gelince gönderilir. Uygulama durumu her zaman \"senkronize\", \"bekleyen\" veya \"çevrimdışı\" olarak gösterir."),
-        Page(id: 6, icon: "sos", title: "Acil durum sınırlamaları",
-             body: "Retfast SOS, çağrınızı internet üzerinden Retfast sunucusuna iletir. Yetkililere veya 112'ye otomatik olarak ulaşmaz ve acil servislerin yerini tutmaz. Bağlantı yoksa çağrı iletilemez; uygulama çağrının hangi aşamada olduğunu açıkça gösterir. Mümkünse her zaman 112'yi arayın."),
+             body: "Retfast yamaç paraşütü etkinlikleri için uçuş takibi ve retrieve uygulamasıdır. Katıldığın etkinlikte uçuşunu GPS ile kaydeder, organizatör ve gözlemcilerin canlı haritasında gösterir; indikten sonra seni alacak retriever'ı bulmanı sağlar."),
+        Page(id: 1, icon: "person.3", title: "Roller",
+             body: "Her etkinlikte bir rolün olur: pilot, gözlemci veya retriever. Etkinliğe başvurursun, organizatör onaylayıp rolünü belirler. Etkinlik ekranı rolüne göre açılır."),
+        Page(id: 2, icon: "location.north.line", title: "Takip nasıl çalışır?",
+             body: "Uçuşu sen başlatırsın. Her GPS noktası önce telefona kaydedilir, bağlantı olduğunda sunucuya gönderilir. Ekrandan çıkmak kaydı durdurmaz; kaydı yalnızca sen bitirirsin. İrtifa GPS irtifasıdır, dikey hız bir tahmindir."),
+        Page(id: 3, icon: "car", title: "Retrieve",
+             body: "İndiğinde \"Retrieve iste\" ile bulunduğun yeri ve kısa bir not gönderirsin. Bir retriever kabul edince adını, konumunu ve telefonunu görürsün; o da seni bulmak için güncel konumunu görür. Beklerken konumun yaklaşık 30 saniyede bir paylaşılır, alındığında durur."),
+        Page(id: 4, icon: "lock.iphone", title: "Arka planda konum",
+             body: "Ekran kilitliyken kaydın ve paylaşımın sürmesi için konum iznini \"Her Zaman\" olarak vermen önerilir. Uygulamayı uygulama değiştiriciden kaydırarak kapatırsan iOS konum vermeyi durdurur: iz kesilir ve retriever güncel konumunu göremez. Sürekli GPS pil tüketir; Düşük Güç Modu güncellemeleri seyrekleştirebilir."),
+        Page(id: 5, icon: "antenna.radiowaves.left.and.right.slash", title: "Bağlantı ve GPS sınırları",
+             body: "Dağda mobil veri olmayabilir. Bağlantı yokken kayıt sürer ve retrieve talebin telefonda bekler; bağlantı gelince gönderilir. Canlı harita anlık değildir ve GPS konumu metrelerce hatalı olabilir. Uygulama durumu her zaman açıkça gösterir."),
+        Page(id: 6, icon: "exclamationmark.shield", title: "Acil durum servisi değildir",
+             body: "Retfast bir etkinlik ve retrieve uygulamasıdır; acil durum ya da kurtarma servisi değildir, yetkililere veya 112'ye ulaşmaz. Yaralanma veya tehlike durumunda her zaman 112'yi ve normal acil durum kanallarını kullan."),
     ]
 
     var body: some View {
@@ -44,7 +44,7 @@ struct OnboardingView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                             if p.id == pages.count - 1 {
                                 Toggle(isOn: $acknowledged) {
-                                    Text("Retfast'in acil servislerin yerini tutmadığını ve bağlantı olmadan çağrı iletemeyeceğini anladım.")
+                                    Text("Retfast'in bir acil durum servisi olmadığını; acil durumda 112'yi aramam gerektiğini anladım.")
                                         .font(.subheadline)
                                 }
                                 .toggleStyle(.switch)

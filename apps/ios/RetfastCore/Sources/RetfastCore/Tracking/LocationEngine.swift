@@ -45,6 +45,7 @@ public final class LocationEngine: NSObject, LocationProviding {
 
     public private(set) var authorization: LocationAuthorization = .unknown
     public private(set) var isUpdating = false
+    public private(set) var activeProfile: TrackingProfile?
     public var backgroundSessionActive: Bool { backgroundSession != nil }
     public var serviceSessionActive: Bool { serviceSession != nil }
 
@@ -123,6 +124,13 @@ public final class LocationEngine: NSObject, LocationProviding {
             ? kCLLocationAccuracyBestForNavigation
             : (s.desiredAccuracy == ProfileSettings.accuracyBest ? kCLLocationAccuracyBest : s.desiredAccuracy)
         manager.distanceFilter = s.distanceFilter < 0 ? kCLDistanceFilterNone : s.distanceFilter
+        manager.activityType = switch s.activity {
+        case .airborne: .airborne
+        case .automotiveNavigation: .automotiveNavigation
+        case .fitness: .fitness
+        case .other: .other
+        }
+        activeProfile = profile
     }
 
     public func stopRecording() {
@@ -136,11 +144,10 @@ public final class LocationEngine: NSObject, LocationProviding {
         backgroundSession = nil
         serviceSession = nil
         isUpdating = false
+        activeProfile = nil
         Self.log.info("location updates stopped")
     }
 
-    /// One-shot update for screens that just want "where am I" (pre-flight, explore).
-    public func requestOneShotLocation() { manager.requestLocation() }
 
     nonisolated public static func raw(_ l: CLLocation) -> RawLocation {
         var ellipsoidal: Double?

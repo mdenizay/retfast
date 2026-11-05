@@ -27,6 +27,14 @@ struct LocationDiagnostics {
     var network: NetworkStatus
     var realtime: RealtimeConnectionState
     var interruptions: Int
+    var sharingMode: SharingMode
+    var sharingLastSent: Date?
+    var sharingSent: Int
+    var sharingFailures: Int
+    var sharingError: String?
+    var engineProfile: TrackingProfile?
+    var duty: RetrieverDutyState?
+    var retrievals: [LocalRetrieval]
 
     static func capture(_ model: AppModel) -> LocationDiagnostics {
         let s = model.session
@@ -42,7 +50,11 @@ struct LocationDiagnostics {
             appVersion: "\(model.config.appVersion) (\(model.config.build))",
             os: "iOS \(UIDevice.current.systemVersion) · \(UIDevice.current.model)",
             network: model.networkStatus, realtime: model.realtimeState,
-            interruptions: s.flight?.interruptionCount ?? 0)
+            interruptions: s.flight?.interruptionCount ?? 0,
+            sharingMode: model.sharing.mode, sharingLastSent: model.sharing.lastSentAt, sharingSent: model.sharing.sentCount,
+            sharingFailures: model.sharing.failureCount, sharingError: model.sharing.lastError,
+            engineProfile: model.arbiter.appliedProfile, duty: model.retrieverDuty,
+            retrievals: (try? model.store.retrievals(limit: 5)) ?? [])
     }
 
     /// Plain-text report for support (no coordinates).
@@ -56,7 +68,10 @@ struct LocationDiagnostics {
             "battery=\(conditions.batteryLevel.map { String(format: "%.2f", $0) } ?? "-") state=\(conditions.batteryState.rawValue) lowPower=\(conditions.lowPowerMode)",
             "bgSession=\(backgroundSession) serviceSession=\(serviceSession) network=\(network.isConnected) \(network.interface.rawValue)",
             "db=\(dbSize) recoveries=\(dbRecoveries.count) fatal=\(storeFatal ?? "-") engineError=\(engineError ?? "-")",
+            "engineProfile=\(engineProfile?.rawValue ?? "off") sharing=\(sharingMode.diagnostic) sent=\(sharingSent) failures=\(sharingFailures) lastSent=\(sharingLastSent.map(JSONCoding.formatDate) ?? "-") error=\(sharingError ?? "-")",
+            "duty=\(duty.map { "\($0.eventId.prefix(8)) onDuty=\($0.onDuty) pickups=\($0.activePickups)" } ?? "-")",
         ]
+        lines += retrievals.map { "retrieval \($0.wireId.prefix(8)) stage=\(RetrievalWaitingView.stageKey($0.stage)) outbox=\($0.outbox.rawValue) attempts=\($0.attemptCount) error=\($0.lastError ?? "-")" }
         lines += engineEvents.suffix(30).map { "\(JSONCoding.formatDate($0.at)) \($0.message)" }
         return lines.joined(separator: "\n")
     }
@@ -83,6 +98,30 @@ struct DiagnosticsView: View {
                     KeyValueRow(key: String(localized: "Servis oturumu (iOS 18+)"), value: d.serviceSession ? String(localized: "Aktif") : String(localized: "Yok"))
                     KeyValueRow(key: String(localized: "Kesinti (bu uçuş)"), value: "\(d.interruptions)")
                     if let e = d.engineError { KeyValueRow(key: String(localized: "Motor hatası"), value: e, mono: true) }
+                }
+                Section("Konum paylaşımı") {
+                    KeyValueRow(key: String(localized: "Mod"), value: d.sharingMode.diagnostic, mono: true)
+                    KeyValueRow(key: String(localized: "Motor profili"), value: d.engineProfile?.rawValue ?? String(localized: "kapalı"), mono: true)
+                    KeyValueRow(key: String(localized: "Son gönderim"), value: d.sharingLastSent.map { "\(Fmt.time($0)) (\(Fmt.relative($0)))" } ?? Fmt.dash)
+                    KeyValueRow(key: String(localized: "Gönderilen / hata"), value: "\(d.sharingSent) / \(d.sharingFailures)")
+                    if let e = d.sharingError { KeyValueRow(key: String(localized: "Son hata"), value: e, mono: true) }
+                    if let duty = d.duty {
+                        KeyValueRow(key: String(localized: "Retriever görevi"), value: "\(duty.eventName ?? duty.eventId) · \(duty.onDuty ? String(localized: "görevde") : String(localized: "görev dışı")) · \(duty.activePickups)")
+                    }
+                }
+                Section("Retrieve talepleri (telefondaki kuyruk)") {
+                    if d.retrievals.isEmpty { Text("Kayıt yok").foregroundStyle(AeroTokens.textSecondary) }
+                    ForEach(d.retrievals) { r in
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack {
+                                Text(r.wireId.prefix(8)).font(.caption.monospaced())
+                                Spacer()
+                                StatusPill(r.stage.shortTitle, systemImage: r.stage.systemImage, tone: r.stage.tone)
+                            }
+                            Text("outbox=\(r.outbox.rawValue) · deneme \(r.attemptCount) · \(r.lastError ?? "hata yok") · \(Fmt.dateTime(r.updatedAt))")
+                                .font(.caption2.monospaced()).foregroundStyle(AeroTokens.textSecondary)
+                        }
+                    }
                 }
                 Section("Senkronizasyon") {
                     SyncBadge(snapshot: d.sync)
@@ -144,6 +183,16 @@ struct DiagnosticsView: View {
         case .denied: String(localized: "Reddedildi")
         case .whenInUse: String(localized: "Kullanımdayken")
         case .always: String(localized: "Her zaman")
+        }
+    }
+}
+
+extension SharingMode {
+    var diagnostic: String {
+        switch self {
+        case .off: "off"
+        case .pilotWaiting(let id, _): "pilot_waiting(\(id.prefix(8)))"
+        case .retriever(let e): "retriever(\(e.prefix(8)))"
         }
     }
 }

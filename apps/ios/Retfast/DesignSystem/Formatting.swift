@@ -120,7 +120,8 @@ extension TrackingProfile {
         case .thermal: "Termik"
         case .cruise: "Seyir"
         case .landing: "İniş"
-        case .emergency: "Acil durum"
+        case .retrieveWaiting: "Retrieve bekleniyor"
+        case .retrieverDriving: "Retrieve görevi"
         }
     }
 }
@@ -183,4 +184,115 @@ extension Event {
         }
     }
     var uuid: UUID? { UUID(uuidString: id) }
+}
+
+extension EventRole {
+    var title: String {
+        switch self {
+        case .pilot: String(localized: "Pilot")
+        case .observer: String(localized: "Gözlemci")
+        case .retriever: String(localized: "Retriever")
+        }
+    }
+    var systemImage: String {
+        switch self {
+        case .pilot: "paperplane.fill"
+        case .observer: "eye.fill"
+        case .retriever: "car.fill"
+        }
+    }
+    var explanation: String {
+        switch self {
+        case .pilot: String(localized: "Uçar; uçuşu etkinlikte paylaşılır, inince retrieve ister.")
+        case .observer: String(localized: "Canlı haritayı izler (çoğunlukla web).")
+        case .retriever: String(localized: "İnen pilotları bulunduğu yerden alıp teslim eder.")
+        }
+    }
+}
+
+extension RetrievalStage {
+    /// Short, logistics-style status (never "help is coming").
+    var shortTitle: String {
+        switch self {
+        case .savedLocally: String(localized: "Telefona kaydedildi")
+        case .sending: String(localized: "Gönderiliyor")
+        case .requested: String(localized: "Retriever bekleniyor")
+        case .accepted: String(localized: "Kabul edildi")
+        case .pickedUp: String(localized: "Alındın")
+        case .delivered: String(localized: "Teslim edildi")
+        case .cancelling: String(localized: "İptal gönderiliyor")
+        case .cancelled: String(localized: "İptal edildi")
+        case .refused: String(localized: "Sunucu kabul etmedi")
+        case .merged: String(localized: "Açık talebinle birleştirildi")
+        }
+    }
+    var systemImage: String {
+        switch self {
+        case .savedLocally: "iphone"
+        case .sending: "arrow.up.circle"
+        case .requested: "hourglass"
+        case .accepted: "car.fill"
+        case .pickedUp: "figure.seated.side"
+        case .delivered: "checkmark.circle.fill"
+        case .cancelling, .cancelled: "xmark.circle"
+        case .refused: "exclamationmark.octagon"
+        case .merged: "arrow.triangle.merge"
+        }
+    }
+    var tone: Tone {
+        switch self {
+        case .savedLocally, .sending, .cancelling: .warning
+        case .requested: .info
+        case .accepted, .pickedUp: .active
+        case .delivered: .success
+        case .cancelled, .merged: .neutral
+        case .refused: .error
+        }
+    }
+}
+
+extension RetrievalStatus {
+    var title: String {
+        switch self {
+        case .requested: String(localized: "Talep edildi")
+        case .accepted: String(localized: "Kabul edildi")
+        case .pickedUp: String(localized: "Alındı")
+        case .delivered: String(localized: "Teslim edildi")
+        case .cancelled: String(localized: "İptal edildi")
+        }
+    }
+    var systemImage: String {
+        switch self {
+        case .requested: "hourglass"
+        case .accepted: "car.fill"
+        case .pickedUp: "figure.seated.side"
+        case .delivered: "checkmark.circle.fill"
+        case .cancelled: "xmark.circle"
+        }
+    }
+    var tone: Tone {
+        switch self {
+        case .requested: .warning
+        case .accepted: .info
+        case .pickedUp: .active
+        case .delivered: .success
+        case .cancelled: .neutral
+        }
+    }
+}
+
+extension Fmt {
+    /// Great-circle distance in metres.
+    static func meters(_ a: (lat: Double, lon: Double), _ b: (lat: Double, lon: Double)) -> Double {
+        let r = 6_371_000.0
+        let dLat = (b.lat - a.lat) * .pi / 180, dLon = (b.lon - a.lon) * .pi / 180
+        let h = sin(dLat / 2) * sin(dLat / 2) + cos(a.lat * .pi / 180) * cos(b.lat * .pi / 180) * sin(dLon / 2) * sin(dLon / 2)
+        return 2 * r * asin(min(1, sqrt(h)))
+    }
+
+    static func distanceText(_ m: Double?) -> String {
+        guard let m else { return dash }
+        let d = distance(m)
+        return "\(d.0) \(d.1)"
+    }
 }

@@ -15,7 +15,12 @@ public enum RealtimeMessage: Sendable, Equatable {
     case subscribed(channel: String)
     case position(channel: String, LivePositionEvent)
     case flight(channel: String, Flight)
-    case incident(Incident)
+    /// `retrievals:<event_id>` subscribed: the snapshot is decoded leniently
+    /// (it may be the live-snapshot shape or just a list of retrievals).
+    case retrievalsSnapshot(channel: String, retrievals: [Retrieval])
+    case retrieval(channel: String, Retrieval)
+    case retrieverPosition(channel: String, RetrieverPositionEvent)
+    case pilotPosition(channel: String, PilotPositionEvent)
     case error(code: String, channel: String?)
 }
 
@@ -26,13 +31,14 @@ public enum RealtimeConnectionState: Sendable, Equatable {
     case reconnecting(attempt: Int, delay: Double)
 }
 
-/// WebSocket client for the live map and rescue views. Foreground only: the
+/// WebSocket client for the event map and retrieval views. Foreground only: the
 /// app disconnects when it leaves the foreground (this is not a background
 /// channel and does not carry the pilot's own telemetry).
 public actor RealtimeClient {
     private let url: URL
     private let session: URLSession
     private let tokenProvider: @Sendable () async -> String?
+    private let enabled: Bool
     private let backoff = Backoff(base: 1, cap: 30)
     private var task: URLSessionWebSocketTask?
     private var receiveLoop: Task<Void, Never>?
@@ -49,7 +55,10 @@ public actor RealtimeClient {
     private static let log = Logger(subsystem: "com.mizibu.retfast", category: "realtime")
 
     /// - Parameter baseURL: server root (http/https); converted to ws/wss.
-    public init(baseURL: URL, session: URLSession = .shared, tokenProvider: @escaping @Sendable () async -> String?) {
+    /// - Parameter enabled: false keeps the client inert (UI tests against a stub API).
+    public init(baseURL: URL, session: URLSession = .shared, enabled: Bool = true,
+                tokenProvider: @escaping @Sendable () async -> String?) {
+        self.enabled = enabled
         var c = URLComponents(url: baseURL.appendingPathComponent("api/v1/realtime"), resolvingAgainstBaseURL: false)!
         c.scheme = c.scheme == "https" ? "wss" : "ws"
         self.url = c.url!
@@ -58,6 +67,7 @@ public actor RealtimeClient {
     }
 
     public func connect() {
+        guard enabled else { return }
         wantConnected = true
         guard task == nil else { return }
         open()
@@ -183,6 +193,16 @@ public actor RealtimeClient {
                 messages.send(.eventSnapshot(channel: channel, snapshot: s.snapshot))
             } else if channel.hasPrefix("flight:"), let s = try? decoder.decode(SnapshotEnvelope<Flight>.self, from: data) {
                 messages.send(.flightSnapshot(channel: channel, flight: s.snapshot))
+            } else if channel.hasPrefix("retrievals:") {
+                if let s = try? decoder.decode(SnapshotEnvelope<LiveSnapshot>.self, from: data), let r = s.snapshot.retrievals {
+                    messages.send(.retrievalsSnapshot(channel: channel, retrievals: r))
+                } else if let s = try? decoder.decode(SnapshotEnvelope<ItemsResponse<Retrieval>>.self, from: data) {
+                    messages.send(.retrievalsSnapshot(channel: channel, retrievals: s.snapshot.items))
+                } else if let s = try? decoder.decode(SnapshotEnvelope<[Retrieval]>.self, from: data) {
+                    messages.send(.retrievalsSnapshot(channel: channel, retrievals: s.snapshot))
+                } else {
+                    messages.send(.subscribed(channel: channel))
+                }
             } else {
                 messages.send(.subscribed(channel: channel))
             }
@@ -194,8 +214,18 @@ public actor RealtimeClient {
             if let d = try? decoder.decode(DataEnvelope<Flight>.self, from: data) {
                 messages.send(.flight(channel: env.channel ?? "", d.data))
             }
-        case "incident":
-            if let d = try? decoder.decode(DataEnvelope<Incident>.self, from: data) { messages.send(.incident(d.data)) }
+        case "retrieval":
+            if let d = try? decoder.decode(DataEnvelope<Retrieval>.self, from: data) {
+                messages.send(.retrieval(channel: env.channel ?? "", d.data))
+            }
+        case "retriever_position":
+            if let d = try? decoder.decode(DataEnvelope<RetrieverPositionEvent>.self, from: data) {
+                messages.send(.retrieverPosition(channel: env.channel ?? "", d.data))
+            }
+        case "pilot_position":
+            if let d = try? decoder.decode(DataEnvelope<PilotPositionEvent>.self, from: data) {
+                messages.send(.pilotPosition(channel: env.channel ?? "", d.data))
+            }
         case "error":
             messages.send(.error(code: env.code ?? "unknown", channel: env.channel))
         default:

@@ -25,49 +25,59 @@ struct RootView: View {
                 }
             }
         }
-        .safeAreaInset(edge: .top, spacing: 0) {
-            if model.session.isActive && !model.showFlightComputer {
-                ActiveFlightBanner()
-            }
-        }
-        .fullScreenCover(isPresented: $model.showFlightComputer) {
-            FlightComputerContainer()
+        .fullScreenCover(item: $model.overlay) { overlay in
+            OverlayView(overlay: overlay)
                 .environment(model)
         }
+        .modifier(FlowSheets(active: model.overlay == nil))
         .preferredColorScheme(AppAppearance(rawValue: appearance)?.colorScheme)
         .tint(AeroTokens.primary)
     }
 }
 
-/// Visible on every screen while a flight is recording but the flight computer is closed.
-struct ActiveFlightBanner: View {
+/// Content of the full-screen cover.
+struct OverlayView: View {
     @Environment(AppModel.self) private var model
+    let overlay: Overlay
 
     var body: some View {
-        Button {
-            model.showFlightComputer = true
-        } label: {
-            HStack(spacing: AeroTokens.Space.s2) {
-                Image(systemName: model.session.state.systemImage)
-                    .symbolEffect(.pulse, isActive: model.session.state == .recording)
-                Text(model.session.state.title)
-                    .font(.subheadline.weight(.semibold))
-                TimelineView(.periodic(from: .now, by: 1)) { context in
-                    Text(Fmt.duration(context.date.timeIntervalSince(model.session.flight?.startedAt ?? context.date)))
-                        .font(.subheadline.monospacedDigit())
-                }
-                Spacer()
-                Text("Uçuş ekranı").font(.subheadline)
-                Image(systemName: "chevron.right")
+        Group {
+            switch overlay {
+            case .flight: FlightComputerContainer()
+            case .retrieval(let id): RetrievalWaitingView(retrievalId: id)
             }
-            .foregroundStyle(AeroTokens.onPrimary)
-            .padding(.horizontal, AeroTokens.Space.s4)
-            .padding(.vertical, AeroTokens.Space.s2)
-            .frame(maxWidth: .infinity)
-            .background(AeroTokens.trackingActive)
         }
-        .buttonStyle(.plain)
-        .accessibilityHint(Text("Uçuş bilgisayarını açar"))
+        .modifier(FlowSheets(active: true))
+    }
+}
+
+/// Landing prompt and retrieve-request sheet. Attached both at the root and
+/// inside the cover; `active` makes sure only the topmost one presents.
+struct FlowSheets: ViewModifier {
+    @Environment(AppModel.self) private var model
+    let active: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .sheet(item: Binding(get: { active ? model.retrieveRequest : nil },
+                                 set: { if active { model.retrieveRequest = $0 } })) { ctx in
+                NavigationStack { RetrieveRequestView(context: ctx) }
+                    .environment(model)
+            }
+            .alert("İndin mi?", isPresented: Binding(get: { active && model.showLandingPrompt },
+                                                     set: { if active && !$0 { model.showLandingPrompt = false } })) {
+                Button("Uçuşu bitir ve retrieve iste") {
+                    model.showLandingPrompt = false
+                    model.endFlightAndRequestRetrieve()
+                }
+                Button("Uçuşu bitir, retrieve gerekmez") {
+                    model.showLandingPrompt = false
+                    model.endFlight()
+                }
+                Button("Hâlâ uçuyorum", role: .cancel) { model.snoozeLandingPrompt() }
+            } message: {
+                Text("Hızın ve irtifa değişimin bir süredir çok düşük. Uçuş kaydı sen bitirene kadar devam eder.")
+            }
     }
 }
 
@@ -77,26 +87,98 @@ struct MainTabView: View {
     var body: some View {
         @Bindable var model = model
         TabView(selection: $model.selectedTab) {
-            NavigationStack { HomeView() }
-                .tabItem { Label("Ana Sayfa", systemImage: "house") }
-                .tag(AppTab.home)
-            NavigationStack { ExploreView() }
-                .tabItem { Label("Keşfet", systemImage: "map") }
-                .tag(AppTab.explore)
-            NavigationStack { FlightsListView() }
-                .tabItem { Label("Uçuşlar", systemImage: "point.topleft.down.to.point.bottomright.curvepath") }
-                .tag(AppTab.flights)
-            if model.showsRescue {
-                NavigationStack { RescueDashboardView() }
-                    .tabItem { Label("Kurtarma", systemImage: "cross.case") }
-                    .tag(AppTab.rescue)
+            NavigationStack(path: $model.eventsPath) {
+                EventsListView()
+                    .navigationDestination(for: EventRoute.self) { route in
+                        switch route {
+                        case .event(let id): EventScreen(eventId: id)
+                        case .applications(let id): ApplicationsInboxView(eventId: id)
+                        case .members(let id): MembersListView(eventId: id)
+                        }
+                    }
             }
+            .safeAreaInset(edge: .bottom, spacing: 0) { ActivityBar() }
+            .tabItem { Label("Etkinlikler", systemImage: "flag.2.crossed") }
+            .tag(AppTab.events)
+
+            NavigationStack { FlightsListView() }
+                .safeAreaInset(edge: .bottom, spacing: 0) { ActivityBar() }
+                .tabItem { Label("Uçuşlarım", systemImage: "point.topleft.down.to.point.bottomright.curvepath") }
+                .tag(AppTab.flights)
+
             NavigationStack { ProfileView() }
+                .safeAreaInset(edge: .bottom, spacing: 0) { ActivityBar() }
                 .tabItem { Label("Profil", systemImage: "person.crop.circle") }
                 .tag(AppTab.profile)
         }
-        .sheet(isPresented: Binding(get: { model.showSOS && !model.showFlightComputer }, set: { model.showSOS = $0 })) {
-            NavigationStack { SOSView() }.environment(model)
+    }
+}
+
+/// Persistent "resume" entry above the tab bar while a flight records, a
+/// retrieve is open or retriever duty shares the position.
+struct ActivityBar: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        VStack(spacing: 0) {
+            if model.session.isActive && model.overlay != .flight {
+                bar(tone: .active, accessibilityId: "activity.flight") {
+                    model.overlay = .flight
+                } content: {
+                    Image(systemName: model.session.state.systemImage)
+                        .symbolEffect(.pulse, isActive: model.session.state == .recording)
+                    Text(model.session.state.title).font(.subheadline.weight(.semibold))
+                    TimelineView(.periodic(from: .now, by: 1)) { context in
+                        Text(Fmt.duration(context.date.timeIntervalSince(model.session.flight?.startedAt ?? context.date)))
+                            .font(.subheadline.monospacedDigit())
+                    }
+                    Spacer(minLength: 4)
+                    Text("Uçuş ekranı").font(.subheadline)
+                }
+            }
+            if let r = model.activeRetrieval, model.overlay != .retrieval(r.id) {
+                bar(tone: .info, accessibilityId: "activity.retrieval") {
+                    model.overlay = .retrieval(r.id)
+                } content: {
+                    Image(systemName: r.stage.systemImage)
+                    Text(r.stage.shortTitle).font(.subheadline.weight(.semibold)).lineLimit(1)
+                    if let name = r.server?.retriever?.fullName, r.stage == .accepted {
+                        Text("· \(name)").font(.subheadline).lineLimit(1)
+                    }
+                    Spacer(minLength: 4)
+                    Text("Retrieve").font(.subheadline)
+                }
+            }
+            if case .retriever(let eventId) = model.sharing.mode, model.activeRetrieval == nil {
+                bar(tone: .success, accessibilityId: "activity.duty") {
+                    model.selectedTab = .events
+                    if model.eventsPath.last != .event(eventId) { model.eventsPath = [.event(eventId)] }
+                } content: {
+                    Image(systemName: "car.fill")
+                    Text("Retrieve görevi").font(.subheadline.weight(.semibold))
+                    let n = model.retrieverDuty?.activePickups ?? 0
+                    if n > 0 { Text("· \(n) alım").font(.subheadline) }
+                    Spacer(minLength: 4)
+                    Text("Konum paylaşılıyor").font(.caption)
+                }
+            }
         }
+    }
+
+    private func bar<C: View>(tone: Tone, accessibilityId: String, action: @escaping () -> Void,
+                              @ViewBuilder content: () -> C) -> some View {
+        Button(action: action) {
+            HStack(spacing: AeroTokens.Space.s2) {
+                content()
+                Image(systemName: "chevron.up")
+            }
+            .foregroundStyle(tone == .info ? AeroTokens.onSecondary : AeroTokens.onPrimary)
+            .padding(.horizontal, AeroTokens.Space.s4)
+            .padding(.vertical, AeroTokens.Space.s2)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .background(tone == .info ? AeroTokens.secondary : (tone == .success ? AeroTokens.success : AeroTokens.trackingActive))
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier(accessibilityId)
     }
 }

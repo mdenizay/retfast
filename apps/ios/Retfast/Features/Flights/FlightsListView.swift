@@ -64,7 +64,7 @@ struct FlightsListView: View {
         List {
             if local.isEmpty && remoteOnly.isEmpty {
                 ContentUnavailableView("Henüz uçuş yok", systemImage: "point.topleft.down.to.point.bottomright.curvepath",
-                                       description: Text("Ana sayfadan bir uçuş başlattığınızda burada görünür."))
+                                       description: Text("Bir etkinliğin ekranından uçuş başlattığında burada görünür."))
                     .listRowBackground(Color.clear)
             }
             if !local.isEmpty {
@@ -97,7 +97,7 @@ struct FlightsListView: View {
         }
         .listStyle(.plain)
         .aeroBackground()
-        .navigationTitle("Uçuşlar")
+        .navigationTitle("Uçuşlarım")
         .task { await load() }
         .refreshable { await load() }
         .onChange(of: model.session.state) { _, _ in local = (try? model.store.recentFlights(limit: 200)) ?? local }
@@ -150,7 +150,6 @@ struct FlightDetailView: View {
                     KeyValueRow(key: String(localized: "Maks yer hızı"), value: joined(Fmt.speed(stats.maxGroundSpeed)), mono: true)
                     KeyValueRow(key: String(localized: "Toplam tırmanış"), value: joined(Fmt.altitude(stats.totalAscent)), mono: true)
                     KeyValueRow(key: String(localized: "Toplam alçalma"), value: joined(Fmt.altitude(stats.totalDescent)), mono: true)
-                    KeyValueRow(key: String(localized: "Görünürlük"), value: f.visibility)
                     if f.interruptionCount > 0 { KeyValueRow(key: String(localized: "Kesinti"), value: "\(f.interruptionCount)") }
                 }
                 Section("Konum") {
@@ -196,7 +195,7 @@ struct FlightDetailView: View {
                         Label("GPX dışa aktar", systemImage: "square.and.arrow.up")
                     }
                 } footer: {
-                    Text("GPX dosyası telefondaki ham GPS noktalarından oluşturulur. Sertifikalı bir uçuş kaydı (IGC) değildir ve yarışma/rekor kanıtı olarak kullanılamaz.")
+                    Text("GPX dosyası telefondaki ham GPS noktalarından oluşturulur. Sertifikalı bir uçuş kaydı değildir (not a certified flight log); yarışma/rekor kanıtı olarak kullanılamaz.")
                 }
             }
         }

@@ -9,7 +9,7 @@ struct FlightLiveMapView: View {
     @State private var camera: MapCameraPosition = .automatic
     @State private var follow = true
     @State private var headingUp = false
-    @State private var live: LiveMapModel?
+    @State private var live: EventLiveModel?
     @State private var lastSynced: TelemetrySample?
     @State private var showPilots = false
 
@@ -107,7 +107,7 @@ struct FlightLiveMapView: View {
         .task {
             recenter()
             guard let eventId = model.session.flight?.eventId?.uuidString.lowercased() else { return }
-            let live = LiveMapModel(model: model, eventId: eventId, excludeFlightId: model.session.flight?.id.uuidString.lowercased())
+            let live = EventLiveModel(model: model, eventId: eventId, excludeFlightId: model.session.flight?.id.uuidString.lowercased())
             self.live = live
             await live.start()
         }
@@ -144,23 +144,5 @@ struct FlightLiveMapView: View {
     private func recenter() {
         guard let own else { return }
         camera = .camera(MapCamera(centerCoordinate: own, distance: 4000, heading: headingUp ? (v.heading ?? 0) : 0, pitch: 0))
-    }
-}
-
-struct PilotMarker: View {
-    let freshness: String
-    let simulated: Bool
-    let course: Double?
-
-    var body: some View {
-        VStack(spacing: 2) {
-            Image(systemName: freshness == "live" ? "paperplane.fill" : (freshness == "stale" ? "paperplane" : "questionmark.circle"))
-                .rotationEffect(.degrees((course ?? 45) - 45))
-                .font(.title3)
-                .foregroundStyle(freshness == "live" ? AeroTokens.secondary : (freshness == "stale" ? AeroTokens.warning : AeroTokens.offline))
-            if simulated { SimBadge() }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(freshness == "live" ? "Canlı pilot" : (freshness == "stale" ? "Gecikmeli pilot" : "Sinyali kayıp pilot")))
     }
 }

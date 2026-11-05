@@ -14,7 +14,7 @@ settings:
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
     DEVELOPMENT_TEAM: JHW499P7S3
-    MARKETING_VERSION: 4.0.0
+    MARKETING_VERSION: 4.1.0
     CURRENT_PROJECT_VERSION: 1
     LOCALIZATION_PREFERS_STRING_CATALOGS: YES
     SWIFT_EMIT_LOC_STRINGS: YES
@@ -60,10 +60,10 @@ targets:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        NSLocationWhenInUseUsageDescription: "Retfast, uçuş kaydı sırasında konumunuzu GPS ile kaydeder ve izin verdiğiniz kişilerle canlı haritada paylaşır. Konumunuz yalnızca uçuş kaydı veya acil durum çağrısı açıkken kullanılır."
-        NSLocationAlwaysAndWhenInUseUsageDescription: "Uçuş sırasında ekran kilitliyken veya uygulama arka plandayken de iz kaydının kesilmemesi için gereklidir. Retfast konumu yalnızca siz bir uçuş başlattığınızda kaydeder; uçuş bitince durdurur."
+        NSLocationWhenInUseUsageDescription: "Retfast, uçuş kaydı sırasında konumunuzu GPS ile kaydeder ve katıldığınız etkinliğin organizatör ve gözlemcileriyle paylaşır. Retrieve beklerken veya retriever olarak görevdeyken konumunuz alacak/alınacak kişiyle paylaşılır."
+        NSLocationAlwaysAndWhenInUseUsageDescription: "Ekran kilitliyken veya uygulama arka plandayken uçuş kaydının ve retrieve konum paylaşımının kesilmemesi için gereklidir. Retfast konumu yalnızca siz uçuş başlattığınızda, retrieve beklerken veya retriever görevindeyken kullanır."
         NSLocationTemporaryUsageDescriptionDictionary:
-          FlightRecording: "Uçuş izinin doğru kaydedilmesi ve acil durumda konumunuzun doğru iletilmesi için hassas konum gerekir."
+          FlightRecording: "Uçuş izinin ve retrieve alınma noktanızın doğru olması için hassas konum gerekir."
         # Debug talks to http://localhost:8080. The exception is removed from
         # Release builds by the "Strip debug ATS exception" build phase below.
         NSAppTransportSecurity:

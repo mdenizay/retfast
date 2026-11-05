@@ -74,7 +74,7 @@ struct FlightSessionManagerTests {
         let store = try Fixtures.store()
         let loc = FakeLocation(), time = TimeBox()
         let m = makeManager(store: store, location: loc, time: time)
-        try m.start(.init(eventId: nil, eventName: nil, visibility: "event"))
+        try m.start(.init(eventId: nil, eventName: nil))
         #expect(m.state == .preparing)
         #expect(loc.started == [.preFlight])
 
@@ -107,7 +107,7 @@ struct FlightSessionManagerTests {
             let store = try LocalTelemetryStore.open(at: url)
             let loc = FakeLocation()
             let m = makeManager(store: store, location: loc, time: time)
-            try m.start(.init(eventId: nil, eventName: nil, visibility: "event"))
+            try m.start(.init(eventId: nil, eventName: nil))
             for i in 0..<12 {
                 time.now = Fixtures.t0.addingTimeInterval(Double(i * 5) + 0.1)
                 loc.deliver([Fixtures.fix(i, dt: 5)])
@@ -137,7 +137,7 @@ struct FlightSessionManagerTests {
         let store = try Fixtures.store()
         let loc = FakeLocation(), time = TimeBox()
         let m = makeManager(store: store, location: loc, time: time)
-        try m.start(.init(eventId: nil, eventName: nil, visibility: "event"))
+        try m.start(.init(eventId: nil, eventName: nil))
         time.now = Fixtures.t0.addingTimeInterval(0.1)
         loc.deliver([Fixtures.fix(0)])
         try m.pause()
@@ -148,25 +148,13 @@ struct FlightSessionManagerTests {
         #expect(m.state == .recording)
     }
 
-    @Test func emergencyForcesBestProfile() throws {
-        let store = try Fixtures.store()
-        let loc = FakeLocation(), time = TimeBox()
-        let m = makeManager(store: store, location: loc, time: time)
-        try m.start(.init(eventId: nil, eventName: nil, visibility: "event"))
-        time.now = Fixtures.t0.addingTimeInterval(0.1)
-        loc.deliver([Fixtures.fix(0)])
-        m.setEmergency(true)
-        #expect(m.profile == .emergency)
-        #expect(loc.applied.last == .emergency)
-    }
-
     @Test func deniedPermissionRefusesStart() throws {
         let store = try Fixtures.store()
         let loc = FakeLocation(), time = TimeBox()
         loc.authorization = LocationAuthorization(status: .denied, fullAccuracy: true, servicesEnabled: true)
         let m = makeManager(store: store, location: loc, time: time)
         #expect(throws: FlightSessionManager.SessionError.permissionDenied) {
-            try m.start(.init(eventId: nil, eventName: nil, visibility: "event"))
+            try m.start(.init(eventId: nil, eventName: nil))
         }
         #expect(m.state == .idle)
     }
@@ -175,8 +163,8 @@ struct FlightSessionManagerTests {
 @Suite("Tracking policy")
 struct TrackingPolicyTests {
     let t0 = Fixtures.t0
-    func input(_ s: Double, speed: Double?, vario: Double?, turn: Double?, emergency: Bool = false) -> PolicyInput {
-        PolicyInput(time: t0.addingTimeInterval(s), groundSpeed: speed, verticalSpeed: vario, turnRate: turn, emergency: emergency)
+    func input(_ s: Double, speed: Double?, vario: Double?, turn: Double?) -> PolicyInput {
+        PolicyInput(time: t0.addingTimeInterval(s), groundSpeed: speed, verticalSpeed: vario, turnRate: turn)
     }
 
     @Test func takeoffNeedsDwell() {
@@ -207,13 +195,6 @@ struct TrackingPolicyTests {
         #expect(p.profile == .activeFlight)
     }
 
-    @Test func emergencyOverridesImmediatelyAndReleases() {
-        var p = TrackingPolicy(initial: .cruise)
-        #expect(p.evaluate(input(0, speed: 10, vario: 0, turn: 0, emergency: true)) == .emergency)
-        #expect(p.evaluate(input(1, speed: 0, vario: 0, turn: 0, emergency: true)) == .emergency)
-        #expect(p.evaluate(input(2, speed: 10, vario: 0, turn: 0)) == .activeFlight)
-    }
-
     @Test func missingDataKeepsProfile() {
         var p = TrackingPolicy(initial: .thermal)
         for s in 0..<60 { _ = p.evaluate(input(Double(s), speed: nil, vario: nil, turn: nil)) }
@@ -221,11 +202,22 @@ struct TrackingPolicyTests {
     }
 
     @Test func profileTargets() {
-        #expect(TrackingProfile.emergency.settings.desiredAccuracy == ProfileSettings.accuracyBestForNavigation)
-        for p in [TrackingProfile.activeFlight, .thermal, .cruise, .landing, .emergency] {
+        for p in [TrackingProfile.activeFlight, .thermal, .cruise, .landing] {
             #expect(p.settings.desiredAccuracy == ProfileSettings.accuracyBestForNavigation)
         }
         #expect(TrackingProfile.cruise.settings.minSampleInterval > TrackingProfile.thermal.settings.minSampleInterval)
+        for p in [TrackingProfile.preFlight, .activeFlight, .thermal, .cruise, .landing] {
+            #expect(p.settings.activity == .airborne)
+            #expect(p.isFlightProfile)
+        }
+        // Sharing profiles: lower power, never chosen by the flight policy.
+        #expect(TrackingProfile.retrieveWaiting.settings.activity == .fitness)
+        #expect(TrackingProfile.retrieveWaiting.settings.desiredAccuracy == ProfileSettings.accuracyNearestTenMeters)
+        #expect(TrackingProfile.retrieveWaiting.settings.minSampleInterval == 30)
+        #expect(TrackingProfile.retrieverDriving.settings.activity == .automotiveNavigation)
+        #expect(TrackingProfile.retrieverDriving.settings.minSampleInterval == 15)
+        #expect(!TrackingProfile.retrieveWaiting.isFlightProfile && !TrackingProfile.retrieverDriving.isFlightProfile)
+        #expect(TrackingPolicy(initial: .retrieveWaiting).profile == .activeFlight)
     }
 }
 

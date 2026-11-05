@@ -24,7 +24,7 @@ struct FlightComputerContainer: View {
                 NavigationStack { FlightSummaryView() }
             case .idle:
                 // Nothing to show (e.g. reset elsewhere): close the cover.
-                Color.clear.onAppear { model.showFlightComputer = false }
+                Color.clear.onAppear { if model.overlay == .flight { model.overlay = nil } }
             default:
                 FlightComputerView(highContrast: theme == .highContrast)
             }
@@ -91,7 +91,7 @@ struct FlightComputerView: View {
     private var topBar: some View {
         HStack(spacing: AeroTokens.Space.s2) {
             Button {
-                model.showFlightComputer = false
+                model.overlay = nil
             } label: {
                 Image(systemName: "chevron.down").font(.title3.weight(.semibold))
                     .frame(width: 44, height: 44)
@@ -111,24 +111,20 @@ struct FlightComputerView: View {
                 }
             }
 
-            Button {
-                Haptics.sos()
-                model.showSOS = true
-            } label: {
-                Text("SOS")
-                    .font(.headline.weight(.heavy))
-                    .foregroundStyle(AeroTokens.onEmergency)
-                    .frame(minWidth: 60, minHeight: 44)
-                    .background(AeroTokens.emergency, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.md))
+            if model.session.flight?.eventId != nil {
+                Button {
+                    model.showLandingPrompt = true
+                } label: {
+                    Label("İndim", systemImage: "arrow.down.to.line")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(minHeight: 44)
+                }
+                .accessibilityHint(Text("Uçuşu bitirme ve retrieve isteme seçeneklerini açar"))
+                .accessibilityIdentifier("fc.landed")
             }
-            .accessibilityLabel(Text("Acil durum çağrısı"))
-            .accessibilityIdentifier("fc.sos")
         }
         .padding(.horizontal, AeroTokens.Space.s2)
         .padding(.vertical, AeroTokens.Space.s1)
-        .sheet(isPresented: Binding(get: { model.showSOS && model.showFlightComputer }, set: { model.showSOS = $0 })) {
-            NavigationStack { SOSView() }.environment(model)
-        }
     }
 
     private var stateText: String.LocalizationValue {
@@ -176,9 +172,9 @@ struct FlightComputerView: View {
         if v.lowQuality {
             AeroCard { WarningRow(text: String(localized: "GPS doğruluğu düşük (\(Fmt.accuracy(v.horizontalAccuracy))). Noktalar kaydediliyor ancak istatistiklere katılmıyor.")) }
         }
-        if session.emergencyActive {
+        if session.state == .recording && session.profile == .landing {
             AeroCard {
-                WarningRow(text: String(localized: "Acil durum çağrısı açık: GPS en yüksek doğrulukta çalışıyor."), tone: .emergency, systemImage: "sos")
+                WarningRow(text: String(localized: "İniş algılandı (düşük hız, düşük dikey hız). Kayıt sen bitirene kadar sürer."), tone: .info, systemImage: "arrow.down.to.line")
             }
         }
     }
@@ -250,7 +246,8 @@ struct FlightComputerView: View {
         case .thermal: String(localized: "Termik")
         case .cruise: String(localized: "Seyir")
         case .landing: String(localized: "İniş")
-        case .emergency: String(localized: "Acil durum")
+        case .retrieveWaiting: String(localized: "Retrieve bekleniyor")
+        case .retrieverDriving: String(localized: "Retrieve görevi")
         }
     }
 
@@ -300,6 +297,23 @@ struct FlightSummaryView: View {
                     if f?.isSimulated == true { SimBadge() }
                 }
             }
+            Section {
+                if let f, let eventId = f.eventId?.uuidString.lowercased(), model.activeRetrieval(eventId: eventId) == nil {
+                    Button {
+                        model.retrieveRequest = RetrieveContext(eventId: eventId, eventName: f.eventName, flightId: f.id)
+                    } label: { Label("Retrieve iste", systemImage: "car.fill") }
+                    .buttonStyle(.aeroPrimaryLarge)
+                    .listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
+                    .accessibilityIdentifier("summary.retrieve")
+                }
+                Button(f?.eventId != nil ? "Retrieve gerekmez, kapat" : "Tamam") {
+                    model.session.reset()
+                    model.overlay = nil
+                }
+                .buttonStyle(.aeroSecondary)
+                .listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
+                .accessibilityIdentifier("summary.done")
+            }
             Section("Özet") {
                 KeyValueRow(key: String(localized: "Süre"), value: Fmt.duration((f?.endedAt ?? Date()).timeIntervalSince(f?.startedAt ?? Date())), mono: true)
                 KeyValueRow(key: String(localized: "Mesafe"), value: Fmt.distance(v.distance).0 + " " + Fmt.distance(v.distance).1, mono: true)
@@ -320,15 +334,6 @@ struct FlightSummaryView: View {
                     Text("Bekleyen noktalar telefonda saklanır ve bağlantı gelince otomatik gönderilir. Uygulamayı açık tutmak gönderimi hızlandırır.")
                         .font(.footnote).foregroundStyle(AeroTokens.textSecondary)
                 }
-            }
-            Section {
-                Button("Tamam") {
-                    model.session.reset()
-                    model.showFlightComputer = false
-                }
-                .buttonStyle(.aeroPrimary)
-                .listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
-                .accessibilityIdentifier("summary.done")
             }
         }
         .navigationTitle("Uçuş özeti")

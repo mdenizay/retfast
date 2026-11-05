@@ -23,19 +23,22 @@ struct ProfileView: View {
                         Text(me.email).foregroundStyle(AeroTokens.textSecondary)
                         if let id = me.pilot?.publicId { Text("@\(id)").font(.caption.monospaced()).foregroundStyle(AeroTokens.textMuted) }
                     }
-                    HStack { ForEach(me.roles, id: \.self) { StatusPill($0, systemImage: "person.badge.key", tone: .info) } }
+                    if me.isPlatformAdmin { StatusPill(String(localized: "Platform yöneticisi"), systemImage: "person.badge.key", tone: .info) }
                     if me.emailVerified == false {
                         WarningRow(text: String(localized: "E-posta adresiniz doğrulanmadı."))
                     }
                 }
-                Section("Pilot") {
-                    NavigationLink("Pilot bilgileri ve acil durum kişisi") { PilotProfileEditor() }
-                    if (me.pilot?.emergencyContactPhone ?? "").isEmpty {
-                        WarningRow(text: String(localized: "Acil durum kişisi eklenmemiş. Kurtarma ekibi size ulaşacak kişiyi bilemez."))
+                Section {
+                    NavigationLink("Pilot bilgileri, telefon ve acil durum kişisi") { PilotProfileEditor() }
+                        .accessibilityIdentifier("profile.pilot")
+                    if (me.pilot?.phone ?? "").isEmpty {
+                        WarningRow(text: String(localized: "Telefon numarası eklenmemiş. Retrieve istediğinde retriever seni arayamaz."))
                     }
+                } header: { Text("Pilot") } footer: {
+                    Text("Telefonunu yalnızca etkinlik organizatörleri ve retrieve talebini kabul eden retriever görür.")
                 }
                 Section("Gizlilik") {
-                    NavigationLink("Gizlilik ve varsayılan görünürlük") { PrivacyEditor() }
+                    NavigationLink("Herkese açık profil") { PrivacyEditor() }
                 }
             }
             Section("Görünüm") {
@@ -59,7 +62,6 @@ struct ProfileView: View {
             }
             Section("Uygulama") {
                 NavigationLink { DiagnosticsView() } label: { Label("Tanılama", systemImage: "stethoscope") }
-                NavigationLink { SOSHistoryView() } label: { Label("Acil durum geçmişi", systemImage: "sos") }
                 NavigationLink { ChangePasswordView(forced: false) } label: { Label("Şifre değiştir", systemImage: "key") }
                 Button { model.onboardingCompleted = false } label: { Label("Tanıtımı yeniden göster", systemImage: "info.circle") }
                 KeyValueRow(key: String(localized: "Sürüm"), value: "\(model.config.appVersion) (\(model.config.build))")
@@ -78,9 +80,9 @@ struct ProfileView: View {
                 }
                 if let message { Text(message).font(.footnote) }
                 Button("Çıkış yap", role: .destructive) { confirmLogout = true }
-                    .disabled(model.session.isActive)
-                if model.session.isActive {
-                    Text("Uçuş kaydı sürerken çıkış yapılamaz.").font(.footnote).foregroundStyle(AeroTokens.textSecondary)
+                    .disabled(model.session.isActive || model.activeRetrieval != nil)
+                if model.session.isActive || model.activeRetrieval != nil {
+                    Text("Uçuş kaydı veya açık retrieve talebi sürerken çıkış yapılamaz.").font(.footnote).foregroundStyle(AeroTokens.textSecondary)
                 }
             } header: { Text("Hesap") }
         }
@@ -98,7 +100,7 @@ struct ProfileView: View {
         .confirmationDialog("Çıkış yapılsın mı?", isPresented: $confirmLogout, titleVisibility: .visible) {
             Button("Çıkış yap", role: .destructive) { Task { await model.logout() } }
         } message: {
-            Text("Gönderilmemiş uçuş noktaları cihazda kalır ve tekrar giriş yaptığınızda gönderilir.")
+            Text("Gönderilmemiş uçuş noktaları cihazda kalır ve tekrar giriş yaptığınızda gönderilir. Retriever görevin kapatılır.")
         }
     }
 
@@ -137,11 +139,16 @@ struct PilotProfileEditor: View {
                 TextField("Lisans no", text: bind(\.licenseNo))
             }
             Section {
+                TextField("Telefon (ör. +90 5xx xxx xx xx)", text: bind(\.phone)).keyboardType(.phonePad).textContentType(.telephoneNumber)
+                    .accessibilityIdentifier("profile.phone")
+            } header: { Text("Telefon") } footer: {
+                Text("Yalnızca etkinlik organizatörleri ve retrieve talebini kabul eden retriever görür (seni alırken arayabilmesi için). Herkese açık profilde asla görünmez.")
+            }
+            Section {
                 TextField("Acil durum kişisi", text: bind(\.emergencyContactName)).textContentType(.name)
-                TextField("Acil durum telefonu", text: bind(\.emergencyContactPhone)).keyboardType(.phonePad).textContentType(.telephoneNumber)
-                TextField("Kan grubu", text: bind(\.bloodType))
-            } header: { Text("Acil durum") } footer: {
-                Text("Bu bilgiler yalnızca acil durum çağrısı açtığınızda yetkili kurtarma ekibine gösterilir; herkese açık profilde asla görünmez.")
+                TextField("Acil durum kişisinin telefonu", text: bind(\.emergencyContactPhone)).keyboardType(.phonePad).textContentType(.telephoneNumber)
+            } header: { Text("Acil durum kişisi") } footer: {
+                Text("Organizatörler gerektiğinde ulaşabilsin diye. Retfast acil durum servisi değildir; acil durumda 112'yi ara.")
             }
             if let error { Section { WarningRow(text: error, tone: .error) } }
             Section {
@@ -176,42 +183,32 @@ struct PilotProfileEditor: View {
 struct PrivacyEditor: View {
     @Environment(AppModel.self) private var model
     @State private var publicProfile = false
-    @State private var visibility = "event"
     @State private var error: String?
+    @State private var saved = false
 
     var body: some View {
         Form {
             Section {
                 Toggle("Herkese açık pilot profili", isOn: $publicProfile)
             } footer: {
-                Text("Açıkken adınız, kanadınız ve herkese açık uçuşlarınız profil sayfanızda görünür. İletişim, lisans ve acil durum bilgileri asla gösterilmez.")
-            }
-            Section {
-                Picker("Varsayılan uçuş görünürlüğü", selection: $visibility) {
-                    Text("Yalnızca ben").tag("private")
-                    Text("Etkinlik katılımcıları").tag("event")
-                    Text("Herkese açık").tag("public")
-                }
-            } footer: {
-                Text("Her uçuştan önce değiştirebilirsiniz. Acil durum çağrısında yetkili kurtarma ekibi görünürlükten bağımsız olarak konumunuzu görür.")
+                Text("Açıkken adın ve kanadın profil sayfanda görünür. Telefon, lisans ve acil durum bilgileri asla gösterilmez. Etkinlik uçuşları rol kurallarına göre paylaşılır; etkinlik dışı uçuşlar yalnızca sana aittir.")
             }
             if let error { Section { WarningRow(text: error, tone: .error) } }
+            if saved { Section { WarningRow(text: String(localized: "Kaydedildi."), tone: .success, systemImage: "checkmark.circle") } }
             Section {
                 Button("Kaydet") {
                     Task {
                         do {
-                            let me = try await model.api.updateMe(fullName: nil, preferences: Preferences(units: Units.current.rawValue, defaultFlightVisibility: visibility, publicProfile: publicProfile))
+                            let me = try await model.api.updateMe(fullName: nil, preferences: Preferences(units: Units.current.rawValue, publicProfile: publicProfile))
                             model.didSignIn(me)
                             error = nil
+                            saved = true
                         } catch { self.error = ErrorText.message(error) }
                     }
                 }
             }
         }
         .navigationTitle("Gizlilik")
-        .onAppear {
-            publicProfile = model.me?.preferences?.publicProfile ?? false
-            visibility = model.me?.preferences?.defaultFlightVisibility ?? "event"
-        }
+        .onAppear { publicProfile = model.me?.preferences?.publicProfile ?? false }
     }
 }

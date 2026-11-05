@@ -123,34 +123,6 @@ public struct PreparedBatch: Sendable, Equatable {
     public var samples: [TelemetrySample]
 }
 
-/// Locally persisted SOS. See `EmergencyManager` for the state ladder.
-public struct LocalIncident: Codable, Sendable, Equatable, Identifiable, FetchableRecord, PersistableRecord {
-    public static let databaseTableName = "incident"
-
-    public var id: UUID
-    public var flightId: UUID?
-    public var eventId: UUID?
-    public var isTest: Bool
-    public var lat: Double?
-    public var lon: Double?
-    public var altitude: Double?
-    public var hAcc: Double?
-    public var positionTime: Date?
-    public var message: String
-    public var createdAtDevice: Date
-    public var deliveryState: SOSDeliveryState
-    public var serverStatus: String?
-    public var receivedAt: Date?
-    public var acknowledgedAt: Date?
-    public var acknowledgedByName: String?
-    public var cancelRequested: Bool
-    public var cancelSynced: Bool
-    public var attemptCount: Int
-    public var lastAttemptAt: Date?
-    public var lastError: String?
-    public var updatedAt: Date
-}
-
 /// A record of the database being found damaged and replaced.
 public struct StoreRecoveryEvent: Codable, Sendable, Equatable {
     public var occurredAt: Date

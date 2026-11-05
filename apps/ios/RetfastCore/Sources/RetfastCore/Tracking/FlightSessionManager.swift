@@ -25,7 +25,6 @@ public final class FlightSessionManager {
     /// (OS termination, crash, force-quit): the last sample time before the gap.
     public private(set) var interruptedSince: Date?
     public private(set) var storedSampleCount = 0
-    public private(set) var emergencyActive = false
 
     /// Called after each stored sample / on end, to nudge the sync engine.
     public var onSampleStored: (() -> Void)?
@@ -42,10 +41,9 @@ public final class FlightSessionManager {
     public struct StartOptions: Sendable, Equatable {
         public var eventId: UUID?
         public var eventName: String?
-        public var visibility: String
         public var isSimulated: Bool
-        public init(eventId: UUID?, eventName: String?, visibility: String, isSimulated: Bool = false) {
-            self.eventId = eventId; self.eventName = eventName; self.visibility = visibility; self.isSimulated = isSimulated
+        public init(eventId: UUID?, eventName: String?, isSimulated: Bool = false) {
+            self.eventId = eventId; self.eventName = eventName; self.isSimulated = isSimulated
         }
     }
 
@@ -73,20 +71,21 @@ public final class FlightSessionManager {
             lastError = "location_permission_denied"
             throw SessionError.permissionDenied
         }
-        let flight = LocalFlight(eventId: options.eventId, eventName: options.eventName, visibility: options.visibility,
+        // `visibility` is a legacy column: ADR-012 shares event flights by role.
+        let flight = LocalFlight(eventId: options.eventId, eventName: options.eventName,
+                                 visibility: options.eventId == nil ? "private" : "event",
                                  isSimulated: options.isSimulated, startedAt: now(), state: .preparing)
         try store.insertFlight(flight)
         try transition(.start)
         self.flight = flight
         recorder = FlightRecorder(flightId: flight.id, store: store)
-        recorder?.emergency = emergencyActive
         values = FlightComputerValues()
         track = []
         storedSampleCount = 0
         interruptedSince = nil
         lastError = nil
         profile = .preFlight
-        location.startRecording(profile: emergencyActive ? .emergency : .preFlight)
+        location.startRecording(profile: .preFlight)
         record("start flight=\(flight.id.uuidString.prefix(8))")
     }
 
@@ -141,7 +140,6 @@ public final class FlightSessionManager {
             let recorder = FlightRecorder(flightId: saved.id, store: store,
                                           initialProfile: TrackingProfile(rawValue: saved.profile) ?? .activeFlight)
             recorder.restore(from: samples)
-            recorder.emergency = emergencyActive
             self.recorder = recorder
             self.flight = saved
             self.values = recorder.values
@@ -155,7 +153,7 @@ public final class FlightSessionManager {
                 interruptedSince = saved.lastSampleAt ?? saved.startedAt
                 try store.updateFlight(id: saved.id, { $0.interruptionCount += 1 }, now: now())
                 self.flight = try store.flight(id: saved.id)
-                location.startRecording(profile: emergencyActive ? .emergency : recorder.profile)
+                location.startRecording(profile: recorder.profile)
                 record("restored recording flight=\(saved.id.uuidString.prefix(8)) samples=\(samples.count)")
             case .paused:
                 record("restored paused flight")
@@ -168,13 +166,6 @@ public final class FlightSessionManager {
             lastError = "restore_failed"
             record("restore failed: \(error)")
         }
-    }
-
-    public func setEmergency(_ on: Bool) {
-        guard emergencyActive != on else { return }
-        emergencyActive = on
-        if let change = recorder?.setEmergency(on, now: now()) { apply(profile: change) }
-        else if on && state == .recording { apply(profile: .emergency) }
     }
 
     public func requestAlwaysAuthorization() { location.requestAlwaysAuthorization() }

@@ -217,7 +217,7 @@ public actor TelemetrySyncEngine {
         for flight in try store.flightsNeedingServerCreate() {
             let body = CreateFlightRequest(id: flight.id.uuidString.lowercased(),
                                            eventId: flight.eventId?.uuidString.lowercased(),
-                                           startedAt: flight.startedAt, visibility: flight.visibility,
+                                           startedAt: flight.startedAt,
                                            isSimulated: flight.isSimulated, device: device)
             do {
                 _ = try await api.createFlight(body)

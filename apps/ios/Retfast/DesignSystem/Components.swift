@@ -5,7 +5,7 @@ import SwiftUI
 // AeroTokens (packages/design-tokens). State is always icon + text, never colour alone.
 
 enum Tone {
-    case neutral, active, success, warning, error, emergency, info
+    case neutral, active, success, warning, error, info
 
     var color: Color {
         switch self {
@@ -14,7 +14,6 @@ enum Tone {
         case .success: AeroTokens.success
         case .warning: AeroTokens.warning
         case .error: AeroTokens.error
-        case .emergency: AeroTokens.emergencyText
         case .info: AeroTokens.secondary
         }
     }
@@ -59,7 +58,7 @@ struct StatusPill: View {
 }
 
 struct PrimaryButtonStyle: ButtonStyle {
-    enum Kind { case primary, secondary, destructive, emergency }
+    enum Kind { case primary, secondary, destructive }
     var kind: Kind = .primary
     var large = false
     @Environment(\.isEnabled) private var isEnabled
@@ -86,7 +85,6 @@ struct PrimaryButtonStyle: ButtonStyle {
         case .primary: AeroTokens.primary
         case .secondary: AeroTokens.surfaceElevated
         case .destructive: AeroTokens.error
-        case .emergency: AeroTokens.emergency
         }
     }
 
@@ -94,7 +92,7 @@ struct PrimaryButtonStyle: ButtonStyle {
         switch kind {
         case .primary: AeroTokens.onPrimary
         case .secondary: AeroTokens.textPrimary
-        case .destructive, .emergency: AeroTokens.onEmergency
+        case .destructive: AeroTokens.onEmergency
         }
     }
 }
@@ -205,17 +203,6 @@ struct SimBadge: View {
     }
 }
 
-struct TestBadge: View {
-    var body: some View {
-        Text("TEST")
-            .font(.caption.weight(.heavy).monospaced())
-            .padding(.horizontal, 6).padding(.vertical, 2)
-            .foregroundStyle(.black)
-            .background(AeroTokens.warning, in: RoundedRectangle(cornerRadius: 4))
-            .accessibilityLabel(Text("Test çağrısı, gerçek acil durum değil"))
-    }
-}
-
 struct SectionHeader: View {
     let title: String
     var body: some View {
@@ -268,5 +255,6 @@ enum Haptics {
     @MainActor static func start() { UINotificationFeedbackGenerator().notificationOccurred(.success) }
     @MainActor static func stop() { UIImpactFeedbackGenerator(style: .heavy).impactOccurred() }
     @MainActor static func tick() { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
-    @MainActor static func sos() { UINotificationFeedbackGenerator().notificationOccurred(.warning) }
+    @MainActor static func attention() { UINotificationFeedbackGenerator().notificationOccurred(.warning) }
+    @MainActor static func success() { UINotificationFeedbackGenerator().notificationOccurred(.success) }
 }

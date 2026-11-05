@@ -113,7 +113,7 @@ struct LocalTelemetryStoreTests {
             #expect(try old.appliedMigrations() == ["v1_flights_samples"])
         }
         let store = try LocalTelemetryStore.open(at: url)
-        #expect(try store.appliedMigrations() == ["v1_flights_samples", "v2_incidents_kv"])
+        #expect(try store.appliedMigrations() == ["v1_flights_samples", "v2_incidents_kv", "v3_retrievals"])
         #expect(try store.samples(flightId: flight.id).count == 1)
         #expect(store.recoveryEvent == nil)
     }

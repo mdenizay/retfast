@@ -43,7 +43,6 @@ public final class FlightRecorder {
     private let store: LocalTelemetryStore
     public private(set) var processor = TelemetryProcessor()
     public private(set) var policy: TrackingPolicy
-    public var emergency = false
     public private(set) var consecutiveWriteFailures = 0
 
     public struct Result: Sendable {
@@ -65,7 +64,7 @@ public final class FlightRecorder {
     /// Rebuild filter/statistics state from what is already on disk.
     public func restore(from samples: [TelemetrySample]) {
         processor.replay(samples)
-        if let last = samples.last, let p = TrackingProfile(rawValue: last.profile), p != .emergency {
+        if let last = samples.last, let p = TrackingProfile(rawValue: last.profile), p.isFlightProfile {
             policy = TrackingPolicy(initial: p, airborne: p != .preFlight)
         }
     }
@@ -93,19 +92,8 @@ public final class FlightRecorder {
         }
         let v = processor.values
         let next = policy.evaluate(PolicyInput(time: raw.timestamp, groundSpeed: v.groundSpeed,
-                                               verticalSpeed: v.verticalSpeed, turnRate: v.turnRate,
-                                               emergency: emergency))
+                                               verticalSpeed: v.verticalSpeed, turnRate: v.turnRate))
         if next != profileBefore { result.profileChange = next }
         return result
-    }
-
-    /// Force a re-evaluation (e.g. SOS opened/closed) without a new fix.
-    public func setEmergency(_ on: Bool, now: Date) -> TrackingProfile? {
-        emergency = on
-        let before = policy.profile
-        let v = processor.values
-        let next = policy.evaluate(PolicyInput(time: now, groundSpeed: v.groundSpeed, verticalSpeed: v.verticalSpeed,
-                                               turnRate: v.turnRate, emergency: on))
-        return next != before ? next : nil
     }
 }

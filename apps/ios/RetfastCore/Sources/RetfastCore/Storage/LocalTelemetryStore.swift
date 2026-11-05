@@ -2,8 +2,8 @@ import Foundation
 import GRDB
 import os
 
-/// SQLite (GRDB, WAL) persistence for flights, samples, outbound batches and SOS
-/// incidents. Every accepted GPS sample is written here *before* any network use.
+/// SQLite (GRDB, WAL) persistence for flights, samples, outbound batches and
+/// retrieval requests. Every accepted GPS sample is written here *before* any network use.
 ///
 /// Invariants:
 /// - `seq` is assigned inside the insert transaction from `flight.nextSeq`, so it
@@ -193,6 +193,34 @@ public final class LocalTelemetryStore: Sendable {
             try db.create(table: "kv") { t in
                 t.primaryKey("key", .text)
                 t.column("value", .text).notNull()
+            }
+        }
+        m.registerMigration("v3_retrievals") { db in
+            // ADR-012: SOS/incidents were removed from the product.
+            try db.drop(table: "incident")
+            try db.create(table: "retrieval") { t in
+                t.primaryKey("id", .blob)
+                t.column("eventId", .text).notNull()
+                t.column("eventName", .text)
+                t.column("flightId", .blob)
+                t.column("pickupLat", .double).notNull()
+                t.column("pickupLon", .double).notNull()
+                t.column("pickupAlt", .double)
+                t.column("pickupHAcc", .double)
+                t.column("pickupT", .datetime).notNull()
+                t.column("note", .text).notNull().defaults(to: "")
+                t.column("createdAt", .datetime).notNull()
+                t.column("outbox", .text).notNull()
+                t.column("attemptCount", .integer).notNull().defaults(to: 0)
+                t.column("lastAttemptAt", .datetime)
+                t.column("lastError", .text)
+                t.column("serverStatus", .text)
+                t.column("serverJSON", .text)
+                t.column("cancelRequested", .boolean).notNull().defaults(to: false)
+                t.column("cancelReason", .text)
+                t.column("cancelSynced", .boolean).notNull().defaults(to: false)
+                t.column("mergedInto", .text)
+                t.column("updatedAt", .datetime).notNull()
             }
         }
         return m
@@ -443,20 +471,6 @@ public final class LocalTelemetryStore: Sendable {
             let size = (try? fm.attributesOfItem(atPath: url.path + suffix)[.size] as? NSNumber)?.int64Value ?? 0
             return total + size
         }
-    }
-
-    // MARK: Incidents
-
-    public func saveIncident(_ incident: LocalIncident) throws {
-        try writer.write { db in try incident.save(db) }
-    }
-
-    public func incident(id: UUID) throws -> LocalIncident? {
-        try writer.read { db in try LocalIncident.fetchOne(db, key: id) }
-    }
-
-    public func incidents(limit: Int = 50) throws -> [LocalIncident] {
-        try writer.read { db in try LocalIncident.order(Column("createdAtDevice").desc).limit(limit).fetchAll(db) }
     }
 
     // MARK: Key-value & diagnostics

@@ -39,14 +39,14 @@
 		</dict>
 	</dict>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Uçuş sırasında ekran kilitliyken veya uygulama arka plandayken de iz kaydının kesilmemesi için gereklidir. Retfast konumu yalnızca siz bir uçuş başlattığınızda kaydeder; uçuş bitince durdurur.</string>
+	<string>Ekran kilitliyken veya uygulama arka plandayken uçuş kaydının ve retrieve konum paylaşımının kesilmemesi için gereklidir. Retfast konumu yalnızca siz uçuş başlattığınızda, retrieve beklerken veya retriever görevindeyken kullanır.</string>
 	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
 	<dict>
 		<key>FlightRecording</key>
-		<string>Uçuş izinin doğru kaydedilmesi ve acil durumda konumunuzun doğru iletilmesi için hassas konum gerekir.</string>
+		<string>Uçuş izinin ve retrieve alınma noktanızın doğru olması için hassas konum gerekir.</string>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Retfast, uçuş kaydı sırasında konumunuzu GPS ile kaydeder ve izin verdiğiniz kişilerle canlı haritada paylaşır. Konumunuz yalnızca uçuş kaydı veya acil durum çağrısı açıkken kullanılır.</string>
+	<string>Retfast, uçuş kaydı sırasında konumunuzu GPS ile kaydeder ve katıldığınız etkinliğin organizatör ve gözlemcileriyle paylaşır. Retrieve beklerken veya retriever olarak görevdeyken konumunuz alacak/alınacak kişiyle paylaşılır.</string>
 	<key>RetfastAPIBaseURL</key>
 	<string>$(RETFAST_API_BASE_URL)</string>
 	<key>UIApplicationSceneManifest</key>

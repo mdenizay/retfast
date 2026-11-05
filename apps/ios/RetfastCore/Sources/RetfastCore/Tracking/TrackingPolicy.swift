@@ -6,14 +6,12 @@ public struct PolicyInput: Sendable, Equatable {
     public var groundSpeed: Double?
     public var verticalSpeed: Double?
     public var turnRate: Double?
-    public var emergency: Bool
 
-    public init(time: Date, groundSpeed: Double?, verticalSpeed: Double?, turnRate: Double?, emergency: Bool = false) {
+    public init(time: Date, groundSpeed: Double?, verticalSpeed: Double?, turnRate: Double?) {
         self.time = time
         self.groundSpeed = groundSpeed
         self.verticalSpeed = verticalSpeed
         self.turnRate = turnRate
-        self.emergency = emergency
     }
 }
 
@@ -25,7 +23,7 @@ public struct PolicyInput: Sendable, Equatable {
 /// - thermal: climb ≥ 0.3 m/s and |turn rate| ≥ 8 °/s for 10 s
 /// - cruise: ground speed ≥ 5 m/s and |turn rate| < 5 °/s for 20 s
 /// - landing: ground speed < 2.5 m/s and |vario| < 0.4 m/s for 30 s
-/// - emergency: immediately while an SOS is open, overriding everything.
+///   (drives the "İndin mi? Retrieve iste" prompt; never ends the flight by itself)
 public struct TrackingPolicy: Sendable, Equatable {
     public struct Thresholds: Sendable, Equatable {
         public var takeoffSpeed = 4.0
@@ -51,6 +49,7 @@ public struct TrackingPolicy: Sendable, Equatable {
     private var candidateSince: Date?
 
     public init(initial: TrackingProfile = .preFlight, airborne: Bool = false, thresholds: Thresholds = Thresholds()) {
+        let initial = initial.isFlightProfile ? initial : .activeFlight
         self.profile = initial
         self.airborne = airborne || (initial != .preFlight)
         self.thresholds = thresholds
@@ -59,17 +58,6 @@ public struct TrackingPolicy: Sendable, Equatable {
     /// Returns the profile to use after this input (may be unchanged).
     @discardableResult
     public mutating func evaluate(_ input: PolicyInput) -> TrackingProfile {
-        if input.emergency {
-            profile = .emergency
-            candidate = nil
-            return profile
-        }
-        if profile == .emergency {
-            // SOS closed: resume conservatively at full rate and re-classify.
-            profile = airborne ? .activeFlight : .preFlight
-            candidate = nil
-        }
-
         guard let target = classify(input) else { return profile }
         if target == profile {
             candidate = nil
@@ -114,8 +102,7 @@ public struct TrackingPolicy: Sendable, Equatable {
         case .thermal: thresholds.thermalDwell
         case .cruise: thresholds.cruiseDwell
         case .landing: thresholds.landingDwell
-        case .preFlight: thresholds.activeDwell
-        case .emergency: 0
+        case .preFlight, .retrieveWaiting, .retrieverDriving: thresholds.activeDwell
         }
     }
 }

@@ -20,14 +20,27 @@ public enum FlightSessionState: String, Codable, Sendable, CaseIterable {
     }
 }
 
-/// Location sampling profiles. Raw values are what we send in `meta.profile`.
+/// Location sampling profiles. Raw values of the flight profiles are what we
+/// send in `meta.profile`. The two sharing profiles never record flight
+/// samples; they drive the engine while a pilot waits for a retrieve or a
+/// retriever is on duty (positions are shared, not stored as a track).
 public enum TrackingProfile: String, Codable, Sendable, CaseIterable {
     case preFlight = "pre_flight"
     case activeFlight = "active_flight"
     case thermal
     case cruise
     case landing
-    case emergency
+    /// Pilot landed and waits for a retrieve: low power, walking pace.
+    case retrieveWaiting = "retrieve_waiting"
+    /// Retriever on duty / driving to pilots.
+    case retrieverDriving = "retriever_driving"
+
+    public var isFlightProfile: Bool { self != .retrieveWaiting && self != .retrieverDriving }
+}
+
+/// Core Location activity type, without importing CoreLocation in the domain.
+public enum LocationActivity: String, Sendable, Equatable {
+    case airborne, automotiveNavigation, fitness, other
 }
 
 /// What a profile asks Core Location for. These are *targets*: iOS decides the
@@ -41,17 +54,21 @@ public struct ProfileSettings: Sendable, Equatable {
     /// Minimum spacing between *stored* samples. Fixes arriving faster are
     /// used for presentation but not persisted.
     public var minSampleInterval: TimeInterval
+    public var activity: LocationActivity
 
-    public init(desiredAccuracy: Double, distanceFilter: Double, minSampleInterval: TimeInterval) {
+    public init(desiredAccuracy: Double, distanceFilter: Double, minSampleInterval: TimeInterval,
+                activity: LocationActivity = .airborne) {
         self.desiredAccuracy = desiredAccuracy
         self.distanceFilter = distanceFilter
         self.minSampleInterval = minSampleInterval
+        self.activity = activity
     }
 
     // Apple's constants, duplicated so the domain does not need CoreLocation.
     public static let accuracyBestForNavigation: Double = -2   // kCLLocationAccuracyBestForNavigation
     public static let accuracyBest: Double = -1                 // kCLLocationAccuracyBest
     public static let distanceFilterNone: Double = -1           // kCLDistanceFilterNone
+    public static let accuracyNearestTenMeters: Double = 10     // kCLLocationAccuracyNearestTenMeters
 }
 
 extension TrackingProfile {
@@ -72,8 +89,17 @@ extension TrackingProfile {
             ProfileSettings(desiredAccuracy: ProfileSettings.accuracyBestForNavigation, distanceFilter: 10, minSampleInterval: 3)
         case .landing:
             ProfileSettings(desiredAccuracy: ProfileSettings.accuracyBestForNavigation, distanceFilter: ProfileSettings.distanceFilterNone, minSampleInterval: 2)
-        case .emergency:
-            ProfileSettings(desiredAccuracy: ProfileSettings.accuracyBestForNavigation, distanceFilter: ProfileSettings.distanceFilterNone, minSampleInterval: 1)
+        case .retrieveWaiting:
+            // Landed pilot: ~10 m is plenty for a pickup. Power is driven by the
+            // accuracy target (not the distance filter, which does not idle the
+            // GPS); no filter, so a pilot standing still keeps fresh timestamps
+            // and does not look "lost" to the retriever. Shared ≈ every 30 s.
+            ProfileSettings(desiredAccuracy: ProfileSettings.accuracyNearestTenMeters, distanceFilter: ProfileSettings.distanceFilterNone,
+                            minSampleInterval: 30, activity: .fitness)
+        case .retrieverDriving:
+            // Car on mountain roads: automotive activity type. Shared ≈ every 15 s.
+            ProfileSettings(desiredAccuracy: ProfileSettings.accuracyBest, distanceFilter: ProfileSettings.distanceFilterNone,
+                            minSampleInterval: 15, activity: .automotiveNavigation)
         }
     }
 }

@@ -174,8 +174,6 @@ struct EventCard: View {
         default:
             if event.isOrganizer, let n = event.counts?.pendingApplications, n > 0 {
                 Label("\(n) başvuru bekliyor", systemImage: "tray.full")
-            } else if let c = event.counts {
-                Text("\(c.pilots ?? 0) pilot · \(c.retrievers ?? 0) retriever")
             } else {
                 Text(EventDates.range(event))
             }

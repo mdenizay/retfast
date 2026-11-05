@@ -46,7 +46,7 @@ struct RetrieveRequestView: View {
                     KeyValueRow(key: String(localized: "Konum"), value: Fmt.coordinate(p.lat, p.lon), mono: true)
                     KeyValueRow(key: String(localized: "Doğruluk"), value: Fmt.accuracy(p.hAccM))
                     TimelineView(.periodic(from: .now, by: 5)) { ctx in
-                        KeyValueRow(key: String(localized: "Konum zamanı"), value: p.t.map { "\(Fmt.time($0)) (\(Fmt.age(max(0, ctx.date.timeIntervalSince($0)))) önce)" } ?? Fmt.dash)
+                        KeyValueRow(key: String(localized: "Konum zamanı"), value: p.t.map { String(localized: "\(Fmt.time($0)) (\(Fmt.age(max(0, ctx.date.timeIntervalSince($0)))) önce)") } ?? Fmt.dash)
                     }
                     if (p.hAccM ?? 0) > 50 {
                         WarningRow(text: String(localized: "Konum doğruluğu düşük. Mümkünse açık alanda birkaç saniye bekleyip yenile."))

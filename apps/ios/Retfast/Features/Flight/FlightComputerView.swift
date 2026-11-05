@@ -2,122 +2,57 @@ import RetfastCore
 import SwiftUI
 import UIKit
 
-/// Full-screen cover, independent of the tab hierarchy. Closing it only hides
-/// the UI; recording continues in `FlightSessionManager`.
+/// Full-screen cover for the flight. While recording, the flight lives in the
+/// event screen's bottom panel, so this only shows the post-flight summary.
 struct FlightComputerContainer: View {
     @Environment(AppModel.self) private var model
-    @AppStorage("fcTheme") private var themeRaw = FlightComputerTheme.auto.rawValue
-
-    private var theme: FlightComputerTheme { FlightComputerTheme(rawValue: themeRaw) ?? .auto }
-    private var scheme: ColorScheme? {
-        switch theme {
-        case .auto: nil
-        case .dark: .dark
-        case .light, .highContrast: .light
-        }
-    }
 
     var body: some View {
-        Group {
-            switch model.session.state {
-            case .completed:
-                NavigationStack { FlightSummaryView() }
-            case .idle:
-                // Nothing to show (e.g. reset elsewhere): close the cover.
-                Color.clear.onAppear { if model.overlay == .flight { model.overlay = nil } }
-            default:
-                FlightComputerView(highContrast: theme == .highContrast)
+        switch model.session.state {
+        case .completed:
+            NavigationStack { FlightSummaryView() }
+        default:
+            Color.clear.onAppear {
+                if model.overlay == .flight { model.overlay = nil }
+                if model.session.isActive { model.openFlightEvent() }
             }
         }
-        .preferredColorScheme(scheme)
-        .environment(\.legibilityWeight, theme == .highContrast ? .bold : nil)
     }
 }
 
-struct FlightComputerView: View {
+/// The flight, inside the event screen's bottom sheet: timer, the numbers a
+/// pilot glances at, warnings, and İndim / Duraklat / Bitir.
+struct FlightPanel: View {
     @Environment(AppModel.self) private var model
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    let highContrast: Bool
-    @State private var showMap = false
-    @State private var confirmEnd = false
-    @State private var conditions = DeviceConditions.unknown
+    @Binding var confirmEnd: Bool
 
     private var session: FlightSessionManager { model.session }
     private var v: FlightComputerValues { session.values }
 
     var body: some View {
-        VStack(spacing: 0) {
-            topBar
-            if showMap {
-                FlightLiveMapView()
-            } else {
-                ScrollView {
-                    VStack(spacing: AeroTokens.Space.s3) {
-                        hero
-                        banners
-                        instruments
-                    }
-                    .padding(.horizontal, AeroTokens.Space.s4)
-                    .padding(.bottom, AeroTokens.Space.s4)
-                }
+        VStack(spacing: AeroTokens.Space.s3) {
+            HStack(spacing: AeroTokens.Space.s2) {
+                StatusPill(String(localized: stateText), systemImage: session.state.systemImage, tone: session.state.tone)
+                    .accessibilityIdentifier("fc.state")
+                SyncBadge(snapshot: model.syncSnapshot)
+                if session.flight?.isSimulated == true { SimBadge() }
+                Spacer(minLength: 0)
             }
+            hero
+            Button {
+                model.showLandingPrompt = true
+            } label: { Label("İndim", systemImage: "arrow.down.to.line") }
+            .buttonStyle(.aeroPrimaryLarge)
+            .accessibilityHint(Text("Uçuşu bitirme ve retrieve isteme seçeneklerini açar"))
+            .accessibilityIdentifier("fc.landed")
             controls
+            banners
+            stats
         }
-        .background((highContrast ? Color.white : AeroTokens.background).ignoresSafeArea())
-        .onAppear {
-            conditions = DeviceStatus.current()
-            UIApplication.shared.isIdleTimerDisabled = true
-        }
+        .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
         .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
-        .onReceive(Timer.publish(every: 30, on: .main, in: .common).autoconnect()) { _ in conditions = DeviceStatus.current() }
-        .confirmationDialog("Uçuşu bitir?", isPresented: $confirmEnd, titleVisibility: .visible) {
-            Button("Uçuşu bitir", role: .destructive) { model.endFlight() }
-            Button("Vazgeç", role: .cancel) {}
-        } message: {
-            Text("Kayıt durdurulur. Gönderilmemiş noktalar bağlantı gelince gönderilmeye devam eder.")
-        }
     }
 
-    // MARK: Top bar
-
-    private var topBar: some View {
-        HStack(spacing: AeroTokens.Space.s2) {
-            MapCircleButton(systemImage: "chevron.down", label: "Küçült (kayıt devam eder)") { model.overlay = nil }
-                .accessibilityIdentifier("fc.minimize")
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: AeroTokens.Space.s2) {
-                    StatusPill(String(localized: stateText), systemImage: session.state.systemImage, tone: session.state.tone)
-                        .accessibilityIdentifier("fc.state")
-                    SyncBadge(snapshot: model.syncSnapshot)
-                    StatusPill(Fmt.battery(conditions.batteryLevel) + (conditions.lowPowerMode ? " · LPM" : ""),
-                               systemImage: conditions.lowPowerMode ? "battery.25percent" : "battery.75percent",
-                               tone: (conditions.batteryLevel ?? 1) < 0.2 ? .error : .neutral)
-                    if session.flight?.isSimulated == true { SimBadge() }
-                }
-            }
-
-            if model.session.flight?.eventId != nil {
-                Button {
-                    model.showLandingPrompt = true
-                } label: {
-                    Label("İndim", systemImage: "arrow.down.to.line")
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(AeroTokens.onPrimary)
-                        .padding(.horizontal, AeroTokens.Space.s4)
-                        .frame(minHeight: 44)
-                        .background(AeroTokens.primary, in: Capsule())
-                }
-                .buttonStyle(.plain)
-                .accessibilityHint(Text("Uçuşu bitirme ve retrieve isteme seçeneklerini açar"))
-                .accessibilityIdentifier("fc.landed")
-            }
-        }
-        .padding(.horizontal, AeroTokens.Space.s4)
-        .padding(.vertical, AeroTokens.Space.s2)
-    }
-
-    /// Big flight timer + the three numbers a pilot glances at.
     private var hero: some View {
         let alt = Fmt.altitude(v.gpsAltitude)
         let speed = Fmt.speed(v.groundSpeed)
@@ -125,28 +60,28 @@ struct FlightComputerView: View {
         return VStack(spacing: AeroTokens.Space.s3) {
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 Text(Fmt.duration(context.date.timeIntervalSince(session.flight?.startedAt ?? context.date)))
-                    .font(.system(size: 64, weight: .bold, design: .rounded).monospacedDigit())
-                    .foregroundStyle(highContrast ? Color.black : AeroTokens.textPrimary)
+                    .font(.system(size: 56, weight: .bold, design: .rounded).monospacedDigit())
+                    .foregroundStyle(AeroTokens.textPrimary)
                     .minimumScaleFactor(0.6)
                     .accessibilityLabel(Text("Uçuş süresi"))
             }
             HStack(spacing: 0) {
                 heroValue(String(localized: "İrtifa"), alt.0, alt.1).accessibilityIdentifier("fc.altitude")
-                Divider().frame(height: 44)
+                Divider().frame(height: 40)
                 heroValue(String(localized: "Hız"), speed.0, speed.1)
-                Divider().frame(height: 44)
+                Divider().frame(height: 40)
                 heroValue(String(localized: "Dikey"), vario.0, vario.1)
             }
         }
         .padding(.vertical, AeroTokens.Space.s4)
         .frame(maxWidth: .infinity)
-        .background(highContrast ? Color.white : AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.xl, style: .continuous))
+        .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.xl, style: .continuous))
     }
 
     private func heroValue(_ label: String, _ value: String, _ unit: String) -> some View {
         VStack(spacing: 2) {
             HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text(value).font(.system(size: 28, weight: .bold, design: .rounded).monospacedDigit())
+                Text(value).font(.system(size: 26, weight: .bold, design: .rounded).monospacedDigit())
                 Text(unit).font(.caption.weight(.semibold)).foregroundStyle(AeroTokens.textSecondary)
             }
             Text(label).font(.caption).foregroundStyle(AeroTokens.textSecondary)
@@ -167,43 +102,28 @@ struct FlightComputerView: View {
         }
     }
 
-    // MARK: Banners
-
     @ViewBuilder private var banners: some View {
         if let since = session.interruptedSince {
-            AeroCard {
-                WarningRow(text: String(localized: "Kayıt \(Fmt.time(since)) sonrasında kesildi (uygulama kapatıldı veya iOS sonlandırdı) ve yeniden başlatıldı. Aradaki süre izde boşluk olarak görünür."))
-            }
+            WarningRow(text: String(localized: "Kayıt \(Fmt.time(since)) sonrasında kesildi ve yeniden başladı. Aradaki süre izde boşluk olarak görünür."))
         }
         if let error = session.lastError {
-            AeroCard { WarningRow(text: errorText(error), tone: .error) }
+            WarningRow(text: errorText(error), tone: .error)
         }
         if session.state == .preparing {
-            AeroCard {
-                WarningRow(text: String(localized: "GPS konumu bekleniyor. Açık gökyüzü altında kalın; ilk iyi konum gelince kayıt başlar."), tone: .info, systemImage: "location.magnifyingglass")
-            }
+            WarningRow(text: String(localized: "GPS konumu bekleniyor. Açık gökyüzü altında kal; ilk iyi konumla kayıt başlar."), tone: .info, systemImage: "location.magnifyingglass")
         }
         if session.state == .paused {
-            AeroCard {
-                WarningRow(text: String(localized: "Kayıt duraklatıldı. GPS kapalı; bu sürede konum kaydedilmez ve canlı haritada güncellenmezsiniz."), tone: .warning, systemImage: "pause.circle")
-            }
+            WarningRow(text: String(localized: "Kayıt duraklatıldı; bu sürede konum kaydedilmez."), tone: .warning, systemImage: "pause.circle")
         }
         if session.state == .recording {
             TimelineView(.periodic(from: .now, by: 5)) { context in
                 if let last = v.lastFixAt, context.date.timeIntervalSince(last) > 15 {
-                    AeroCard {
-                        WarningRow(text: String(localized: "Son GPS konumu \(Fmt.age(context.date.timeIntervalSince(last))) önce alındı. Telefonu gökyüzünü görecek şekilde tutun."))
-                    }
+                    WarningRow(text: String(localized: "Son GPS konumu \(Fmt.age(context.date.timeIntervalSince(last))) önce alındı."))
                 }
             }
         }
         if v.lowQuality {
-            AeroCard { WarningRow(text: String(localized: "GPS doğruluğu düşük (\(Fmt.accuracy(v.horizontalAccuracy))). Noktalar kaydediliyor ancak istatistiklere katılmıyor.")) }
-        }
-        if session.state == .recording && session.profile == .landing {
-            AeroCard {
-                WarningRow(text: String(localized: "İniş algılandı (düşük hız, düşük dikey hız). Kayıt sen bitirene kadar sürer."), tone: .info, systemImage: "arrow.down.to.line")
-            }
+            WarningRow(text: String(localized: "GPS doğruluğu düşük (\(Fmt.accuracy(v.horizontalAccuracy)))."))
         }
     }
 
@@ -216,91 +136,36 @@ struct FlightComputerView: View {
         }
     }
 
-    // MARK: Instruments
-
-    private var instruments: some View {
+    private var stats: some View {
         let dist = Fmt.distance(v.distance)
         let maxAlt = Fmt.altitude(v.maxAltitude)
-        let maxSpeed = Fmt.speed(v.maxGroundSpeed)
         let up = Fmt.altitude(v.totalAscent)
-        let down = Fmt.altitude(v.totalDescent)
-
-        return VStack(spacing: AeroTokens.Space.s3) {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: AeroTokens.Space.s3)], spacing: AeroTokens.Space.s3) {
-                InstrumentTile(label: String(localized: "GPS doğruluğu"), value: Fmt.accuracy(v.horizontalAccuracy),
-                               tone: (v.horizontalAccuracy ?? 999) > 50 ? .error : ((v.horizontalAccuracy ?? 999) > 20 ? .warning : .neutral),
-                               highContrast: highContrast)
-                InstrumentTile(label: String(localized: "Yön"), value: Fmt.heading(v.heading), highContrast: highContrast)
-            }
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: AeroTokens.Space.s2)], spacing: AeroTokens.Space.s2) {
-                InstrumentTile(label: String(localized: "Mesafe"), value: dist.0, unit: dist.1, highContrast: highContrast)
-                InstrumentTile(label: String(localized: "Maks irtifa"), value: maxAlt.0, unit: maxAlt.1, highContrast: highContrast)
-                InstrumentTile(label: String(localized: "Maks hız"), value: maxSpeed.0, unit: maxSpeed.1, highContrast: highContrast)
-                InstrumentTile(label: String(localized: "Toplam tırmanış"), value: up.0, unit: up.1, highContrast: highContrast)
-                InstrumentTile(label: String(localized: "Toplam alçalma"), value: down.0, unit: down.1, highContrast: highContrast)
-                InstrumentTile(label: String(localized: "Nokta"), value: "\(session.storedSampleCount)", highContrast: highContrast)
-            }
-            HStack {
-                StatusPill(String(localized: "Profil: ") + profileName, systemImage: "slider.horizontal.3", tone: .info)
-                Spacer()
-                if let ack = model.syncSnapshot.lastServerAck {
-                    Text("Son sunucu onayı \(Fmt.time(ack))").font(.caption).foregroundStyle(AeroTokens.textSecondary)
-                }
-            }
-            Text("Değerler GPS'ten hesaplanır. İrtifa GPS irtifasıdır; dikey hız filtrelenmiş bir tahmindir ve variometre yerine geçmez.")
-                .font(.caption2).foregroundStyle(AeroTokens.textMuted)
-                .frame(maxWidth: .infinity, alignment: .leading)
+        return HStack(spacing: AeroTokens.Space.s2) {
+            InstrumentTile(label: String(localized: "Mesafe"), value: dist.0, unit: dist.1)
+            InstrumentTile(label: String(localized: "Maks irtifa"), value: maxAlt.0, unit: maxAlt.1)
+            InstrumentTile(label: String(localized: "Tırmanış"), value: up.0, unit: up.1)
         }
     }
-
-    private var profileName: String {
-        switch session.profile {
-        case .preFlight: String(localized: "Kalkış öncesi")
-        case .activeFlight: String(localized: "Uçuş")
-        case .thermal: String(localized: "Termik")
-        case .cruise: String(localized: "Seyir")
-        case .landing: String(localized: "İniş")
-        case .retrieveWaiting: String(localized: "Retrieve bekleniyor")
-        case .retrieverDriving: String(localized: "Retrieve görevi")
-        }
-    }
-
-    // MARK: Controls
 
     private var controls: some View {
-        VStack(spacing: AeroTokens.Space.s3) {
-            CapsuleSegment(selection: $showMap, options: [(false, String(localized: "Göstergeler")), (true, String(localized: "Canlı harita"))])
-                .accessibilityIdentifier("fc.mode")
-            HStack(spacing: AeroTokens.Space.s3) {
-                if session.state == .paused || session.state == .error {
-                    Button {
-                        try? session.resume()
-                        Haptics.start()
-                    } label: { Label("Devam et", systemImage: "play.fill") }
-                    .buttonStyle(.aeroPrimary)
-                } else {
-                    Button {
-                        try? session.pause()
-                        Haptics.tick()
-                    } label: { Label("Duraklat", systemImage: "pause.fill") }
-                    .buttonStyle(.aeroSecondary)
-                    .disabled(session.state != .recording)
-                }
+        HStack(spacing: AeroTokens.Space.s3) {
+            if session.state == .paused || session.state == .error {
                 Button {
-                    confirmEnd = true
-                } label: { Label("Bitir", systemImage: "stop.fill") }
+                    try? session.resume()
+                    Haptics.start()
+                } label: { Label("Devam et", systemImage: "play.fill") }
+                .buttonStyle(.aeroSecondary)
+            } else {
+                Button {
+                    try? session.pause()
+                    Haptics.tick()
+                } label: { Label("Duraklat", systemImage: "pause.fill") }
+                .buttonStyle(.aeroSecondary)
+                .disabled(session.state != .recording)
+            }
+            Button { confirmEnd = true } label: { Label("Bitir", systemImage: "stop.fill") }
                 .buttonStyle(.aeroInk)
                 .accessibilityIdentifier("fc.end")
-            }
-        }
-        .padding(.horizontal, AeroTokens.Space.s4)
-        .padding(.top, AeroTokens.Space.s4)
-        .padding(.bottom, AeroTokens.Space.s2)
-        .background {
-            UnevenRoundedRectangle(topLeadingRadius: AeroTokens.Radius.xl, topTrailingRadius: AeroTokens.Radius.xl, style: .continuous)
-                .fill(AeroTokens.surface)
-                .shadow(color: .black.opacity(0.12), radius: 12, y: -2)
-                .ignoresSafeArea(edges: .bottom)
         }
     }
 }

@@ -26,7 +26,6 @@
 		792520C91CCFE7D67D0AE6A4 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5430D5DDB62234ADA95B3185 /* Components.swift */; };
 		797953238203E4B53D07BDB6 /* RetrieveFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B27374FA46F735789EB098BE /* RetrieveFlowUITests.swift */; };
 		88AF3E11D636F8720CBDBB4D /* AuthViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B74AA1AF6065D63780E53F3 /* AuthViews.swift */; };
-		89CBEDAD82DB19F1BA5945BE /* FlightLiveMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAF0CB92B964245F9B0EFAE0 /* FlightLiveMapView.swift */; };
 		99DBDD16A5D6FE7E1A8B5D6D /* FlightsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56579908C80354AA80341DB /* FlightsListView.swift */; };
 		9D9D0A03EBE2082F2E72B53B /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 0E2A525C7369E7BBC655C5D9 /* Localizable.xcstrings */; };
 		B12EC4B697D18C962AF8ABB9 /* EventScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B15D28E4E23DC75B6B2539E1 /* EventScreen.swift */; };
@@ -79,7 +78,6 @@
 		C21581FE6852B72B01F750A6 /* project.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = project.yml; sourceTree = "<group>"; };
 		C5D6AE547A29C99FFE1C04FA /* FlightComputerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightComputerView.swift; sourceTree = "<group>"; };
 		CEF1FE6946747CC1E5B6CDC1 /* DiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsView.swift; sourceTree = "<group>"; };
-		DAF0CB92B964245F9B0EFAE0 /* FlightLiveMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightLiveMapView.swift; sourceTree = "<group>"; };
 		DFBF8DB72834E43B00526DA0 /* make-sim-route.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "make-sim-route.py"; sourceTree = "<group>"; };
 		E8290E59886C7C1731705836 /* RetfastApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetfastApp.swift; sourceTree = "<group>"; };
 		E8BB7E3C357A4650EBAA14B1 /* RetrievalWaitingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetrievalWaitingView.swift; sourceTree = "<group>"; };
@@ -170,7 +168,6 @@
 			isa = PBXGroup;
 			children = (
 				C5D6AE547A29C99FFE1C04FA /* FlightComputerView.swift */,
-				DAF0CB92B964245F9B0EFAE0 /* FlightLiveMapView.swift */,
 				9DB4504830187341C671BD90 /* OneShotLocator.swift */,
 			);
 			path = Flight;
@@ -428,7 +425,6 @@
 				B12EC4B697D18C962AF8ABB9 /* EventScreen.swift in Sources */,
 				42D61C38831DF77B878C87AB /* EventsListView.swift in Sources */,
 				3A501F1EDE06787BFC2E487E /* FlightComputerView.swift in Sources */,
-				89CBEDAD82DB19F1BA5945BE /* FlightLiveMapView.swift in Sources */,
 				99DBDD16A5D6FE7E1A8B5D6D /* FlightsListView.swift in Sources */,
 				D8B30C90786BCF20C6B5AC7F /* Formatting.swift in Sources */,
 				23A62136881612C6C3F4E89D /* OnboardingView.swift in Sources */,

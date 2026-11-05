@@ -374,7 +374,22 @@ final class AppModel {
         landing = LandingPromptDetector(enabled: event.settings?.landingPrompt ?? true)
         try? store.setValue(event.id, forKey: "flightEventId")
         Haptics.start()
-        overlay = .flight
+    }
+
+    /// The flight is shown in its event's bottom sheet: bring that event to front.
+    func openFlightEvent() {
+        overlay = nil
+        guard let id = session.flight?.eventId?.uuidString.lowercased() else { return }
+        selectedTab = .events
+        if case .event(let current)? = eventsPath.last, current.lowercased() == id { return }
+        eventsPath = [.event(id)]
+    }
+
+    /// True while the event screen of the running flight is on screen.
+    var isShowingFlightEvent: Bool {
+        guard overlay == nil, selectedTab == .events, let id = session.flight?.eventId?.uuidString.lowercased(),
+              case .event(let current)? = eventsPath.last else { return false }
+        return current.lowercased() == id
     }
 
     func endFlight() {
@@ -528,7 +543,9 @@ final class AppModel {
     func scenePhaseChanged(_ phase: ScenePhase) {
         switch phase {
         case .active:
-            if session.isActive || session.state == .completed {
+            if session.isActive {
+                if overlay == nil { openFlightEvent() }
+            } else if session.state == .completed {
                 if overlay == nil { overlay = .flight }
             } else if !restoredOverlayShown, overlay == nil, let r = activeRetrieval {
                 // Relaunch with an open retrieve: show the waiting screen again.

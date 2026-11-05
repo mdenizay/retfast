@@ -8,19 +8,6 @@ enum Units: String, CaseIterable, Identifiable {
     static var current: Units { Units(rawValue: UserDefaults.standard.string(forKey: "units") ?? "metric") ?? .metric }
 }
 
-enum FlightComputerTheme: String, CaseIterable, Identifiable {
-    case auto, dark, light, highContrast
-    var id: String { rawValue }
-    var title: LocalizedStringKey {
-        switch self {
-        case .auto: "Otomatik"
-        case .dark: "Koyu"
-        case .light: "Açık"
-        case .highContrast: "Yüksek kontrast (güneş altı)"
-        }
-    }
-}
-
 enum AppAppearance: String, CaseIterable, Identifiable {
     case system, light, dark
     var id: String { rawValue }

@@ -72,14 +72,16 @@ final class EndToEndTests: XCTestCase {
         expectation(for: NSPredicate(format: "label CONTAINS[c] 'Recording' OR label CONTAINS[c] 'Kaydediliyor'"), evaluatedWith: state)
         waitForExpectations(timeout: 60)
 
-        // Leaving the flight screen must not stop recording.
-        app.buttons["fc.minimize"].tap()
+        // Leaving the event screen must not stop recording.
+        app.buttons["event.back"].tap()
         let resume = app.descendants(matching: .any)["activity.flight"].firstMatch
         XCTAssertTrue(resume.waitForExistence(timeout: 5))
         Thread.sleep(forTimeInterval: recordSeconds)
         resume.tap()
 
-        app.buttons["fc.end"].tap()
+        let end = app.buttons["fc.end"]
+        app.reveal(end)
+        end.tap()
         let confirm = app.buttons.matching(NSPredicate(format: "(label == 'End flight' OR label == 'Uçuşu bitir') AND identifier != 'pilot.end'")).firstMatch
         XCTAssertTrue(confirm.waitForExistence(timeout: 5))
         app.settleAndTap(confirm)

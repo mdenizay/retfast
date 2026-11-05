@@ -98,7 +98,7 @@ struct EventScreen: View {
             if EventSheetMode.showsOrganizerTools(event) {
                 OrganizerToolsCard(event: event)
             }
-            EventInfoCard(event: event, sites: sites)
+            EventInfoCard(event: event, live: live)
         }
     }
 

@@ -30,7 +30,7 @@ final class RetrieveFlowUITests: XCTestCase {
         XCTAssertTrue(start.isEnabled, "start must be enabled")
         start.tap()
 
-        // Flight computer: recording with simulated fixes.
+        // The flight runs in the event sheet: recording with simulated fixes.
         let state = app.descendants(matching: .any)["fc.state"]
         XCTAssertTrue(state.waitForExistence(timeout: 10))
         let recording = NSPredicate(format: "label CONTAINS[c] 'Recording' OR label CONTAINS[c] 'Kaydediliyor'")
@@ -38,8 +38,9 @@ final class RetrieveFlowUITests: XCTestCase {
         waitForExpectations(timeout: 20)
 
         // End the flight.
-        app.buttons["fc.end"].tap()
-        // The event sheet behind the cover also has an "End flight" button (pilot.end).
+        let end = app.buttons["fc.end"]
+        app.reveal(end)
+        end.tap()
         let confirm = app.buttons.matching(NSPredicate(format: "(label == 'End flight' OR label == 'Uçuşu bitir') AND identifier != 'pilot.end'")).firstMatch
         XCTAssertTrue(confirm.waitForExistence(timeout: 5))
         app.settleAndTap(confirm)

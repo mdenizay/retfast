@@ -136,7 +136,10 @@ final class EventLiveModel {
         case .position(let ch, let event) where ch == eventChannel:
             apply(event)
         case .flight(let ch, let flight) where ch == eventChannel:
-            if let i = pilots.firstIndex(where: { $0.id == flight.id.lowercased() }) { pilots[i].status = flight.status }
+            if let i = pilots.firstIndex(where: { $0.id == flight.id.lowercased() }) {
+                // Only pilots currently in the air are listed; a finished flight drops off.
+                if flight.status != "recording" { pilots.remove(at: i) } else { pilots[i].status = flight.status }
+            }
         case .retrievalsSnapshot(let ch, let list) where ch == retrievalChannel:
             retrievals = list
             onRetrievalsSnapshot?(list)
@@ -174,6 +177,7 @@ final class EventLiveModel {
         pilots = snapshot.pilots.compactMap { p in
             let id = p.flightId.lowercased()
             if id == excludeFlightId { return nil }
+            if let st = p.status, st != "recording" { return nil }
             let trail: [CLLocationCoordinate2D] = (p.trail ?? []).compactMap { point in
                 guard point.count >= 2, let lon = point[0], let lat = point[1] else { return nil }
                 return CLLocationCoordinate2D(latitude: lat, longitude: lon)

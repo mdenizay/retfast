@@ -5,7 +5,6 @@ struct ProfileView: View {
     @Environment(AppModel.self) private var model
     @AppStorage("units") private var units = Units.metric.rawValue
     @AppStorage("appearance") private var appearance = AppAppearance.system.rawValue
-    @AppStorage("fcTheme") private var fcTheme = FlightComputerTheme.auto.rawValue
     @State private var exportURL: URL?
     @State private var exportError: String?
     @State private var exporting = false
@@ -48,9 +47,6 @@ struct ProfileView: View {
                 }
                 Picker("Uygulama görünümü", selection: $appearance) {
                     ForEach(AppAppearance.allCases) { Text($0.title).tag($0.rawValue) }
-                }
-                Picker("Uçuş bilgisayarı teması", selection: $fcTheme) {
-                    ForEach(FlightComputerTheme.allCases) { Text($0.title).tag($0.rawValue) }
                 }
             }
             Section("Verilerim") {

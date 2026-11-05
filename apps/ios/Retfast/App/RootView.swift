@@ -73,6 +73,7 @@ struct FlowSheets: ViewModifier {
                 Button("Uçuşu bitir, retrieve gerekmez") {
                     model.showLandingPrompt = false
                     model.endFlight()
+                    model.overlay = .flight
                 }
                 Button("Hâlâ uçuyorum", role: .cancel) { model.snoozeLandingPrompt() }
             } message: {
@@ -121,9 +122,9 @@ struct ActivityBar: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if model.session.isActive && model.overlay != .flight {
+            if model.session.isActive && !model.isShowingFlightEvent {
                 bar(tone: .active, accessibilityId: "activity.flight") {
-                    model.overlay = .flight
+                    model.openFlightEvent()
                 } content: {
                     Image(systemName: model.session.state.systemImage)
                         .symbolEffect(.pulse, isActive: model.session.state == .recording)
@@ -133,7 +134,7 @@ struct ActivityBar: View {
                             .font(.subheadline.monospacedDigit())
                     }
                     Spacer(minLength: 4)
-                    Text("Uçuş ekranı").font(.subheadline)
+                    Text("Uçuşa dön").font(.subheadline)
                 }
             }
             if let r = model.activeRetrieval, model.overlay != .retrieval(r.id) {

@@ -179,7 +179,8 @@ struct RetrievalWaitingView: View {
                         let c = r.map(myCoordinate) ?? CLLocationCoordinate2D(latitude: rp.lat, longitude: rp.lon)
                         let me = (c.latitude, c.longitude)
                         TimelineView(.periodic(from: .now, by: 10)) { ctx in
-                            Text("\(Fmt.distanceText(Fmt.meters((rp.lat, rp.lon), me))) uzakta" + (rp.t.map { " · \(Fmt.age(max(0, ctx.date.timeIntervalSince($0)))) önce" } ?? ""))
+                            Text(rp.t.map { String(localized: "\(Fmt.distanceText(Fmt.meters((rp.lat, rp.lon), me))) uzakta · \(Fmt.age(max(0, ctx.date.timeIntervalSince($0)))) önce") }
+                                 ?? String(localized: "\(Fmt.distanceText(Fmt.meters((rp.lat, rp.lon), me))) uzakta"))
                                 .font(.subheadline.monospacedDigit()).foregroundStyle(AeroTokens.textSecondary)
                         }
                     } else {

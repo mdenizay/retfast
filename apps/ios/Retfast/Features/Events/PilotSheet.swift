@@ -24,11 +24,11 @@ struct PilotSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
             if flightHere {
-                InFlightCard(confirmEnd: $confirmEnd)
+                FlightPanel(confirmEnd: $confirmEnd)
             } else if model.session.isActive {
                 AeroCard {
                     WarningRow(text: String(localized: "Başka bir etkinlikte (\(model.session.flight?.eventName ?? "—")) uçuş kaydı sürüyor. Önce onu bitir."))
-                    Button("Uçuş ekranına git") { model.overlay = .flight }.buttonStyle(.aeroSecondary)
+                    Button("O etkinliğe git") { model.openFlightEvent() }.buttonStyle(.aeroSecondary)
                 }
             } else if let r = model.activeRetrieval(eventId: event.id) {
                 RetrievalStatusCard(retrieval: r)
@@ -38,7 +38,7 @@ struct PilotSheet: View {
         }
         .confirmationDialog("Uçuşu bitir?", isPresented: $confirmEnd, titleVisibility: .visible) {
             Button("Uçuşu bitir ve retrieve iste") { model.endFlightAndRequestRetrieve() }
-            Button("Uçuşu bitir", role: .destructive) { model.endFlight() }
+            Button("Uçuşu bitir", role: .destructive) { model.endFlight(); model.overlay = .flight }
             Button("Vazgeç", role: .cancel) {}
         } message: {
             Text("Kayıt durdurulur. Gönderilmemiş noktalar bağlantı gelince gönderilmeye devam eder.")
@@ -63,13 +63,6 @@ struct PilotSheet: View {
         .buttonStyle(.aeroPrimaryLarge)
         .disabled(!canStart)
         .accessibilityIdentifier("pilot.start")
-        Button {
-            model.retrieveRequest = RetrieveContext(eventId: event.id.lowercased(), eventName: event.name, flightId: nil)
-        } label: {
-            Label("Kayıt olmadan retrieve iste", systemImage: "car")
-        }
-        .buttonStyle(.aeroSecondary)
-        .accessibilityIdentifier("pilot.retrieveWithoutFlight")
     }
 
     private var canStart: Bool {
@@ -130,42 +123,6 @@ struct PreFlightView: View {
     }
 }
 
-/// Compact flight summary inside the event sheet while recording.
-struct InFlightCard: View {
-    @Environment(AppModel.self) private var model
-    @Binding var confirmEnd: Bool
-
-    var body: some View {
-        let v = model.session.values
-        let alt = Fmt.altitude(v.gpsAltitude)
-        let speed = Fmt.speed(v.groundSpeed)
-        VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
-            HStack(alignment: .firstTextBaseline) {
-                Label(String(localized: model.session.state.titleValue), systemImage: model.session.state.systemImage)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(model.session.state.tone.color)
-                    .symbolEffect(.pulse, isActive: model.session.state == .recording)
-                Spacer()
-                TimelineView(.periodic(from: .now, by: 1)) { ctx in
-                    Text(Fmt.duration(ctx.date.timeIntervalSince(model.session.flight?.startedAt ?? ctx.date)))
-                        .font(.system(.title, design: .rounded).monospacedDigit().weight(.bold))
-                }
-            }
-            HStack(spacing: AeroTokens.Space.s2) {
-                InstrumentTile(label: String(localized: "GPS irtifa"), value: alt.0, unit: alt.1)
-                InstrumentTile(label: String(localized: "Yer hızı"), value: speed.0, unit: speed.1)
-            }
-            SyncBadge(snapshot: model.syncSnapshot)
-            Button { confirmEnd = true } label: { Label("İndim", systemImage: "arrow.down.to.line") }
-                .buttonStyle(.aeroPrimaryLarge)
-                .accessibilityIdentifier("pilot.end")
-            Button { model.overlay = .flight } label: { Label("Uçuş ekranı", systemImage: "gauge.with.dots.needle.67percent") }
-                .buttonStyle(.aeroInk)
-                .accessibilityIdentifier("pilot.openFlight")
-        }
-    }
-}
-
 /// The pilot's open retrieve, inside the event sheet.
 struct RetrievalStatusCard: View {
     @Environment(AppModel.self) private var model
@@ -208,21 +165,21 @@ extension FlightSessionState {
 
 // MARK: Readiness
 
-/// Pre-flight readiness: permission (incl. Always), precision, GPS fix,
-/// battery, network, storage, background, notifications. Offline is allowed.
+/// Pre-flight readiness as separate cards: location permission, precision,
+/// GPS fix, background note, notifications. Only what affects tracking;
+/// no device inventory (battery/storage/network) on purpose.
 struct ReadinessList: View {
     @Environment(AppModel.self) private var model
     @Environment(\.openURL) private var openURL
-    var compact = false
     @State private var locator = OneShotLocator()
-    @State private var conditions = DeviceConditions.unknown
+    @State private var lowPowerMode = ProcessInfo.processInfo.isLowPowerModeEnabled
     @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
-    @State private var expanded = false
 
     struct Item: Identifiable {
         let id: String
         let tone: Tone
-        let text: String
+        let title: String
+        var detail: String?
         let icon: String
         var action: (title: LocalizedStringKey, run: () -> Void)?
     }
@@ -230,30 +187,10 @@ struct ReadinessList: View {
     private var auth: LocationAuthorization { model.session.authorization }
 
     var body: some View {
-        let items = self.items
-        let problems = items.filter { $0.tone != .success && $0.tone != .info }
-        AeroCard {
-            HStack {
-                SectionHeader(title: String(localized: "Uçuş öncesi"))
-                Spacer()
-                if problems.isEmpty {
-                    StatusPill(String(localized: "Hazır"), systemImage: "checkmark.seal", tone: .success)
-                } else {
-                    StatusPill(String(localized: "\(problems.count) uyarı"), systemImage: "exclamationmark.triangle", tone: .warning)
-                }
-            }
-            ForEach(compact && !expanded ? items.filter { $0.tone == .error } : items) { item in row(item) }
-            if compact {
-                Button {
-                    withAnimation(.snappy) { expanded.toggle() }
-                } label: {
-                    Label(expanded ? "Gizle" : "Kontrolleri göster", systemImage: expanded ? "chevron.up" : "chevron.down")
-                }
-                .font(.subheadline.weight(.semibold))
-            }
+        VStack(spacing: AeroTokens.Space.s3) {
+            ForEach(items) { card($0) }
         }
         .onAppear {
-            conditions = DeviceStatus.current()
             locator.request()
             UNUserNotificationCenter.current().getNotificationSettings { s in
                 let status = s.authorizationStatus
@@ -261,32 +198,59 @@ struct ReadinessList: View {
             }
         }
         .onChange(of: auth) { _, _ in locator.request() }
-        .onReceive(NotificationCenter.default.publisher(for: UIDevice.batteryLevelDidChangeNotification)) { _ in conditions = DeviceStatus.current() }
-        .onReceive(NotificationCenter.default.publisher(for: .NSProcessInfoPowerStateDidChange)) { _ in conditions = DeviceStatus.current() }
+        .onReceive(NotificationCenter.default.publisher(for: .NSProcessInfoPowerStateDidChange)) { _ in
+            Task { @MainActor in lowPowerMode = ProcessInfo.processInfo.isLowPowerModeEnabled }
+        }
     }
 
-    private func row(_ item: Item) -> some View {
-        VStack(alignment: .leading, spacing: AeroTokens.Space.s1) {
-            HStack(alignment: .top, spacing: AeroTokens.Space.s3) {
-                Image(systemName: item.icon).foregroundStyle(item.tone.color).frame(width: 22)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(item.text).font(.subheadline).fixedSize(horizontal: false, vertical: true)
-                    Text(toneLabel(item.tone)).font(.caption2.weight(.semibold)).foregroundStyle(item.tone.color)
+    private func card(_ item: Item) -> some View {
+        VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
+            HStack(alignment: .center, spacing: AeroTokens.Space.s3) {
+                Image(systemName: item.icon)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(item.tone.color)
+                    .frame(width: 48, height: 48)
+                    .background(item.tone.color.opacity(0.14), in: Circle())
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.title).font(.headline).foregroundStyle(AeroTokens.textPrimary)
+                    if let d = item.detail {
+                        Text(d).font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
+                Spacer(minLength: 0)
+                statusMark(item.tone)
             }
             if let action = item.action {
-                Button(action.title, action: action.run).font(.subheadline.weight(.semibold)).padding(.leading, 34)
+                Button(action: action.run) {
+                    Text(action.title).font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity).padding(.vertical, 10)
+                        .background(AeroTokens.background, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(AeroTokens.textPrimary)
             }
         }
+        .padding(AeroTokens.Space.s4)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
         .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("preflight.check.\(item.id)")
     }
 
-    private func toneLabel(_ tone: Tone) -> LocalizedStringKey {
+    @ViewBuilder private func statusMark(_ tone: Tone) -> some View {
         switch tone {
-        case .success: "Hazır"
-        case .warning: "Uyarı"
-        case .error: "Engel"
-        default: "Bilgi"
+        case .success:
+            Image(systemName: "checkmark.circle.fill").font(.title2).foregroundStyle(AeroTokens.success)
+                .accessibilityLabel(Text("Hazır"))
+        case .error:
+            Image(systemName: "xmark.circle.fill").font(.title2).foregroundStyle(AeroTokens.error)
+                .accessibilityLabel(Text("Engel"))
+        case .warning:
+            Image(systemName: "exclamationmark.circle.fill").font(.title2).foregroundStyle(AeroTokens.warning)
+                .accessibilityLabel(Text("Uyarı"))
+        default:
+            EmptyView()
         }
     }
 
@@ -298,85 +262,79 @@ struct ReadinessList: View {
         var out: [Item] = []
         // Permission
         if !auth.servicesEnabled {
-            out.append(Item(id: "perm", tone: .error, text: String(localized: "Konum servisleri kapalı."), icon: "location.slash", action: settings))
+            out.append(Item(id: "perm", tone: .error, title: String(localized: "Konum servisleri kapalı"),
+                            detail: String(localized: "Uçuş kaydı için Ayarlar'dan aç."), icon: "location.slash", action: settings))
         } else {
             switch auth.status {
             case .always:
-                out.append(Item(id: "perm", tone: .success, text: String(localized: "Konum izni: Her Zaman. Ekran kilitliyken kayıt ve paylaşım sürer."), icon: "location.fill"))
+                out.append(Item(id: "perm", tone: .success, title: String(localized: "Konum izni"),
+                                detail: String(localized: "Her Zaman · ekran kilitliyken de kayıt sürer."), icon: "location.fill"))
             case .whenInUse:
-                out.append(Item(id: "perm", tone: .warning, text: String(localized: "Konum izni: Kullanımdayken. Kayıt arka planda sürer ama \"Her Zaman\" iOS kesintilerinden sonra kendiliğinden devam etmeyi sağlar."),
+                out.append(Item(id: "perm", tone: .warning, title: String(localized: "Konum izni"),
+                                detail: String(localized: "Kullanımdayken · \"Her Zaman\" kesintilerden sonra kaydın kendiliğinden sürmesini sağlar."),
                                 icon: "location", action: ("\"Her Zaman\" iste", { model.session.requestAlwaysAuthorization() })))
             case .notDetermined:
-                out.append(Item(id: "perm", tone: .warning, text: String(localized: "Konum izni henüz verilmedi."), icon: "location.circle",
+                out.append(Item(id: "perm", tone: .warning, title: String(localized: "Konum izni"),
+                                detail: String(localized: "Henüz verilmedi."), icon: "location.circle",
                                 action: ("İzin ver", { model.session.requestWhenInUseAuthorization() })))
             case .denied, .restricted:
-                out.append(Item(id: "perm", tone: .error, text: String(localized: "Konum izni reddedildi. Uçuş kaydı için Ayarlar'dan izin ver."), icon: "location.slash", action: settings))
+                out.append(Item(id: "perm", tone: .error, title: String(localized: "Konum izni"),
+                                detail: String(localized: "Reddedildi. Uçuş kaydı için Ayarlar'dan izin ver."), icon: "location.slash", action: settings))
             }
         }
         if auth.canRecord {
             out.append(auth.fullAccuracy
-                ? Item(id: "precise", tone: .success, text: String(localized: "Hassas konum açık."), icon: "scope")
-                : Item(id: "precise", tone: .error, text: String(localized: "Yaklaşık konum seçili: iz ve retrieve konumu kilometrelerce hatalı olabilir."), icon: "scope",
+                ? Item(id: "precise", tone: .success, title: String(localized: "Hassas konum"), detail: String(localized: "Açık"), icon: "scope")
+                : Item(id: "precise", tone: .error, title: String(localized: "Hassas konum"),
+                       detail: String(localized: "Yaklaşık konum seçili; iz ve alınma noktası hatalı olur."), icon: "scope",
                        action: ("Hassas konum iste", { (model.location as? LocationEngine)?.requestTemporaryFullAccuracy() })))
         }
         // GPS fix
         if let fix = locator.fix {
             let acc = fix.horizontalAccuracy
             out.append(Item(id: "fix", tone: acc <= 20 ? .success : (acc <= 50 ? .warning : .error),
-                            text: String(localized: "GPS doğruluğu \(Fmt.accuracy(acc)) · \(Fmt.relative(fix.timestamp))"), icon: "location.north.circle",
-                            action: ("Yenile", { locator.request() })))
+                            title: String(localized: "GPS sinyali"),
+                            detail: String(localized: "Doğruluk \(Fmt.accuracy(acc)) · \(Fmt.relative(fix.timestamp))"),
+                            icon: "location.north.circle",
+                            action: acc <= 20 ? nil : ("Yenile", { locator.request() })))
         } else if auth.canRecord {
-            out.append(Item(id: "fix", tone: .info, text: locator.failed ? String(localized: "Henüz GPS konumu yok. Açık gökyüzü altında bekle.") : String(localized: "GPS konumu alınıyor…"),
+            out.append(Item(id: "fix", tone: .info, title: String(localized: "GPS sinyali"),
+                            detail: locator.failed ? String(localized: "Henüz konum yok. Açık gökyüzü altında bekle.") : String(localized: "Konum alınıyor…"),
                             icon: "location.magnifyingglass", action: ("Yenile", { locator.request() })))
         }
-        // Battery
-        if conditions.lowPowerMode {
-            out.append(Item(id: "lpm", tone: .warning, text: String(localized: "Düşük Güç Modu açık: iOS konum güncellemelerini seyrekleştirebilir."), icon: "battery.25percent"))
-        }
-        if let level = conditions.batteryLevel {
-            out.append(Item(id: "battery", tone: level < 0.2 ? .error : (level < 0.4 ? .warning : .success),
-                            text: String(localized: "Pil \(Fmt.battery(level))") + (conditions.batteryState == .charging ? String(localized: " · şarj oluyor") : ""),
-                            icon: level < 0.4 ? "battery.25percent" : "battery.100percent"))
-        } else {
-            out.append(Item(id: "battery", tone: .info, text: String(localized: "Pil seviyesi okunamıyor (simülatör)."), icon: "battery.0percent"))
-        }
-        // Network
-        out.append(model.networkStatus.isConnected
-            ? Item(id: "net", tone: .success, text: String(localized: "İnternet bağlantısı var") + (model.networkStatus.isConstrained ? String(localized: " (Düşük Veri Modu)") : ""), icon: "wifi")
-            : Item(id: "net", tone: .warning, text: String(localized: "Bağlantı yok. Kayıt çevrimdışı yapılır; canlı haritada görünmezsin, retrieve talebi bağlantı gelince gönderilir."), icon: "wifi.slash"))
-        // Storage
-        if let free = Self.freeBytes() {
-            out.append(Item(id: "storage", tone: free < 200_000_000 ? .warning : .success, text: String(localized: "Boş alan \(Fmt.bytes(free))"), icon: "internaldrive"))
+        if lowPowerMode {
+            out.append(Item(id: "lpm", tone: .warning, title: String(localized: "Düşük Güç Modu"),
+                            detail: String(localized: "Açıkken iOS konum güncellemelerini seyrekleştirebilir."), icon: "bolt.slash"))
         }
         // Background
         let modes = Bundle.main.object(forInfoDictionaryKey: "UIBackgroundModes") as? [String] ?? []
         if !modes.contains("location") {
-            out.append(Item(id: "bg", tone: .error, text: String(localized: "Uygulama arka plan konumu için yapılandırılmamış."), icon: "exclamationmark.octagon"))
+            out.append(Item(id: "bg", tone: .error, title: String(localized: "Arka plan konumu"),
+                            detail: String(localized: "Uygulama arka plan konumu için yapılandırılmamış."), icon: "exclamationmark.octagon"))
         } else {
-            out.append(Item(id: "bg", tone: auth.status == .always && !conditions.lowPowerMode ? .success : .warning,
-                            text: String(localized: "Uygulamayı uygulama değiştiriciden kaydırarak kapatma; kapatırsan iOS konum vermeyi durdurur."), icon: "hand.raised"))
+            out.append(Item(id: "bg", tone: .info, title: String(localized: "Uygulamayı kapatma"),
+                            detail: String(localized: "Uçarken uygulamayı yukarı kaydırıp kapatırsan kayıt durur."), icon: "hand.raised"))
         }
         // Notifications (landing reminder in the background)
-        if notificationStatus == .notDetermined {
-            out.append(Item(id: "notif", tone: .info, text: String(localized: "Bildirim izni: uygulama arka plandayken iniş hatırlatması için."), icon: "bell",
+        switch notificationStatus {
+        case .notDetermined:
+            out.append(Item(id: "notif", tone: .warning, title: String(localized: "Bildirimler"),
+                            detail: String(localized: "İniş hatırlatması için izin ver."), icon: "bell",
                             action: ("Bildirimlere izin ver", {
                                 UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { ok, _ in
                                     Task { @MainActor in notificationStatus = ok ? .authorized : .denied }
                                 }
                             })))
-        }
-        let pending = (try? model.store.pendingCount()) ?? 0
-        if pending > 0 && !model.session.isActive {
-            out.append(Item(id: "pending", tone: .info, text: String(localized: "Önceki uçuşlardan \(pending) nokta henüz gönderilmedi; bağlantı gelince gönderilir."), icon: "tray.full"))
+        case .denied:
+            out.append(Item(id: "notif", tone: .warning, title: String(localized: "Bildirimler"),
+                            detail: String(localized: "Kapalı · iniş hatırlatması gelmez."), icon: "bell.slash", action: settings))
+        default:
+            out.append(Item(id: "notif", tone: .success, title: String(localized: "Bildirimler"), detail: String(localized: "Açık"), icon: "bell.fill"))
         }
         if model.isSimulatedBuild {
-            out.append(Item(id: "sim", tone: .info, text: String(localized: "Simülatör/test: konumlar simüle edilir ve uçuş SIM olarak işaretlenir. Gerçek cihaz doğrulaması değildir."), icon: "desktopcomputer"))
+            out.append(Item(id: "sim", tone: .info, title: String(localized: "Test modu"),
+                            detail: String(localized: "Konumlar simüle edilir; uçuş SIM olarak işaretlenir."), icon: "testtube.2"))
         }
         return out
-    }
-
-    static func freeBytes() -> Int64? {
-        let url = URL(fileURLWithPath: NSHomeDirectory())
-        return (try? url.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]))?.volumeAvailableCapacityForImportantUsage
     }
 }

@@ -229,40 +229,30 @@ struct EventSheetHeader: View {
 /// Event details card (description, dates, launch sites).
 struct EventInfoCard: View {
     let event: Event
-    let sites: [LaunchSite]
+    var live: EventLiveModel?
 
     var body: some View {
-        AeroCard {
-            SectionHeader(title: String(localized: "Etkinlik"))
+        VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
+            HStack(spacing: AeroTokens.Space.s2) {
+                fact("calendar", EventDates.range(event))
+                if let live { fact("paperplane.fill", String(localized: "\(live.pilots.count) uçuşta")) }
+            }
+            if let loc = event.locationName, !loc.isEmpty { fact("mappin.and.ellipse", loc) }
+            if let o = event.organizers, !o.isEmpty { fact("person.crop.circle", o.map(\.displayName).joined(separator: ", ")) }
             if let d = event.description, !d.isEmpty {
                 Text(d).font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
             }
-            if let loc = event.locationName, !loc.isEmpty {
-                KeyValueRow(key: String(localized: "Yer"), value: loc)
-            }
-            KeyValueRow(key: String(localized: "Tarih"), value: EventDates.range(event))
-            if let o = event.organizers, !o.isEmpty {
-                KeyValueRow(key: String(localized: "Organizatör"), value: o.map(\.displayName).joined(separator: ", "))
-            }
-            if let c = event.counts {
-                KeyValueRow(key: String(localized: "Pilot / gözlemci / retriever"),
-                            value: "\(c.pilots ?? 0) / \(c.observers ?? 0) / \(c.retrievers ?? 0)")
-            }
-            if event.center != nil, event.centerIsApproximate ?? false {
-                WarningRow(text: String(localized: "Etkinlik merkezi yaklaşıktır; kalkış alanı olarak kullanmayın."), systemImage: "scope")
-            }
         }
-        if !sites.isEmpty {
-            AeroCard {
-                SectionHeader(title: String(localized: "Kalkış alanları"))
-                ForEach(sites) { s in
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(s.name).font(.subheadline.weight(.semibold))
-                        LaunchSiteBadges(site: s)
-                        if let n = s.notes, !n.isEmpty { Text(n).font(.caption).foregroundStyle(AeroTokens.textSecondary) }
-                    }
-                }
-            }
-        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityIdentifier("event.info")
+    }
+
+    private func fact(_ icon: String, _ text: String) -> some View {
+        Label(text, systemImage: icon)
+            .font(.subheadline)
+            .foregroundStyle(AeroTokens.textPrimary)
+            .lineLimit(1)
+            .padding(.horizontal, 12).padding(.vertical, 8)
+            .background(AeroTokens.surface, in: Capsule())
     }
 }

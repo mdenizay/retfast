@@ -138,6 +138,7 @@ Application = { "id","event_id","user":{"user_id","full_name","email","public_id
 | POST | `/events/{id}/leave` | member | |
 | GET/POST | `/events/{id}/launch-sites` | read: as event; write: organizer | |
 | PATCH/DELETE | `/events/{id}/launch-sites/{site_id}` | organizer | |
+| GET | `/events/{id}/weather` | as event (public for public events) | Open-Meteo forecast for the event centre, next 12 h: `{source, attribution, elevation_m, current{…}, hourly[{t, wind_ms, wind_dir_deg, gust_ms, wind_850_ms, cape_jkg, precip_prob_pct, cloud_base_m, flyability, fly_reasons}], flyability, fly_reasons}`. `flyability` ∈ good/marginal/poor/unknown is a coarse advisory. Cached 10 min per ~1 km cell; 404 without a centre, 503 when upstream fails. Attribution must be shown. |
 | GET | `/events/{id}/live` | see "Live visibility" | snapshot |
 | GET | `/events/{id}/report` | organizer/admin | members by role, flights, durations, telemetry completeness, interruptions, retrievals (count, median request→accept, accept→pickup, pickup→delivery) |
 
@@ -281,6 +282,7 @@ Retrieval = {
 | POST | `/retrievals/{id}/cancel` | pilot (own) or organizer/admin | `{reason?}` (e.g. "kendim döndüm") |
 | POST | `/retrievals/{id}/notes` | pilot, accepting retriever, organizer | `{body}` |
 | POST | `/events/{id}/retrievers/me/position` | event retriever | `{lat, lon, h_acc_m, t, course_deg?, speed_ms?}` while on duty or holding an active retrieval |
+| GET | `/events/{id}/retrievers/{user_id}/track?minutes=180` | organizer/observer/admin, or that retriever | `{user_id, items:[{t, lat, lon, h_acc_m, course_deg, speed_ms}]}` oldest first; window ≤ 1440 min, ≤ 5000 points |
 | PUT | `/events/{id}/retrievers/me/duty` | event retriever | `{on_duty: bool}` — shows them as available to organizers |
 
 Visibility: organizers/observers/admin see all retrievals of the event; retrievers see all `requested` ones plus those they accepted; pilots see their own. Every state change is written to `audit_logs` and pushed on `retrievals:<event_id>`.

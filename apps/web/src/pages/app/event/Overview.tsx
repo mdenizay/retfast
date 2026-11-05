@@ -8,6 +8,7 @@ import { ErrorState, KeyValue, Loading, Panel } from "@/components/common";
 import { FlightStatusBadge, SimBadge } from "@/components/status";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { WeatherPanel } from "@/features/events/WeatherPanel";
 import { useEventContext } from "@/features/events/context";
 import { SETTING_LABELS } from "@/features/events/settings";
 
@@ -61,6 +62,7 @@ export default function EventOverviewPage() {
             ]}
           />
         </Panel>
+        <WeatherPanel event={e} />
         <Panel
           title={t("eventForm.settings")}
           actions={access.canManage ? <Link to={`/app/events/${e.id}/settings`} className="text-footnote text-primary hover:underline">{t("common.edit")}</Link> : undefined}

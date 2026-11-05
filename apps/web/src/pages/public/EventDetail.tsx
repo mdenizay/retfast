@@ -8,6 +8,7 @@ import { useSession } from "@/lib/auth";
 import { eventAccess, myEventRoles } from "@/lib/roles";
 import { MEMBER_ROLES, type RfEvent } from "@/lib/api/types";
 import { fmtCoord, fmtDateTime } from "@/lib/format";
+import { WeatherPanel } from "@/features/events/WeatherPanel";
 import { ErrorState, Field, FormError, KeyValue, Loading, Panel } from "@/components/common";
 import { ApplicationStatusBadge, RoleBadge } from "@/components/status";
 import { ROLE_ICON } from "@/components/stateIcons";
@@ -80,20 +81,23 @@ export default function PublicEventDetailPage() {
               )}
           </Panel>
         </div>
-        <Panel title={t("eventPage.details")}>
-          <KeyValue
-            items={[
-              [t("eventPage.starts"), fmtDateTime(e.starts_at, locale)],
-              [t("eventPage.ends"), fmtDateTime(e.ends_at, locale)],
-              [t("eventPage.organizers"), e.organizers?.length ? e.organizers.map((o) => o.full_name).join(", ") : t("eventPage.noOrganizers")],
-              [t("eventPage.members"), t("eventPage.membersValue", { p: e.counts?.pilots ?? 0, o: e.counts?.observers ?? 0, r: e.counts?.retrievers ?? 0 })],
-              [t("eventPage.applications"), e.settings.applications_open ? t("eventPage.applicationsOpen") : t("eventPage.applicationsClosed")],
-              [t("eventPage.liveMap"), !e.settings.live_tracking ? t("eventPage.liveOff") : e.settings.public_live_map ? t("eventPage.livePublic") : t("eventPage.liveMembers")],
-              ...(e.center ? ([[t("eventPage.center"), `${fmtCoord(e.center.lat, e.center.lon)}${e.center_is_approximate ? ` (${t("eventPage.approx")})` : ""}`]] as [string, string][]) : []),
-            ]}
-          />
-          {e.is_demo && <p className="mt-4 border-t border-border pt-3 text-caption text-fg-muted">{t("eventPage.demoNote")}</p>}
-        </Panel>
+        <div className="space-y-6">
+          <Panel title={t("eventPage.details")}>
+            <KeyValue
+              items={[
+                [t("eventPage.starts"), fmtDateTime(e.starts_at, locale)],
+                [t("eventPage.ends"), fmtDateTime(e.ends_at, locale)],
+                [t("eventPage.organizers"), e.organizers?.length ? e.organizers.map((o) => o.full_name).join(", ") : t("eventPage.noOrganizers")],
+                [t("eventPage.members"), t("eventPage.membersValue", { p: e.counts?.pilots ?? 0, o: e.counts?.observers ?? 0, r: e.counts?.retrievers ?? 0 })],
+                [t("eventPage.applications"), e.settings.applications_open ? t("eventPage.applicationsOpen") : t("eventPage.applicationsClosed")],
+                [t("eventPage.liveMap"), !e.settings.live_tracking ? t("eventPage.liveOff") : e.settings.public_live_map ? t("eventPage.livePublic") : t("eventPage.liveMembers")],
+                ...(e.center ? ([[t("eventPage.center"), `${fmtCoord(e.center.lat, e.center.lon)}${e.center_is_approximate ? ` (${t("eventPage.approx")})` : ""}`]] as [string, string][]) : []),
+              ]}
+            />
+            {e.is_demo && <p className="mt-4 border-t border-border pt-3 text-caption text-fg-muted">{t("eventPage.demoNote")}</p>}
+          </Panel>
+          <WeatherPanel event={e} />
+        </div>
       </div>
     </div>
   );

@@ -33,6 +33,7 @@ import (
 	"github.com/mdenizay/retfast/services/api/internal/retrievals"
 	"github.com/mdenizay/retfast/services/api/internal/tracking"
 	"github.com/mdenizay/retfast/services/api/internal/users"
+	"github.com/mdenizay/retfast/services/api/internal/weather"
 )
 
 // Version is set at build time (-ldflags "-X .../internal/app.Version=...").
@@ -102,6 +103,7 @@ func New(ctx context.Context, cfg *config.Config, log *slog.Logger, pool *pgxpoo
 	telemetryH := &tracking.Handler{Ingestor: a.Ingestor, Limiter: lim}
 	retrievalsH := &retrievals.Handler{Pool: pool, Q: q, Limiter: lim, Metrics: m}
 	notifH := &notifications.Handler{Q: q}
+	weatherH := &weather.Handler{Q: q, Redis: rdb, Client: &weather.Client{BaseURL: cfg.OpenMeteoURL}, Log: log}
 	adminH := &admin.Handler{Pool: pool, Q: q, Redis: rdb, Auth: a.Auth, Status: a.checks}
 
 	r := chi.NewRouter()
@@ -130,6 +132,7 @@ func New(ctx context.Context, cfg *config.Config, log *slog.Logger, pool *pgxpoo
 				flightsH.PublicRoutes(r)
 				liveH.Routes(r)
 				usersH.PublicRoutes(r)
+				weatherH.Routes(r)
 			})
 			r.Group(func(r chi.Router) {
 				r.Use(a.Auth.Middleware(auth.RequiredAllowPCR))

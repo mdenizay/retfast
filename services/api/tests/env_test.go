@@ -151,6 +151,8 @@ func newEnvWith(t *testing.T, o envOpts) *Env {
 			return "127.0.0.1,::1"
 		case "SHUTDOWN_TIMEOUT":
 			return "10s"
+		case "OPEN_METEO_URL":
+			return wxStubURL()
 		case "LOG_LEVEL":
 			return envOr("RETFAST_TEST_LOG_LEVEL", "error")
 		}

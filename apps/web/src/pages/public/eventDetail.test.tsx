@@ -120,3 +120,32 @@ describe("public event detail", () => {
     expect(await screen.findByRole("link", { name: /Canlı haritayı aç/ })).toHaveAttribute("href", `/events/${SLUG}/live`);
   });
 });
+
+describe("event weather", () => {
+  it("shows the flyability verdict, reasons and the attribution", async () => {
+    serveEvent(() => event({ center: { lat: 37.7, lon: 29.13 } }));
+    server.use(
+      http.get(`${API()}/events/e-1/weather`, () =>
+        HttpResponse.json({
+          source: "open-meteo", attribution: "Weather data by Open-Meteo.com (CC BY 4.0)", lat: 37.7, lon: 29.13, elevation_m: 1250,
+          fetched_at: "2026-11-05T10:00:00Z",
+          current: { t: "2026-11-05T10:00:00Z", temp_c: 14, wind_ms: 6, wind_dir_deg: 250, gust_ms: 9, cloud_cover_pct: 20, precip_mm: 0 },
+          hourly: [{ t: "2026-11-05T10:00:00Z", temp_c: 14, dew_point_c: 6, wind_ms: 6, wind_dir_deg: 250, gust_ms: 9, wind_850_ms: 7,
+            wind_850_dir_deg: 240, cape_jkg: 100, precip_prob_pct: 0, cloud_cover_pct: 20, cloud_base_m: 2250, flyability: "marginal", fly_reasons: ["strong_wind", "gusty"] }],
+          flyability: "marginal", fly_reasons: ["strong_wind", "gusty"],
+        })),
+    );
+    renderApp(`/events/${SLUG}`, { session: null });
+    expect(await screen.findByText("Sınırda")).toBeInTheDocument();
+    expect(screen.getByText("Kuvvetli rüzgâr")).toBeInTheDocument();
+    expect(screen.getByText("Hamleli")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open-Meteo.com" })).toHaveAttribute("href", "https://open-meteo.com/");
+  });
+
+  it("degrades quietly when weather is unavailable", async () => {
+    serveEvent(() => event({ center: { lat: 37.7, lon: 29.13 } }));
+    server.use(http.get(`${API()}/events/e-1/weather`, () => HttpResponse.json({ error: { code: "unavailable", message: "x" } }, { status: 503 })));
+    renderApp(`/events/${SLUG}`, { session: null });
+    expect(await screen.findByText("Hava durumu şu an alınamıyor.", {}, { timeout: 5000 })).toBeInTheDocument();
+  });
+});

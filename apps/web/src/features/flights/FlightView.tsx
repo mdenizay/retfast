@@ -6,7 +6,7 @@ import { useI18n } from "@/lib/i18n";
 import { eventsApi, flightsApi } from "@/lib/api/endpoints";
 import type { Flight, Position } from "@/lib/api/types";
 import { useSession } from "@/lib/auth";
-import { fmtAccuracy, fmtAltitude, fmtDateTime, fmtDistance, fmtDuration, fmtNumber, fmtPercent, fmtSpeed } from "@/lib/format";
+import { fmtAccuracy, fmtAltitude, fmtDateTime, fmtDistance, fmtDuration, fmtNumber, fmtPercent, fmtSpeed, fmtVario } from "@/lib/format";
 import { EmptyState, ErrorState, FormError, Loading, Panel, Stat } from "@/components/common";
 import { FlightStatusBadge, SimBadge } from "@/components/status";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { MapCanvas } from "@/components/map/MapCanvas";
 import { FlightRouteLayers } from "./FlightRouteLayers";
 import { FlightCharts } from "./FlightCharts";
 import { gpsQuality } from "./quality";
+import { paraStats } from "./paraStats";
 
 export function FlightView({ idOrPublicId, mode }: { idOrPublicId: string; mode: "public" | "app" }) {
   const { t, locale } = useI18n();
@@ -63,6 +64,7 @@ export function FlightView({ idOrPublicId, mode }: { idOrPublicId: string; mode:
         <GpsQualityPanel flight={f} positions={pts} />
       </div>
 
+      {pts.length > 1 && <ParaPanel positions={pts} />}
       {pts.length > 1 && <FlightCharts positions={pts} />}
       <p className="text-caption text-fg-muted">{t("flight.altNote")}</p>
     </div>
@@ -166,6 +168,32 @@ function GpsQualityPanel({ flight: f, positions }: { flight: Flight; positions: 
         </div>
       )}
       <p className="mt-4 text-caption text-fg-muted">{t("flight.qualityNote")}</p>
+    </Panel>
+  );
+}
+
+function ParaPanel({ positions }: { positions: Position[] }) {
+  const { t, locale } = useI18n();
+  const s = useMemo(() => paraStats(positions), [positions]);
+  if (!s) return null;
+  const items: [string, string, string?][] = [
+    [t("flight.thermals"), fmtNumber(s.climbCount, locale), t("flight.thermalsHint")],
+    [t("flight.bestClimb"), fmtVario(s.bestClimbAvg, locale)],
+    [t("flight.maxClimb"), fmtVario(s.maxClimb, locale)],
+    [t("flight.maxSink"), fmtVario(s.maxSink, locale)],
+    [t("flight.climbShare"), fmtPercent(s.climbingShare, locale)],
+    [t("flight.avgSpeed"), fmtSpeed(s.avgSpeed, locale)],
+    [t("flight.straight"), fmtDistance(s.straightDistance, locale)],
+    [t("flight.maxFrom"), fmtDistance(s.maxFromTakeoff, locale)],
+    [t("flight.takeoffAlt"), fmtAltitude(s.takeoffAlt, locale)],
+    [t("flight.landingAlt"), fmtAltitude(s.landingAlt, locale)],
+  ];
+  return (
+    <Panel title={t("flight.para")}>
+      <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 lg:grid-cols-5">
+        {items.map(([k, v, h]) => <Stat key={k} label={k} value={v} hint={h} />)}
+      </div>
+      <p className="mt-4 text-caption text-fg-muted">{t("flight.paraNote")}</p>
     </Panel>
   );
 }

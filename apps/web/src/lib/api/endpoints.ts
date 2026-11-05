@@ -3,7 +3,7 @@ import { api, apiRaw } from "./client";
 import type {
   AdminStats, AdminUser, Application, ApplicationStatus, AuditEntry, AuthResponse, EventReport, EventSettings,
   Flight, LaunchSite, LatLon, LiveSnapshot, Me, Member, MemberRole, NotificationItem, Page, PilotProfile, Position,
-  Preferences, PublicPilot, Retrieval, RetrieverPosition, RfEvent, UserSearchItem,
+  Preferences, PublicPilot, Retrieval, RetrieverPosition, RfEvent, Weather, UserSearchItem,
 } from "./types";
 
 const enc = encodeURIComponent;
@@ -63,6 +63,7 @@ export const eventsApi = {
   list: (query: { status?: string; q?: string; mine?: boolean; limit?: number; cursor?: string } = {}) =>
     api<Page<RfEvent>>("/events", { query: { ...query, mine: query.mine ? "true" : undefined } }),
   get: (idOrSlug: string) => api<RfEvent>(`/events/${enc(idOrSlug)}`),
+  weather: (idOrSlug: string) => api<Weather>(`/events/${enc(idOrSlug)}/weather`),
   create: (body: EventInput) => api<RfEvent>("/events", { method: "POST", body }),
   update: (id: string, body: Partial<EventInput>) => api<RfEvent>(`/events/${enc(id)}`, { method: "PATCH", body }),
   archive: (id: string) => api<RfEvent>(`/events/${enc(id)}/archive`, { method: "POST", body: {} }),

@@ -43,6 +43,7 @@ type Config struct {
 	LogLevel         string
 	DisableWorkers   bool // tests: run only the HTTP surface
 	ResendBaseURL    string
+	OpenMeteoURL     string
 	DeletionGraceDur time.Duration
 }
 
@@ -77,6 +78,7 @@ func LoadFrom(getenv func(string) string) (*Config, error) {
 		CookieDomain:  get("COOKIE_DOMAIN", ""),
 		LogLevel:      get("LOG_LEVEL", "info"),
 		ResendBaseURL: strings.TrimRight(get("RESEND_BASE_URL", "https://api.resend.com"), "/"),
+		OpenMeteoURL:  strings.TrimRight(get("OPEN_METEO_URL", "https://api.open-meteo.com"), "/"),
 	}
 	switch c.Env {
 	case EnvDevelopment, EnvStaging, EnvProduction:

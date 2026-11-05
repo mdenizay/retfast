@@ -384,3 +384,35 @@ export interface EventReport {
   };
   items?: EventReportFlight[];
 }
+
+export type Flyability = "good" | "marginal" | "poor" | "unknown";
+
+export interface WeatherHour {
+  t: string;
+  temp_c: number | null;
+  dew_point_c: number | null;
+  wind_ms: number | null;
+  wind_dir_deg: number | null;
+  gust_ms: number | null;
+  wind_850_ms: number | null;
+  wind_850_dir_deg: number | null;
+  cape_jkg: number | null;
+  precip_prob_pct: number | null;
+  cloud_cover_pct: number | null;
+  cloud_base_m: number | null;
+  flyability: Flyability;
+  fly_reasons: string[];
+}
+
+export interface Weather {
+  source: string;
+  attribution: string;
+  lat: number;
+  lon: number;
+  elevation_m: number | null;
+  fetched_at: string;
+  current: { t: string; temp_c: number | null; wind_ms: number | null; wind_dir_deg: number | null; gust_ms: number | null; cloud_cover_pct: number | null; precip_mm: number | null };
+  hourly: WeatherHour[];
+  flyability: Flyability;
+  fly_reasons: string[];
+}

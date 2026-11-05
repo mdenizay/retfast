@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Car, Columns3, Crosshair, Map as MapIcon, MapPin, Navigation2, Users, WifiOff, X } from "lucide-react";
 import type { Member, RfEvent } from "@/lib/api/types";
-import { eventsApi } from "@/lib/api/endpoints";
+import { eventsApi, retrievalsApi } from "@/lib/api/endpoints";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/auth";
 import { fmtAge, fmtCoord, fmtTime } from "@/lib/format";
@@ -95,6 +95,19 @@ export function LiveView({ event, mode, canManage = false, backHref }: Props) {
   const selRow = selection?.kind === "pilot" ? rows.find((r) => r.userId === selection.userId) ?? null : null;
   const selRetrieval = selection?.kind === "retrieval" ? retrievals.find((r) => r.id === selection.id) ?? null : null;
   const selRetriever = selection?.kind === "retriever" ? live.retrievers.find((r) => r.userId === selection.userId) ?? null : null;
+
+  const canSeeTrack = selRetriever != null && (mode === "ops" || selRetriever.userId === user?.id);
+  const trackQ = useQuery({
+    queryKey: ["retriever-track", event.id, selRetriever?.userId],
+    queryFn: ({ signal }) => retrievalsApi.retrieverTrack(event.id, selRetriever!.userId, 180, signal),
+    enabled: canSeeTrack,
+    refetchInterval: 30_000,
+    retry: false,
+  });
+  const retrieverTrack = useMemo(
+    () => (canSeeTrack ? trackQ.data?.map((p) => [p.lon, p.lat] as [number, number]) : undefined),
+    [canSeeTrack, trackQ.data],
+  );
 
   const centerPoint = (p: { lat: number; lon: number }) => {
     setCenterOn(p);
@@ -232,6 +245,7 @@ export function LiveView({ event, mode, canManage = false, backHref }: Props) {
                   pilots={live.pilots}
                   retrievals={retrievals}
                   retrievers={live.retrievers}
+                  retrieverTrack={retrieverTrack}
                   selection={selection}
                   follow={follow}
                   centerRequest={centerRequest}

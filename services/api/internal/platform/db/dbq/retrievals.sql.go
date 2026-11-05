@@ -696,6 +696,63 @@ func (q *Queries) ListRetrievalsForPilot(ctx context.Context, pilotID uuid.UUID)
 	return items, nil
 }
 
+const listRetrieverTrack = `-- name: ListRetrieverTrack :many
+SELECT t, lat, lon, h_acc_m, course_deg, speed_ms
+FROM retriever_positions
+WHERE event_id = $1 AND user_id = $2 AND t >= $3
+ORDER BY t ASC
+LIMIT $4
+`
+
+type ListRetrieverTrackParams struct {
+	EventID uuid.UUID
+	UserID  uuid.UUID
+	Since   time.Time
+	MaxRows int32
+}
+
+type ListRetrieverTrackRow struct {
+	T         time.Time
+	Lat       float64
+	Lon       float64
+	HAccM     float64
+	CourseDeg *float64
+	SpeedMs   *float64
+}
+
+// A retriever's recorded positions in an event since a time, oldest first (capped).
+func (q *Queries) ListRetrieverTrack(ctx context.Context, arg ListRetrieverTrackParams) ([]ListRetrieverTrackRow, error) {
+	rows, err := q.db.Query(ctx, listRetrieverTrack,
+		arg.EventID,
+		arg.UserID,
+		arg.Since,
+		arg.MaxRows,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListRetrieverTrackRow{}
+	for rows.Next() {
+		var i ListRetrieverTrackRow
+		if err := rows.Scan(
+			&i.T,
+			&i.Lat,
+			&i.Lon,
+			&i.HAccM,
+			&i.CourseDeg,
+			&i.SpeedMs,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRetrieversForEvent = `-- name: ListRetrieversForEvent :many
 SELECT m.user_id, u.full_name, COALESCE(rs.on_duty, false)::bool AS on_duty,
     rs.lat, rs.lon, rs.h_acc_m, rs.t, rs.course_deg, rs.speed_ms, rs.position_received_at,

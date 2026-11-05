@@ -133,7 +133,7 @@ Section labels: footnote, semibold, uppercase, wide tracking, `textSecondary`.
 | cancelled | circle-slash | **İptal** / Cancelled | muted | — |
 
 Other map shapes: pilot's latest on-ground position inside a retrieval = small ringed dot in `retrieval`;
-retriever = **rounded square** in `secondary` (solid/hollow/dashed by position age, inner arrow when moving) — a
+retriever = **triangle** in `secondary` pointing along the course (solid/hollow/dashed by position age, centre dot when stationary) — a
 different shape from the pilot chevron so the two never get confused in grayscale.
 
 ### Roles and applications

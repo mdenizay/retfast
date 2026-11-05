@@ -81,7 +81,7 @@ kuyruğu* / *Detay*). Panels are mounted once by media query (not duplicated and
 - **Map**: pilot chevrons/dots (freshness styling only while recording; neutral dot once landed; hidden under a pickup
   pin while the pilot has an open retrieval), selected trail + accuracy circle, **pickup pins** (filled = requested,
   hollow = accepted, label with status + age), pilot's latest ground position (ringed dot), **retriever vehicles**
-  (rounded squares, freshness-styled), dashed **retriever → pilot line** for accepted retrievals. Click selects pilot,
+  (triangles, freshness-styled; the selected retriever shows its recorded track), dashed **retriever → pilot line** for accepted retrievals. Click selects pilot,
   retrieval or retriever.
 - **Side panel**: nothing selected → **Alım kuyruğu** (open requests grouped by status, longest waiting first).
   Retrieval selected → status, age phrase, request time, pilot phone (if returned) or "Telefon görünmüyor", pilot

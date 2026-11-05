@@ -22,6 +22,8 @@ interface Props extends MapReady {
   pilots: LivePilotView[];
   retrievals?: Retrieval[];
   retrievers?: RetrieverView[];
+  /** Recorded track of the selected retriever ([lon, lat] pairs, oldest first). */
+  retrieverTrack?: [number, number][];
   selection: MapSelection;
   follow: boolean;
   centerRequest: number;
@@ -42,12 +44,13 @@ const SRC = {
   pins: "rf-ret-pins",
   ground: "rf-ret-ground",
   vehicles: "rf-retrievers",
+  vtrack: "rf-retriever-track",
 } as const;
 
 const CLICKABLE = ["rf-pilots", "rf-ret-pins", "rf-ret-ground", "rf-retrievers"];
 
 export function LiveMapLayers({
-  map, styleVersion, pilots, retrievals = [], retrievers = [], selection, follow, centerRequest, centerOn, fallbackCenter,
+  map, styleVersion, pilots, retrievals = [], retrievers = [], retrieverTrack, selection, follow, centerRequest, centerOn, fallbackCenter,
   nowMs, clockOffsetMs = 0, onSelect,
 }: Props) {
   const { t, lang } = useI18n();
@@ -87,6 +90,10 @@ export function LiveMapLayers({
     add({ id: "rf-accuracy-fill", type: "fill", source: SRC.acc, paint: { "fill-color": primary, "fill-opacity": 0.1 } });
     add({ id: "rf-accuracy-line", type: "line", source: SRC.acc, paint: { "line-color": primary, "line-width": 1, "line-dasharray": [2, 2] } });
     add({ id: "rf-sel-trail", type: "line", source: SRC.sel, layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": primary, "line-width": 3 } });
+    add({
+      id: "rf-retriever-track", type: "line", source: SRC.vtrack, layout: { "line-join": "round", "line-cap": "round" },
+      paint: { "line-color": secondary, "line-width": 3, "line-opacity": 0.75 },
+    });
     // Retriever → pilot: dashed while approaching, solid once picked up.
     add({
       id: "rf-ret-lines", type: "line", source: SRC.lines, layout: { "line-cap": "round" },
@@ -156,6 +163,22 @@ export function LiveMapLayers({
       }
     };
   }, [map, styleVersion]);
+
+  // Selected retriever's recorded track, extended to the live position.
+  const selRetrieverId = selection?.kind === "retriever" ? selection.userId : null;
+  const selRetrieverPos = retrievers.find((r) => r.userId === selRetrieverId)?.position ?? null;
+  const posLat = selRetrieverPos?.lat;
+  const posLon = selRetrieverPos?.lon;
+  useEffect(() => {
+    const coords = selRetrieverId && retrieverTrack ? [...retrieverTrack] : [];
+    if (coords.length && posLat !== undefined && posLon !== undefined) {
+      const [lon, lat] = coords[coords.length - 1]!;
+      if (lon !== posLon || lat !== posLat) coords.push([posLon, posLat]);
+    }
+    setGeoJSON(map, SRC.vtrack, coords.length >= 2
+      ? { type: "FeatureCollection", features: [{ type: "Feature", geometry: { type: "LineString", coordinates: coords }, properties: {} }] }
+      : EMPTY_FC);
+  }, [map, styleVersion, selRetrieverId, retrieverTrack, posLat, posLon]);
 
   const selFlight = selection?.kind === "pilot" ? selection.flightId : null;
   const selPilotUser = selection?.kind === "pilot" ? selection.userId : null;

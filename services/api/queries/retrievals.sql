@@ -120,6 +120,14 @@ ON CONFLICT (event_id, user_id) DO UPDATE SET lat = EXCLUDED.lat, lon = EXCLUDED
 INSERT INTO retriever_positions (event_id, user_id, t, lat, lon, h_acc_m, course_deg, speed_ms)
 VALUES (@event_id, @user_id, @t, @lat, @lon, @h_acc_m, sqlc.narg('course_deg'), sqlc.narg('speed_ms'));
 
+-- name: ListRetrieverTrack :many
+-- A retriever's recorded positions in an event since a time, oldest first (capped).
+SELECT t, lat, lon, h_acc_m, course_deg, speed_ms
+FROM retriever_positions
+WHERE event_id = @event_id AND user_id = @user_id AND t >= @since
+ORDER BY t ASC
+LIMIT @max_rows;
+
 -- name: ListRetrieversForEvent :many
 -- Active retriever members with their latest state and number of open retrievals they hold.
 SELECT m.user_id, u.full_name, COALESCE(rs.on_duty, false)::bool AS on_duty,

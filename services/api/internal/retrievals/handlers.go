@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -41,6 +42,7 @@ func (h *Handler) Routes(r chi.Router) {
 	r.Get("/events/{id}/retrievals", httpx.H(h.list))
 	r.Post("/events/{id}/retrievers/me/position", httpx.H(h.retrieverPosition))
 	r.Put("/events/{id}/retrievers/me/duty", httpx.H(h.duty))
+	r.Get("/events/{id}/retrievers/{uid}/track", httpx.H(h.track))
 	r.Get("/retrievals/{rid}", httpx.H(h.get))
 	r.Post("/retrievals/{rid}/position", httpx.H(h.pilotPosition))
 	r.Post("/retrievals/{rid}/accept", httpx.H(h.accept))
@@ -908,5 +910,59 @@ func (h *Handler) duty(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	httpx.WriteJSON(w, http.StatusOK, st)
+	return nil
+}
+
+// TrackPoint is one recorded retriever fix.
+type TrackPoint struct {
+	T         httpx.Time `json:"t"`
+	Lat       float64    `json:"lat"`
+	Lon       float64    `json:"lon"`
+	HAccM     float64    `json:"h_acc_m"`
+	CourseDeg *float64   `json:"course_deg"`
+	SpeedMS   *float64   `json:"speed_ms"`
+}
+
+const (
+	trackDefaultWindow = 3 * time.Hour
+	trackMaxWindow     = 24 * time.Hour
+	trackMaxRows       = 5000
+)
+
+// track serves GET /events/{id}/retrievers/{uid}/track?minutes=N: the
+// retriever's recorded positions (oldest first). Organizers, observers and
+// admins may read any retriever's track; a retriever only their own.
+func (h *Handler) track(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	a := authz.ActorFrom(ctx)
+	e, acc, err := events.LoadVisible(ctx, h.Q, chi.URLParam(r, "id"), a)
+	if err != nil {
+		return err
+	}
+	uid, err := uuid.Parse(chi.URLParam(r, "uid"))
+	if err != nil {
+		return httpx.NotFound("Retriever not found")
+	}
+	if !a.Authenticated() || !(authz.SeesAllRetrievals(a, acc) || a.Is(uid)) {
+		return httpx.Forbidden("Only organizers can see other retrievers' tracks")
+	}
+	window := trackDefaultWindow
+	if m := r.URL.Query().Get("minutes"); m != "" {
+		n, err := strconv.Atoi(m)
+		if err != nil || n < 1 {
+			return httpx.Validation(map[string]string{"minutes": "must be a positive integer"})
+		}
+		window = min(time.Duration(n)*time.Minute, trackMaxWindow)
+	}
+	rows, err := h.Q.ListRetrieverTrack(ctx, dbq.ListRetrieverTrackParams{EventID: e.ID, UserID: uid,
+		Since: time.Now().Add(-window), MaxRows: trackMaxRows})
+	if err != nil {
+		return err
+	}
+	out := make([]TrackPoint, 0, len(rows))
+	for _, p := range rows {
+		out = append(out, TrackPoint{T: httpx.T(p.T), Lat: p.Lat, Lon: p.Lon, HAccM: p.HAccM, CourseDeg: p.CourseDeg, SpeedMS: p.SpeedMs})
+	}
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{"user_id": uid, "items": out})
 	return nil
 }

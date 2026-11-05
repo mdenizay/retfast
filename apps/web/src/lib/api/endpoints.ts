@@ -3,7 +3,7 @@ import { api, apiRaw } from "./client";
 import type {
   AdminStats, AdminUser, Application, ApplicationStatus, AuditEntry, AuthResponse, EventReport, EventSettings,
   Flight, LaunchSite, LatLon, LiveSnapshot, Me, Member, MemberRole, NotificationItem, Page, PilotProfile, Position,
-  Preferences, PublicPilot, Retrieval, RfEvent, UserSearchItem,
+  Preferences, PublicPilot, Retrieval, RetrieverPosition, RfEvent, UserSearchItem,
 } from "./types";
 
 const enc = encodeURIComponent;
@@ -122,6 +122,9 @@ export const retrievalsApi = {
     api<unknown>(`/events/${enc(eventId)}/retrievers/me/duty`, { method: "PUT", body: { on_duty } }),
   postMyPosition: (eventId: string, body: { lat: number; lon: number; h_acc_m: number; t: string; course_deg?: number | null; speed_ms?: number | null }) =>
     api<unknown>(`/events/${enc(eventId)}/retrievers/me/position`, { method: "POST", body, noRetry: true }),
+  /** Recorded retriever positions, oldest first (organizers/observers, or the retriever themself). */
+  retrieverTrack: (eventId: string, userId: string, minutes = 180, signal?: AbortSignal) =>
+    api<{ user_id: string; items: RetrieverPosition[] }>(`/events/${enc(eventId)}/retrievers/${enc(userId)}/track`, { query: { minutes }, signal }).then((r) => r.items),
 };
 
 export const flightsApi = {

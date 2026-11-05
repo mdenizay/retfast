@@ -316,6 +316,22 @@ func TestRetrieverDutyAndPositions(t *testing.T) {
 	if sub(st, "position")["lat"] != 37.04 {
 		t.Fatalf("state: %v", st)
 	}
+	// track: organizers/observers and the retriever itself; nobody else
+	trackURL := "/events/" + w.evID + "/retrievers/" + w.ra.ID.String() + "/track"
+	tr := e.Must(e.Do("GET", trackURL, nil, Req{Token: w.org.Token}), 200).JSON()
+	if items, _ := tr["items"].([]any); len(items) != 1 || items[0].(map[string]any)["lat"] != 37.04 {
+		t.Fatalf("track: %v", tr)
+	}
+	e.Must(e.Do("GET", trackURL+"?minutes=5", nil, Req{Token: w.ra.Token}), 200)
+	e.Must(e.Do("GET", trackURL, nil, Req{Token: w.obs.Token}), 200)
+	for _, u := range []*User{w.rb, w.pilot} {
+		if r := e.Do("GET", trackURL, nil, Req{Token: u.Token}); r.Status != 403 {
+			t.Fatalf("track by %s: %d", u.Name, r.Status)
+		}
+	}
+	if r := e.Do("GET", trackURL+"?minutes=x", nil, Req{Token: w.org.Token}); r.Status != 422 && r.Status != 400 {
+		t.Fatalf("bad minutes: %d", r.Status)
+	}
 	// organizers/observers see retrievers; pilots only the one serving them
 	_, live := e.live(t, w.evID, w.obs.Token)
 	if len(live.Retrievers) != 2 {

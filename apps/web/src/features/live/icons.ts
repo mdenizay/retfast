@@ -140,48 +140,40 @@ function drawPin(color: string, halo: string, hollow: boolean): ImageData | null
   return ctx.getImageData(0, 0, SIZE, SIZE);
 }
 
-function squarePath(ctx: CanvasRenderingContext2D) {
-  const x = 14, y = 14, w = 36, rr = 8;
+function trianglePath(ctx: CanvasRenderingContext2D) {
+  // Isosceles triangle pointing up (north); rotated by course on the map.
   ctx.beginPath();
-  ctx.moveTo(x + rr, y);
-  ctx.arcTo(x + w, y, x + w, y + w, rr);
-  ctx.arcTo(x + w, y + w, x, y + w, rr);
-  ctx.arcTo(x, y + w, x, y, rr);
-  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.moveTo(32, 10);
+  ctx.lineTo(52, 50);
+  ctx.lineTo(12, 50);
   ctx.closePath();
 }
 
-/** Retriever = rounded square (distinct from the pilot chevron) with an inner heading arrow when moving. */
+/** Retriever = triangle (distinct from the pilot chevron) pointing along the course; a dot marks a stationary vehicle. */
 function drawVehicle(style: Style, moving: boolean, color: string, halo: string): ImageData | null {
   const r = ctx2d();
   if (!r) return null;
   const [, ctx] = r;
-  squarePath(ctx);
+  ctx.lineJoin = "round";
+  trianglePath(ctx);
   ctx.lineWidth = 8;
   ctx.strokeStyle = halo;
   ctx.stroke();
-  squarePath(ctx);
+  trianglePath(ctx);
   ctx.fillStyle = style === "solid" ? color : halo;
   ctx.fill();
   ctx.lineWidth = 4;
   ctx.strokeStyle = color;
   if (style === "dashed") ctx.setLineDash([6, 5]);
-  squarePath(ctx);
+  trianglePath(ctx);
   ctx.stroke();
   ctx.setLineDash([]);
-  const inner = style === "solid" ? halo : color;
-  ctx.fillStyle = inner;
-  ctx.beginPath();
-  if (moving) {
-    ctx.moveTo(32, 20);
-    ctx.lineTo(42, 42);
-    ctx.lineTo(32, 37);
-    ctx.lineTo(22, 42);
-    ctx.closePath();
-  } else {
-    ctx.arc(32, 32, 5, 0, Math.PI * 2);
+  if (!moving) {
+    ctx.fillStyle = style === "solid" ? halo : color;
+    ctx.beginPath();
+    ctx.arc(32, 37, 4.5, 0, Math.PI * 2);
+    ctx.fill();
   }
-  ctx.fill();
   return ctx.getImageData(0, 0, SIZE, SIZE);
 }
 

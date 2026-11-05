@@ -59,6 +59,34 @@ final class StubBackend: URLProtocol, @unchecked Sendable {
         "preferences": ["units": "metric", "public_profile": false],
     ]
 
+    /// SYNTHETIC server flight for UI tests/screenshots: 40 min from the Teleferik with two thermals.
+    nonisolated(unsafe) static let stubFlight: [String: Any] = [
+        "id": "00000000-0000-4000-8000-0000000000f1", "status": "ended", "is_simulated": true,
+        "started_at": "2026-11-03T10:00:00.000Z", "ended_at": "2026-11-03T10:40:00.000Z",
+        "stats": ["duration_s": 2400, "distance_m": 14200, "max_gps_alt_m": 2140, "sample_count": 480, "expected_sample_count": 480, "gap_count": 0],
+    ]
+
+    static func stubPositions() -> [[String: Any]] {
+        var lat = 37.708, lon = 29.135, alt = 1300.0, heading = 350.0
+        let t0 = JSONCoding.parseDate("2026-11-03T10:00:00.000Z") ?? Date()
+        var out: [[String: Any]] = []
+        let legs: [(Int, Double, Double, Double)] = [(30, 10, -1.2, 0), (60, 8.5, 2.2, 30), (24, 11, -1.1, 0), (60, 8.5, 1.8, -28),
+                                                     (60, 11.5, -1.6, 2), (36, 9, -2.0, 25), (90, 10, -1.5, 0), (180, 0, 0, 0)]
+        var t = 0.0
+        for (n, speed, vario, turn) in legs {
+            for _ in 0..<n {
+                heading = (heading + turn).truncatingRemainder(dividingBy: 360)
+                lat += speed * 5 * cos(heading * .pi / 180) / 111_320
+                lon += speed * 5 * sin(heading * .pi / 180) / (111_320 * cos(lat * .pi / 180))
+                alt = max(420, alt + vario * 5)
+                t += 5
+                out.append(["t": JSONCoding.formatDate(t0.addingTimeInterval(t)), "lat": lat, "lon": lon, "gps_alt_m": alt,
+                            "speed_ms": speed, "course_deg": speed > 0 ? heading : -1])
+            }
+        }
+        return out
+    }
+
     static var auth: [String: Any] {
         ["access_token": "stub-access", "access_expires_at": "2099-01-01T00:00:00.000Z", "refresh_token": "stub-refresh",
          "refresh_expires_at": "2099-01-01T00:00:00.000Z", "user": me]
@@ -107,7 +135,9 @@ final class StubBackend: URLProtocol, @unchecked Sendable {
         case ("POST", "flights"):
             if parts.count == 3 { return (200, ["id": parts[1], "status": "ended"]) }
             return (201, ["id": json["id"] ?? "", "status": "recording", "event_id": json["event_id"] ?? NSNull()])
-        case ("GET", "flights"): return (200, ["items": [], "next_cursor": NSNull()])
+        case ("GET", "flights"):
+            if parts.count == 3 && parts[2] == "positions" { return (200, ["items": stubPositions()]) }
+            return (200, ["items": [stubFlight], "next_cursor": NSNull()])
         case ("GET", "events"):
             if parts.count == 1 { return (200, ["items": [event], "next_cursor": NSNull()]) }
             if parts.count == 2 { return (200, event) }

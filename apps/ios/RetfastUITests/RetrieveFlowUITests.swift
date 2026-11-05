@@ -71,6 +71,8 @@ final class RetrieveFlowUITests: XCTestCase {
 
 extension XCUIApplication {
     @MainActor func login(email: String, password: String, file: StaticString = #filePath, line: UInt = #line) {
+        let viaEmail = buttons["auth.email"]
+        if viaEmail.waitForExistence(timeout: 10) { viaEmail.tap() }
         let emailField = textFields["login.email"]
         XCTAssertTrue(emailField.waitForExistence(timeout: 15), file: file, line: line)
         emailField.tap(); emailField.typeText(email)

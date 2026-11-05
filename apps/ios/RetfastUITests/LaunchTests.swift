@@ -12,7 +12,10 @@ final class LaunchTests: XCTestCase {
 
         app.completeOnboarding()
 
-        XCTAssertTrue(app.textFields["login.email"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["auth.apple"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["auth.google"].exists)
+        app.buttons["auth.email"].tap()
+        XCTAssertTrue(app.textFields["login.email"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.secureTextFields["login.password"].exists)
     }
 }

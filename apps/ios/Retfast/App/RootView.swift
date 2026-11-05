@@ -4,25 +4,16 @@ import SwiftUI
 struct RootView: View {
     @Environment(AppModel.self) private var model
     @AppStorage("appearance") private var appearance = AppAppearance.system.rawValue
+    @State private var showSplash = !ProcessInfo.processInfo.arguments.contains("-uiTesting")
 
     var body: some View {
         @Bindable var model = model
-        Group {
-            if !model.onboardingCompleted {
-                OnboardingView()
-            } else {
-                switch model.authPhase {
-                case .loading:
-                    // Matches the system launch screen; no artificial delay.
-                    Brand.ink.ignoresSafeArea()
-                        .overlay { BrandMark(size: 120, color: .white).accessibilityLabel(Text("Yükleniyor")) }
-                case .signedOut:
-                    AuthFlowView()
-                case .mustChangePassword:
-                    NavigationStack { ChangePasswordView(forced: true) }
-                case .signedIn:
-                    MainTabView()
-                }
+        ZStack {
+            content
+            if showSplash {
+                SplashView { withAnimation(.easeInOut(duration: 0.45)) { showSplash = false } }
+                    .transition(.opacity.combined(with: .scale(scale: 1.08)))
+                    .zIndex(1)
             }
         }
         .fullScreenCover(item: $model.overlay) { overlay in
@@ -32,6 +23,27 @@ struct RootView: View {
         .modifier(FlowSheets(active: model.overlay == nil))
         .preferredColorScheme(AppAppearance(rawValue: appearance)?.colorScheme)
         .tint(AeroTokens.primary)
+    }
+
+    @ViewBuilder private var content: some View {
+        Group {
+            if !model.onboardingCompleted {
+                OnboardingView()
+            } else {
+                switch model.authPhase {
+                case .loading:
+                    // Matches the launch screen and the splash.
+                    Brand.ink.ignoresSafeArea()
+                case .signedOut:
+                    AuthFlowView()
+                case .mustChangePassword:
+                    NavigationStack { ChangePasswordView(forced: true) }
+                case .signedIn:
+                    MainTabView()
+                }
+            }
+        }
+        .animation(.smooth(duration: 0.4), value: model.authPhase)
     }
 }
 

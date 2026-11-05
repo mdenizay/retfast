@@ -14,46 +14,44 @@ struct ProfileView: View {
     @State private var confirmLogout = false
 
     var body: some View {
-        Form {
+        List {
             if let me = model.me {
                 Section {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(me.pilot?.displayName ?? me.fullName).font(.title3.bold())
-                        Text(me.email).foregroundStyle(AeroTokens.textSecondary)
-                        if let id = me.pilot?.publicId { Text("@\(id)").font(.caption.monospaced()).foregroundStyle(AeroTokens.textMuted) }
-                    }
-                    if me.isPlatformAdmin { StatusPill(String(localized: "Platform yöneticisi"), systemImage: "person.badge.key", tone: .info) }
-                    if me.emailVerified == false {
-                        WarningRow(text: String(localized: "E-posta adresiniz doğrulanmadı."))
-                    }
+                    hero(me)
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
                 }
                 Section {
-                    NavigationLink("Pilot bilgileri, telefon ve acil durum kişisi") { PilotProfileEditor() }
-                        .accessibilityIdentifier("profile.pilot")
+                    NavigationLink { PilotProfileEditor() } label: {
+                        IconRow(icon: "person.fill", tint: Brand.orange, title: "Pilot bilgileri",
+                                subtitle: "Kanat, lisans, telefon ve acil durum kişisi")
+                    }
+                    .accessibilityIdentifier("profile.pilot")
                     if (me.pilot?.phone ?? "").isEmpty {
                         WarningRow(text: String(localized: "Telefon numarası eklenmemiş. Retrieve istediğinde retriever seni arayamaz."))
+                    }
+                    NavigationLink { PrivacyEditor() } label: {
+                        IconRow(icon: "eye.fill", tint: AeroTokens.retrieval, title: "Herkese açık profil",
+                                subtitle: me.preferences?.publicProfile == true ? "Açık" : "Kapalı")
                     }
                 } header: { Text("Pilot") } footer: {
                     Text("Telefonunu yalnızca etkinlik organizatörleri ve retrieve talebini kabul eden retriever görür.")
                 }
-                Section("Gizlilik") {
-                    NavigationLink("Herkese açık profil") { PrivacyEditor() }
-                }
             }
             Section("Görünüm") {
-                Picker("Birimler", selection: $units) {
+                Picker(selection: $units) {
                     Text("Metrik (m, km/h)").tag(Units.metric.rawValue)
                     Text("Imperial (ft, mph)").tag(Units.imperial.rawValue)
-                }
-                Picker("Uygulama görünümü", selection: $appearance) {
+                } label: { IconRow(icon: "gauge", tint: AeroTokens.secondary, title: "Birimler") }
+                Picker(selection: $appearance) {
                     ForEach(AppAppearance.allCases) { Text($0.title).tag($0.rawValue) }
-                }
+                } label: { IconRow(icon: "circle.lefthalf.filled", tint: Color.indigo, title: "Uygulama görünümü") }
                 // iOS per-app language (Türkçe / English) lives in Settings › Retfast › Language.
                 Button {
                     if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
                 } label: {
                     HStack {
-                        Label("Dil / Language", icon: "globe").foregroundStyle(AeroTokens.textPrimary)
+                        IconRow(icon: "globe", tint: AeroTokens.success, title: "Dil / Language")
                         Spacer()
                         Text(Bundle.main.preferredLocalizations.first == "en" ? "English" : "Türkçe")
                             .foregroundStyle(AeroTokens.textSecondary)
@@ -65,15 +63,21 @@ struct ProfileView: View {
             Section("Verilerim") {
                 Button {
                     Task { await export() }
-                } label: { if exporting { ProgressView() } else { Label("Verilerimi dışa aktar (JSON)", icon: "square.and.arrow.down") } }
-                if let exportURL { ShareLink(item: exportURL) { Label("Dışa aktarılan dosyayı paylaş", icon: "square.and.arrow.up") } }
+                } label: {
+                    HStack {
+                        IconRow(icon: "square.and.arrow.down", tint: AeroTokens.retrieval, title: "Verilerimi dışa aktar (JSON)")
+                        if exporting { Spacer(); ProgressView() }
+                    }
+                }
+                if let exportURL {
+                    ShareLink(item: exportURL) { IconRow(icon: "square.and.arrow.up", tint: AeroTokens.retrieval, title: "Dışa aktarılan dosyayı paylaş") }
+                }
                 if let exportError { WarningRow(text: exportError, tone: .error) }
             }
             Section("Uygulama") {
-                NavigationLink { DiagnosticsView() } label: { Label("Tanılama", icon: "stethoscope") }
-                NavigationLink { ChangePasswordView(forced: false) } label: { Label("Şifre değiştir", icon: "key") }
-                Button { model.onboardingCompleted = false } label: { Label("Tanıtımı yeniden göster", icon: "info.circle") }
-                KeyValueRow(key: String(localized: "Sürüm"), value: "\(model.config.appVersion) (\(model.config.build))")
+                NavigationLink { DiagnosticsView() } label: { IconRow(icon: "stethoscope", tint: AeroTokens.success, title: "Tanılama") }
+                NavigationLink { ChangePasswordView(forced: false) } label: { IconRow(icon: "key", tint: AeroTokens.warning, title: "Şifre değiştir") }
+                Button { model.onboardingCompleted = false } label: { IconRow(icon: "info.circle", tint: AeroTokens.textSecondary, title: "Tanıtımı yeniden göster") }
             }
             Section {
                 if let deletion {
@@ -84,17 +88,27 @@ struct ProfileView: View {
                             catch { message = ErrorText.message(error) }
                         }
                     }
-                } else {
-                    Button("Hesabımı sil", role: .destructive) { confirmDelete = true }
                 }
                 if let message { Text(message).font(.footnote) }
-                Button("Çıkış yap", role: .destructive) { confirmLogout = true }
-                    .disabled(model.session.isActive || model.activeRetrieval != nil)
+                Button(role: .destructive) { confirmLogout = true } label: {
+                    IconRow(icon: "rectangle.portrait.and.arrow.right", tint: AeroTokens.error, title: "Çıkış yap", titleColor: AeroTokens.error)
+                }
+                .disabled(model.session.isActive || model.activeRetrieval != nil)
                 if model.session.isActive || model.activeRetrieval != nil {
                     Text("Uçuş kaydı veya açık retrieve talebi sürerken çıkış yapılamaz.").font(.footnote).foregroundStyle(AeroTokens.textSecondary)
                 }
-            } header: { Text("Hesap") }
+                if deletion == nil {
+                    Button("Hesabımı sil", role: .destructive) { confirmDelete = true }
+                        .font(.footnote)
+                }
+            } header: { Text("Hesap") } footer: {
+                Text("Retfast \(model.config.appVersion) (\(model.config.build))")
+                    .frame(maxWidth: .infinity).padding(.top, AeroTokens.Space.s4)
+            }
         }
+        .listSectionSpacing(.compact)
+        .scrollContentBackground(.hidden)
+        .aeroBackground()
         .navigationTitle("Profil")
         .confirmationDialog("Hesabınız silinsin mi?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Silme talebi gönder", role: .destructive) {
@@ -111,6 +125,32 @@ struct ProfileView: View {
         } message: {
             Text("Gönderilmemiş uçuş noktaları cihazda kalır ve tekrar giriş yaptığınızda gönderilir. Retriever görevin kapatılır.")
         }
+    }
+
+    private func hero(_ me: Me) -> some View {
+        VStack(spacing: AeroTokens.Space.s2) {
+            ZStack {
+                Circle().fill(Brand.orange.opacity(0.25)).frame(width: 112, height: 112).blur(radius: 18)
+                Avatar(name: me.pilot?.displayName ?? me.fullName, size: 88, tint: Brand.orange)
+                    .overlay(Circle().stroke(AeroTokens.surface, lineWidth: 4))
+            }
+            Text(me.pilot?.displayName ?? me.fullName).font(.title2.bold()).foregroundStyle(AeroTokens.textPrimary)
+            Text(me.email).font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
+            HStack(spacing: 6) {
+                if let id = me.pilot?.publicId {
+                    Text("@\(id)").font(.caption.monospaced()).foregroundStyle(AeroTokens.textMuted)
+                }
+                if let wing = me.pilot?.wing, !wing.isEmpty {
+                    Label(wing, icon: "wind").font(.caption.weight(.medium)).foregroundStyle(AeroTokens.textSecondary)
+                }
+            }
+            HStack(spacing: 6) {
+                if me.isPlatformAdmin { StatusPill(String(localized: "Platform yöneticisi"), systemImage: "person.badge.key", tone: .info) }
+                if me.emailVerified == false { StatusPill(String(localized: "E-posta doğrulanmadı"), systemImage: "exclamationmark.triangle", tone: .warning) }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, AeroTokens.Space.s4)
     }
 
     private func export() async {
@@ -219,5 +259,28 @@ struct PrivacyEditor: View {
         }
         .navigationTitle("Gizlilik")
         .onAppear { publicProfile = model.me?.preferences?.publicProfile ?? false }
+    }
+}
+
+/// Settings row: tinted rounded icon tile, title and optional subtitle.
+struct IconRow: View {
+    let icon: String
+    var tint: Color
+    let title: LocalizedStringKey
+    var subtitle: LocalizedStringKey? = nil
+    var titleColor: Color = AeroTokens.textPrimary
+
+    var body: some View {
+        HStack(spacing: AeroTokens.Space.s3) {
+            Image(icon: icon)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 32, height: 32)
+                .background(tint.gradient, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title).foregroundStyle(titleColor)
+                if let subtitle { Text(subtitle).font(.caption).foregroundStyle(AeroTokens.textSecondary) }
+            }
+        }
     }
 }

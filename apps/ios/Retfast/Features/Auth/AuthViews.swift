@@ -3,7 +3,116 @@ import SwiftUI
 
 struct AuthFlowView: View {
     var body: some View {
-        NavigationStack { LoginView() }
+        NavigationStack { AuthWelcomeView() }
+            .environment(\.colorScheme, .dark)
+            .tint(.white)
+    }
+}
+
+/// First screen when signed out: hero, Apple / Google, "Continue with email".
+struct AuthWelcomeView: View {
+    @Environment(AppModel.self) private var model
+    @Environment(\.openURL) private var openURL
+    @State private var comingSoon: String?
+    @State private var appear = false
+
+    var body: some View {
+        ZStack {
+            SkyBackdrop(glowCenter: UnitPoint(x: 0.5, y: 0.32))
+            VStack(spacing: 0) {
+                Spacer(minLength: AeroTokens.Space.s8)
+                VStack(spacing: AeroTokens.Space.s4) {
+                    BrandMark(size: 96, color: .white)
+                        .shadow(color: Brand.orange.opacity(0.55), radius: 26)
+                    Text("Retfast")
+                        .font(.system(size: 40, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                    Text("Uç. İn. Alın.")
+                        .font(.title3.weight(.medium))
+                        .foregroundStyle(.white.opacity(0.65))
+                }
+                .scaleEffect(appear ? 1 : 0.92)
+                .opacity(appear ? 1 : 0)
+                Spacer(minLength: AeroTokens.Space.s8)
+
+                VStack(spacing: AeroTokens.Space.s3) {
+                    if let message = model.authMessage {
+                        Text(message).font(.footnote).foregroundStyle(Brand.amber)
+                            .multilineTextAlignment(.center).padding(.bottom, AeroTokens.Space.s2)
+                    }
+                    Button { comingSoon = "Apple" } label: {
+                        Label { Text("Apple ile devam et") } icon: { Image(systemName: "apple.logo") }
+                    }
+                    .buttonStyle(WhiteCapsuleButtonStyle())
+                    .accessibilityIdentifier("auth.apple")
+                    Button { comingSoon = "Google" } label: {
+                        Label { Text("Google ile devam et") } icon: { GoogleGlyph(size: 18) }
+                    }
+                    .buttonStyle(WhiteCapsuleButtonStyle())
+                    .accessibilityIdentifier("auth.google")
+                    NavigationLink { EmailLoginView() } label: {
+                        Label("E-posta ile devam et", icon: "envelope")
+                    }
+                    .buttonStyle(GlassCapsuleButtonStyle())
+                    .accessibilityIdentifier("auth.email")
+                }
+                .offset(y: appear ? 0 : 30)
+                .opacity(appear ? 1 : 0)
+
+                HStack(spacing: AeroTokens.Space.s4) {
+                    Button("Gizlilik") { if let u = URL(string: "https://retfast.com/privacy") { openURL(u) } }
+                    Text("·").foregroundStyle(.white.opacity(0.3))
+                    NavigationLink("Hesap oluştur") { RegisterView() }
+                        .accessibilityIdentifier("auth.register")
+                }
+                .font(.footnote.weight(.medium))
+                .foregroundStyle(.white.opacity(0.55))
+                .padding(.top, AeroTokens.Space.s6)
+            }
+            .padding(.horizontal, AeroTokens.Space.s6)
+            .padding(.bottom, AeroTokens.Space.s4)
+            .frame(maxWidth: 520)
+        }
+        .toolbar(.hidden, for: .navigationBar)
+        .onAppear { withAnimation(.spring(response: 0.7, dampingFraction: 0.8)) { appear = true } }
+        .alert(Text("\(comingSoon ?? "") ile giriş yakında"), isPresented: Binding(get: { comingSoon != nil }, set: { if !$0 { comingSoon = nil } })) {
+            Button("Tamam", role: .cancel) {}
+        } message: {
+            Text("Şimdilik e-posta ile devam edebilirsin.")
+        }
+    }
+}
+
+/// Dark scaffold shared by the e-mail, register and reset screens.
+struct AuthScaffold<Content: View>: View {
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey?
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            Brand.ink.ignoresSafeArea()
+            RadialGradient(colors: [Brand.orange.opacity(0.28), .clear], center: .top, startRadius: 0, endRadius: 360)
+                .ignoresSafeArea()
+                .accessibilityHidden(true)
+            ScrollView {
+                VStack(alignment: .leading, spacing: AeroTokens.Space.s6) {
+                    VStack(alignment: .leading, spacing: AeroTokens.Space.s2) {
+                        Text(title).font(.system(size: 32, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                        if let subtitle { Text(subtitle).font(.body).foregroundStyle(.white.opacity(0.6)) }
+                    }
+                    content
+                }
+                .padding(.horizontal, AeroTokens.Space.s6)
+                .padding(.top, AeroTokens.Space.s4)
+                .padding(.bottom, AeroTokens.Space.s8)
+                .frame(maxWidth: 520)
+                .frame(maxWidth: .infinity)
+            }
+            .scrollDismissesKeyboard(.interactively)
+        }
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -34,73 +143,69 @@ enum ErrorText {
     }
 }
 
-struct LoginView: View {
+struct EmailLoginView: View {
     @Environment(AppModel.self) private var model
     @State private var email = ""
     @State private var password = ""
     @State private var busy = false
     @State private var error: String?
+    @FocusState private var focus: Field?
+    private enum Field { case email, password }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: AeroTokens.Space.s6) {
-                VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
-                    BrandMark(size: 64, color: Brand.orange)
-                    Text("Retfast").font(.system(size: 40, weight: .bold))
-                    Text("Uçuşunu kaydet, iniş yerini paylaş, retriever seni alsın.")
-                        .font(.title3).foregroundStyle(AeroTokens.textSecondary)
-                }
-                .padding(.top, AeroTokens.Space.s8)
-
-                if let message = model.authMessage { WarningRow(text: message) }
-
-                VStack(spacing: AeroTokens.Space.s3) {
-                    field { TextField("E-posta", text: $email)
+        AuthScaffold(title: "Tekrar hoş geldin", subtitle: "E-posta adresin ve şifrenle giriş yap.") {
+            VStack(spacing: AeroTokens.Space.s3) {
+                AuthField(icon: "envelope") {
+                    TextField("", text: $email, prompt: Text("E-posta").foregroundStyle(.white.opacity(0.4)))
                         .textContentType(.username)
                         .keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                        .accessibilityIdentifier("login.email") }
-                    field { SecureField("Şifre", text: $password)
-                        .textContentType(.password)
-                        .accessibilityIdentifier("login.password") }
-                    if let error { WarningRow(text: error, tone: .error) }
-                    Button {
-                        Task { await login() }
-                    } label: {
-                        if busy { ProgressView().tint(.white) } else { Text("Giriş yap") }
-                    }
-                    .buttonStyle(.aeroPrimaryLarge)
-                    .disabled(busy || email.isEmpty || password.isEmpty)
-                    .accessibilityIdentifier("login.submit")
+                        .submitLabel(.next)
+                        .focused($focus, equals: .email)
+                        .onSubmit { focus = .password }
+                        .accessibilityIdentifier("login.email")
                 }
-
+                AuthField(icon: "lock") {
+                    SecureField("", text: $password, prompt: Text("Şifre").foregroundStyle(.white.opacity(0.4)))
+                        .textContentType(.password)
+                        .submitLabel(.go)
+                        .focused($focus, equals: .password)
+                        .onSubmit { if canSubmit { Task { await login() } } }
+                        .accessibilityIdentifier("login.password")
+                }
                 HStack {
-                    NavigationLink("Hesap oluştur") { RegisterView() }.fontWeight(.semibold)
                     Spacer()
                     NavigationLink("Şifremi unuttum") { ForgotPasswordView() }
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.6))
                 }
-                .tint(AeroTokens.textPrimary)
-
-                Text("Sunucu: \(model.config.apiBaseURL.absoluteString)")
-                    .font(.caption2.monospaced())
-                    .foregroundStyle(AeroTokens.textMuted)
             }
-            .padding(.horizontal, AeroTokens.Space.s6)
-            .padding(.bottom, AeroTokens.Space.s8)
+            if let error {
+                Label(error, icon: "exclamationmark.circle").font(.subheadline).foregroundStyle(AeroTokens.error)
+                    .transition(.opacity)
+            }
+            Button {
+                Task { await login() }
+            } label: {
+                if busy { ProgressView().tint(.black) } else { Text("Giriş yap") }
+            }
+            .buttonStyle(WhiteCapsuleButtonStyle())
+            .disabled(!canSubmit)
+            .accessibilityIdentifier("login.submit")
+
+            HStack(spacing: 4) {
+                Text("Hesabın yok mu?").foregroundStyle(.white.opacity(0.55))
+                NavigationLink("Hesap oluştur") { RegisterView() }.fontWeight(.semibold).foregroundStyle(Brand.orange)
+            }
+            .font(.subheadline)
+            .frame(maxWidth: .infinity)
         }
-        .scrollDismissesKeyboard(.interactively)
-        .aeroBackground()
-        .toolbar(.hidden, for: .navigationBar)
+        .animation(.smooth, value: error)
+        .onAppear { if email.isEmpty { focus = .email } }
     }
 
-    private func field<C: View>(@ViewBuilder _ c: () -> C) -> some View {
-        c()
-            .font(.body)
-            .padding(.horizontal, AeroTokens.Space.s4)
-            .frame(height: AeroTokens.Control.heightLarge)
-            .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous))
-    }
+    private var canSubmit: Bool { !busy && !email.isEmpty && !password.isEmpty }
 
     private func login() async {
         busy = true; error = nil
@@ -116,6 +221,7 @@ struct LoginView: View {
             }
         } catch {
             self.error = ErrorText.message(error)
+            Haptics.attention()
         }
     }
 }
@@ -129,31 +235,42 @@ struct RegisterView: View {
     @State private var error: String?
 
     var body: some View {
-        Form {
-            Section {
-                TextField("Ad Soyad", text: $fullName).textContentType(.name)
-                TextField("E-posta", text: $email)
-                    .textContentType(.emailAddress).keyboardType(.emailAddress)
-                    .textInputAutocapitalization(.never).autocorrectionDisabled()
-                SecureField("Şifre", text: $password).textContentType(.newPassword)
-            } footer: {
+        AuthScaffold(title: "Hesap oluştur", subtitle: "Bir dakikadan kısa sürer.") {
+            VStack(spacing: AeroTokens.Space.s3) {
+                AuthField(icon: "person") {
+                    TextField("", text: $fullName, prompt: Text("Ad Soyad").foregroundStyle(.white.opacity(0.4)))
+                        .textContentType(.name)
+                        .accessibilityIdentifier("register.name")
+                }
+                AuthField(icon: "envelope") {
+                    TextField("", text: $email, prompt: Text("E-posta").foregroundStyle(.white.opacity(0.4)))
+                        .textContentType(.emailAddress).keyboardType(.emailAddress)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                        .accessibilityIdentifier("register.email")
+                }
+                AuthField(icon: "lock") {
+                    SecureField("", text: $password, prompt: Text("Şifre").foregroundStyle(.white.opacity(0.4)))
+                        .textContentType(.newPassword)
+                        .accessibilityIdentifier("register.password")
+                }
                 PasswordPolicyHint(password: password, email: email)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, AeroTokens.Space.s2)
             }
-            if let error { Section { WarningRow(text: error, tone: .error) } }
-            Section {
-                Button {
-                    Task {
-                        busy = true; defer { busy = false }
-                        do { model.didSignIn(try await model.api.register(email: email, password: password, fullName: fullName)) }
-                        catch { self.error = ErrorText.message(error) }
-                    }
-                } label: { if busy { ProgressView() } else { Text("Hesap oluştur") } }
-                .buttonStyle(.aeroPrimary)
-                .disabled(busy || fullName.isEmpty || email.isEmpty || password.count < 10)
-                .listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
+            if let error {
+                Label(error, icon: "exclamationmark.circle").font(.subheadline).foregroundStyle(AeroTokens.error)
             }
+            Button {
+                Task {
+                    busy = true; defer { busy = false }
+                    do { model.didSignIn(try await model.api.register(email: email, password: password, fullName: fullName)) }
+                    catch { self.error = ErrorText.message(error); Haptics.attention() }
+                }
+            } label: { if busy { ProgressView().tint(.black) } else { Text("Hesap oluştur") } }
+            .buttonStyle(WhiteCapsuleButtonStyle())
+            .disabled(busy || fullName.isEmpty || email.isEmpty || password.count < 10)
+            .accessibilityIdentifier("register.submit")
         }
-        .navigationTitle("Hesap oluştur")
     }
 }
 
@@ -177,31 +294,34 @@ struct ForgotPasswordView: View {
     @Environment(AppModel.self) private var model
     @State private var email = ""
     @State private var sent = false
+    @State private var busy = false
     @State private var error: String?
 
     var body: some View {
-        Form {
-            Section {
-                TextField("E-posta", text: $email)
+        AuthScaffold(title: "Şifreni sıfırla", subtitle: "Hesap varsa bu adrese bir sıfırlama bağlantısı göndeririz.") {
+            AuthField(icon: "envelope") {
+                TextField("", text: $email, prompt: Text("E-posta").foregroundStyle(.white.opacity(0.4)))
                     .keyboardType(.emailAddress).textInputAutocapitalization(.never).autocorrectionDisabled()
-            } footer: {
-                Text("Hesap varsa bu adrese bir sıfırlama bağlantısı gönderilir. Güvenlik nedeniyle hesabın var olup olmadığını göstermiyoruz.")
             }
-            if sent { Section { WarningRow(text: String(localized: "İstek alındı. E-postanızı kontrol edin."), tone: .success, systemImage: "checkmark.circle.fill") } }
-            if let error { Section { WarningRow(text: error, tone: .error) } }
-            Section {
-                Button("Sıfırlama bağlantısı gönder") {
-                    Task {
-                        do { try await model.api.forgotPassword(email: email); sent = true; error = nil }
-                        catch { self.error = ErrorText.message(error) }
-                    }
+            if sent {
+                Label("İstek alındı. E-postanı kontrol et.", icon: "checkmark.circle.fill")
+                    .font(.subheadline).foregroundStyle(AeroTokens.success)
+            }
+            if let error {
+                Label(error, icon: "exclamationmark.circle").font(.subheadline).foregroundStyle(AeroTokens.error)
+            }
+            Button {
+                Task {
+                    busy = true; defer { busy = false }
+                    do { try await model.api.forgotPassword(email: email); sent = true; error = nil; Haptics.success() }
+                    catch { self.error = ErrorText.message(error) }
                 }
-                .buttonStyle(.aeroPrimary)
-                .disabled(email.isEmpty)
-                .listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
-            }
+            } label: { if busy { ProgressView().tint(.black) } else { Text("Bağlantı gönder") } }
+            .buttonStyle(WhiteCapsuleButtonStyle())
+            .disabled(busy || email.isEmpty)
+            Text("Güvenlik nedeniyle hesabın var olup olmadığını göstermiyoruz.")
+                .font(.footnote).foregroundStyle(.white.opacity(0.45))
         }
-        .navigationTitle("Şifremi unuttum")
     }
 }
 

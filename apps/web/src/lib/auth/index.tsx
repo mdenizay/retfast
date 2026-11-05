@@ -49,8 +49,7 @@ export function hasRole(user: Me | null | undefined, ...roles: GlobalRole[]): bo
   return Boolean(user && roles.some((r) => user.roles.includes(r)));
 }
 
-export const isResponder = (u: Me | null | undefined) => hasRole(u, "platform_admin", "rescue_operator");
-export const canCreateEvents = (u: Me | null | undefined) => hasRole(u, "platform_admin", "event_organizer");
+export const isAdmin = (u: Me | null | undefined) => hasRole(u, "platform_admin");
 
 export async function login(email: string, password: string): Promise<AuthResponse> {
   const res = await authApi.login(email, password);

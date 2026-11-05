@@ -15,7 +15,7 @@ The checks below were run on the pre-pivot build (2026-11-04/05). The production
 | 4 | Database connectivity | ✅ | ready check + `migrate up` applied `0001_init` (121 ms) † |
 | 5 | Redis connectivity | ✅ | ready check † |
 | 6 | Account creation / seed | ✅ † | `seed`: users 5 (created 5), events 1, launch_sites 1, memberships 5 |
-| 7 | First-login password change | ✅ † | `deniz@retfast.com` login → `must_change_password: true`; password changed from the iOS app (TestFlight 4.0.0) |
+| 7 | First-login password change | ✅ † | `deniz@retfast.com` login → `must_change_password: true`; afterwards `must_change_password = false` in the DB for deniz and tecelli (changed by the users) |
 | 8 | Event creation and participation | Pending (pivot) | |
 | 9 | Simulated telemetry ingestion | Pending on production | verified locally (backend-results.md) |
 | 10 | WebSocket live delivery | Pending on production | verified locally |

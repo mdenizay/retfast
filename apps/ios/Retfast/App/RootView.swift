@@ -14,8 +14,8 @@ struct RootView: View {
                 switch model.authPhase {
                 case .loading:
                     // Matches the system launch screen; no artificial delay.
-                    AeroTokens.background.ignoresSafeArea()
-                        .overlay { ProgressView().accessibilityLabel(Text("Yükleniyor")) }
+                    Brand.ink.ignoresSafeArea()
+                        .overlay { BrandMark(size: 120, color: .white).accessibilityLabel(Text("Yükleniyor")) }
                 case .signedOut:
                     AuthFlowView()
                 case .mustChangePassword:
@@ -175,8 +175,11 @@ struct ActivityBar: View {
             .foregroundStyle(tone == .info ? AeroTokens.onSecondary : AeroTokens.onPrimary)
             .padding(.horizontal, AeroTokens.Space.s4)
             .padding(.vertical, AeroTokens.Space.s2)
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .background(tone == .info ? AeroTokens.secondary : (tone == .success ? AeroTokens.success : AeroTokens.trackingActive))
+            .frame(maxWidth: .infinity, minHeight: 48)
+            .background(tone == .info ? AeroTokens.secondary : (tone == .success ? AeroTokens.success : AeroTokens.trackingActive), in: Capsule())
+            .shadow(color: .black.opacity(0.18), radius: 8, y: 2)
+            .padding(.horizontal, AeroTokens.Space.s3)
+            .padding(.vertical, AeroTokens.Space.s1)
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(accessibilityId)

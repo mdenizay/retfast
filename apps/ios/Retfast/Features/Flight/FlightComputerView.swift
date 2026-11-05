@@ -48,20 +48,12 @@ struct FlightComputerView: View {
     var body: some View {
         VStack(spacing: 0) {
             topBar
-            Picker("Görünüm", selection: $showMap) {
-                Text("Göstergeler").tag(false)
-                Text("Canlı harita").tag(true)
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal, AeroTokens.Space.s4)
-            .padding(.bottom, AeroTokens.Space.s2)
-            .accessibilityIdentifier("fc.mode")
-
             if showMap {
                 FlightLiveMapView()
             } else {
                 ScrollView {
                     VStack(spacing: AeroTokens.Space.s3) {
+                        hero
                         banners
                         instruments
                     }
@@ -90,14 +82,8 @@ struct FlightComputerView: View {
 
     private var topBar: some View {
         HStack(spacing: AeroTokens.Space.s2) {
-            Button {
-                model.overlay = nil
-            } label: {
-                Image(systemName: "chevron.down").font(.title3.weight(.semibold))
-                    .frame(width: 44, height: 44)
-            }
-            .accessibilityLabel(Text("Küçült (kayıt devam eder)"))
-            .accessibilityIdentifier("fc.minimize")
+            MapCircleButton(systemImage: "chevron.down", label: "Küçült (kayıt devam eder)") { model.overlay = nil }
+                .accessibilityIdentifier("fc.minimize")
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: AeroTokens.Space.s2) {
@@ -116,15 +102,57 @@ struct FlightComputerView: View {
                     model.showLandingPrompt = true
                 } label: {
                     Label("İndim", systemImage: "arrow.down.to.line")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(AeroTokens.onPrimary)
+                        .padding(.horizontal, AeroTokens.Space.s4)
                         .frame(minHeight: 44)
+                        .background(AeroTokens.primary, in: Capsule())
                 }
+                .buttonStyle(.plain)
                 .accessibilityHint(Text("Uçuşu bitirme ve retrieve isteme seçeneklerini açar"))
                 .accessibilityIdentifier("fc.landed")
             }
         }
-        .padding(.horizontal, AeroTokens.Space.s2)
-        .padding(.vertical, AeroTokens.Space.s1)
+        .padding(.horizontal, AeroTokens.Space.s4)
+        .padding(.vertical, AeroTokens.Space.s2)
+    }
+
+    /// Big flight timer + the three numbers a pilot glances at.
+    private var hero: some View {
+        let alt = Fmt.altitude(v.gpsAltitude)
+        let speed = Fmt.speed(v.groundSpeed)
+        let vario = Fmt.vario(v.verticalSpeed)
+        return VStack(spacing: AeroTokens.Space.s3) {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                Text(Fmt.duration(context.date.timeIntervalSince(session.flight?.startedAt ?? context.date)))
+                    .font(.system(size: 64, weight: .bold, design: .rounded).monospacedDigit())
+                    .foregroundStyle(highContrast ? Color.black : AeroTokens.textPrimary)
+                    .minimumScaleFactor(0.6)
+                    .accessibilityLabel(Text("Uçuş süresi"))
+            }
+            HStack(spacing: 0) {
+                heroValue(String(localized: "İrtifa"), alt.0, alt.1).accessibilityIdentifier("fc.altitude")
+                Divider().frame(height: 44)
+                heroValue(String(localized: "Hız"), speed.0, speed.1)
+                Divider().frame(height: 44)
+                heroValue(String(localized: "Dikey"), vario.0, vario.1)
+            }
+        }
+        .padding(.vertical, AeroTokens.Space.s4)
+        .frame(maxWidth: .infinity)
+        .background(highContrast ? Color.white : AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.xl, style: .continuous))
+    }
+
+    private func heroValue(_ label: String, _ value: String, _ unit: String) -> some View {
+        VStack(spacing: 2) {
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(value).font(.system(size: 28, weight: .bold, design: .rounded).monospacedDigit())
+                Text(unit).font(.caption.weight(.semibold)).foregroundStyle(AeroTokens.textSecondary)
+            }
+            Text(label).font(.caption).foregroundStyle(AeroTokens.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
     }
 
     private var stateText: String.LocalizationValue {
@@ -191,28 +219,14 @@ struct FlightComputerView: View {
     // MARK: Instruments
 
     private var instruments: some View {
-        let alt = Fmt.altitude(v.gpsAltitude)
-        let speed = Fmt.speed(v.groundSpeed)
-        let vario = Fmt.vario(v.verticalSpeed)
         let dist = Fmt.distance(v.distance)
         let maxAlt = Fmt.altitude(v.maxAltitude)
         let maxSpeed = Fmt.speed(v.maxGroundSpeed)
         let up = Fmt.altitude(v.totalAscent)
         let down = Fmt.altitude(v.totalDescent)
-        let varioTone: Tone = (v.verticalSpeed ?? 0) > 0.3 ? .success : ((v.verticalSpeed ?? 0) < -2.5 ? .warning : .neutral)
 
         return VStack(spacing: AeroTokens.Space.s3) {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: AeroTokens.Space.s3)], spacing: AeroTokens.Space.s3) {
-                InstrumentTile(label: String(localized: "GPS irtifa"), value: alt.0, unit: alt.1, prominent: true, highContrast: highContrast)
-                    .accessibilityIdentifier("fc.altitude")
-                InstrumentTile(label: String(localized: "Yer hızı"), value: speed.0, unit: speed.1, prominent: true, highContrast: highContrast)
-                InstrumentTile(label: String(localized: "Dikey hız"), value: vario.0, unit: vario.1, qualifier: String(localized: "tahmini"),
-                               tone: varioTone, prominent: true, highContrast: highContrast)
-                    .accessibilityHint(Text("Filtrelenmiş GPS tahmini, barometrik variometre değildir"))
-                TimelineView(.periodic(from: .now, by: 1)) { context in
-                    InstrumentTile(label: String(localized: "Süre"), value: Fmt.duration(context.date.timeIntervalSince(session.flight?.startedAt ?? context.date)),
-                                   prominent: true, highContrast: highContrast)
-                }
                 InstrumentTile(label: String(localized: "GPS doğruluğu"), value: Fmt.accuracy(v.horizontalAccuracy),
                                tone: (v.horizontalAccuracy ?? 999) > 50 ? .error : ((v.horizontalAccuracy ?? 999) > 20 ? .warning : .neutral),
                                highContrast: highContrast)
@@ -254,30 +268,40 @@ struct FlightComputerView: View {
     // MARK: Controls
 
     private var controls: some View {
-        HStack(spacing: AeroTokens.Space.s3) {
-            if session.state == .paused || session.state == .error {
+        VStack(spacing: AeroTokens.Space.s3) {
+            CapsuleSegment(selection: $showMap, options: [(false, String(localized: "Göstergeler")), (true, String(localized: "Canlı harita"))])
+                .accessibilityIdentifier("fc.mode")
+            HStack(spacing: AeroTokens.Space.s3) {
+                if session.state == .paused || session.state == .error {
+                    Button {
+                        try? session.resume()
+                        Haptics.start()
+                    } label: { Label("Devam et", systemImage: "play.fill") }
+                    .buttonStyle(.aeroPrimary)
+                } else {
+                    Button {
+                        try? session.pause()
+                        Haptics.tick()
+                    } label: { Label("Duraklat", systemImage: "pause.fill") }
+                    .buttonStyle(.aeroSecondary)
+                    .disabled(session.state != .recording)
+                }
                 Button {
-                    try? session.resume()
-                    Haptics.start()
-                } label: { Label("Devam et", systemImage: "play.fill") }
-                .buttonStyle(.aeroPrimary)
-            } else {
-                Button {
-                    try? session.pause()
-                    Haptics.tick()
-                } label: { Label("Duraklat", systemImage: "pause.fill") }
-                .buttonStyle(.aeroSecondary)
-                .disabled(session.state != .recording)
+                    confirmEnd = true
+                } label: { Label("Bitir", systemImage: "stop.fill") }
+                .buttonStyle(.aeroInk)
+                .accessibilityIdentifier("fc.end")
             }
-            Button {
-                confirmEnd = true
-            } label: { Label("Bitir", systemImage: "stop.fill") }
-            .buttonStyle(.aeroDestructive)
-            .accessibilityIdentifier("fc.end")
         }
         .padding(.horizontal, AeroTokens.Space.s4)
-        .padding(.vertical, AeroTokens.Space.s2)
-        .background(.bar)
+        .padding(.top, AeroTokens.Space.s4)
+        .padding(.bottom, AeroTokens.Space.s2)
+        .background {
+            UnevenRoundedRectangle(topLeadingRadius: AeroTokens.Radius.xl, topTrailingRadius: AeroTokens.Radius.xl, style: .continuous)
+                .fill(AeroTokens.surface)
+                .shadow(color: .black.opacity(0.12), radius: 12, y: -2)
+                .ignoresSafeArea(edges: .bottom)
+        }
     }
 }
 

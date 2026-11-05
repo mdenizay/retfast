@@ -5,6 +5,7 @@ import SwiftUI
 /// Map-first event screen with a role-specific bottom sheet.
 struct EventScreen: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.dismiss) private var dismiss
     let eventId: String
     @State private var event: Event?
     @State private var sites: [LaunchSite] = []
@@ -34,16 +35,14 @@ struct EventScreen: View {
             } else {
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-        }
-        .navigationTitle(event?.name ?? "")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .tabBar)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button { Task { await load(); await live?.reload() } } label: { Image(systemName: "arrow.clockwise") }
-                    .accessibilityLabel(Text("Yenile"))
+            if event == nil {
+                MapCircleButton(systemImage: "arrow.left", label: "Geri") { dismiss() }
+                    .padding(.horizontal, AeroTokens.Space.s4).padding(.top, AeroTokens.Space.s2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+        .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
         .task { await load() }
         .onDisappear { live?.stop() }
         .aeroBackground()
@@ -51,17 +50,19 @@ struct EventScreen: View {
 
     @ViewBuilder private func mapOverlay(_ event: Event) -> some View {
         HStack(alignment: .top) {
-            if let live { ConnectionPill(state: live.connection) }
+            MapCircleButton(systemImage: "arrow.left", label: "Geri") { dismiss() }
+                .accessibilityIdentifier("event.back")
+            Spacer()
+            if let live { ConnectionPill(state: live.connection).padding(.top, 10) }
             Spacer()
             VStack(spacing: AeroTokens.Space.s2) {
-                Button { fitEvent(event) } label: { Image(systemName: "scope").frame(width: 44, height: 44) }
-                    .accessibilityLabel(Text("Etkinliği ortala"))
-                Button { camera = .userLocation(fallback: camera) } label: { Image(systemName: "location").frame(width: 44, height: 44) }
-                    .accessibilityLabel(Text("Konumuma git"))
+                MapCircleButton(systemImage: "location.fill", label: "Konumuma git") { camera = .userLocation(fallback: camera) }
+                MapCircleButton(systemImage: "scope", label: "Etkinliği ortala") { fitEvent(event) }
+                MapCircleButton(systemImage: "arrow.clockwise", label: "Yenile") { Task { await load(); await live?.reload() } }
             }
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.md))
         }
-        .padding(AeroTokens.Space.s3)
+        .padding(.horizontal, AeroTokens.Space.s4)
+        .padding(.top, AeroTokens.Space.s2)
     }
 
     @ViewBuilder private func sheetContent(_ event: Event) -> some View {

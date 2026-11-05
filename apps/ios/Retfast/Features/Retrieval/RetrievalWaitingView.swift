@@ -46,31 +46,21 @@ struct RetrievalWaitingView: View {
 
     private func content(_ r: LocalRetrieval) -> some View {
         let stage = r.stage
-        return ScrollView {
-            VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
-                map(r)
-                    .frame(height: 260)
-                    .clipShape(RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
-                StatusPill(stage.shortTitle, systemImage: stage.systemImage, tone: stage.tone)
-                    .accessibilityIdentifier("retrieval.stage")
-                    .accessibilityValue(Text(Self.stageKey(stage)))
-                deliveryBanner(r)
-                RetrievalLadder(stage: stage, server: server)
-                retrieverCard(stage)
-                if stage.sharesPilotPosition || model.sharing.isSharing { AeroCard { SharingStatusRow() } }
-                if !r.note.isEmpty {
-                    AeroCard { Label(r.note, systemImage: "text.bubble").font(.subheadline) }
-                }
-                actions(r)
-                Text("Retfast bir acil durum servisi değildir. Acil bir durumda 112'yi ara.")
-                    .font(.caption).foregroundStyle(AeroTokens.textSecondary)
+        return ZStack(alignment: .top) {
+            map(r).ignoresSafeArea()
+            HStack {
+                MapCircleButton(systemImage: "chevron.down", label: "Küçült (talep sürer)") { model.overlay = nil }
+                    .accessibilityIdentifier("retrieval.minimize")
+                Spacer()
+                MapCircleButton(systemImage: "location.fill", label: "Konumuma git") { camera = .userLocation(fallback: camera) }
             }
-            .padding(AeroTokens.Space.s4)
+            .padding(.horizontal, AeroTokens.Space.s4)
+            .padding(.top, AeroTokens.Space.s2)
+            panel(r, stage: stage)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxHeight: .infinity, alignment: .bottom)
         }
-        .aeroBackground()
-        .navigationTitle(r.eventName ?? String(localized: "Retrieve"))
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar { closeButton }
+        .toolbar(.hidden, for: .navigationBar)
         .task(id: r.eventId) {
             let l = EventLiveModel(model: model, eventId: r.eventId, subscribePositions: false)
             let manager = model.retrievals
@@ -88,6 +78,39 @@ struct RetrievalWaitingView: View {
         } message: {
             Text("Retriever'a artık gerek olmadığı bildirilir ve konum paylaşımın durur.")
         }
+    }
+
+    /// Ink panel: who is coming, the steps, the one action.
+    private func panel(_ r: LocalRetrieval, stage: RetrievalStage) -> some View {
+        VStack(alignment: .leading, spacing: AeroTokens.Space.s4) {
+            Capsule().fill(AeroTokens.textMuted.opacity(0.6)).frame(width: 44, height: 5)
+                .frame(maxWidth: .infinity).accessibilityHidden(true)
+            HStack(alignment: .firstTextBaseline) {
+                Text(r.eventName ?? String(localized: "Retrieve")).font(.caption.weight(.semibold))
+                    .foregroundStyle(AeroTokens.textSecondary).textCase(.uppercase)
+                Spacer()
+                Label(stage.shortTitle, systemImage: stage.systemImage)
+                    .font(.caption.weight(.semibold)).foregroundStyle(stage.tone.color)
+                    .accessibilityIdentifier("retrieval.stage")
+                    .accessibilityValue(Text(Self.stageKey(stage)))
+            }
+            retrieverCard(stage)
+            deliveryBanner(r)
+            RetrievalLadder(stage: stage, server: server)
+            if stage.sharesPilotPosition || model.sharing.isSharing { SharingStatusRow() }
+            if !r.note.isEmpty {
+                Label(r.note, systemImage: "text.bubble").font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
+            }
+            actions(r)
+            Text("Retfast bir acil durum servisi değildir. Acil bir durumda 112'yi ara.")
+                .font(.caption2).foregroundStyle(AeroTokens.textMuted)
+        }
+        .padding(.horizontal, AeroTokens.Space.s4)
+        .padding(.top, AeroTokens.Space.s3)
+        .padding(.bottom, AeroTokens.Space.s4)
+        .background(AeroTokens.background, in: UnevenRoundedRectangle(topLeadingRadius: AeroTokens.Radius.xl, topTrailingRadius: AeroTokens.Radius.xl, style: .continuous))
+        .shadow(color: .black.opacity(0.25), radius: 16, y: -2)
+        .environment(\.colorScheme, .dark)
     }
 
     static func stageKey(_ s: RetrievalStage) -> String {
@@ -116,7 +139,7 @@ struct RetrievalWaitingView: View {
             }
         }
         .mapStyle(.standard(pointsOfInterest: .excludingAll))
-        .mapControls { MapUserLocationButton(); MapCompass() }
+        .mapControls { MapCompass() }
     }
 
     private func myCoordinate(_ r: LocalRetrieval) -> CLLocationCoordinate2D {
@@ -148,29 +171,36 @@ struct RetrievalWaitingView: View {
 
     @ViewBuilder private func retrieverCard(_ stage: RetrievalStage) -> some View {
         if let retriever = server?.retriever, stage == .accepted || stage == .pickedUp || stage == .delivered {
-            AeroCard {
-                HStack {
-                    Image(systemName: "car.fill").foregroundStyle(AeroTokens.secondary)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(retriever.fullName ?? String(localized: "Retriever")).font(.headline)
-                        if let rp = server?.retrieverPosition {
-                            let me = model.sharing.lastFix.map { ($0.latitude, $0.longitude) } ?? (r?.pickupLat ?? rp.lat, r?.pickupLon ?? rp.lon)
-                            Text("Uzaklık (kuş uçuşu): \(Fmt.distanceText(Fmt.meters((rp.lat, rp.lon), me)))")
-                                .font(.subheadline.monospacedDigit())
-                            if let t = rp.t {
-                                TimelineView(.periodic(from: .now, by: 10)) { ctx in
-                                    Text("Retriever konumu \(Fmt.age(max(0, ctx.date.timeIntervalSince(t)))) önce")
-                                        .font(.caption).foregroundStyle(AeroTokens.textSecondary)
-                                }
-                            }
+            HStack(spacing: AeroTokens.Space.s3) {
+                Avatar(name: retriever.fullName, size: 52)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(retriever.fullName ?? String(localized: "Retriever")).font(.headline)
+                    if let rp = server?.retrieverPosition {
+                        let c = r.map(myCoordinate) ?? CLLocationCoordinate2D(latitude: rp.lat, longitude: rp.lon)
+                        let me = (c.latitude, c.longitude)
+                        TimelineView(.periodic(from: .now, by: 10)) { ctx in
+                            Text("\(Fmt.distanceText(Fmt.meters((rp.lat, rp.lon), me))) uzakta" + (rp.t.map { " · \(Fmt.age(max(0, ctx.date.timeIntervalSince($0)))) önce" } ?? ""))
+                                .font(.subheadline.monospacedDigit()).foregroundStyle(AeroTokens.textSecondary)
                         }
+                    } else {
+                        Text("Retriever yolda").font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
                     }
-                    Spacer()
                 }
+                Spacer()
                 if let tel = AppleMaps.telURL(retriever.phone) {
-                    Button { openURL(tel) } label: { Label("Retriever'ı ara", systemImage: "phone.fill") }
-                        .buttonStyle(.aeroPrimary)
+                    RoundIconButton(systemImage: "phone.fill", label: "Retriever'ı ara", tint: AeroTokens.success) { openURL(tel) }
                         .accessibilityIdentifier("retrieval.call")
+                }
+            }
+            .padding(AeroTokens.Space.s3)
+            .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
+        } else if stage == .requested || stage == .sending || stage == .savedLocally {
+            HStack(spacing: AeroTokens.Space.s3) {
+                ProgressView().frame(width: 52, height: 52)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Retriever aranıyor").font(.headline)
+                    Text("Bir retriever kabul edince adını ve konumunu göreceksin.")
+                        .font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
                 }
             }
         }
@@ -182,8 +212,8 @@ struct RetrievalWaitingView: View {
                 .buttonStyle(.aeroPrimary)
                 .accessibilityIdentifier("retrieval.close")
         } else if r.stage != .cancelling && r.stage != .pickedUp {
-            Button(role: .destructive) { confirmCancel = true } label: {
-                Label("Kendim döndüm", systemImage: "figure.walk")
+            Button { confirmCancel = true } label: {
+                Label("Kendim döndüm, iptal et", systemImage: "figure.walk")
             }
             .buttonStyle(.aeroSecondary)
             .accessibilityIdentifier("retrieval.cancel")
@@ -198,27 +228,16 @@ struct RetrievalLadder: View {
 
     var body: some View {
         let done = stage.confirmedStep ?? -1
-        let steps: [(String, String, Date?)] = [
-            (String(localized: "Talep iletildi"), "paperplane", server?.requestedAt),
-            (String(localized: "Retriever kabul etti"), "car", server?.acceptedAt),
-            (String(localized: "Alındın"), "figure.seated.side", server?.pickedUpAt),
-            (String(localized: "Teslim edildin"), "checkmark.circle", server?.deliveredAt),
+        let raw: [(String, Date?)] = [
+            (String(localized: "Talep iletildi"), server?.requestedAt),
+            (String(localized: "Retriever kabul etti"), server?.acceptedAt),
+            (String(localized: "Alındın"), server?.pickedUpAt),
+            (String(localized: "Teslim edildin"), server?.deliveredAt),
         ]
-        AeroCard {
-            ForEach(Array(steps.enumerated()), id: \.offset) { i, step in
-                HStack(spacing: AeroTokens.Space.s3) {
-                    Image(systemName: i <= done ? "checkmark.circle.fill" : (i == done + 1 && !stage.isFinished ? "circle.dotted" : "circle"))
-                        .foregroundStyle(i <= done ? AeroTokens.success : AeroTokens.textMuted)
-                        .font(.title3)
-                    Label(step.0, systemImage: step.1)
-                        .font(.subheadline.weight(i == done ? .semibold : .regular))
-                        .foregroundStyle(i <= done ? AeroTokens.textPrimary : AeroTokens.textSecondary)
-                    Spacer()
-                    if i <= done, let t = step.2 { Text(Fmt.time(t)).font(.caption.monospacedDigit()).foregroundStyle(AeroTokens.textSecondary) }
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityValue(Text(i <= done ? "tamam" : "bekliyor"))
-            }
+        VStack(alignment: .leading, spacing: 0) {
+            StepTimeline(steps: raw.enumerated().map { i, s in
+                StepTimeline.Step(id: i, title: s.0, time: s.1, done: i <= done, current: i == done + 1 && !stage.isFinished)
+            })
             if stage == .cancelled { Label("Talep iptal edildi", systemImage: "xmark.circle").font(.subheadline) }
         }
     }

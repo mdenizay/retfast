@@ -14,7 +14,7 @@ settings:
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
     DEVELOPMENT_TEAM: JHW499P7S3
-    MARKETING_VERSION: 4.1.0
+    MARKETING_VERSION: 4.2.0
     CURRENT_PROJECT_VERSION: 1
     LOCALIZATION_PREFERS_STRING_CATALOGS: YES
     SWIFT_EMIT_LOC_STRINGS: YES
@@ -35,9 +35,8 @@ targets:
     platform: iOS
     sources:
       - path: Retfast
-      # Generated design tokens (packages/design-tokens/build.mjs). Referenced, never copied or edited.
-      - path: ../../packages/design-tokens/dist/AeroTokens.swift
-        group: Retfast/DesignSystem
+      # iOS brand theme lives in Retfast/DesignSystem/Theme.swift (2026-11 redesign);
+      # the web still uses packages/design-tokens.
     dependencies:
       - package: RetfastCore
         product: RetfastCore

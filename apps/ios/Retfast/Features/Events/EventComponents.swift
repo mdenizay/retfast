@@ -107,51 +107,6 @@ extension SharedPosition {
     var coordinate: CLLocationCoordinate2D { CLLocationCoordinate2D(latitude: lat, longitude: lon) }
 }
 
-/// One card row for an event in the list.
-struct EventRow: View {
-    let event: Event
-
-    var body: some View {
-        AeroCard {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: AeroTokens.Space.s1) {
-                    HStack(spacing: AeroTokens.Space.s2) {
-                        Text(event.name).font(.headline).foregroundStyle(AeroTokens.textPrimary)
-                        if event.isDemo ?? false { DemoBadge() }
-                    }
-                    if let loc = event.locationName, !loc.isEmpty {
-                        Label(loc, systemImage: "mappin.and.ellipse").font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
-                    }
-                    Text(EventDates.range(event)).font(.caption).foregroundStyle(AeroTokens.textMuted)
-                    RoleBadges(event: event)
-                    if !event.isMember { applicationBadge }
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: AeroTokens.Space.s1) {
-                    EventStatusPill(status: event.status)
-                    if event.isOrganizer, let n = event.counts?.pendingApplications, n > 0 {
-                        StatusPill(String(localized: "\(n) başvuru"), systemImage: "tray.full", tone: .warning)
-                    }
-                }
-            }
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    @ViewBuilder private var applicationBadge: some View {
-        switch EventSheetMode.mode(for: event) {
-        case .notMember(.pending):
-            StatusPill(String(localized: "Başvuru bekliyor"), systemImage: "clock", tone: .warning)
-        case .notMember(.rejected):
-            StatusPill(String(localized: "Başvuru reddedildi"), systemImage: "xmark.circle", tone: .neutral)
-        case .notMember(.canApply):
-            StatusPill(String(localized: "Başvuruya açık"), systemImage: "person.badge.plus", tone: .info)
-        default:
-            EmptyView()
-        }
-    }
-}
-
 // MARK: Bottom sheet
 
 enum SheetDetent: CaseIterable { case peek, half, full }
@@ -174,7 +129,7 @@ struct BottomSheet<Header: View, Content: View>: View {
             let height = min(full, max(heights[.peek]!, base - drag))
             VStack(spacing: 0) {
                 VStack(spacing: AeroTokens.Space.s2) {
-                    Capsule().fill(AeroTokens.border).frame(width: 40, height: 5).padding(.top, 8)
+                    Capsule().fill(AeroTokens.textMuted.opacity(0.6)).frame(width: 44, height: 5).padding(.top, 10)
                         .accessibilityHidden(true)
                     header
                 }
@@ -209,9 +164,9 @@ struct BottomSheet<Header: View, Content: View>: View {
             .frame(height: height)
             .frame(maxWidth: .infinity)
             .background(AeroTokens.background, in: UnevenRoundedRectangle(topLeadingRadius: AeroTokens.Radius.xl, topTrailingRadius: AeroTokens.Radius.xl, style: .continuous))
-            .overlay(UnevenRoundedRectangle(topLeadingRadius: AeroTokens.Radius.xl, topTrailingRadius: AeroTokens.Radius.xl, style: .continuous)
-                .strokeBorder(AeroTokens.border, lineWidth: 1))
-            .shadow(color: .black.opacity(0.15), radius: 12, y: -2)
+            .shadow(color: .black.opacity(0.25), radius: 16, y: -2)
+            // Ink panel under a light map, like the reference designs.
+            .environment(\.colorScheme, .dark)
             .frame(maxHeight: .infinity, alignment: .bottom)
         }
     }
@@ -221,19 +176,24 @@ struct BottomSheet<Header: View, Content: View>: View {
 struct EventSheetHeader: View {
     let event: Event
     var body: some View {
-        VStack(alignment: .leading, spacing: AeroTokens.Space.s1) {
-            HStack(spacing: AeroTokens.Space.s2) {
-                Text(event.name).font(.title3.bold()).foregroundStyle(AeroTokens.textPrimary).lineLimit(2)
-                if event.isDemo ?? false { DemoBadge() }
-                Spacer()
+        HStack(alignment: .center, spacing: AeroTokens.Space.s3) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(event.name).font(.title2.bold()).foregroundStyle(AeroTokens.textPrimary).lineLimit(2)
+                HStack(spacing: 6) {
+                    if let role = event.memberRole {
+                        Label(role.title, systemImage: role.systemImage)
+                    }
+                    if event.isOrganizer { Label("Organizatör", systemImage: "star.fill") }
+                    if let loc = event.locationName, !loc.isEmpty { Text("· \(loc)").lineLimit(1) }
+                }
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(AeroTokens.textSecondary)
             }
-            HStack(spacing: AeroTokens.Space.s1) {
-                EventStatusPill(status: event.status)
-                RoleBadges(event: event)
-            }
+            Spacer()
+            EventStatusPill(status: event.status)
         }
         .padding(.horizontal, AeroTokens.Space.s4)
-        .padding(.bottom, AeroTokens.Space.s2)
+        .padding(.bottom, AeroTokens.Space.s3)
     }
 }
 

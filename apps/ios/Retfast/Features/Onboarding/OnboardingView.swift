@@ -13,20 +13,14 @@ struct OnboardingView: View {
     }
 
     private let pages: [Page] = [
-        Page(id: 0, icon: "paperplane.circle", title: "Retfast nedir?",
-             body: "Retfast yamaç paraşütü etkinlikleri için uçuş takibi ve retrieve uygulamasıdır. Katıldığın etkinlikte uçuşunu GPS ile kaydeder, organizatör ve gözlemcilerin canlı haritasında gösterir; indikten sonra seni alacak retriever'ı bulmanı sağlar."),
-        Page(id: 1, icon: "person.3", title: "Roller",
-             body: "Her etkinlikte bir rolün olur: pilot, gözlemci veya retriever. Etkinliğe başvurursun, organizatör onaylayıp rolünü belirler. Etkinlik ekranı rolüne göre açılır."),
-        Page(id: 2, icon: "location.north.line", title: "Takip nasıl çalışır?",
-             body: "Uçuşu sen başlatırsın. Her GPS noktası önce telefona kaydedilir, bağlantı olduğunda sunucuya gönderilir. Ekrandan çıkmak kaydı durdurmaz; kaydı yalnızca sen bitirirsin. İrtifa GPS irtifasıdır, dikey hız bir tahmindir."),
-        Page(id: 3, icon: "car", title: "Retrieve",
-             body: "İndiğinde \"Retrieve iste\" ile bulunduğun yeri ve kısa bir not gönderirsin. Bir retriever kabul edince adını, konumunu ve telefonunu görürsün; o da seni bulmak için güncel konumunu görür. Beklerken konumun yaklaşık 30 saniyede bir paylaşılır, alındığında durur."),
-        Page(id: 4, icon: "lock.iphone", title: "Arka planda konum",
-             body: "Ekran kilitliyken kaydın ve paylaşımın sürmesi için konum iznini \"Her Zaman\" olarak vermen önerilir. Uygulamayı uygulama değiştiriciden kaydırarak kapatırsan iOS konum vermeyi durdurur: iz kesilir ve retriever güncel konumunu göremez. Sürekli GPS pil tüketir; Düşük Güç Modu güncellemeleri seyrekleştirebilir."),
-        Page(id: 5, icon: "antenna.radiowaves.left.and.right.slash", title: "Bağlantı ve GPS sınırları",
-             body: "Dağda mobil veri olmayabilir. Bağlantı yokken kayıt sürer ve retrieve talebin telefonda bekler; bağlantı gelince gönderilir. Canlı harita anlık değildir ve GPS konumu metrelerce hatalı olabilir. Uygulama durumu her zaman açıkça gösterir."),
-        Page(id: 6, icon: "exclamationmark.shield", title: "Acil durum servisi değildir",
-             body: "Retfast bir etkinlik ve retrieve uygulamasıdır; acil durum ya da kurtarma servisi değildir, yetkililere veya 112'ye ulaşmaz. Yaralanma veya tehlike durumunda her zaman 112'yi ve normal acil durum kanallarını kullan."),
+        Page(id: 0, icon: "brand", title: "Uç. İn. Alın.",
+             body: "Retfast yamaç paraşütü etkinlikleri için uçuş takibi ve retrieve uygulamasıdır. Uçuşun canlı haritada görünür; indiğinde seni alacak retriever'ı tek dokunuşla çağırırsın."),
+        Page(id: 1, icon: "person.3.fill", title: "Her etkinlikte bir rol",
+             body: "Pilot, gözlemci veya retriever. Etkinliğe başvurursun; organizatör onaylayıp rolünü belirler. Etkinlik ekranı rolüne göre açılır."),
+        Page(id: 2, icon: "location.north.line.fill", title: "Takip ve retrieve",
+             body: "Uçuşu sen başlatır, sen bitirirsin. Konum önce telefona kaydedilir, bağlantı gelince gönderilir. İndiğinde \"Retrieve iste\" ile yerini paylaşırsın; retriever kabul edince adını ve konumunu görürsün.\n\nKilit ekranında da çalışması için konum iznini \"Her Zaman\" ver. Uygulamayı kaydırıp kapatırsan iOS konumu durdurur. GPS metrelerce hatalı olabilir; irtifa GPS irtifası, dikey hız tahminidir."),
+        Page(id: 3, icon: "exclamationmark.shield.fill", title: "Acil durum servisi değildir",
+             body: "Retfast yetkililere veya 112'ye ulaşmaz. Yaralanma veya tehlike durumunda her zaman 112'yi ve normal acil durum kanallarını kullan."),
     ]
 
     var body: some View {
@@ -35,12 +29,21 @@ struct OnboardingView: View {
                 ForEach(pages) { p in
                     ScrollView {
                         VStack(alignment: .leading, spacing: AeroTokens.Space.s4) {
-                            Image(systemName: p.icon)
-                                .font(.system(size: 56, weight: .light))
-                                .foregroundStyle(AeroTokens.primary)
-                                .accessibilityHidden(true)
-                            Text(p.title).font(.largeTitle.bold()).foregroundStyle(AeroTokens.textPrimary)
-                            Text(p.body).font(.body).foregroundStyle(AeroTokens.textSecondary)
+                            Group {
+                                if p.icon == "brand" {
+                                    BrandMark(size: 96, color: Brand.red)
+                                } else {
+                                    Image(systemName: p.icon)
+                                        .font(.system(size: 40, weight: .semibold))
+                                        .foregroundStyle(AeroTokens.primary)
+                                        .frame(width: 88, height: 88)
+                                        .background(AeroTokens.primary.opacity(0.12), in: Circle())
+                                }
+                            }
+                            .padding(.top, AeroTokens.Space.s8)
+                            .accessibilityHidden(true)
+                            Text(p.title).font(.system(size: 34, weight: .bold)).foregroundStyle(AeroTokens.textPrimary)
+                            Text(p.body).font(.title3).foregroundStyle(AeroTokens.textSecondary)
                                 .fixedSize(horizontal: false, vertical: true)
                             if p.id == pages.count - 1 {
                                 Toggle(isOn: $acknowledged) {
@@ -48,6 +51,9 @@ struct OnboardingView: View {
                                         .font(.subheadline)
                                 }
                                 .toggleStyle(.switch)
+                                .tint(AeroTokens.primary)
+                                .padding(AeroTokens.Space.s4)
+                                .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
                                 .accessibilityIdentifier("onboarding.ack")
                             }
                         }
@@ -58,7 +64,7 @@ struct OnboardingView: View {
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .always))
-            .indexViewStyle(.page(backgroundDisplayMode: .always))
+            .indexViewStyle(.page(backgroundDisplayMode: .never))
 
             Group {
                 if page < pages.count - 1 {

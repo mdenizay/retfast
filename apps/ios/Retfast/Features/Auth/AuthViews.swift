@@ -42,55 +42,64 @@ struct LoginView: View {
     @State private var error: String?
 
     var body: some View {
-        Form {
-            Section {
-                VStack(alignment: .leading, spacing: AeroTokens.Space.s2) {
-                    Text("Retfast").font(.largeTitle.bold())
-                    Text("Uçuş kaydı, canlı takip ve acil durum").foregroundStyle(AeroTokens.textSecondary)
+        ScrollView {
+            VStack(alignment: .leading, spacing: AeroTokens.Space.s6) {
+                VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
+                    BrandMark(size: 64, color: Brand.red)
+                    Text("Retfast").font(.system(size: 40, weight: .bold))
+                    Text("Uçuşunu kaydet, iniş yerini paylaş, retriever seni alsın.")
+                        .font(.title3).foregroundStyle(AeroTokens.textSecondary)
                 }
-                .listRowBackground(Color.clear)
-            }
-            if let message = model.authMessage {
-                Section { WarningRow(text: message) }
-            }
-            Section {
-                TextField("E-posta", text: $email)
-                    .textContentType(.username)
-                    .keyboardType(.emailAddress)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .accessibilityIdentifier("login.email")
-                SecureField("Şifre", text: $password)
-                    .textContentType(.password)
-                    .accessibilityIdentifier("login.password")
-            }
-            if let error {
-                Section { WarningRow(text: error, tone: .error) }
-            }
-            Section {
-                Button {
-                    Task { await login() }
-                } label: {
-                    if busy { ProgressView() } else { Text("Giriş yap") }
+                .padding(.top, AeroTokens.Space.s8)
+
+                if let message = model.authMessage { WarningRow(text: message) }
+
+                VStack(spacing: AeroTokens.Space.s3) {
+                    field { TextField("E-posta", text: $email)
+                        .textContentType(.username)
+                        .keyboardType(.emailAddress)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .accessibilityIdentifier("login.email") }
+                    field { SecureField("Şifre", text: $password)
+                        .textContentType(.password)
+                        .accessibilityIdentifier("login.password") }
+                    if let error { WarningRow(text: error, tone: .error) }
+                    Button {
+                        Task { await login() }
+                    } label: {
+                        if busy { ProgressView().tint(.white) } else { Text("Giriş yap") }
+                    }
+                    .buttonStyle(.aeroPrimaryLarge)
+                    .disabled(busy || email.isEmpty || password.isEmpty)
+                    .accessibilityIdentifier("login.submit")
                 }
-                .buttonStyle(.aeroPrimary)
-                .disabled(busy || email.isEmpty || password.isEmpty)
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
-                .accessibilityIdentifier("login.submit")
-            }
-            Section {
-                NavigationLink("Hesap oluştur") { RegisterView() }
-                NavigationLink("Şifremi unuttum") { ForgotPasswordView() }
-            }
-            Section {
+
+                HStack {
+                    NavigationLink("Hesap oluştur") { RegisterView() }.fontWeight(.semibold)
+                    Spacer()
+                    NavigationLink("Şifremi unuttum") { ForgotPasswordView() }
+                }
+                .tint(AeroTokens.textPrimary)
+
                 Text("Sunucu: \(model.config.apiBaseURL.absoluteString)")
-                    .font(.caption.monospaced())
+                    .font(.caption2.monospaced())
                     .foregroundStyle(AeroTokens.textMuted)
             }
+            .padding(.horizontal, AeroTokens.Space.s6)
+            .padding(.bottom, AeroTokens.Space.s8)
         }
-        .navigationTitle("Giriş")
-        .navigationBarTitleDisplayMode(.inline)
+        .scrollDismissesKeyboard(.interactively)
+        .aeroBackground()
+        .toolbar(.hidden, for: .navigationBar)
+    }
+
+    private func field<C: View>(@ViewBuilder _ c: () -> C) -> some View {
+        c()
+            .font(.body)
+            .padding(.horizontal, AeroTokens.Space.s4)
+            .frame(height: AeroTokens.Control.heightLarge)
+            .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous))
     }
 
     private func login() async {

@@ -49,35 +49,32 @@ struct PilotSheet: View {
 
     @ViewBuilder private var startSection: some View {
         if event.status != "active" {
-            AeroCard {
-                WarningRow(text: event.status == "published"
-                           ? String(localized: "Etkinlik henüz başlamadı. Uçuşu yine de kaydedebilirsin; organizatör ayarlarına göre canlı haritada görünmeyebilir.")
-                           : String(localized: "Etkinlik aktif değil. Uçuş kaydedilir ancak etkinliğe kabul edilmeyebilir."), systemImage: "calendar")
-            }
+            WarningRow(text: event.status == "published"
+                       ? String(localized: "Etkinlik henüz başlamadı. Uçuşu yine de kaydedebilirsin; canlı haritada görünmeyebilir.")
+                       : String(localized: "Etkinlik aktif değil. Uçuş kaydedilir ancak etkinliğe kabul edilmeyebilir."), systemImage: "calendar")
         }
         if event.settings?.liveTracking == false {
-            AeroCard { WarningRow(text: String(localized: "Bu etkinlikte canlı takip kapalı. Sunucu uçuşu etkinliğe kabul etmeyebilir; kayıt telefonda kalır.")) }
+            WarningRow(text: String(localized: "Bu etkinlikte canlı takip kapalı. Kayıt telefonda kalır."))
         }
-        ReadinessList(compact: true)
         SharingNoticeCard(acknowledged: $sharingAcknowledged, seesEachOther: event.settings?.pilotsSeeEachOther ?? false)
-        if let startError { AeroCard { WarningRow(text: startError, tone: .error) } }
+        if let startError { WarningRow(text: startError, tone: .error) }
         Button {
             start()
         } label: {
-            Label("Uçuşa başla", systemImage: "play.fill")
+            Label("Uçuşa başla", systemImage: "paperplane.fill")
         }
         .buttonStyle(.aeroPrimaryLarge)
         .disabled(!canStart)
         .accessibilityIdentifier("pilot.start")
         if !sharingAcknowledged {
-            Text("Başlamak için paylaşım bilgisini onayla.").font(.caption).foregroundStyle(AeroTokens.textSecondary)
+            Text("Başlamak için paylaşımı onayla.").font(.caption).foregroundStyle(AeroTokens.textSecondary)
+                .frame(maxWidth: .infinity)
         }
-        Text("Bağlantı yokken de kayıt yapılır; noktalar telefonda saklanır ve bağlantı gelince gönderilir.")
-            .font(.caption).foregroundStyle(AeroTokens.textSecondary)
+        ReadinessList(compact: true)
         Button {
             model.retrieveRequest = RetrieveContext(eventId: event.id.lowercased(), eventName: event.name, flightId: nil)
         } label: {
-            Label("Uçuş kaydı olmadan retrieve iste", systemImage: "car")
+            Label("Kayıt olmadan retrieve iste", systemImage: "car")
         }
         .buttonStyle(.aeroSecondary)
         .accessibilityIdentifier("pilot.retrieveWithoutFlight")
@@ -106,24 +103,20 @@ struct SharingNoticeCard: View {
     let seesEachOther: Bool
 
     var body: some View {
-        AeroCard {
-            Label {
-                VStack(alignment: .leading, spacing: AeroTokens.Space.s1) {
-                    Text("Bu etkinlikte uçuşların organizatör ve gözlemcilerle paylaşılır.")
-                        .font(.subheadline.weight(.semibold))
-                    if seesEachOther {
-                        Text("Etkinliğin diğer pilotları da canlı konumunu görür.").font(.caption)
-                    }
-                    Text("Retrieve istediğinde, kabul eden retriever konumunu ve telefonunu görür.").font(.caption)
-                        .foregroundStyle(AeroTokens.textSecondary)
-                }
-            } icon: {
-                Image(systemName: "eye").foregroundStyle(AeroTokens.secondary)
+        Toggle(isOn: $acknowledged) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Uçuşum organizatör ve gözlemcilerle paylaşılır")
+                    .font(.subheadline.weight(.semibold))
+                Text(seesEachOther
+                     ? String(localized: "Diğer pilotlar da seni görür. Retrieve istersen kabul eden retriever konumunu ve telefonunu görür.")
+                     : String(localized: "Retrieve istersen kabul eden retriever konumunu ve telefonunu görür."))
+                    .font(.caption).foregroundStyle(AeroTokens.textSecondary)
             }
-            Toggle("Anladım", isOn: $acknowledged)
-                .font(.subheadline.weight(.semibold))
-                .accessibilityIdentifier("pilot.shareAck")
         }
+        .tint(AeroTokens.primary)
+        .padding(AeroTokens.Space.s4)
+        .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
+        .accessibilityIdentifier("pilot.shareAck")
     }
 }
 
@@ -136,26 +129,29 @@ struct InFlightCard: View {
         let v = model.session.values
         let alt = Fmt.altitude(v.gpsAltitude)
         let speed = Fmt.speed(v.groundSpeed)
-        AeroCard {
-            HStack {
-                StatusPill(String(localized: model.session.state.titleValue), systemImage: model.session.state.systemImage, tone: model.session.state.tone)
-                SyncBadge(snapshot: model.syncSnapshot)
+        VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
+            HStack(alignment: .firstTextBaseline) {
+                Label(String(localized: model.session.state.titleValue), systemImage: model.session.state.systemImage)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(model.session.state.tone.color)
+                    .symbolEffect(.pulse, isActive: model.session.state == .recording)
                 Spacer()
                 TimelineView(.periodic(from: .now, by: 1)) { ctx in
                     Text(Fmt.duration(ctx.date.timeIntervalSince(model.session.flight?.startedAt ?? ctx.date)))
-                        .font(.title3.monospacedDigit().weight(.semibold))
+                        .font(.system(.title, design: .rounded).monospacedDigit().weight(.bold))
                 }
             }
             HStack(spacing: AeroTokens.Space.s2) {
                 InstrumentTile(label: String(localized: "GPS irtifa"), value: alt.0, unit: alt.1)
                 InstrumentTile(label: String(localized: "Yer hızı"), value: speed.0, unit: speed.1)
             }
-            Button { model.overlay = .flight } label: { Label("Uçuş bilgisayarı", systemImage: "gauge.with.dots.needle.67percent") }
-                .buttonStyle(.aeroPrimary)
-                .accessibilityIdentifier("pilot.openFlight")
-            Button { confirmEnd = true } label: { Label("Uçuşu bitir", systemImage: "stop.fill") }
-                .buttonStyle(.aeroSecondary)
+            SyncBadge(snapshot: model.syncSnapshot)
+            Button { confirmEnd = true } label: { Label("İndim", systemImage: "arrow.down.to.line") }
+                .buttonStyle(.aeroPrimaryLarge)
                 .accessibilityIdentifier("pilot.end")
+            Button { model.overlay = .flight } label: { Label("Uçuş ekranı", systemImage: "gauge.with.dots.needle.67percent") }
+                .buttonStyle(.aeroInk)
+                .accessibilityIdentifier("pilot.openFlight")
         }
     }
 }
@@ -166,18 +162,23 @@ struct RetrievalStatusCard: View {
     let retrieval: LocalRetrieval
 
     var body: some View {
-        AeroCard {
-            HStack {
-                StatusPill(retrieval.stage.shortTitle, systemImage: retrieval.stage.systemImage, tone: retrieval.stage.tone)
+        VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
+            HStack(spacing: AeroTokens.Space.s3) {
+                Avatar(name: retrieval.server?.retriever?.fullName ?? "?", size: 48)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(retrieval.server?.retriever?.fullName ?? String(localized: "Retriever bekleniyor"))
+                        .font(.headline)
+                    Label(retrieval.stage.shortTitle, systemImage: retrieval.stage.systemImage)
+                        .font(.subheadline).foregroundStyle(retrieval.stage.tone.color)
+                }
                 Spacer()
-                Text(Fmt.relative(retrieval.createdAt)).font(.caption).foregroundStyle(AeroTokens.textSecondary)
+                Text(Fmt.relative(retrieval.createdAt)).font(.caption).foregroundStyle(AeroTokens.textMuted)
             }
-            if let name = retrieval.server?.retriever?.fullName {
-                KeyValueRow(key: String(localized: "Retriever"), value: name)
-            }
-            Button { model.overlay = .retrieval(retrieval.id) } label: { Label("Retrieve durumunu aç", systemImage: "car") }
+            Button { model.overlay = .retrieval(retrieval.id) } label: { Label("Retrieve'ı takip et", systemImage: "map") }
                 .buttonStyle(.aeroPrimary)
         }
+        .padding(AeroTokens.Space.s4)
+        .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
     }
 }
 
@@ -231,10 +232,14 @@ struct ReadinessList: View {
                     StatusPill(String(localized: "\(problems.count) uyarı"), systemImage: "exclamationmark.triangle", tone: .warning)
                 }
             }
-            ForEach(compact && !expanded ? Array(problems.prefix(3)) : items) { item in row(item) }
+            ForEach(compact && !expanded ? items.filter { $0.tone == .error } : items) { item in row(item) }
             if compact {
-                Button(expanded ? "Daha az göster" : "Tüm kontrolleri göster") { expanded.toggle() }
-                    .font(.subheadline.weight(.semibold))
+                Button {
+                    withAnimation(.snappy) { expanded.toggle() }
+                } label: {
+                    Label(expanded ? "Gizle" : "Kontrolleri göster", systemImage: expanded ? "chevron.up" : "chevron.down")
+                }
+                .font(.subheadline.weight(.semibold))
             }
         }
         .onAppear {

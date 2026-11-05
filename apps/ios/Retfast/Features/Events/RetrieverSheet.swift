@@ -15,20 +15,32 @@ struct RetrieverSheet: View {
         model.sharing.lastFix.map { ($0.latitude, $0.longitude) } ?? model.recentFix(maxAge: 600).map { ($0.lat, $0.lon) }
     }
 
+    enum Tab: Hashable { case requests, pickups }
+    @State private var tab: Tab = .requests
+
     var body: some View {
         VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
             dutyCard
             if let notice = board.notice { noticeCard(notice) }
-            if !board.myPickups.isEmpty {
-                SectionHeader(title: String(localized: "Aktif alımlarım (\(board.myPickups.count))"))
+            CapsuleSegment(selection: $tab, options: [
+                (.requests, String(localized: "Talepler · \(board.openRequests.count)")),
+                (.pickups, String(localized: "Alımlarım · \(board.myPickups.count)")),
+            ])
+            .accessibilityIdentifier("retriever.tabs")
+            switch tab {
+            case .requests:
+                if board.openRequests.isEmpty {
+                    emptyState(String(localized: "Bekleyen pilot yok"),
+                               String(localized: "Yeni retrieve talepleri burada ve haritada görünür."), "hand.raised")
+                }
+                ForEach(board.openRequests) { r in OpenRequestCard(retrieval: r, board: board, me: me) }
+            case .pickups:
+                if board.myPickups.isEmpty {
+                    emptyState(String(localized: "Aktif alımın yok"),
+                               String(localized: "Bir talebi kabul ettiğinde pilot burada görünür."), "car")
+                }
                 ForEach(board.myPickups) { r in PickupCard(retrieval: r, board: board, me: me) }
             }
-            SectionHeader(title: String(localized: "Açık talepler (\(board.openRequests.count))"))
-            if board.openRequests.isEmpty {
-                Text("Şu an retrieve bekleyen pilot yok. Yeni talepler burada ve haritada görünür.")
-                    .font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
-            }
-            ForEach(board.openRequests) { r in OpenRequestCard(retrieval: r, board: board, me: me) }
             if let e = board.refreshError {
                 WarningRow(text: String(localized: "Liste yenilenemedi (\(e)). Tekrar denenecek."))
             }
@@ -37,6 +49,18 @@ struct RetrieverSheet: View {
             }
         }
         .task { await board.refresh() }
+        .onChange(of: board.myPickups.count) { old, new in if new > old { tab = .pickups } }
+        .onAppear { if !board.myPickups.isEmpty { tab = .pickups } }
+    }
+
+    private func emptyState(_ title: String, _ text: String, _ icon: String) -> some View {
+        VStack(spacing: AeroTokens.Space.s2) {
+            Image(systemName: icon).font(.title).foregroundStyle(AeroTokens.textMuted)
+            Text(title).font(.headline)
+            Text(text).font(.subheadline).foregroundStyle(AeroTokens.textSecondary).multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, AeroTokens.Space.s6)
     }
 
     private var dutyCard: some View {
@@ -125,24 +149,27 @@ struct OpenRequestCard: View {
     let me: (lat: Double, lon: Double)?
 
     var body: some View {
-        AeroCard(padding: AeroTokens.Space.s3) {
-            HStack(alignment: .top) {
+        AeroCard(padding: AeroTokens.Space.s4) {
+            HStack(spacing: AeroTokens.Space.s3) {
+                Avatar(name: retrieval.pilot?.fullName, size: 48, tint: AeroTokens.primary)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(retrieval.pilot?.fullName ?? String(localized: "Pilot")).font(.headline)
-                    TimelineView(.periodic(from: .now, by: 30)) { ctx in
-                        Text("Bekliyor: \(Fmt.age(max(0, ctx.date.timeIntervalSince(retrieval.requestedAt ?? ctx.date))))")
-                            .font(.subheadline.monospacedDigit())
+                    HStack(spacing: 6) {
+                        Text(retrieval.pilot?.fullName ?? String(localized: "Pilot")).font(.headline)
+                        if retrieval.isSimulated == true { SimBadge() }
                     }
-                    if let d = RetrievalInfo.distance(retrieval, from: me) {
-                        Text("Mesafe (kuş uçuşu): \(d)").font(.subheadline.monospacedDigit()).foregroundStyle(AeroTokens.textSecondary)
+                    TimelineView(.periodic(from: .now, by: 30)) { ctx in
+                        HStack(spacing: 6) {
+                            Text("\(Fmt.age(max(0, ctx.date.timeIntervalSince(retrieval.requestedAt ?? ctx.date)))) bekliyor")
+                            if let d = RetrievalInfo.distance(retrieval, from: me) { Text("· \(d)") }
+                        }
+                        .font(.subheadline.monospacedDigit())
+                        .foregroundStyle(AeroTokens.textSecondary)
                     }
                 }
                 Spacer()
-                if retrieval.isSimulated == true { SimBadge() }
-                StatusPill(RetrievalStatus.requested.title, systemImage: "hourglass", tone: .warning)
             }
             if let note = retrieval.note, !note.isEmpty {
-                Label(note, systemImage: "text.bubble").font(.subheadline)
+                Label(note, systemImage: "text.bubble").font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
             }
             Button {
                 Task {
@@ -170,34 +197,34 @@ struct PickupCard: View {
 
     var body: some View {
         let status = retrieval.retrievalStatus ?? .accepted
-        AeroCard(padding: AeroTokens.Space.s3) {
-            HStack(alignment: .top) {
+        AeroCard(padding: AeroTokens.Space.s4) {
+            HStack(spacing: AeroTokens.Space.s3) {
+                Avatar(name: retrieval.pilot?.fullName, size: 48, tint: AeroTokens.primary)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(retrieval.pilot?.fullName ?? String(localized: "Pilot")).font(.headline)
-                    if let d = RetrievalInfo.distance(retrieval, from: me) {
-                        Text("Mesafe (kuş uçuşu): \(d)").font(.subheadline.monospacedDigit())
-                    }
-                    TimelineView(.periodic(from: .now, by: 15)) { ctx in
-                        if let age = RetrievalInfo.positionAge(retrieval, now: ctx.date) {
-                            Text("Pilot konumu \(age) önce · \(Fmt.accuracy(retrieval.latestPilotPosition?.hAccM))")
-                                .font(.caption.monospacedDigit()).foregroundStyle(AeroTokens.textSecondary)
-                        }
-                    }
+                    Label(status.title, systemImage: status.systemImage)
+                        .font(.subheadline).foregroundStyle(status.tone.color)
                 }
                 Spacer()
-                StatusPill(status.title, systemImage: status.systemImage, tone: status.tone)
-            }
-            if let note = retrieval.note, !note.isEmpty { Label(note, systemImage: "text.bubble").font(.subheadline) }
-            HStack(spacing: AeroTokens.Space.s2) {
                 if let tel = AppleMaps.telURL(retrieval.pilot?.phone) {
-                    Button { openURL(tel) } label: { Label("Ara", systemImage: "phone.fill") }
-                        .buttonStyle(.aeroSecondary)
+                    RoundIconButton(systemImage: "phone.fill", label: "Ara", tint: AeroTokens.success) { openURL(tel) }
                 }
                 if let p = retrieval.latestPilotPosition, let url = AppleMaps.directionsURL(to: p.coordinate, name: retrieval.pilot?.fullName ?? "Pilot") {
-                    Button { openURL(url) } label: { Label("Navigasyon", systemImage: "arrow.triangle.turn.up.right.diamond.fill") }
-                        .buttonStyle(.aeroSecondary)
+                    RoundIconButton(systemImage: "arrow.triangle.turn.up.right.diamond.fill", label: "Navigasyon", tint: AeroTokens.secondary) { openURL(url) }
                 }
             }
+            HStack(spacing: AeroTokens.Space.s2) {
+                if let d = RetrievalInfo.distance(retrieval, from: me) {
+                    Label(d, systemImage: "location").font(.subheadline.monospacedDigit())
+                }
+                TimelineView(.periodic(from: .now, by: 15)) { ctx in
+                    if let age = RetrievalInfo.positionAge(retrieval, now: ctx.date) {
+                        Text("· konum \(age) önce · \(Fmt.accuracy(retrieval.latestPilotPosition?.hAccM))")
+                            .font(.caption.monospacedDigit()).foregroundStyle(AeroTokens.textSecondary)
+                    }
+                }
+            }
+            if let note = retrieval.note, !note.isEmpty { Label(note, systemImage: "text.bubble").font(.subheadline) }
             if AppleMaps.telURL(retrieval.pilot?.phone) == nil {
                 Text("Pilot telefon numarası eklememiş.").font(.caption).foregroundStyle(AeroTokens.textSecondary)
             }

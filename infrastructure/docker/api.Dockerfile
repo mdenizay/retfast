@@ -4,7 +4,7 @@
 # Contains /usr/local/bin/retfast-api (serve | migrate | seed | healthcheck | reset-link)
 # and /usr/local/bin/retfast-simulator. Runs as non-root (distroless nonroot, uid 65532).
 
-FROM golang:1.27-alpine AS build
+FROM golang:1.27.3-alpine AS build
 WORKDIR /src
 ENV CGO_ENABLED=0 GOOS=linux GOTOOLCHAIN=local
 COPY services/api/go.mod services/api/go.sum ./

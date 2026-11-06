@@ -22,6 +22,11 @@ class Prefs(context: Context) {
     val units: StateFlow<String> = _units
     fun setUnits(v: String) { sp.edit().putString("units", v).apply(); _units.value = v }
 
+    private val _basemap = MutableStateFlow(sp.getString("basemap", "standard") ?: "standard")
+    /** "standard" | "topo" | "satellite" */
+    val basemap: StateFlow<String> = _basemap
+    fun setBasemap(v: String) { sp.edit().putString("basemap", v).apply(); _basemap.value = v }
+
     private val _onboarded = MutableStateFlow(sp.getBoolean("onboarded", false))
     val onboarded: StateFlow<Boolean> = _onboarded
     fun setOnboarded(v: Boolean) { sp.edit().putBoolean("onboarded", v).apply(); _onboarded.value = v }

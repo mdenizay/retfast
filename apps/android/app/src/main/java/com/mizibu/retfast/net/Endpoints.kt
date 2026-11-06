@@ -35,6 +35,7 @@ suspend fun ApiClient.launchSites(eventId: String): List<LaunchSite> =
     send("GET", "events/$eventId/launch-sites", ItemsOf.serializer(LaunchSite.serializer())).items
 
 suspend fun ApiClient.live(eventId: String): LiveSnapshot = get("events/$eventId/live")
+suspend fun ApiClient.weather(eventId: String): Weather = get("events/$eventId/weather")
 
 suspend fun ApiClient.apply(eventId: String, message: String?) {
     sendRaw("POST", "events/$eventId/applications", body = encode(ApplyRequest(message?.takeIf { it.isNotBlank() })))

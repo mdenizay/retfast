@@ -7,10 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,14 +20,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mizibu.retfast.BuildConfig
 import com.mizibu.retfast.R
 import com.mizibu.retfast.graph
 import com.mizibu.retfast.retrieval.stage
-import com.mizibu.retfast.ui.common.AeroCard
+import com.mizibu.retfast.ui.common.RowDivider
+import com.mizibu.retfast.ui.theme.Aero
+import com.mizibu.retfast.ui.theme.Lucide
+import com.mizibu.retfast.ui.theme.Mono
 import com.mizibu.retfast.ui.common.Fmt
 import com.mizibu.retfast.ui.common.PrimaryButton
 import com.mizibu.retfast.ui.common.rememberPermState
@@ -112,15 +114,20 @@ fun DiagnosticsScreen() {
         ))
     }
 
-    Column(Modifier.safeDrawingPadding().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(R.string.diagnostics), style = MaterialTheme.typography.headlineMedium)
+    val c = Aero.colors
+    Column(
+        Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(top = 4.dp, bottom = 32.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(stringResource(R.string.diag_sub), fontSize = 14.sp, lineHeight = 20.sp, color = c.textSecondary)
         rows.forEach { (title, items) ->
-            AeroCard {
-                Text(title, style = MaterialTheme.typography.titleSmall)
-                items.forEach { (k, v) ->
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(k, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
-                        Text(v, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace), modifier = Modifier.weight(1.3f))
+            GroupHeader(title)
+            ListGroup {
+                items.forEachIndexed { i, (k, v) ->
+                    if (i > 0) RowDivider(Modifier.padding(start = 16.dp))
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 11.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(k, fontSize = 14.sp, color = c.textSecondary, modifier = Modifier.weight(1f))
+                        Text(v, fontSize = 13.sp, fontFamily = Mono, color = valueColor(v), modifier = Modifier.weight(1.2f), textAlign = TextAlign.End)
                     }
                 }
             }
@@ -128,6 +135,13 @@ fun DiagnosticsScreen() {
         PrimaryButton(stringResource(R.string.share_report), {
             val text = rows.joinToString("\n\n") { (t, items) -> "## $t\n" + items.joinToString("\n") { "${it.first}: ${it.second}" } }
             ctx.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text), null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        })
+        }, Modifier.padding(top = 8.dp), icon = Lucide.Share)
     }
+}
+
+@Composable
+private fun valueColor(v: String) = when (v) {
+    "true" -> Aero.colors.success
+    "false" -> Aero.colors.warning
+    else -> Aero.colors.textPrimary
 }

@@ -21,19 +21,19 @@ import androidx.compose.ui.unit.sp
 val LocalAero = staticCompositionLocalOf { AeroTokens.light }
 val LocalDark = staticCompositionLocalOf { false }
 
-/** Calm technical minimalism: Material 3 structure restyled with the shared Retfast Aero tokens. */
+/** Minimal card UI mirroring the iOS app: Material 3 structure restyled with the shared Retfast Aero tokens. */
 private fun scheme(c: AeroColors, dark: Boolean): ColorScheme {
     val base = if (dark) darkColorScheme() else lightColorScheme()
     return base.copy(
         primary = c.primary, onPrimary = c.onPrimary,
-        primaryContainer = c.surfaceElevated, onPrimaryContainer = c.textPrimary,
+        primaryContainer = c.primarySoft, onPrimaryContainer = c.primary,
         secondary = c.secondary, onSecondary = c.onSecondary,
-        secondaryContainer = c.surfaceElevated, onSecondaryContainer = c.textPrimary,
+        secondaryContainer = c.primarySoft, onSecondaryContainer = c.primary,
         tertiary = c.retrieval, onTertiary = c.onPrimary,
         background = c.background, onBackground = c.textPrimary,
         surface = c.surface, onSurface = c.textPrimary,
         surfaceVariant = c.surfaceElevated, onSurfaceVariant = c.textSecondary,
-        surfaceContainer = c.surface, surfaceContainerHigh = c.surfaceElevated, surfaceContainerHighest = c.surfaceElevated,
+        surfaceContainer = c.surface, surfaceContainerHigh = c.surface, surfaceContainerHighest = c.surfaceElevated,
         surfaceContainerLow = c.background, surfaceContainerLowest = c.background,
         outline = c.border, outlineVariant = c.border,
         error = c.error, onError = Color.White,

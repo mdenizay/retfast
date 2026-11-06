@@ -1,48 +1,54 @@
 package com.mizibu.retfast.ui.events
 
 import android.app.Application
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mizibu.retfast.R
@@ -56,16 +62,24 @@ import com.mizibu.retfast.tracking.TrackingStatus
 import com.mizibu.retfast.ui.common.Banner
 import com.mizibu.retfast.ui.common.BannerKind
 import com.mizibu.retfast.ui.common.LoadingBox
-import com.mizibu.retfast.ui.common.StatusPill
+import com.mizibu.retfast.ui.common.MapCircleButton
+import com.mizibu.retfast.ui.common.PrimaryButton
+import com.mizibu.retfast.ui.common.TopBar
+import com.mizibu.retfast.ui.common.rememberPermState
 import com.mizibu.retfast.ui.flight.FlightSummarySheet
 import com.mizibu.retfast.ui.flight.RetrieveRequestSheet
+import com.mizibu.retfast.ui.map.BasemapButton
 import com.mizibu.retfast.ui.map.MapContent
 import com.mizibu.retfast.ui.map.MapLine
 import com.mizibu.retfast.ui.map.MapPin
 import com.mizibu.retfast.ui.map.PinKind
 import com.mizibu.retfast.ui.map.RetfastMap
+import com.mizibu.retfast.ui.map.rememberMapCamera
 import com.mizibu.retfast.ui.theme.Aero
+import com.mizibu.retfast.ui.theme.Lucide
 import kotlinx.coroutines.launch
+
+private val PEEK = 196.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,6 +93,7 @@ fun EventScreen(
 ) {
     val ctx = LocalContext.current
     val g = ctx.graph
+    val c = Aero.colors
     val vm: EventViewModel = viewModel(key = "event-$eventId", factory = EventViewModel.Factory(ctx.applicationContext as Application, eventId))
     val ui by vm.ui.collectAsStateWithLifecycle()
     val status by g.engine.status.collectAsStateWithLifecycle()
@@ -88,9 +103,10 @@ fun EventScreen(
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val owner = LocalLifecycleOwner.current
+    val camera = rememberMapCamera()
     var showRetrieve by remember { mutableStateOf(initialRetrieve) }
-    var recenter by remember { mutableIntStateOf(0) }
     var selected by remember { mutableStateOf<MapPin?>(null) }
+    var preflightDone by rememberSaveable { mutableStateOf(false) }
     val imperial = units == "imperial"
 
     LaunchedEffect(owner) { owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { vm.runWhileVisible() } }
@@ -122,64 +138,84 @@ fun EventScreen(
             g.db.samples().recentPoints(fid, 400).map { it.lat to it.lon }.reversed() else emptyList()
     }
 
-    val content = remember(ui.event, ui.sites, ui.live, ui.myPos, status.values.lat, status.values.lon, myTrack, activeLocal, selected) {
+    val content = remember(ui.event, ui.sites, ui.live, ui.myPos, status.values.lat, status.values.lon, myTrack, activeLocal) {
         buildMapContent(ui, status, myTrack, activeLocal?.id)
     }
+    val me = status.lastPos ?: ui.myPos
 
-    BottomSheetScaffold(
-        scaffoldState = rememberBottomSheetScaffoldState(),
-        sheetPeekHeight = 200.dp,
-        sheetContainerColor = MaterialTheme.colorScheme.surface,
-        sheetShape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        snackbarHost = { SnackbarHost(snackbar) },
-        sheetContent = {
-            Column(
-                Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                when {
-                    ui.loading -> LoadingBox()
-                    event == null -> Banner(ui.error ?: stringResource(R.string.err_unexpected), BannerKind.Error)
-                    else -> EventSheetBody(
-                        event, ui, vm, status, sync, activeLocal, imperial,
-                        onOpenComputer = onOpenComputer,
-                        onOpenWaiting = onOpenWaiting,
-                        onOpenPermissions = onOpenPermissions,
-                        onRetrieve = { showRetrieve = true },
-                    )
+    val mode = event?.let { EventSheetMode.forEvent(it) }
+    val showPreflight = mode == EventSheetMode.Pilot && !preflightDone && !status.recording && activeLocal == null &&
+        event?.status == "active" && ui.endedFlightId == null && !showRetrieve
+
+    Box(Modifier.fillMaxSize().background(c.background)) {
+        BottomSheetScaffold(
+            scaffoldState = rememberBottomSheetScaffoldState(),
+            sheetPeekHeight = PEEK,
+            sheetContainerColor = c.background,
+            sheetContentColor = c.textPrimary,
+            sheetShadowElevation = 12.dp,
+            sheetShape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp),
+            sheetDragHandle = {
+                Box(Modifier.padding(top = 8.dp, bottom = 6.dp).size(36.dp, 5.dp).clip(CircleShape).background(c.textMuted.copy(alpha = 0.45f)))
+            },
+            containerColor = c.background,
+            snackbarHost = { SnackbarHost(snackbar) },
+            sheetContent = {
+                Column(
+                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = 32.dp).navigationBarsPadding(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    when {
+                        ui.loading && event == null -> LoadingBox()
+                        event == null -> Banner(ui.error ?: stringResource(R.string.err_unexpected), BannerKind.Error)
+                        else -> EventSheetBody(
+                            event, ui, vm, status, sync, activeLocal, imperial,
+                            onOpenComputer = onOpenComputer,
+                            onOpenWaiting = onOpenWaiting,
+                            onOpenPermissions = onOpenPermissions,
+                            onRetrieve = { showRetrieve = true },
+                        )
+                    }
                 }
-            }
-        },
-    ) { padding ->
-        Box(Modifier.fillMaxSize().padding(bottom = 0.dp)) {
-            RetfastMap(content, Modifier.fillMaxSize(), onPinTap = { selected = it }, recenterKey = recenter)
-            Row(Modifier.statusBarsPadding().padding(12.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-                MapButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) }
-                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    MapButton(onClick = { recenter++ }) { Icon(Icons.Filled.MyLocation, stringResource(R.string.recenter)) }
-                    val c = Aero.colors
+            },
+        ) {
+            Box(Modifier.fillMaxSize()) {
+                RetfastMap(content, Modifier.fillMaxSize(), onPinTap = { selected = it }, camera = camera, bottomPadding = PEEK, topPadding = 64.dp)
+                Row(
+                    Modifier.statusBarsPadding().padding(horizontal = 14.dp, vertical = 8.dp).fillMaxWidth(),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    MapCircleButton(Lucide.ArrowLeft, stringResource(R.string.back), onBack)
+                    Spacer(Modifier.weight(1f))
                     if (event != null && (event.isOrganizer || event.memberRole != null)) {
-                        StatusPill(
-                            stringResource(if (ui.wsConnected) R.string.conn_live else R.string.conn_polling),
-                            if (ui.wsConnected) c.trackingActive else c.trackingStale,
+                        ConnectionPill(ui.wsConnected, Modifier.padding(top = 6.dp).shadow(4.dp, CircleShape))
+                    }
+                    Spacer(Modifier.weight(1f))
+                    Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        BasemapButton()
+                        if (me != null) MapCircleButton(Lucide.LocateFixed, stringResource(R.string.recenter), { camera.moveTo(me.first, me.second, 14.0) })
+                        if (content.fit.isNotEmpty()) MapCircleButton(Lucide.Maximize, stringResource(R.string.fit_event), { camera.fit(content.fit) })
+                    }
+                }
+                selected?.let { pin ->
+                    Row(
+                        Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 70.dp).shadow(6.dp, RoundedCornerShape(14.dp))
+                            .clip(RoundedCornerShape(14.dp)).background(c.surface).padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Text(pin.label.ifBlank { pin.kind.name }, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = c.textPrimary)
+                        androidx.compose.material3.Icon(
+                            Lucide.X, stringResource(R.string.cancel), tint = c.textMuted,
+                            modifier = Modifier.size(18.dp).clip(CircleShape).then(Modifier.background(c.surfaceElevated)).padding(3.dp)
+                                .then(Modifier.clickableNoRipple { selected = null }),
                         )
                     }
                 }
             }
-            event?.let {
-                Surface(
-                    Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 14.dp, start = 64.dp, end = 64.dp),
-                    shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
-                ) {
-                    Text(it.name, Modifier.padding(horizontal = 14.dp, vertical = 8.dp), style = MaterialTheme.typography.labelLarge, maxLines = 1)
-                }
-            }
-            selected?.let { pin ->
-                Surface(
-                    Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 64.dp), shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surface, shadowElevation = 4.dp,
-                ) { Text(pin.label.ifBlank { pin.kind.name }, Modifier.padding(12.dp), style = MaterialTheme.typography.bodyMedium) }
-            }
+        }
+
+        AnimatedVisibility(showPreflight && event != null, enter = fadeIn(), exit = fadeOut()) {
+            if (event != null) PreflightOverlay(event, imperial, sync.pendingCount, onBack, onOpenPermissions) { preflightDone = true }
         }
     }
 
@@ -206,10 +242,30 @@ fun EventScreen(
     }
 }
 
+private fun Modifier.clickableNoRipple(onClick: () -> Unit) = this.then(
+    Modifier.clickable(onClick = onClick),
+)
+
+/** Full-screen pre-flight check for pilots: weather + phone readiness before the sheet. */
 @Composable
-private fun MapButton(onClick: () -> Unit, content: @Composable () -> Unit) {
-    Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f), shadowElevation = 3.dp, modifier = Modifier.size(44.dp)) {
-        IconButton(onClick = onClick) { content() }
+private fun PreflightOverlay(event: Event, imperial: Boolean, pending: Int, onBack: () -> Unit, onOpenPermissions: () -> Unit, onContinue: () -> Unit) {
+    val c = Aero.colors
+    val g = LocalContext.current.graph
+    val perm by rememberPermState()
+    val online by g.online.collectAsStateWithLifecycle()
+    Column(Modifier.fillMaxSize().background(c.background).statusBarsPadding().navigationBarsPadding()) {
+        TopBar(stringResource(R.string.preflight_title), onBack = onBack)
+        Column(
+            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Text(event.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = c.primary)
+            Text(stringResource(R.string.preflight_sub), fontSize = 15.sp, lineHeight = 21.sp, color = c.textSecondary)
+            WeatherCard(event, imperial)
+            ReadinessList(perm, online, pending, onOpenPermissions)
+            Spacer(Modifier.height(8.dp))
+        }
+        PrimaryButton(stringResource(R.string.continue_btn), onContinue, Modifier.padding(16.dp).fillMaxWidth(), large = true, icon = Lucide.ArrowRight)
     }
 }
 
@@ -229,14 +285,16 @@ private fun EventSheetBody(
 ) {
     val mode = EventSheetMode.forEvent(event)
     EventHeader(event)
-    if (event.status == "draft") Banner(stringResource(R.string.event_not_started), BannerKind.Info)
+    ui.error?.let { Banner(it, BannerKind.Error) }
     when (mode) {
         is EventSheetMode.NotMember -> NotMemberSheet(event, mode.state, ui.busy, vm)
-        EventSheetMode.Pilot -> PilotSheet(event, vm, status, sync, activeLocal, imperial, onOpenComputer, onOpenWaiting, onOpenPermissions, onRetrieve)
+        EventSheetMode.Pilot -> PilotSheet(event, ui, vm, status, sync, activeLocal, imperial, onOpenComputer, onOpenWaiting, onOpenPermissions, onRetrieve)
         EventSheetMode.Retriever -> RetrieverSheet(event, ui, vm, status, imperial, onOpenPermissions)
         EventSheetMode.Observer, EventSheetMode.OrganizerOnly -> OverviewSheet(event, ui, imperial)
     }
     if (EventSheetMode.showsOrganizerTools(event)) OrganizerTools(event, ui, vm)
+    if (mode != EventSheetMode.Pilot) WeatherCard(event, imperial)
+    EventInfoCard(event, ui)
 }
 
 private fun buildMapContent(ui: EventUi, status: TrackingStatus, myTrack: List<Pair<Double, Double>>, activeRetrievalId: String?): MapContent {

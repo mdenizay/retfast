@@ -330,3 +330,36 @@ object RetrievalStatus {
     fun isOpen(s: String?) = s in OPEN
     fun isTerminal(s: String?) = s == DELIVERED || s == CANCELLED
 }
+
+@Serializable
+data class WeatherCurrent(
+    val t: String? = null,
+    val tempC: Double? = null,
+    val windMs: Double? = null,
+    val windDirDeg: Double? = null,
+    val gustMs: Double? = null,
+)
+
+@Serializable
+data class WeatherHour(
+    val t: String,
+    val tempC: Double? = null,
+    val windMs: Double? = null,
+    val windDirDeg: Double? = null,
+    val gustMs: Double? = null,
+    val cloudBaseM: Double? = null,
+    val flyability: String = "unknown",
+    val flyReasons: List<String>? = null,
+)
+
+/** Advisory forecast for an event's centre (Open-Meteo, proxied by the API). */
+@Serializable
+data class Weather(
+    val source: String = "",
+    val attribution: String = "",
+    val current: WeatherCurrent = WeatherCurrent(),
+    val hourly: List<WeatherHour> = emptyList(),
+    /** good | marginal | poor | unknown */
+    val flyability: String = "unknown",
+    val flyReasons: List<String>? = null,
+)

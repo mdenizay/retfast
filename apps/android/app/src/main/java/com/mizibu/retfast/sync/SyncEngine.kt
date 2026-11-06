@@ -225,8 +225,19 @@ class SyncEngine(
         for (f in db.flights().needingEnd()) {
             val endedAt = f.endedAt ?: continue
             if (db.samples().pendingCount(f.id) != 0) continue
-            api.endFlight(f.id, Iso.format(endedAt))
-            db.flights().byId(f.id)?.let { db.flights().update(it.copy(serverEnded = true, updatedAt = clock.now())) }
+            try {
+                api.endFlight(f.id, Iso.format(endedAt))
+                db.flights().byId(f.id)?.let { db.flights().update(it.copy(serverEnded = true, lastError = null, updatedAt = clock.now())) }
+            } catch (e: ApiException.Server) {
+                when {
+                    // The server no longer has this flight (deleted / DB reset): re-create it next pass.
+                    e.status == 404 -> db.flights().byId(f.id)?.let { db.flights().update(it.copy(serverCreated = false, updatedAt = clock.now())) }
+                    // Permanent: retrying can never succeed. Stop retrying and surface it.
+                    (e.status == 403 && !e.isPasswordChangeRequired) || e.status in listOf(400, 409, 422) ->
+                        db.flights().byId(f.id)?.let { db.flights().update(it.copy(serverEnded = true, lastError = e.code, updatedAt = clock.now())) }
+                    else -> throw e
+                }
+            }
         }
     }
 

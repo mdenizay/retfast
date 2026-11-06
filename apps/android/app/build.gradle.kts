@@ -23,8 +23,8 @@ val signingEnv: Map<String, String> = run {
 val releaseKeystore = rootProject.file("../../infrastructure/secrets/android-release.jks")
 val haveReleaseSigning = releaseKeystore.exists() && signingEnv.size == 3
 
-val appVersionName = "4.1.0"
-val appVersionCode = 41000
+val appVersionName = "4.2.0"
+val appVersionCode = 42000
 
 android {
     namespace = "com.mizibu.retfast"
@@ -113,7 +113,6 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
-    implementation(libs.compose.icons)
     implementation(libs.activity.compose)
     implementation(libs.nav.compose)
     implementation(libs.lifecycle.vm.compose)

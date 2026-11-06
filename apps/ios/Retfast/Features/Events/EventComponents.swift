@@ -326,58 +326,97 @@ struct WeatherCard: View {
 
     @ViewBuilder private func content(_ w: Weather) -> some View {
         let now = w.hourly.first
+        let tone = Self.tone(w.flyability)
+        let wind = w.current.windMs ?? now?.windMs
+        let dirDeg = w.current.windDirDeg ?? now?.windDirDeg
+        let hours = Array(w.hourly.prefix(12))
         VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
-            HStack {
-                Text("Hava durumu").font(.headline).foregroundStyle(AeroTokens.textPrimary)
-                Spacer()
-                Self.pill(w.flyability)
+            HStack(alignment: .center, spacing: AeroTokens.Space.s3) {
+                ZStack {
+                    Circle().fill(tone.color.opacity(0.14))
+                    Image(icon: "arrow.up")
+                        .font(.system(size: 18, weight: .bold))
+                        .rotationEffect(.degrees((dirDeg ?? 0) + 180))
+                        .opacity(dirDeg == nil ? 0.3 : 1)
+                        .foregroundStyle(tone.color)
+                }
+                .frame(width: 46, height: 46)
+                .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Hava durumu").font(.caption).foregroundStyle(AeroTokens.textMuted)
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        Text(Self.speedValue(wind)).font(.title3.weight(.semibold).monospacedDigit())
+                            .foregroundStyle(AeroTokens.textPrimary)
+                        Text(Fmt.speed(wind).1 + Self.dir(dirDeg)).font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
+                    }
+                    Text(details(w, now)).font(.footnote).foregroundStyle(AeroTokens.textSecondary)
+                        .lineLimit(1).minimumScaleFactor(0.8)
+                }
+                Spacer(minLength: 0)
+                verdict(w.flyability, tone: tone)
             }
             if let reasons = w.flyReasons, !reasons.isEmpty {
-                Text(reasons.map(Self.reason).joined(separator: " · "))
-                    .font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
+                Label(reasons.map(Self.reason).joined(separator: " · "), icon: "exclamationmark.triangle")
+                    .font(.footnote.weight(.medium)).foregroundStyle(tone.color)
             }
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: AeroTokens.Space.s2), GridItem(.flexible())], spacing: AeroTokens.Space.s2) {
-                InfoTile(icon: "wind", title: String(localized: "Rüzgar"),
-                         value: Self.speed(w.current.windMs ?? now?.windMs) + Self.dir(w.current.windDirDeg ?? now?.windDirDeg))
-                InfoTile(icon: "wind", title: String(localized: "Hamle"), value: Self.speed(w.current.gustMs ?? now?.gustMs))
-                InfoTile(icon: "cloud", title: String(localized: "Bulut tabanı"), value: Self.alt(now?.cloudBaseM))
-                InfoTile(icon: "thermometer", title: String(localized: "Sıcaklık"),
-                         value: (w.current.tempC ?? now?.tempC).map { String(format: "%.0f °C", $0) } ?? Fmt.dash)
-            }
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: AeroTokens.Space.s2) {
-                    ForEach(w.hourly.prefix(12)) { h in hourCell(h) }
+            if !hours.isEmpty {
+                let scale = max(8, hours.compactMap(\.windMs).max() ?? 0)
+                HStack(alignment: .bottom, spacing: 4) {
+                    ForEach(hours) { h in hourBar(h, scale: scale) }
                 }
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("weather.hours")
             }
-            .accessibilityIdentifier("weather.hours")
-            Text("Tahmin yalnızca bilgi amaçlıdır; uçuş kararı pilota aittir.")
-                .font(.caption).foregroundStyle(AeroTokens.textMuted)
             Link(destination: URL(string: "https://open-meteo.com/")!) {
-                Text(w.attribution).font(.caption2).foregroundStyle(AeroTokens.textMuted)
+                (Text("Bilgi amaçlıdır; karar pilotun.") + Text(" · ") + Text(w.attribution))
+                    .font(.caption2).foregroundStyle(AeroTokens.textMuted)
+                    .multilineTextAlignment(.leading)
             }
         }
+        .padding(AeroTokens.Space.s4)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
         .accessibilityIdentifier("event.weather")
     }
 
-    private func hourCell(_ h: WeatherHour) -> some View {
-        VStack(spacing: 4) {
-            Text(h.t, format: .dateTime.hour(.twoDigits(amPM: .omitted)))
-                .font(.caption2.monospacedDigit()).foregroundStyle(AeroTokens.textMuted)
-            Circle().fill(Self.tone(h.flyability).color).frame(width: 8, height: 8)
-            Image(icon: "arrow.up")
-                .font(.system(size: 14, weight: .bold))
-                .rotationEffect(.degrees((h.windDirDeg ?? 0) + 180))
-                .opacity(h.windDirDeg == nil ? 0.2 : 1)
-                .foregroundStyle(AeroTokens.textPrimary)
-            Text(Self.speedValue(h.windMs)).font(.caption.weight(.semibold).monospacedDigit())
-                .foregroundStyle(AeroTokens.textPrimary)
-            Text(Self.speedValue(h.gustMs)).font(.caption2.monospacedDigit()).foregroundStyle(AeroTokens.textSecondary)
+    private func details(_ w: Weather, _ now: WeatherHour?) -> String {
+        var parts = [String(localized: "Hamle \(Self.speed(w.current.gustMs ?? now?.gustMs))")]
+        if let base = now?.cloudBaseM { parts.append(String(localized: "Taban \(Self.alt(base))")) }
+        if let t = w.current.tempC ?? now?.tempC { parts.append(String(format: "%.0f °C", t)) }
+        return parts.joined(separator: " · ")
+    }
+
+    private func verdict(_ f: String, tone: Tone) -> some View {
+        HStack(spacing: 5) {
+            Circle().fill(tone.color).frame(width: 7, height: 7)
+            Text(Self.verdictText(f)).font(.caption.weight(.semibold))
         }
-        .frame(width: 48)
-        .padding(.vertical, AeroTokens.Space.s2)
-        .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.md, style: .continuous))
-        .accessibilityElement(children: .combine)
+        .foregroundStyle(tone.color)
+        .padding(.horizontal, 10).padding(.vertical, 6)
+        .background(tone.color.opacity(0.14), in: Capsule())
+    }
+
+    private func hourBar(_ h: WeatherHour, scale: Double) -> some View {
+        let tone = Self.tone(h.flyability)
+        return VStack(spacing: 3) {
+            Text(Self.speedValue(h.windMs)).font(.system(size: 10, weight: .semibold).monospacedDigit())
+                .foregroundStyle(AeroTokens.textSecondary)
+            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .fill(tone == .neutral ? AeroTokens.surfaceElevated : tone.color.opacity(0.8))
+                .frame(height: max(4, 30 * min(h.windMs ?? 0, scale) / scale))
+            Text(h.t, format: .dateTime.hour(.twoDigits(amPM: .omitted)))
+                .font(.system(size: 10).monospacedDigit()).foregroundStyle(AeroTokens.textMuted)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    static func verdictText(_ f: String) -> String {
+        switch f {
+        case "good": String(localized: "Uygun")
+        case "marginal": String(localized: "Sınırda")
+        case "poor": String(localized: "Önerilmez")
+        default: String(localized: "Bilinmiyor")
+        }
     }
 
     static func tone(_ f: String) -> Tone {

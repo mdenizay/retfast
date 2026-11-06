@@ -6,17 +6,22 @@ struct EventsListView: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        let mine = model.myEvents
+        let all = model.myEvents
+        let hero = all.first { $0.status == "active" }
+        let mine = all.filter { $0.id != hero?.id }
         let others = model.otherEvents
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 header
                 notices
-                statsCard(mine)
-                SectionTitle(String(localized: "Etkinliklerim"), count: mine.count)
-                    .padding(.top, 10)
-                    .padding(.horizontal, 4)
-                if mine.isEmpty && !model.eventsLoading {
+                if let hero { heroCard(hero) }
+                pendingNotice(all)
+                if !mine.isEmpty || hero == nil {
+                    SectionTitle(hero == nil ? String(localized: "Etkinliklerim") : String(localized: "Diğer etkinliklerim"), count: mine.count)
+                        .padding(.top, 10)
+                        .padding(.horizontal, 4)
+                }
+                if all.isEmpty && !model.eventsLoading {
                     emptyMine
                 }
                 ForEach(mine) { e in card(e) }
@@ -61,27 +66,70 @@ struct EventsListView: View {
         .padding(.bottom, AeroTokens.Space.s2)
     }
 
-    private func statsCard(_ mine: [Event]) -> some View {
-        let active = mine.filter { $0.status == "active" }.count
-        let pending = mine.compactMap { $0.counts?.pendingApplications }.reduce(0, +)
-        return AeroCard {
-            HStack {
-                Text("Özet").font(.headline).foregroundStyle(AeroTokens.textPrimary)
-                Spacer()
-                if active > 0 { StatusPill(String(localized: "Canlı"), systemImage: "dot.radiowaves.left.and.right", tone: .active) }
+    /// The event happening now, front and centre with one clear next step.
+    private func heroCard(_ e: Event) -> some View {
+        let pilot = e.memberRole == .pilot
+        return NavigationLink(value: EventRoute.event(e.id)) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 6) {
+                    Circle().fill(AeroTokens.primary).frame(width: 7, height: 7)
+                    Text("Şu an canlı").font(.footnote.weight(.semibold)).foregroundStyle(AeroTokens.primary)
+                    Spacer()
+                    if let role = e.memberRole {
+                        Label(role.title, icon: role.systemImage)
+                            .font(.footnote.weight(.medium)).foregroundStyle(AeroTokens.textSecondary)
+                    }
+                }
+                Text(e.name)
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundStyle(AeroTokens.textPrimary)
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(2)
+                    .padding(.top, 10)
+                Group {
+                    if let loc = e.locationName, !loc.isEmpty {
+                        Text(loc + " · " + EventDates.range(e))
+                    } else {
+                        Text(EventDates.range(e))
+                    }
+                }
+                .font(.footnote).foregroundStyle(AeroTokens.textSecondary).lineLimit(1)
+                .padding(.top, 4)
+                HStack(spacing: 8) {
+                    Text(pilot ? "Uçuşa hazırlan" : "Etkinliği aç")
+                    Image(icon: "arrow.right").font(.system(size: 14, weight: .bold))
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(AeroTokens.onPrimary)
+                .frame(maxWidth: .infinity, minHeight: 50)
+                .background(AeroTokens.primary, in: Capsule())
+                .padding(.top, AeroTokens.Space.s4)
             }
-            HStack(spacing: 10) {
-                StatTile(value: "\(mine.count)", label: String(localized: "Etkinliğim"))
-                StatTile(value: "\(active)", label: String(localized: "Şu an aktif"))
-                StatTile(value: "\(model.otherEvents.count)", label: String(localized: "Açık etkinlik"))
-            }
-            if pending > 0 {
-                Label("\(pending) başvuru onay bekliyor", icon: "tray.full")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(AeroTokens.warning)
-                    .padding(.horizontal, 14).frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
-                    .background(AeroTokens.warning.opacity(0.14), in: Capsule())
-            }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous)
+                    .fill(AeroTokens.surface)
+                    .overlay(alignment: .topTrailing) {
+                        Circle().fill(AeroTokens.primary.opacity(0.16)).frame(width: 220).blur(radius: 60).offset(x: 70, y: -90)
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
+            )
+            .contentShape(RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("events.row.\(e.slug ?? e.id)")
+    }
+
+    @ViewBuilder private func pendingNotice(_ mine: [Event]) -> some View {
+        let pending = mine.filter(\.isOrganizer).compactMap { $0.counts?.pendingApplications }.reduce(0, +)
+        if pending > 0 {
+            Label("\(pending) başvuru onay bekliyor", icon: "tray.full")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(AeroTokens.warning)
+                .padding(.horizontal, 16).frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                .background(AeroTokens.warning.opacity(0.12), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
     }
 

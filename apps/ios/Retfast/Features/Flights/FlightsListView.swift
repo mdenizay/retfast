@@ -297,36 +297,83 @@ struct FlightTrackSummary: View {
     private var statsGrid: some View {
         let s = track.stats
         let gain = (s.maxAlt ?? 0) - (s.takeoffAlt ?? 0)
-        let tiles: [(String, (String, String?), String?)] = [
-            (String(localized: "Süre"), (Fmt.duration(s.duration), nil), nil),
-            (String(localized: "Mesafe"), v(Fmt.distance(s.distance)), String(localized: "iz")),
-            (String(localized: "Düz mesafe"), v(Fmt.distance(s.straightDistance)), String(localized: "kalkış→iniş")),
-            (String(localized: "Kalkıştan en uzak"), v(Fmt.distance(s.maxFromTakeoff)), nil),
-            (String(localized: "Maks irtifa"), v(Fmt.altitude(s.maxAlt)), "GPS"),
-            (String(localized: "Kalkış üstü kazanç"), v(Fmt.altitude(s.maxAlt == nil ? nil : max(0, gain))), nil),
-            (String(localized: "Kalkış irtifası"), v(Fmt.altitude(s.takeoffAlt)), nil),
-            (String(localized: "İniş irtifası"), v(Fmt.altitude(s.landingAlt)), nil),
-            (String(localized: "Maks tırmanış"), v(Fmt.vario(s.maxClimb)), nil),
-            (String(localized: "Maks çöküş"), v(Fmt.vario(s.maxSink)), nil),
-            (String(localized: "Toplam tırmanış"), v(Fmt.altitude(s.ascent)), nil),
-            (String(localized: "Toplam alçalma"), v(Fmt.altitude(s.descent)), nil),
-            (String(localized: "Maks yer hızı"), v(Fmt.speed(s.maxSpeed)), nil),
-            (String(localized: "Ort. yer hızı"), v(Fmt.speed(s.avgSpeed)), nil),
-            (String(localized: "Termik"), ("\(s.climbCount)", nil), String(localized: "≥30 sn")),
-            (String(localized: "En iyi termik"), v(Fmt.vario(s.bestClimbAvg)), String(localized: "ort.")),
-            (String(localized: "Tırmanışta"), ("\(Int((s.climbingShare * 100).rounded()))", "%"), nil),
+        typealias Row = (String, (String, String?))
+        let groups: [(String, [Row])] = [
+            (String(localized: "Mesafe"), [
+                (String(localized: "Düz mesafe"), v(Fmt.distance(s.straightDistance))),
+                (String(localized: "Kalkıştan en uzak"), v(Fmt.distance(s.maxFromTakeoff))),
+                (String(localized: "Maks yer hızı"), v(Fmt.speed(s.maxSpeed))),
+                (String(localized: "Ort. yer hızı"), v(Fmt.speed(s.avgSpeed))),
+            ]),
+            (String(localized: "İrtifa"), [
+                (String(localized: "Kalkış üstü kazanç"), v(Fmt.altitude(s.maxAlt == nil ? nil : max(0, gain)))),
+                (String(localized: "Kalkış irtifası"), v(Fmt.altitude(s.takeoffAlt))),
+                (String(localized: "İniş irtifası"), v(Fmt.altitude(s.landingAlt))),
+                (String(localized: "Toplam tırmanış"), v(Fmt.altitude(s.ascent))),
+                (String(localized: "Toplam alçalma"), v(Fmt.altitude(s.descent))),
+            ]),
+            (String(localized: "Termik"), [
+                (String(localized: "Maks tırmanış"), v(Fmt.vario(s.maxClimb))),
+                (String(localized: "Maks çöküş"), v(Fmt.vario(s.maxSink))),
+                (String(localized: "En iyi termik"), v(Fmt.vario(s.bestClimbAvg))),
+                (String(localized: "Termik sayısı"), (s.climbCount > 0 ? "\(s.climbCount)" : Fmt.dash, nil)),
+                (String(localized: "Tırmanışta"), (s.climbingShare > 0 ? "\(Int((s.climbingShare * 100).rounded()))" : Fmt.dash, "%")),
+            ]),
         ]
-        return VStack(alignment: .leading, spacing: AeroTokens.Space.s2) {
-            SectionHeader(title: String(localized: "İstatistikler"))
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: AeroTokens.Space.s2), GridItem(.flexible(), spacing: AeroTokens.Space.s2)],
-                      spacing: AeroTokens.Space.s2) {
-                ForEach(tiles.indices, id: \.self) { i in
-                    InstrumentTile(label: tiles[i].0, value: tiles[i].1.0, unit: tiles[i].1.1, qualifier: tiles[i].2)
+        let visible = groups.map { ($0.0, $0.1.filter { $0.1.0 != Fmt.dash }) }.filter { !$0.1.isEmpty }
+        return VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
+            HStack(spacing: 0) {
+                heroMetric(String(localized: "Süre"), (Fmt.duration(s.duration), nil))
+                heroDivider
+                heroMetric(String(localized: "Mesafe"), v(Fmt.distance(s.distance)))
+                heroDivider
+                heroMetric(String(localized: "Maks irtifa"), v(Fmt.altitude(s.maxAlt)))
+            }
+            .padding(.vertical, AeroTokens.Space.s4)
+            .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
+            .accessibilityElement(children: .combine)
+
+            ForEach(visible.indices, id: \.self) { gi in
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(visible[gi].0).font(.footnote.weight(.semibold)).foregroundStyle(AeroTokens.textSecondary)
+                        .padding(.leading, 4)
+                    VStack(spacing: 0) {
+                        ForEach(visible[gi].1.indices, id: \.self) { i in
+                            let r = visible[gi].1[i]
+                            if i > 0 { Divider().overlay(AeroTokens.border).padding(.leading, AeroTokens.Space.s4) }
+                            HStack {
+                                Text(r.0).font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
+                                Spacer(minLength: 8)
+                                (Text(r.1.0).font(.subheadline.weight(.semibold)).foregroundStyle(AeroTokens.textPrimary)
+                                 + Text(r.1.1.map { " " + $0 } ?? "").font(.footnote).foregroundStyle(AeroTokens.textMuted))
+                                    .monospacedDigit()
+                            }
+                            .padding(.horizontal, AeroTokens.Space.s4).frame(minHeight: 44)
+                            .accessibilityElement(children: .combine)
+                        }
+                    }
+                    .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
                 }
             }
             Text("İrtifa ve vario GPS'ten hesaplanır (barometrik değildir); termik sayısı yaklaşık bir tahmindir.")
-                .font(.caption).foregroundStyle(AeroTokens.textMuted)
+                .font(.caption).foregroundStyle(AeroTokens.textMuted).padding(.horizontal, 4)
         }
+    }
+
+    private var heroDivider: some View {
+        Rectangle().fill(AeroTokens.border).frame(width: 1, height: 40)
+    }
+
+    private func heroMetric(_ label: String, _ value: (String, String?)) -> some View {
+        VStack(spacing: 4) {
+            (Text(value.0).font(.system(size: 22, weight: .semibold))
+             + Text(value.1.map { " " + $0 } ?? "").font(.footnote.weight(.medium)).foregroundStyle(AeroTokens.textMuted))
+                .foregroundStyle(AeroTokens.textPrimary).monospacedDigit()
+                .lineLimit(1).minimumScaleFactor(0.6)
+            Text(label).font(.caption).foregroundStyle(AeroTokens.textMuted)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 6)
     }
 
     private var charts: some View {
@@ -377,6 +424,7 @@ struct FlightDetailView: View {
     @State private var track = FlightTrack(raw: [])
     @State private var counts = LocalTelemetryStore.SyncCounts()
     @State private var gpxURL: URL?
+    @State private var showDetails = false
 
     var body: some View {
         ScrollView {
@@ -384,29 +432,11 @@ struct FlightDetailView: View {
                 if let f = flight {
                     header(f)
                     FlightTrackSummary(track: track, title: f.eventName ?? String(localized: "Kişisel uçuş"))
-                    AeroCard {
-                        SectionHeader(title: String(localized: "GPS kalitesi"))
-                        let lowQ = samples.filter(\.lowQuality).count
-                        let avg = samples.isEmpty ? nil : samples.map(\.hAcc).reduce(0, +) / Double(samples.count)
-                        KeyValueRow(key: String(localized: "Nokta sayısı"), value: "\(samples.count)")
-                        KeyValueRow(key: String(localized: "Ortalama doğruluk"), value: Fmt.accuracy(avg))
-                        KeyValueRow(key: String(localized: "Düşük kaliteli (>50 m)"), value: "\(lowQ)")
-                        KeyValueRow(key: String(localized: "En uzun boşluk"), value: Fmt.age(longestGap))
-                        if f.interruptionCount > 0 { KeyValueRow(key: String(localized: "Kesinti"), value: "\(f.interruptionCount)") }
-                        KeyValueRow(key: String(localized: "Başlangıç"), value: Fmt.coordinate(samples.first?.lat, samples.first?.lon), mono: true)
-                        KeyValueRow(key: String(localized: "Bitiş"), value: Fmt.coordinate(samples.last?.lat, samples.last?.lon), mono: true)
-                    }
-                    AeroCard {
-                        SectionHeader(title: String(localized: "Senkronizasyon"))
-                        FlightSyncPill(flight: f)
-                        KeyValueRow(key: String(localized: "Sunucuya ulaşan"), value: "\(counts.synced)")
-                        KeyValueRow(key: String(localized: "Bekleyen"), value: "\(counts.pending)")
-                        KeyValueRow(key: String(localized: "Reddedilen"), value: "\(counts.rejected)")
-                    }
+                    details(f)
                     if let gpxURL {
                         VStack(alignment: .leading, spacing: AeroTokens.Space.s2) {
                             ShareLink(item: gpxURL) { Label("GPX dışa aktar", icon: "square.and.arrow.up") }
-                                .buttonStyle(.aeroPrimary)
+                                .buttonStyle(.aeroSecondary)
                             Text("GPX dosyası telefondaki ham GPS noktalarından oluşturulur. Sertifikalı bir uçuş kaydı değildir (not a certified flight log); yarışma/rekor kanıtı olarak kullanılamaz.")
                                 .font(.caption).foregroundStyle(AeroTokens.textMuted)
                         }
@@ -418,17 +448,80 @@ struct FlightDetailView: View {
         .aeroBackground()
         .navigationTitle("Uçuş")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if let gpxURL {
+                ToolbarItem(placement: .topBarTrailing) {
+                    ShareLink(item: gpxURL) { Image(icon: "square.and.arrow.up") }
+                        .accessibilityLabel(Text("GPX dışa aktar"))
+                }
+            }
+        }
         .task { load() }
     }
 
     private func header(_ f: LocalFlight) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                Text(f.eventName ?? String(localized: "Kişisel uçuş")).font(.title2.bold())
+                Text(f.eventName ?? String(localized: "Kişisel uçuş")).font(.system(size: 26, weight: .semibold))
                 if f.isSimulated { SimBadge() }
             }
-            Text(f.startedAt.formatted(date: .complete, time: .shortened)).foregroundStyle(AeroTokens.textSecondary)
+            Text(f.startedAt.formatted(date: .complete, time: .shortened))
+                .font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
+            FlightSyncPill(flight: f).padding(.top, 2)
         }
+    }
+
+    /// GPS quality and sync counters folded into one collapsible card; most pilots never need them.
+    private func details(_ f: LocalFlight) -> some View {
+        let lowQ = samples.filter(\.lowQuality).count
+        let avg = samples.isEmpty ? nil : samples.map(\.hAcc).reduce(0, +) / Double(samples.count)
+        return VStack(spacing: 0) {
+            Button {
+                withAnimation(.snappy(duration: 0.25)) { showDetails.toggle() }
+            } label: {
+                HStack(spacing: 12) {
+                    Image(icon: "info.circle")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(AeroTokens.textSecondary)
+                        .frame(width: 34, height: 34)
+                        .background(AeroTokens.surfaceElevated, in: Circle())
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Kayıt ayrıntıları").font(.subheadline.weight(.semibold)).foregroundStyle(AeroTokens.textPrimary)
+                        Text("\(samples.count) nokta · \(Fmt.accuracy(avg)) · \(counts.synced)/\(counts.synced + counts.pending + counts.rejected) gönderildi")
+                            .font(.footnote).foregroundStyle(AeroTokens.textSecondary).monospacedDigit().lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
+                    Image(icon: "chevron.down")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(AeroTokens.textMuted)
+                        .rotationEffect(.degrees(showDetails ? 180 : 0))
+                }
+                .padding(AeroTokens.Space.s4)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("flight.details")
+            if showDetails {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("GPS kalitesi").font(.footnote.weight(.semibold)).foregroundStyle(AeroTokens.textMuted).padding(.bottom, 4)
+                    KeyValueRow(key: String(localized: "Ortalama doğruluk"), value: Fmt.accuracy(avg))
+                    KeyValueRow(key: String(localized: "Düşük kaliteli (>50 m)"), value: "\(lowQ)")
+                    KeyValueRow(key: String(localized: "En uzun boşluk"), value: Fmt.age(longestGap))
+                    if f.interruptionCount > 0 { KeyValueRow(key: String(localized: "Kesinti"), value: "\(f.interruptionCount)") }
+                    KeyValueRow(key: String(localized: "Başlangıç"), value: Fmt.coordinate(samples.first?.lat, samples.first?.lon), mono: true)
+                    KeyValueRow(key: String(localized: "Bitiş"), value: Fmt.coordinate(samples.last?.lat, samples.last?.lon), mono: true)
+                    Text("Senkronizasyon").font(.footnote.weight(.semibold)).foregroundStyle(AeroTokens.textMuted)
+                        .padding(.top, AeroTokens.Space.s3).padding(.bottom, 4)
+                    KeyValueRow(key: String(localized: "Sunucuya ulaşan"), value: "\(counts.synced)")
+                    KeyValueRow(key: String(localized: "Bekleyen"), value: "\(counts.pending)")
+                    KeyValueRow(key: String(localized: "Reddedilen"), value: "\(counts.rejected)")
+                }
+                .padding([.horizontal, .bottom], AeroTokens.Space.s4)
+                .transition(.opacity)
+            }
+        }
+        .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
     }
 
     private var longestGap: TimeInterval {

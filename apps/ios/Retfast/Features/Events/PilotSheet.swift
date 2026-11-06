@@ -99,15 +99,13 @@ struct PreFlightView: View {
             .padding(.top, AeroTokens.Space.s2)
             ScrollView {
                 VStack(alignment: .leading, spacing: AeroTokens.Space.s4) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(event.name.uppercased(with: Locale(identifier: "tr_TR")))
-                            .font(.caption.weight(.semibold)).foregroundStyle(AeroTokens.textSecondary)
-                        Text("Uçuş öncesi").font(.system(size: 34, weight: .bold))
-                        Text("Kalkıştan önce telefonun hazır mı kontrol et.")
-                            .font(.title3).foregroundStyle(AeroTokens.textSecondary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(event.name).font(.subheadline.weight(.medium)).foregroundStyle(AeroTokens.textSecondary)
+                            .lineLimit(1)
+                        Text("Uçuş öncesi").font(.system(size: 30, weight: .semibold))
                     }
-                    ReadinessList()
                     WeatherCard(event: event)
+                    ReadinessList()
                 }
                 .padding(AeroTokens.Space.s4)
             }
@@ -187,8 +185,32 @@ struct ReadinessList: View {
     private var auth: LocationAuthorization { model.session.authorization }
 
     var body: some View {
-        VStack(spacing: AeroTokens.Space.s3) {
-            ForEach(items) { card($0) }
+        let all = items
+        let checks = all.filter { $0.tone != .info || $0.id == "fix" }
+            .sorted { Self.rank($0.tone) < Self.rank($1.tone) }
+        let tips = all.filter { $0.tone == .info && $0.id != "fix" }
+        let attention = checks.filter { $0.tone == .error || $0.tone == .warning }.count
+        VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
+            VStack(alignment: .leading, spacing: 0) {
+                summary(checks: checks, attention: attention)
+                    .padding(.horizontal, AeroTokens.Space.s4)
+                    .padding(.top, AeroTokens.Space.s4)
+                    .padding(.bottom, AeroTokens.Space.s2)
+                ForEach(checks) { item in
+                    row(item)
+                    if item.id != checks.last?.id {
+                        Divider().overlay(AeroTokens.border).padding(.leading, 62)
+                    }
+                }
+            }
+            .padding(.bottom, AeroTokens.Space.s2)
+            .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
+            ForEach(tips) { tip in
+                Label { Text(tip.detail ?? tip.title) } icon: { Image(icon: tip.icon) }
+                    .font(.footnote).foregroundStyle(AeroTokens.textSecondary)
+                    .padding(.horizontal, AeroTokens.Space.s2)
+                    .accessibilityIdentifier("preflight.check.\(tip.id)")
+            }
         }
         .onAppear {
             locator.request()
@@ -203,37 +225,62 @@ struct ReadinessList: View {
         }
     }
 
-    private func card(_ item: Item) -> some View {
-        VStack(alignment: .leading, spacing: AeroTokens.Space.s3) {
-            HStack(alignment: .center, spacing: AeroTokens.Space.s3) {
-                Image(icon: item.icon)
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(item.tone.color)
-                    .frame(width: 48, height: 48)
-                    .background(item.tone.color.opacity(0.14), in: Circle())
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(item.title).font(.headline).foregroundStyle(AeroTokens.textPrimary)
-                    if let d = item.detail {
-                        Text(d).font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                Spacer(minLength: 0)
-                statusMark(item.tone)
+    private static func rank(_ t: Tone) -> Int {
+        switch t { case .error: 0; case .warning: 1; case .info: 2; default: 3 }
+    }
+
+    private func summary(checks: [Item], attention: Int) -> some View {
+        let blocked = checks.contains { $0.tone == .error }
+        let tint: Color = blocked ? AeroTokens.error : attention > 0 ? AeroTokens.warning : AeroTokens.success
+        return VStack(alignment: .leading, spacing: AeroTokens.Space.s2) {
+            HStack {
+                Text(attention == 0 ? String(localized: "Telefon uçuşa hazır") : String(localized: "\(attention) madde dikkat istiyor"))
+                    .font(.headline).foregroundStyle(AeroTokens.textPrimary)
+                Spacer()
+                Text("\(checks.filter { $0.tone == .success }.count)/\(checks.count)")
+                    .font(.subheadline.weight(.semibold).monospacedDigit()).foregroundStyle(tint)
             }
-            if let action = item.action {
-                Button(action: action.run) {
-                    Text(action.title).font(.subheadline.weight(.semibold))
-                        .frame(maxWidth: .infinity).padding(.vertical, 10)
-                        .background(AeroTokens.background, in: Capsule())
+            HStack(spacing: 3) {
+                ForEach(checks) { c in
+                    Capsule().fill(c.tone == .success ? AeroTokens.success : c.tone == .info ? AeroTokens.surfaceElevated : c.tone.color)
+                        .frame(height: 5)
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(AeroTokens.textPrimary)
             }
         }
-        .padding(AeroTokens.Space.s4)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func row(_ item: Item) -> some View {
+        HStack(alignment: .center, spacing: AeroTokens.Space.s3) {
+            Image(icon: item.icon)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(item.tone == .success ? AeroTokens.textSecondary : item.tone.color)
+                .frame(width: 34, height: 34)
+                .background(item.tone == .success ? AeroTokens.surfaceElevated : item.tone.color.opacity(0.14), in: Circle())
+            VStack(alignment: .leading, spacing: 1) {
+                Text(item.title).font(.subheadline.weight(.semibold)).foregroundStyle(AeroTokens.textPrimary)
+                if let d = item.detail {
+                    Text(d).font(.footnote).foregroundStyle(AeroTokens.textSecondary)
+                        .lineLimit(item.tone == .success ? 1 : 3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Spacer(minLength: 0)
+            if let action = item.action {
+                Button(action: action.run) {
+                    Text(action.title).font(.footnote.weight(.semibold))
+                        .padding(.horizontal, 12).padding(.vertical, 7)
+                        .background(AeroTokens.primary.opacity(0.16), in: Capsule())
+                        .foregroundStyle(AeroTokens.primary)
+                }
+                .buttonStyle(.plain)
+            } else {
+                statusMark(item.tone)
+            }
+        }
+        .padding(.horizontal, AeroTokens.Space.s4)
+        .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("preflight.check.\(item.id)")
     }
@@ -241,13 +288,13 @@ struct ReadinessList: View {
     @ViewBuilder private func statusMark(_ tone: Tone) -> some View {
         switch tone {
         case .success:
-            Image(icon: "checkmark.circle.fill").font(.title2).foregroundStyle(AeroTokens.success)
+            Image(icon: "checkmark.circle.fill").font(.title3).foregroundStyle(AeroTokens.success)
                 .accessibilityLabel(Text("Hazır"))
         case .error:
-            Image(icon: "xmark.circle.fill").font(.title2).foregroundStyle(AeroTokens.error)
+            Image(icon: "xmark.circle.fill").font(.title3).foregroundStyle(AeroTokens.error)
                 .accessibilityLabel(Text("Engel"))
         case .warning:
-            Image(icon: "exclamationmark.circle.fill").font(.title2).foregroundStyle(AeroTokens.warning)
+            Image(icon: "exclamationmark.circle.fill").font(.title3).foregroundStyle(AeroTokens.warning)
                 .accessibilityLabel(Text("Uyarı"))
         default:
             EmptyView()

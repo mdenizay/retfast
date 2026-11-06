@@ -10,7 +10,7 @@ Discovered: 2026-11-04, via Dokploy API (`https://dp.mdenizay.com/api`), Cloudfl
 | CPU / RAM / Disk | 6 vCPU, 11 GiB RAM (~4 GiB available at discovery), 96 GB disk (31 % used) |
 | TLS | Traefik + Let's Encrypt (Cloudflare proxy **off** for Retfast hosts) |
 
-Shared, **not Retfast-owned** (never touched): Traefik, `dokploy-network`, Dokploy itself, and the projects `isleworks`, `bananarepublic`, `yuut`, `propilot`, `panda`, `eticaret`, `mdenizay`, `vpn`, `venhall` with all their services/databases.
+Shared, **not Retfast-owned** (never touched): Traefik, `dokploy-network`, Dokploy itself, and the projects `isleworks`, `bananarepublic`, `propilot`, `panda`, `eticaret`, `mdenizay`, `vpn`, `venhall` with all their services/databases.
 
 ## Retfast Dokploy project
 

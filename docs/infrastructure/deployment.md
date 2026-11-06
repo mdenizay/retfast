@@ -40,7 +40,7 @@ Secret values live in Dokploy and in the operator's git-ignored `infrastructure/
 ## Deploy
 
 ```sh
-set -a; source ~/Works/yuut/infra/secrets.local.env; source infrastructure/secrets/production.local.env; set +a
+set -a; source ~/Works/bananarepublic/infrastructure/secrets.local.env;  # DOKPLOY_TOKEN for dp.mdenizay.com source infrastructure/secrets/production.local.env; set +a
 DOKPLOY_URL=https://dp.mdenizay.com infrastructure/scripts/deploy.sh "$PROD_COMPOSE_ID"
 infrastructure/scripts/smoke.sh https://api.retfast.com https://retfast.com
 ```

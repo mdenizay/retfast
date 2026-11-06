@@ -88,7 +88,11 @@ struct EventScreen: View {
             if let error = live?.error { AeroCard { WarningRow(text: error) } }
             switch EventSheetMode.mode(for: event) {
             case .pilot:
-                PilotSheet(event: event, live: live)
+                PilotSheet(event: event, live: live) { lat, lon in
+                    withAnimation(.smooth(duration: 0.6)) {
+                        camera = .camera(MapCamera(centerCoordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon), distance: 3000))
+                    }
+                }
             case .retriever:
                 if let board = model.retrieverBoard, board.eventId == event.id.lowercased() {
                     RetrieverSheet(event: event, board: board, live: live)

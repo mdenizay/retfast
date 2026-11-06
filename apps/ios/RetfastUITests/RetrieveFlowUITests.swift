@@ -67,6 +67,49 @@ final class RetrieveFlowUITests: XCTestCase {
         app.buttons["retrieval.minimize"].tap()
         XCTAssertTrue(app.descendants(matching: .any)["activity.retrieval"].firstMatch.waitForExistence(timeout: 5), "resume bar missing")
     }
+
+    /// End without a retrieve: the "flight complete" screen, then back to home.
+    func testEndFlightShowsCompletionThenHome() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-stubAPI", "-stubLocation"]
+        app.launch()
+
+        app.completeOnboarding()
+        app.login(email: "pilot@stub.local", password: "anything-long")
+
+        let row = app.descendants(matching: .any)["events.row.cameli-paragliding-demo"].firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 15), "event list not shown")
+        row.tap()
+        let next = app.buttons["preflight.next"]
+        XCTAssertTrue(next.waitForExistence(timeout: 10))
+        next.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["pilot.myLocation"].firstMatch.waitForExistence(timeout: 10), "own location row missing")
+        let start = app.buttons["pilot.start"]
+        app.reveal(start)
+        start.tap()
+
+        let end = app.buttons["fc.end"]
+        app.reveal(end)
+        app.settleAndTap(end)
+        let confirm = app.buttons.matching(NSPredicate(format: "(label == 'End flight' OR label == 'Uçuşu bitir') AND identifier != 'pilot.end'")).firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        app.settleAndTap(confirm)
+
+        // Retrieve request opens over the completion screen; skip it.
+        let skip = app.buttons["retrieve.skip"]
+        XCTAssertTrue(skip.waitForExistence(timeout: 10), "retrieve request not shown")
+        app.settleAndTap(skip)
+
+        XCTAssertTrue(app.descendants(matching: .any)["summary.title"].firstMatch.waitForExistence(timeout: 10), "completion screen not shown")
+        if let dir = ProcessInfo.processInfo.environment["TOUR_DIR"], !dir.isEmpty {
+            try? app.screenshot().pngRepresentation.write(to: URL(fileURLWithPath: dir).appendingPathComponent("tour_completed.png"))
+        }
+        let home = app.buttons["summary.done"]
+        XCTAssertTrue(home.exists)
+        home.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["events.row.cameli-paragliding-demo"].firstMatch.waitForExistence(timeout: 10), "not back on the home screen")
+        XCTAssertFalse(app.buttons["preflight.next"].exists, "should be on home, not inside the event")
+    }
 }
 
 extension XCUIApplication {

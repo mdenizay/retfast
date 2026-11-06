@@ -404,23 +404,33 @@ final class AppModel {
         }
     }
 
-    /// Ends the recording (if any) and opens the retrieve request for its event.
+    /// Ends the recording (if any) and shows the "flight complete" screen; for an
+    /// event flight the retrieve request opens on top of it.
     func endFlightAndRequestRetrieve() {
         let flight = session.flight
         if session.isActive { endFlight() }
-        guard let flight, let eventId = flight.eventId?.uuidString.lowercased() else {
-            if session.state == .completed { overlay = .flight }
-            return
-        }
+        if session.state == .completed { overlay = .flight }
+        guard let flight, let eventId = flight.eventId?.uuidString.lowercased() else { return }
         retrieveRequest = RetrieveContext(eventId: eventId, eventName: flight.eventName, flightId: flight.id)
     }
 
-    /// The retrieve request was closed without sending ("no retrieve" or swipe):
-    /// the finished flight is already saved, so just clear it.
+    /// The retrieve request was closed without sending ("no retrieve" or swipe).
+    /// Over the "flight complete" screen it just closes; elsewhere the finished
+    /// flight is already saved, so it is cleared.
     func dismissRetrieveRequest() {
         retrieveRequest = nil
+        if overlay == .flight, session.state == .completed { return }
         if session.state == .completed { session.reset() }
         if overlay == .flight { overlay = nil }
+    }
+
+    /// Leaves the "flight complete" screen for the home (events) screen.
+    func finishFlightAndGoHome() {
+        retrieveRequest = nil
+        if session.state == .completed { session.reset() }
+        overlay = nil
+        eventsPath = []
+        selectedTab = .events
     }
 
     var isSimulatedBuild: Bool {

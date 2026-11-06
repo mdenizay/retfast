@@ -206,64 +206,131 @@ struct FlightValue: View {
     }
 }
 
+/// "Flight complete": the result at a glance, an optional retrieve and one way home.
 struct FlightSummaryView: View {
     @Environment(AppModel.self) private var model
     @State private var counts = LocalTelemetryStore.SyncCounts()
+    @State private var appeared = false
 
     var body: some View {
         let v = model.session.values
         let f = model.session.flight
-        List {
-            Section {
-                VStack(alignment: .leading, spacing: AeroTokens.Space.s2) {
-                    Label("Uçuş kaydedildi", icon: "checkmark.circle.fill")
-                        .font(.title2.bold()).foregroundStyle(AeroTokens.success)
-                    if let name = f?.eventName { Text(name).foregroundStyle(AeroTokens.textSecondary) }
-                    if f?.isSimulated == true { SimBadge() }
+        let duration = (f?.endedAt ?? Date()).timeIntervalSince(f?.startedAt ?? Date())
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: AeroTokens.Space.s4) {
+                    VStack(spacing: AeroTokens.Space.s3) {
+                        ZStack {
+                            Circle().fill(AeroTokens.success.opacity(0.14)).frame(width: 112, height: 112)
+                            Circle().fill(AeroTokens.success.opacity(0.22)).frame(width: 78, height: 78)
+                            Image(icon: "checkmark")
+                                .font(.system(size: 34, weight: .bold))
+                                .foregroundStyle(AeroTokens.success)
+                        }
+                        .scaleEffect(appeared ? 1 : 0.6)
+                        .opacity(appeared ? 1 : 0)
+                        Text("Uçuşun tamamlandı")
+                            .font(.system(size: 28, weight: .semibold))
+                            .foregroundStyle(AeroTokens.textPrimary)
+                            .accessibilityIdentifier("summary.title")
+                        HStack(spacing: 6) {
+                            Text(f?.eventName ?? String(localized: "Kişisel uçuş"))
+                                .font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
+                            if f?.isSimulated == true { SimBadge() }
+                        }
+                        Text("Kayıt telefonuna kaydedildi.")
+                            .font(.footnote).foregroundStyle(AeroTokens.textMuted)
+                    }
+                    .padding(.top, AeroTokens.Space.s8)
+
+                    HStack(spacing: 0) {
+                        metric(String(localized: "Süre"), Fmt.duration(duration), nil)
+                        divider
+                        metric(String(localized: "Mesafe"), Fmt.distance(v.distance).0, Fmt.distance(v.distance).1)
+                        divider
+                        metric(String(localized: "Maks irtifa"), Fmt.altitude(v.maxAltitude).0, Fmt.altitude(v.maxAltitude).1)
+                    }
+                    .padding(.vertical, AeroTokens.Space.s4)
+                    .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
+
+                    VStack(spacing: 0) {
+                        row(String(localized: "Maks yer hızı"), Fmt.speed(v.maxGroundSpeed))
+                        Divider().overlay(AeroTokens.border).padding(.leading, AeroTokens.Space.s4)
+                        row(String(localized: "Toplam tırmanış"), Fmt.altitude(v.totalAscent))
+                        Divider().overlay(AeroTokens.border).padding(.leading, AeroTokens.Space.s4)
+                        row(String(localized: "Kaydedilen nokta"), ("\(model.session.storedSampleCount)", nil))
+                        if let n = f?.interruptionCount, n > 0 {
+                            Divider().overlay(AeroTokens.border).padding(.leading, AeroTokens.Space.s4)
+                            row(String(localized: "Kesinti"), ("\(n)", nil))
+                        }
+                        Divider().overlay(AeroTokens.border).padding(.leading, AeroTokens.Space.s4)
+                        HStack {
+                            Text("Senkronizasyon").font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
+                            Spacer()
+                            SyncBadge(snapshot: model.syncSnapshot)
+                        }
+                        .padding(.horizontal, AeroTokens.Space.s4).frame(minHeight: 48)
+                    }
+                    .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: AeroTokens.Radius.lg, style: .continuous))
+
+                    if counts.pending > 0 {
+                        Text("Bekleyen noktalar telefonda saklanır ve bağlantı gelince otomatik gönderilir. Uygulamayı açık tutmak gönderimi hızlandırır.")
+                            .font(.footnote).foregroundStyle(AeroTokens.textMuted)
+                            .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 4)
+                    }
                 }
+                .padding(.horizontal, AeroTokens.Space.s4)
+                .padding(.bottom, AeroTokens.Space.s4)
             }
-            Section {
+            VStack(spacing: AeroTokens.Space.s2) {
                 if let f, let eventId = f.eventId?.uuidString.lowercased(), model.activeRetrieval(eventId: eventId) == nil {
                     Button {
                         model.retrieveRequest = RetrieveContext(eventId: eventId, eventName: f.eventName, flightId: f.id)
                     } label: { Label("Retrieve iste", icon: "car.fill") }
-                    .buttonStyle(.aeroPrimaryLarge)
-                    .listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
+                    .buttonStyle(.aeroTinted)
                     .accessibilityIdentifier("summary.retrieve")
                 }
-                Button(f?.eventId != nil ? "Retrieve gerekmez, kapat" : "Tamam") {
-                    model.session.reset()
-                    model.overlay = nil
-                }
-                .buttonStyle(.aeroSecondary)
-                .listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
+                Button("Ana ekrana dön") { model.finishFlightAndGoHome() }
+                .buttonStyle(.aeroPrimaryLarge)
                 .accessibilityIdentifier("summary.done")
             }
-            Section("Özet") {
-                KeyValueRow(key: String(localized: "Süre"), value: Fmt.duration((f?.endedAt ?? Date()).timeIntervalSince(f?.startedAt ?? Date())), mono: true)
-                KeyValueRow(key: String(localized: "Mesafe"), value: Fmt.distance(v.distance).0 + " " + Fmt.distance(v.distance).1, mono: true)
-                KeyValueRow(key: String(localized: "Maks GPS irtifa"), value: Fmt.altitude(v.maxAltitude).0 + " " + Fmt.altitude(v.maxAltitude).1, mono: true)
-                KeyValueRow(key: String(localized: "Maks yer hızı"), value: Fmt.speed(v.maxGroundSpeed).0 + " " + Fmt.speed(v.maxGroundSpeed).1, mono: true)
-                KeyValueRow(key: String(localized: "Toplam tırmanış"), value: Fmt.altitude(v.totalAscent).0 + " " + Fmt.altitude(v.totalAscent).1, mono: true)
-                KeyValueRow(key: String(localized: "Kaydedilen nokta"), value: "\(model.session.storedSampleCount)", mono: true)
-                if let n = f?.interruptionCount, n > 0 {
-                    KeyValueRow(key: String(localized: "Kesinti"), value: "\(n)")
-                }
-            }
-            Section("Senkronizasyon") {
-                SyncBadge(snapshot: model.syncSnapshot)
-                KeyValueRow(key: String(localized: "Sunucuya ulaşan"), value: "\(counts.synced)")
-                KeyValueRow(key: String(localized: "Bekleyen"), value: "\(counts.pending)")
-                if counts.rejected > 0 { KeyValueRow(key: String(localized: "Sunucunun reddettiği"), value: "\(counts.rejected)") }
-                if counts.pending > 0 {
-                    Text("Bekleyen noktalar telefonda saklanır ve bağlantı gelince otomatik gönderilir. Uygulamayı açık tutmak gönderimi hızlandırır.")
-                        .font(.footnote).foregroundStyle(AeroTokens.textSecondary)
-                }
-            }
+            .padding(.horizontal, AeroTokens.Space.s4)
+            .padding(.bottom, AeroTokens.Space.s2)
         }
-        .navigationTitle("Uçuş özeti")
+        .aeroBackground()
+        .toolbar(.hidden, for: .navigationBar)
+        .onAppear {
+            Haptics.success()
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.1)) { appeared = true }
+        }
         .task(id: model.syncSnapshot) {
             if let id = f?.id { counts = (try? model.store.syncCounts(flightId: id)) ?? counts }
         }
+    }
+
+    private var divider: some View { Rectangle().fill(AeroTokens.border).frame(width: 1, height: 40) }
+
+    private func metric(_ label: String, _ value: String, _ unit: String?) -> some View {
+        VStack(spacing: 4) {
+            (Text(value).font(.system(size: 22, weight: .semibold))
+             + Text(unit.map { " " + $0 } ?? "").font(.footnote.weight(.medium)).foregroundStyle(AeroTokens.textMuted))
+                .foregroundStyle(AeroTokens.textPrimary).monospacedDigit()
+                .lineLimit(1).minimumScaleFactor(0.6)
+            Text(label).font(.caption).foregroundStyle(AeroTokens.textMuted)
+        }
+        .frame(maxWidth: .infinity).padding(.horizontal, 6)
+    }
+
+    private func row(_ label: String, _ value: (String, String)) -> some View { row(label, (value.0, Optional(value.1))) }
+
+    private func row(_ label: String, _ value: (String, String?)) -> some View {
+        HStack {
+            Text(label).font(.subheadline).foregroundStyle(AeroTokens.textSecondary)
+            Spacer()
+            (Text(value.0).font(.subheadline.weight(.semibold)).foregroundStyle(AeroTokens.textPrimary)
+             + Text(value.1.map { " " + $0 } ?? "").font(.footnote).foregroundStyle(AeroTokens.textMuted))
+                .monospacedDigit()
+        }
+        .padding(.horizontal, AeroTokens.Space.s4).frame(minHeight: 48)
     }
 }

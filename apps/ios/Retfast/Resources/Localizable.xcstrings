@@ -14295,6 +14295,54 @@
           }
         }
       }
+    },
+    "Uçuşun tamamlandı" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your flight is complete"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uçuşun tamamlandı"
+          }
+        }
+      }
+    },
+    "Kayıt telefonuna kaydedildi." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The recording is saved on your phone."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kayıt telefonuna kaydedildi."
+          }
+        }
+      }
+    },
+    "Ana ekrana dön" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back to home"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ana ekrana dön"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -9,12 +9,17 @@ struct PilotSheet: View {
     @Environment(AppModel.self) private var model
     let event: Event
     let live: EventLiveModel?
+    /// Centres the event map on the pilot's own position.
+    let onShowMe: ((Double, Double) -> Void)?
     @State private var startError: String?
     @State private var confirmEnd = false
+    @State private var locator = OneShotLocator()
+    @State private var centredOnMe = false
 
-    init(event: Event, live: EventLiveModel?) {
+    init(event: Event, live: EventLiveModel?, onShowMe: ((Double, Double) -> Void)? = nil) {
         self.event = event
         self.live = live
+        self.onShowMe = onShowMe
     }
 
     private var flightHere: Bool {
@@ -53,6 +58,7 @@ struct PilotSheet: View {
         if event.settings?.liveTracking == false {
             WarningRow(text: String(localized: "Bu etkinlikte canlı takip kapalı. Kayıt telefonda kalır."))
         }
+        myLocationRow
         if let startError { WarningRow(text: startError, tone: .error) }
         Button {
             start()
@@ -62,6 +68,58 @@ struct PilotSheet: View {
         .buttonStyle(.aeroPrimaryLarge)
         .disabled(!canStart)
         .accessibilityIdentifier("pilot.start")
+    }
+
+    /// Where the pilot is right now, before the flight starts; tapping centres the map on it.
+    private var myLocationRow: some View {
+        let fix = locator.fix
+        let acc = fix?.horizontalAccuracy
+        let tone: Tone = acc.map { $0 <= 20 ? .success : ($0 <= 50 ? .warning : .error) } ?? .neutral
+        return Button {
+            if let fix { onShowMe?(fix.latitude, fix.longitude) } else { locator.request() }
+        } label: {
+            HStack(spacing: 12) {
+                Image(icon: fix == nil ? "location.magnifyingglass" : "location.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(AeroTokens.primary)
+                    .frame(width: 38, height: 38)
+                    .background(AeroTokens.primary.opacity(0.14), in: Circle())
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Konumun").font(.subheadline.weight(.semibold)).foregroundStyle(AeroTokens.textPrimary)
+                    if let fix {
+                        Text(Fmt.coordinate(fix.latitude, fix.longitude))
+                            .font(.footnote.monospacedDigit()).foregroundStyle(AeroTokens.textSecondary)
+                    } else {
+                        Text(locator.failed ? "Henüz konum yok. Açık gökyüzü altında bekle." : "Konum alınıyor…")
+                            .font(.footnote).foregroundStyle(AeroTokens.textSecondary)
+                    }
+                }
+                Spacer(minLength: 8)
+                if let acc {
+                    HStack(spacing: 5) {
+                        Circle().fill(tone.color).frame(width: 6, height: 6)
+                        Text(Fmt.accuracy(acc)).font(.caption.weight(.semibold)).monospacedDigit()
+                    }
+                    .foregroundStyle(tone.color)
+                    .padding(.horizontal, 10).frame(height: 28)
+                    .background(tone.color.opacity(0.14), in: Capsule())
+                } else if locator.refining {
+                    ProgressView().controlSize(.small)
+                }
+            }
+            .padding(12)
+            .background(AeroTokens.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("pilot.myLocation")
+        .task { locator.request() }
+        .onDisappear { locator.stop() }
+        .onChange(of: locator.fix) { _, fix in
+            guard let fix, !centredOnMe else { return }
+            centredOnMe = true
+            onShowMe?(fix.latitude, fix.longitude)
+        }
     }
 
     private var canStart: Bool {

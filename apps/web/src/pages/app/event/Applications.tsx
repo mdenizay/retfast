@@ -7,7 +7,7 @@ import { isApiError } from "@/lib/api/client";
 import type { Application, ApplicationStatus, MemberRole } from "@/lib/api/types";
 import { fmtAge, fmtDateTime } from "@/lib/format";
 import { useNow } from "@/hooks/useNow";
-import { EmptyState, ErrorState, Field, FormError, Loading, NameAvatar } from "@/components/common";
+import { ErrorState, Field, FormError, Loading, NameAvatar } from "@/components/common";
 import { ApplicationStatusBadge, RoleBadge } from "@/components/status";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,8 @@ import { cn } from "@/lib/utils";
 
 type Filter = "pending" | "approved" | "rejected" | "all";
 
-export default function ApplicationsPage() {
+/** Applications inbox, rendered as the top section of the merged members screen. */
+export function ApplicationsSection() {
   const { t } = useI18n();
   const { event, refetch: refetchEvent } = useEventContext();
   const qc = useQueryClient();
@@ -50,11 +51,18 @@ export default function ApplicationsPage() {
     { id: "all", label: t("apps.f.all"), n: all.length },
   ];
 
+  const pendingN = count("pending");
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="max-w-2xl text-footnote text-fg-secondary">{t("apps.lead")}</p>
-        <div className="flex gap-1.5" role="group" aria-label={t("apps.filterLabel")}>
+    <section className="space-y-4" aria-labelledby="apps-title">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h2 id="apps-title" className="flex items-center gap-2 text-title3 font-semibold tracking-tight">
+            {t("eventTab.applications")}
+            {pendingN > 0 && <span className="grid min-w-6 place-items-center rounded-full bg-warning px-1.5 text-caption font-bold text-black tnum">{pendingN}</span>}
+          </h2>
+          <p className="mt-1 max-w-2xl text-footnote text-fg-muted">{t("apps.lead")}</p>
+        </div>
+        <div className="flex gap-1 overflow-x-auto rounded-full bg-surface p-1 [scrollbar-width:none]" role="group" aria-label={t("apps.filterLabel")}>
           {filters.map((f) => (
             <button
               key={f.id}
@@ -62,8 +70,8 @@ export default function ApplicationsPage() {
               aria-pressed={filter === f.id}
               onClick={() => setFilter(f.id)}
               className={cn(
-                "inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-footnote font-medium tnum",
-                filter === f.id ? "bg-primary text-on-primary" : "bg-surface text-fg-secondary hover:text-fg",
+                "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-footnote font-medium tnum transition-colors",
+                filter === f.id ? "bg-primary text-on-primary" : "text-fg-secondary hover:bg-muted hover:text-fg",
               )}
             >
               {f.label}
@@ -83,13 +91,15 @@ export default function ApplicationsPage() {
 
       {apps.isLoading ? <Loading /> : apps.error ? <ErrorState error={apps.error} onRetry={() => void apps.refetch()} /> :
         shown.length === 0 ? (
-          <EmptyState
-            icon={<Inbox className="size-6" />}
-            title={filter === "pending" ? t("apps.emptyPending") : t("apps.empty")}
-            body={filter === "pending" && !event.settings.applications_open ? t("apps.closedHint") : undefined}
-          />
+          <div className="flex items-center gap-3 rounded-3xl bg-surface px-5 py-4">
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-muted text-fg-muted"><Inbox className="size-5" aria-hidden /></span>
+            <div className="min-w-0">
+              <div className="text-body font-medium text-fg">{filter === "pending" ? t("apps.emptyPending") : t("apps.empty")}</div>
+              {filter === "pending" && !event.settings.applications_open && <div className="text-caption text-fg-muted">{t("apps.closedHint")}</div>}
+            </div>
+          </div>
         ) : (
-          <ul className="grid grid-cols-1 gap-3">
+          <ul className={cn("grid grid-cols-1", filter === "pending" ? "gap-3" : "overflow-hidden rounded-3xl bg-surface")}>
             {shown.map((a) =>
               a.status === "pending" ? (
                 <PendingRow key={a.id} app={a} onDecided={onDecided} onConflict={() => void apps.refetch()} />
@@ -99,7 +109,7 @@ export default function ApplicationsPage() {
             )}
           </ul>
         )}
-    </div>
+    </section>
   );
 }
 
@@ -173,10 +183,10 @@ function PendingRow({ app, onDecided, onConflict }: { app: Application; onDecide
             disabled={busy}
           />
           <div className="flex gap-2">
-            <Button onClick={() => role && approve.mutate(role)} disabled={busy || !role} className="flex-1">
-              <Check /> {role ? t("apps.approveAs", { role: t(`role.${role}`) }) : t("apps.chooseRoleFirst")}
+            <Button onClick={() => role && approve.mutate(role)} disabled={busy || !role} className="min-w-0 flex-1">
+              <Check /> <span className="truncate">{role ? t("apps.approveAs", { role: t(`role.${role}`) }) : t("apps.chooseRoleFirst")}</span>
             </Button>
-            <Button variant="destructive" onClick={() => setRejectOpen(true)} disabled={busy}>
+            <Button variant="destructive" onClick={() => setRejectOpen(true)} disabled={busy} className="shrink-0">
               <X /> {t("apps.reject")}
             </Button>
           </div>

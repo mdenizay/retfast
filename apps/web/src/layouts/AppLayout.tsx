@@ -39,14 +39,16 @@ interface NavItem {
 
 const linkCls = ({ isActive }: { isActive: boolean }) =>
   cn(
-    "flex h-11 items-center gap-3 rounded-2xl px-3.5 text-body font-medium transition-colors [&>svg]:transition-colors",
-    isActive ? "bg-surface text-fg [&>svg]:text-brand" : "text-fg-muted hover:bg-surface/60 hover:text-fg",
+    "relative flex h-10 items-center gap-3 rounded-xl px-3 text-body font-medium transition-colors [&>svg]:transition-colors",
+    isActive
+      ? "bg-muted text-fg [&>svg]:text-brand before:absolute before:top-2.5 before:bottom-2.5 before:-left-3 before:w-1 before:rounded-r-full before:bg-brand"
+      : "text-fg-secondary hover:bg-muted/60 hover:text-fg [&>svg]:text-fg-muted",
   );
 
 function NavSection({ label, Icon, children }: { label: string; Icon?: typeof Home; children: React.ReactNode }) {
   return (
     <>
-      <div className="mt-6 mb-1.5 flex items-center gap-1.5 px-3.5 text-caption font-medium text-fg-muted">
+      <div className="mt-5 mb-1 flex items-center gap-1.5 px-3 text-caption font-medium text-fg-muted">
         {Icon && <Icon className="size-3.5" aria-hidden />} {label}
       </div>
       {children}
@@ -83,7 +85,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
     : [];
 
   return (
-    <nav aria-label={t("nav.app")} className="flex flex-col gap-1">
+    <nav aria-label={t("nav.app")} className="flex flex-col gap-0.5">
       {main.map((i) => (
         <NavLink key={i.to} to={i.to} end={i.end} className={linkCls} onClick={onNavigate}>
           <i.Icon className="size-[18px]" aria-hidden /> {t(i.label)}
@@ -112,7 +114,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
           ))}
         </NavSection>
       )}
-      <div className="my-3" />
+      <div className="my-2" />
       <NavLink to="/app/settings" className={linkCls} onClick={onNavigate}>
         <Settings className="size-[18px]" aria-hidden /> {t("nav.settings")}
       </NavLink>
@@ -130,16 +132,19 @@ function UserFooter() {
   const { user } = useSession();
   const navigate = useNavigate();
   return (
-    <div className="m-3 space-y-3 rounded-3xl bg-surface p-3">
-      <div className="flex items-center gap-3">
-        <Avatar className="size-10" />
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-footnote font-semibold">{user?.full_name}</div>
-          <div className="truncate text-caption text-fg-muted">{user?.email}</div>
-        </div>
+    <div className="space-y-3 border-t border-fg/[0.06] p-3">
+      <div className="flex items-center gap-1.5 rounded-2xl p-1.5">
+        <Link to="/app/settings" className="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-1 transition-colors hover:bg-muted/60">
+          <Avatar className="size-9" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-footnote font-semibold">{user?.full_name}</span>
+            <span className="block truncate text-caption text-fg-muted">{isAdmin(user) ? t("nav.adminBadge") : user?.email}</span>
+          </span>
+        </Link>
         <Button
-          variant="secondary"
+          variant="ghost"
           size="icon-sm"
+          className="text-fg-muted hover:text-fg"
           aria-label={t("auth.logout")}
           title={t("auth.logout")}
           onClick={async () => {
@@ -150,7 +155,7 @@ function UserFooter() {
           <LogOut className="size-4" />
         </Button>
       </div>
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 px-1.5">
         <ThemeToggle />
         <LangToggle />
       </div>
@@ -159,7 +164,7 @@ function UserFooter() {
 }
 
 /** In-app notifications (GET /notifications), polled once a minute. */
-function NotificationsMenu() {
+function NotificationsMenu({ className }: { className?: string }) {
   const { t, locale } = useI18n();
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["notifications"], queryFn: notificationsApi.list, refetchInterval: 60_000, retry: false });
@@ -170,7 +175,7 @@ function NotificationsMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="secondary" size="icon" aria-label={unread ? t("notif.labelUnread", { n: unread }) : t("notif.label")} className="relative bg-surface hover:bg-surface/70">
+        <Button variant="secondary" size="icon" aria-label={unread ? t("notif.labelUnread", { n: unread }) : t("notif.label")} className={cn("relative bg-surface hover:bg-surface/70", className)}>
           <Bell />
           {unread > 0 && (
             <span className="absolute -top-0.5 -right-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[10px] leading-none font-bold text-on-primary tnum ring-2 ring-background" aria-hidden>
@@ -256,34 +261,37 @@ export function AppLayout() {
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-sm focus:bg-surface focus:px-3 focus:py-2">
         {t("a11y.skip")}
       </a>
-      <aside className="sticky top-0 hidden h-dvh w-72 shrink-0 flex-col lg:flex">
-        <div className="flex h-20 items-center px-6">
-          <Link to="/app" aria-label="Retfast"><Logo /></Link>
+      <aside className="sticky top-0 hidden h-dvh w-[17.5rem] shrink-0 p-3 pr-0 lg:flex">
+        <div className="flex w-full flex-col overflow-hidden rounded-3xl bg-surface">
+          <div className="flex h-16 items-center justify-between gap-2 pr-3 pl-5">
+            <Link to="/app" aria-label="Retfast"><Logo /></Link>
+            <NotificationsMenu className="bg-muted hover:bg-muted/70" />
+          </div>
+          <div className="flex-1 overflow-y-auto px-3 py-2"><NavList /></div>
+          <UserFooter />
         </div>
-        <div className="flex-1 overflow-y-auto px-3 py-1"><NavList /></div>
-        <UserFooter />
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 bg-background/85 backdrop-blur-xl">
-          <div className="mx-auto flex h-20 w-full max-w-6xl items-center gap-3 px-4 sm:px-6 lg:px-8">
-            <Link to="/app/settings" aria-label={t("nav.settings")} className="lg:hidden"><Avatar /></Link>
+        <header className="sticky top-0 z-30 bg-background/85 backdrop-blur-xl lg:hidden">
+          <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-3 px-4 sm:px-6">
+            <Link to="/app/settings" aria-label={t("nav.settings")}><Avatar /></Link>
             <TodayTitle />
             <div className="ml-auto flex items-center gap-2">
               <NotificationsMenu />
-              <Button variant="secondary" size="icon" className="bg-surface hover:bg-surface/70 lg:hidden" aria-label={t("nav.menu")} onClick={() => setMenuOpen(true)}>
+              <Button variant="secondary" size="icon" className="bg-surface hover:bg-surface/70" aria-label={t("nav.menu")} onClick={() => setMenuOpen(true)}>
                 <Menu />
               </Button>
             </div>
           </div>
         </header>
-        <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 pt-2 pb-32 sm:px-6 lg:px-8 lg:pb-12">
+        <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 pt-2 pb-32 sm:px-6 lg:px-10 lg:pt-8 lg:pb-12">
           <Outlet />
         </main>
       </div>
       <TabBar onMore={() => setMenuOpen(true)} />
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent side="left" className="w-80 gap-0 p-0">
-          <SheetTitle className="flex h-20 items-center px-6"><Logo /></SheetTitle>
+          <SheetTitle className="flex h-16 items-center px-5"><Logo /></SheetTitle>
           <div className="flex-1 overflow-y-auto px-3"><NavList onNavigate={() => setMenuOpen(false)} /></div>
           <UserFooter />
         </SheetContent>

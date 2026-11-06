@@ -140,41 +140,9 @@ function drawPin(color: string, halo: string, hollow: boolean): ImageData | null
   return ctx.getImageData(0, 0, SIZE, SIZE);
 }
 
-function trianglePath(ctx: CanvasRenderingContext2D) {
-  // Isosceles triangle pointing up (north); rotated by course on the map.
-  ctx.beginPath();
-  ctx.moveTo(32, 10);
-  ctx.lineTo(52, 50);
-  ctx.lineTo(12, 50);
-  ctx.closePath();
-}
-
-/** Retriever = triangle (distinct from the pilot chevron) pointing along the course; a dot marks a stationary vehicle. */
+/** Retriever = same chevron/dot as a pilot, drawn in the retriever colour (moving → chevron along course, still → dot). */
 function drawVehicle(style: Style, moving: boolean, color: string, halo: string): ImageData | null {
-  const r = ctx2d();
-  if (!r) return null;
-  const [, ctx] = r;
-  ctx.lineJoin = "round";
-  trianglePath(ctx);
-  ctx.lineWidth = 8;
-  ctx.strokeStyle = halo;
-  ctx.stroke();
-  trianglePath(ctx);
-  ctx.fillStyle = style === "solid" ? color : halo;
-  ctx.fill();
-  ctx.lineWidth = 4;
-  ctx.strokeStyle = color;
-  if (style === "dashed") ctx.setLineDash([6, 5]);
-  trianglePath(ctx);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  if (!moving) {
-    ctx.fillStyle = style === "solid" ? halo : color;
-    ctx.beginPath();
-    ctx.arc(32, 37, 4.5, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  return ctx.getImageData(0, 0, SIZE, SIZE);
+  return draw(moving ? "chevron" : "dot", style, color, halo);
 }
 
 /** Pilot's latest on-ground position shared inside a retrieval: ringed dot. */

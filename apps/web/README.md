@@ -64,7 +64,7 @@ docker run --rm -p 8080:8080 retfast-web     # http://localhost:8080, health: /h
 
 `nginxinc/nginx-unprivileged` (non-root) on port 8080: SPA history fallback, gzip, immutable caching for `/assets/*`,
 `no-cache` for `index.html`, security headers incl. a CSP that allows only self, the API origin (https + wss) and
-`tiles.openfreemap.org`. No inline scripts (the pre-paint theme script is `public/theme-init.js`).
+`tiles.openfreemap.org`, `*.tile.opentopomap.org` (topographic layer) and `server.arcgisonline.com` (satellite layer). No inline scripts (the pre-paint theme script is `public/theme-init.js`).
 
 ## Layout
 

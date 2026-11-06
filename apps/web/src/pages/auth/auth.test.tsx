@@ -75,7 +75,7 @@ describe("login flow", () => {
     await user.click(screen.getByRole("button", { name: "Giriş yap" }));
     await waitFor(() => expect(router.state.location.pathname).toBe("/change-password"));
 
-    await user.type(screen.getByLabelText("Mevcut şifre"), "password");
+    await user.type(await screen.findByLabelText("Mevcut şifre", {}, { timeout: 3000 }), "password");
     await user.type(screen.getByLabelText("Yeni şifre"), "short");
     await user.type(screen.getByLabelText("Yeni şifre (tekrar)"), "short");
     expect(screen.getByRole("button", { name: "Şifreyi güncelle" })).toBeDisabled();

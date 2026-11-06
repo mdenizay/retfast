@@ -105,6 +105,7 @@ const core = {
   "eventTab.label": "Event sections",
   "eventTab.overview": "Overview",
   "eventTab.applications": "Applications",
+  "eventTab.people": "People",
   "eventTab.members": "Members",
   "eventTab.myRetrievals": "My retrievals",
   "eventTab.settings": "Settings",
@@ -343,6 +344,7 @@ const core = {
   "nav.flights": "Flights",
   "nav.settings": "Settings",
   "nav.admin": "Administration",
+  "nav.adminBadge": "Platform admin",
   "nav.adminUsers": "Users",
   "nav.adminAudit": "Audit log",
   "nav.privacy": "Privacy",
@@ -507,6 +509,10 @@ const core = {
   "telemetry.seq": "Sample no.",
   "telemetry.position": "Coordinates",
   "map.unavailable": "The map can't be shown in this browser (WebGL required).",
+  "map.layers": "Map layer",
+  "map.layer.standard": "Standard",
+  "map.layer.topo": "Topographic",
+  "map.layer.satellite": "Satellite",
 };
 
 export const en: Record<MessageKey, string> = { ...core, ...publicEn, ...accountEn };

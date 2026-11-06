@@ -102,9 +102,8 @@ function RolePanel() {
     blocks.push(
       <RoleBlock key="org" Icon={ShieldCheck} title={t("overview.org.title")} body={t("overview.org.body")}>
         <Button asChild variant={pending ? "default" : "outline"} size="sm">
-          <Link to={`/app/events/${e.id}/applications`}><Inbox /> {pending ? t("overview.org.pending", { n: pending }) : t("eventTab.applications")}</Link>
+          <Link to={`/app/events/${e.id}/members`}><Inbox /> {pending ? t("overview.org.pending", { n: pending }) : t("eventTab.people")}</Link>
         </Button>
-        <Button asChild variant="outline" size="sm"><Link to={`/app/events/${e.id}/members`}>{t("eventTab.members")}</Link></Button>
         {e.settings.live_tracking && (
           <Button asChild variant="outline" size="sm"><Link to={`/app/events/${e.id}/live`}><Radar /> {t("event.openOps")}</Link></Button>
         )}

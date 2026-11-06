@@ -105,6 +105,7 @@ const core = {
   "eventTab.label": "Etkinlik bölümleri",
   "eventTab.overview": "Genel",
   "eventTab.applications": "Başvurular",
+  "eventTab.people": "Katılımcılar",
   "eventTab.members": "Üyeler",
   "eventTab.myRetrievals": "Alımlarım",
   "eventTab.settings": "Ayarlar",
@@ -343,6 +344,7 @@ const core = {
   "nav.flights": "Uçuşlar",
   "nav.settings": "Ayarlar",
   "nav.admin": "Yönetim",
+  "nav.adminBadge": "Platform yöneticisi",
   "nav.adminUsers": "Kullanıcılar",
   "nav.adminAudit": "Denetim kaydı",
   "nav.privacy": "Gizlilik",
@@ -507,6 +509,10 @@ const core = {
   "telemetry.seq": "Örnek no",
   "telemetry.position": "Koordinat",
   "map.unavailable": "Harita bu tarayıcıda gösterilemiyor (WebGL gerekli).",
+  "map.layers": "Harita katmanı",
+  "map.layer.standard": "Standart",
+  "map.layer.topo": "Topografik",
+  "map.layer.satellite": "Uydu",
 };
 
 export const tr = { ...core, ...publicTr, ...accountTr };

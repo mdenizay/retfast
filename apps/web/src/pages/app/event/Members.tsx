@@ -15,8 +15,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RoleChooser } from "@/features/events/RoleChooser";
 import { useEventContext } from "@/features/events/context";
+import { ApplicationsSection } from "./Applications";
 
-export default function MembersPage() {
+/** Applications and members on one screen: decide applications first, then manage the roster. */
+export default function PeoplePage() {
+  return (
+    <div className="space-y-10">
+      <ApplicationsSection />
+      <MembersSection />
+    </div>
+  );
+}
+
+function MembersSection() {
   const { t } = useI18n();
   const { event, refetch: refetchEvent } = useEventContext();
   const qc = useQueryClient();
@@ -49,12 +60,16 @@ export default function MembersPage() {
   const organizersOnly = active.filter((m) => m.is_organizer && !m.role);
 
   return (
-    <div className="space-y-6">
+    <section className="space-y-4" aria-labelledby="members-title">
+      <h2 id="members-title" className="flex items-baseline gap-2 text-title3 font-semibold tracking-tight">
+        {t("eventTab.members")}
+        {members.data && <span className="text-body font-medium text-fg-muted tnum">{active.length}</span>}
+      </h2>
       <AddMember existing={new Set(active.map((m) => m.user_id))} onAdded={invalidate} />
       <FormError error={change.error} />
       {members.isLoading ? <Loading /> : members.error ? <ErrorState error={members.error} onRetry={() => void members.refetch()} /> :
         active.length === 0 ? <EmptyState title={t("members.empty")} body={t("members.emptyBody")} /> : (
-          <div className="grid grid-cols-1 gap-4 2xl:grid-cols-3">
+          <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
             {groups.map((g) => {
               const Icon = ROLE_ICON[g.role];
               return (
@@ -112,7 +127,7 @@ export default function MembersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </section>
   );
 }
 
@@ -130,8 +145,8 @@ function MemberRow({ m, busy, onRole, onRemove }: { m: Member; busy: boolean; on
         </div>
         <div className="flex flex-wrap gap-x-3 text-caption text-fg-muted">
           {m.phone ? (
-            <a href={`tel:${m.phone.replace(/\s+/g, "")}`} className="inline-flex items-center gap-1 whitespace-nowrap text-fg-secondary tnum hover:text-brand">
-              <Phone className="size-3" aria-hidden />{m.phone}
+            <a href={`tel:${m.phone.replace(/\s+/g, "")}`} className="inline-flex min-w-0 max-w-full items-center gap-1 text-fg-secondary tnum hover:text-brand">
+              <Phone className="size-3 shrink-0" aria-hidden /><span className="truncate">{m.phone}</span>
             </a>
           ) : (
             <span>{t("members.noPhone")}</span>
@@ -140,18 +155,21 @@ function MemberRow({ m, busy, onRole, onRemove }: { m: Member; busy: boolean; on
         </div>
       </div>
       <Select value={m.role ?? ""} onValueChange={(v) => onRole(v as MemberRole)} disabled={busy}>
-        <SelectTrigger size="sm" className="w-32 rounded-full" aria-label={t("members.roleFor", { name: m.full_name })}>
+        <SelectTrigger size="sm" className="w-28 shrink-0 rounded-full sm:w-32" aria-label={t("members.roleFor", { name: m.full_name })}>
           <SelectValue placeholder={t("members.giveRole")} />
         </SelectTrigger>
         <SelectContent>
           {MEMBER_ROLES.map((r) => <SelectItem key={r} value={r}>{t(`role.${r}`)}</SelectItem>)}
         </SelectContent>
       </Select>
-      {onRemove && !self && (
-        <Button size="icon-sm" variant="ghost" aria-label={t("members.removeName", { name: m.full_name })} onClick={onRemove}>
-          <Trash2 />
-        </Button>
-      )}
+      {/* Fixed trailing slot keeps the role selects aligned whether or not the row can be removed. */}
+      <span className="grid size-9 shrink-0 place-items-center">
+        {onRemove && !self && (
+          <Button size="icon-sm" variant="ghost" className="text-fg-muted hover:text-error" aria-label={t("members.removeName", { name: m.full_name })} onClick={onRemove}>
+            <Trash2 />
+          </Button>
+        )}
+      </span>
     </li>
   );
 }

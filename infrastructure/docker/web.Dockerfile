@@ -28,7 +28,7 @@ RUN set -eu; \
     api="${VITE_API_URL%/}"; \
     ws="$(printf '%s' "$api" | sed 's#^http#ws#')"; \
     { \
-      echo "add_header Content-Security-Policy \"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tiles.openfreemap.org; font-src 'self' data:; connect-src 'self' ${api} ${ws} https://tiles.openfreemap.org; worker-src 'self' blob:; child-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'\" always;"; \
+      echo "add_header Content-Security-Policy \"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tiles.openfreemap.org https://*.tile.opentopomap.org https://server.arcgisonline.com; font-src 'self' data:; connect-src 'self' ${api} ${ws} https://tiles.openfreemap.org https://*.tile.opentopomap.org https://server.arcgisonline.com; worker-src 'self' blob:; child-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'\" always;"; \
       echo "add_header X-Content-Type-Options \"nosniff\" always;"; \
       echo "add_header X-Frame-Options \"DENY\" always;"; \
       echo "add_header Referrer-Policy \"strict-origin-when-cross-origin\" always;"; \

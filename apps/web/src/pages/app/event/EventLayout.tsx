@@ -30,8 +30,7 @@ export default function EventLayout() {
 
   const tabs: { to: string; label: MessageKey; end?: boolean; badge?: number; show: boolean }[] = [
     { to: "", label: "eventTab.overview", end: true, show: true },
-    { to: "applications", label: "eventTab.applications", badge: pending, show: access.canManage },
-    { to: "members", label: "eventTab.members", show: access.canManage },
+    { to: "members", label: "eventTab.people", badge: pending, show: access.canManage },
     { to: "retrievals", label: "eventTab.myRetrievals", show: access.isRetriever },
     { to: "settings", label: "eventTab.settings", show: access.canManage },
     { to: "report", label: "eventTab.report", show: access.canManage },

@@ -76,7 +76,7 @@ export function createRoutes(): RouteObject[] {
                     {
                       element: <RequireEventAccess need="manage" />,
                       children: [
-                        { path: "applications", lazy: lazyPage(() => import("@/pages/app/event/Applications")) },
+                        { path: "applications", element: <Navigate to="../members" replace /> },
                         { path: "members", lazy: lazyPage(() => import("@/pages/app/event/Members")) },
                         { path: "settings", lazy: lazyPage(() => import("@/pages/app/event/Settings")) },
                         { path: "report", lazy: lazyPage(() => import("@/pages/app/event/Report")) },

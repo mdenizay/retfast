@@ -86,7 +86,7 @@ describe("event role guards", () => {
     stubEvent("organizer");
     renderApp("/app/events/e-1/applications", { session: auth(me()) });
     expect(await screen.findByText("Emre Can")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Başvurular/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Katılımcılar/ })).toHaveAttribute("href", "/app/events/e-1/members");
   });
 
   it("observer: applications/members are blocked, live opens the read-only operations room", async () => {
